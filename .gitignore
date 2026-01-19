@@ -38,6 +38,7 @@ pids/
 
 #BASH SYSTEM
 .connect_db.sh
+.login_to_server.sh
 # Environment files
 .env
 .env.local

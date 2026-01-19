@@ -8,7 +8,7 @@ const RunJobs = require('./jobs');
 // Start referral draw job
 let redisConnected = false;
 
-async function connectRedis() { 
+async function connectRedis() {
   try {
     await redisClient.connect();
     redisConnected = true;
@@ -31,7 +31,7 @@ async function startServer() {
     console.log("✔️  Database connected");
 
     // Try to connect to Redis (non-blocking)
-    // await connectRedis();
+    await connectRedis();
 
     // Run migrations
     try {
