@@ -1,0 +1,438 @@
+components:
+  schemas:
+    LabPersonnel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        role:
+          type: string
+          enum: [lab_manager, sample_collector, lab_technician, radiologist, result_reviewer]
+          example: "lab_technician"
+        status:
+          type: string
+          enum: [pending_registration, invitation_sent, registered, active, suspended, terminated]
+          example: "active"
+        fullName:
+          type: string
+          example: "Jane Doe"
+        email:
+          type: string
+          format: email
+          example: "jane.doe@centralmedlab.com"
+        phone:
+          type: string
+          example: "+1234567892"
+        licenseNumber:
+          type: string
+          example: "TECH123456"
+        specialization:
+          type: string
+          example: "Clinical Chemistry"
+        yearsOfExperience:
+          type: integer
+          example: 5
+        qualifications:
+          type: array
+          items:
+            type: string
+          example: ["Bachelor's in Medical Technology", "Certified Medical Technologist"]
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["view_results", "edit_results", "approve_results"]
+        departments:
+          type: array
+          items:
+            type: string
+          example: ["Chemistry", "Hematology"]
+        registrationToken:
+          type: string
+          example: "abc123def456ghi789jkl012mno345pqr678"
+        userAccountCreated:
+          type: boolean
+          example: true
+        firstLoginCompleted:
+          type: boolean
+          example: true
+        invitationSentAt:
+          type: string
+          format: date-time
+          example: "2024-01-10T10:00:00Z"
+        registeredAt:
+          type: string
+          format: date-time
+          example: "2024-01-11T14:30:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-10T09:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-11T14:30:00Z"
+        facility:
+          $ref: '#/components/schemas/LabFacility'
+        user:
+          $ref: '#/components/schemas/LabUser'
+        invitedBy:
+          $ref: '#/components/schemas/LabUser'
+
+    PersonnelInvitation:
+      type: object
+      required:
+        - fullName
+        - email
+        - role
+      properties:
+        fullName:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Jane Doe"
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: "jane.doe@centralmedlab.com"
+        role:
+          type: string
+          enum: [lab_manager, sample_collector, lab_technician, radiologist, result_reviewer]
+          example: "lab_technician"
+        phone:
+          type: string
+          minLength: 7
+          maxLength: 20
+          example: "+1234567892"
+        licenseNumber:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "TECH123456"
+        specialization:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Clinical Chemistry"
+        yearsOfExperience:
+          type: integer
+          minimum: 0
+          maximum: 50
+          example: 5
+        qualifications:
+          type: array
+          items:
+            type: string
+          example: ["Bachelor's in Medical Technology", "Certified Medical Technologist"]
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["view_results", "edit_results"]
+        departments:
+          type: array
+          items:
+            type: string
+          example: ["Chemistry", "Hematology"]
+
+    PersonnelRegistration:
+      type: object
+      required:
+        - registrationToken
+        - email
+        - password
+        - confirmPassword
+      properties:
+        registrationToken:
+          type: string
+          minLength: 32
+          maxLength: 64
+          example: "abc123def456ghi789jkl012mno345pqr678"
+        email:
+          type: string
+          format: email
+          example: "jane.doe@centralmedlab.com"
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          example: "SecurePass123!"
+          description: "Must contain at least one lowercase letter, one uppercase letter, and one number"
+        confirmPassword:
+          type: string
+          minLength: 8
+          maxLength: 128
+          example: "SecurePass123!"
+
+    PersonnelStatusUpdate:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pending_registration, invitation_sent, registered, active, suspended, terminated]
+          example: "active"
+
+    PersonnelRoleUpdate:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum: [lab_manager, sample_collector, lab_technician, radiologist, result_reviewer]
+          example: "lab_manager"
+
+    RegistrationTokenInfo:
+      type: object
+      properties:
+        fullName:
+          type: string
+          example: "Jane Doe"
+        email:
+          type: string
+          format: email
+          example: "jane.doe@centralmedlab.com"
+        role:
+          type: string
+          example: "lab_technician"
+        facilityName:
+          type: string
+          example: "Central Medical Laboratory"
+        isExpired:
+          type: boolean
+          example: false
+
+    PersonnelStats:
+      type: object
+      additionalProperties:
+        type: object
+        additionalProperties:
+          type: integer
+      example:
+        lab_manager:
+          active: 1
+          suspended: 0
+        lab_technician:
+          active: 3
+          pending_registration: 1
+        sample_collector:
+          active: 2
+          invitation_sent: 1
+
+  parameters:
+    FacilityId:
+      name: id
+      in: path
+      required: true
+      description: Lab facility UUID
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+    PersonnelId:
+      name: id
+      in: path
+      required: true
+      description: Lab personnel UUID
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440002"
+
+    RegistrationToken:
+      name: token
+      in: path
+      required: true
+      description: Registration token
+      schema:
+        type: string
+        example: "abc123def456ghi789jkl012mno345pqr678"
+
+  responses:
+    PersonnelInvited:
+      description: Personnel invitation sent successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Personnel invitation sent successfully. Registration instructions have been emailed."
+              data:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  fullName:
+                    type: string
+                  email:
+                    type: string
+                    format: email
+                  role:
+                    type: string
+                  status:
+                    type: string
+                    example: "invitation_sent"
+                  invitationSentAt:
+                    type: string
+                    format: date-time
+
+    PersonnelRegistered:
+      description: Personnel registration completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Registration completed successfully. You can now login with your credentials."
+              data:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      fullName:
+                        type: string
+                      email:
+                        type: string
+                        format: email
+                      role:
+                        type: string
+                  personnel:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      role:
+                        type: string
+                      facilityName:
+                        type: string
+
+    PersonnelFound:
+      description: Personnel found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Personnel details retrieved successfully"
+              data:
+                $ref: '#/components/schemas/LabPersonnel'
+
+    PersonnelList:
+      description: Personnel list retrieved
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Facility personnel retrieved successfully"
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LabPersonnel'
+              count:
+                type: integer
+                example: 5
+
+    PersonnelUpdated:
+      description: Personnel updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Personnel status updated successfully"
+              data:
+                $ref: '#/components/schemas/LabPersonnel'
+
+    PersonnelRemoved:
+      description: Personnel removed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Personnel removed successfully"
+              data:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Personnel removed successfully"
+
+    TokenInfo:
+      description: Registration token information retrieved
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Registration token info retrieved successfully"
+              data:
+                $ref: '#/components/schemas/RegistrationTokenInfo'
+
+    PersonnelNotFound:
+      description: Personnel not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Personnel not found"
+
+    InvalidToken:
+      description: Invalid or expired registration token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Invalid or expired registration token"

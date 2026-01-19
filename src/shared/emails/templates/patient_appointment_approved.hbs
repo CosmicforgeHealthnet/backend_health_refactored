@@ -1,0 +1,72 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;"></div>
+    <!-- Status Banner -->
+    <div style="background: linear-gradient(135deg, #16a34a, #15803d); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Appointment Confirmed</h2>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>{{patientName}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Great news! <strong>Dr. {{doctorName}}</strong> has approved your appointment request.
+    </p>
+
+    <!-- Appointment Details -->
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #15803d; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Appointment Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #166534;">
+            <strong>Doctor:</strong> Dr. {{doctorName}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #166534;">
+            <strong>Date & Time:</strong> {{appointmentDate}} at {{appointmentTime}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #166534;">
+            <strong>Consultation Type:</strong> {{consultationType}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #166534;">
+            <strong>Appointment ID:</strong> #{{appointmentId}}
+        </p>
+    </div>
+
+    <!-- Next Steps -->
+    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #1d4ed8; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            What's Next?
+        </h3>
+        <p style="color: #1e40af; margin: 5px 0; font-size: 14px;">
+            Your appointment is now scheduled! A meeting link will be generated and sent to you closer to your appointment time.
+        </p>
+        <p style="color: #1e40af; margin: 5px 0; font-size: 14px;">
+            You'll receive reminder notifications 1 hour and 15 minutes before your appointment.
+        </p>
+    </div>
+
+    <!-- Dashboard Link -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{dashboardLink}}" style="color: #3964EA; text-decoration: none; font-weight: bold;">
+            View My Appointments
+        </a>
+    </div>
+
+    <!-- Preparation Tips -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #92400e; margin: 0; font-weight: 600; text-align: center; font-size: 14px;">
+            <strong>Preparation Tip:</strong> Please have your medical history and any relevant documents ready for your consultation.
+        </p>
+    </div>
+
+    <!-- Support info -->
+    <p style="font-size: 14px; color: #555; margin: 20px 0; text-align: center;">
+        If you need to reschedule or have any questions, please contact our <a href="{{supportLink}}" style="color: #3964EA; text-decoration: none;">support team</a>.
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px; text-align: center;">
+        <strong>The CosmicForge Health Team</strong>
+    </p>
+</div>

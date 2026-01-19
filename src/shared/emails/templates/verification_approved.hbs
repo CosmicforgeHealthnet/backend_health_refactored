@@ -1,0 +1,73 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Success Banner -->
+    <div style="background: linear-gradient(135deg, #3964EA, #2548C7); text-align: center; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 20px; color: white; font-weight: bold;">Verification Approved!</h2>
+        <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Welcome to CosmicForge Health</p>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>Dr. {{fullName}}</strong>,
+    </p>
+
+    <!-- Congratulations message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
+        <strong>Congratulations!</strong> Your medical verification has been successfully approved. 
+        You are now a verified medical professional on <strong>CosmicForge Health</strong> and can 
+        start offering consultations to patients worldwide.
+    </p>
+
+    <!-- Next steps intro -->
+    <p style="font-size: 16px; margin-bottom: 30px;">
+        You can now complete your profile setup and start offering consultations to patients.
+    </p>
+
+    <!-- Verification Summary -->
+    <div style="background-color: #F5F8FF; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3964EA;">
+        <h3 style="margin-top: 0; color: #2548C7; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Verification Summary
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>License:</strong> {{licenseNumber}} ({{countryCode}})
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Authority:</strong> {{issuingAuthority}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Approved:</strong> {{approvalDate}}
+        </p>
+        {{#if confidenceScore}}
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Confidence Score:</strong> {{confidenceScore}}/100
+        </p>
+        {{/if}}
+    </div>
+
+    <!-- Additional next steps -->
+    {{#if nextSteps}}
+    <p style="font-size: 16px; margin-bottom: 30px;">
+        {{nextSteps}}
+    </p>
+    {{/if}}
+
+    <!-- Primary Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        {{> button url=profileSetupLink text="Complete Profile Setup" }}
+    </div>
+
+    <!-- Secondary Button -->
+    <div style="text-align: center; margin: 20px 0;">
+        {{> button url=consultationLink text="Start Consultations" }}
+    </div>
+
+    <!-- Welcome message -->
+    <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
+        Welcome to the CosmicForge Health community of verified medical professionals!
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px;">
+        The CosmicForge Health Team
+    </p>
+
+</div>

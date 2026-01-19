@@ -1,0 +1,153 @@
+/**
+ * @typedef {import('typeorm').MigrationInterface} MigrationInterface
+ */
+
+/**
+ * @class
+ * @implements {MigrationInterface}
+ */
+module.exports = class FhirComplieneceSchema1757631123427 {
+    name = 'FhirComplieneceSchema1757631123427'
+
+    async up(queryRunner) {
+        await queryRunner.query(`CREATE TYPE "public"."patient_consents_consent_status_enum" AS ENUM('active', 'inactive', 'withdrawn', 'expired')`);
+        await queryRunner.query(`CREATE TYPE "public"."patient_consents_consent_scope_enum" AS ENUM('full_access', 'limited_access', 'treatment_only', 'emergency_only', 'no_access')`);
+        await queryRunner.query(`CREATE TABLE "patient_consents" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "patient_identifier" character varying NOT NULL, "consent_status" "public"."patient_consents_consent_status_enum" NOT NULL DEFAULT 'active', "consent_scope" "public"."patient_consents_consent_scope_enum" NOT NULL DEFAULT 'limited_access', "allowed_purposes" jsonb NOT NULL DEFAULT '[]', "allowed_users" jsonb, "allowed_resource_types" jsonb, "restricted_resource_types" jsonb, "effective_date" TIMESTAMP NOT NULL, "expiration_date" TIMESTAMP, "allow_emergency_access" boolean NOT NULL DEFAULT true, "emergency_contact_info" jsonb, "consent_document" text, "consent_method" character varying NOT NULL, "consent_language" character varying NOT NULL DEFAULT 'en', "grantor" uuid NOT NULL, "grantor_role" character varying NOT NULL, "witness" uuid, "version" integer NOT NULL DEFAULT '1', "previous_consent_id" uuid, "withdrawn_at" TIMESTAMP, "withdrawal_reason" text, "withdrawn_by" uuid, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_7c40a6cda6f0a1c71e7fc7e6766" PRIMARY KEY ("id")); COMMENT ON COLUMN "patient_consents"."patient_identifier" IS 'Patient identifier from FHIR resources'; COMMENT ON COLUMN "patient_consents"."allowed_purposes" IS 'Array of allowed purposes of use'; COMMENT ON COLUMN "patient_consents"."allowed_users" IS 'Specific users who can access (if limited access)'; COMMENT ON COLUMN "patient_consents"."allowed_resource_types" IS 'Specific FHIR resource types that can be accessed'; COMMENT ON COLUMN "patient_consents"."restricted_resource_types" IS 'FHIR resource types that are explicitly restricted'; COMMENT ON COLUMN "patient_consents"."effective_date" IS 'When consent becomes effective'; COMMENT ON COLUMN "patient_consents"."expiration_date" IS 'When consent expires (null = no expiration)'; COMMENT ON COLUMN "patient_consents"."allow_emergency_access" IS 'Allow break-glass emergency access'; COMMENT ON COLUMN "patient_consents"."emergency_contact_info" IS 'Emergency contact information'; COMMENT ON COLUMN "patient_consents"."consent_document" IS 'Original consent document or reference'; COMMENT ON COLUMN "patient_consents"."consent_method" IS 'How consent was obtained (verbal, written, electronic)'; COMMENT ON COLUMN "patient_consents"."grantor_role" IS 'Role of person granting consent (patient, guardian, etc.)'`);
+        await queryRunner.query(`CREATE INDEX "IDX_PATIENT_CONSENT" ON "patient_consents" ("patient_identifier", "consent_status") `);
+        await queryRunner.query(`CREATE INDEX "IDX_CONSENT_EFFECTIVE" ON "patient_consents" ("effective_date", "expiration_date") `);
+        await queryRunner.query(`CREATE INDEX "IDX_CONSENT_STATUS" ON "patient_consents" ("consent_status") `);
+        await queryRunner.query(`CREATE INDEX "IDX_CONSENT_SCOPE" ON "patient_consents" ("consent_scope") `);
+        await queryRunner.query(`CREATE TYPE "public"."encryption_keys_key_type_enum" AS ENUM('master', 'patient', 'resource', 'sensitivity', 'purpose')`);
+        await queryRunner.query(`CREATE TYPE "public"."encryption_keys_key_status_enum" AS ENUM('active', 'rotated', 'revoked', 'expired')`);
+        await queryRunner.query(`CREATE TYPE "public"."encryption_keys_algorithm_enum" AS ENUM('aes-256-gcm', 'aes-256-cbc', 'chacha20-poly1305')`);
+        await queryRunner.query(`CREATE TABLE "encryption_keys" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "key_identifier" character varying NOT NULL, "key_type" "public"."encryption_keys_key_type_enum" NOT NULL, "key_status" "public"."encryption_keys_key_status_enum" NOT NULL DEFAULT 'active', "patient_identifier" character varying, "fhir_resource_type" character varying, "sensitivity_level" character varying, "purpose_of_use" character varying, "algorithm" "public"."encryption_keys_algorithm_enum" NOT NULL DEFAULT 'aes-256-gcm', "key_size" integer NOT NULL DEFAULT '256', "encrypted_key" text NOT NULL, "key_derivation_salt" character varying, "initialization_vector" character varying, "version" integer NOT NULL DEFAULT '1', "parent_key_id" uuid, "rotated_from_key_id" uuid, "created_by" uuid NOT NULL, "effective_date" TIMESTAMP NOT NULL, "expiration_date" TIMESTAMP, "rotation_schedule" jsonb, "usage_count" bigint NOT NULL DEFAULT '0', "last_used_at" TIMESTAMP, "max_usage_count" bigint, "key_strength" integer, "compliance_flags" jsonb, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_64f6c2be11d0ae1b3c8aaba8600" UNIQUE ("key_identifier"), CONSTRAINT "PK_9b11c521c72b15e00ea39f32b6c" PRIMARY KEY ("id")); COMMENT ON COLUMN "encryption_keys"."key_identifier" IS 'Unique identifier for the key'; COMMENT ON COLUMN "encryption_keys"."patient_identifier" IS 'Patient ID for patient-specific keys'; COMMENT ON COLUMN "encryption_keys"."fhir_resource_type" IS 'FHIR resource type for resource-specific keys'; COMMENT ON COLUMN "encryption_keys"."sensitivity_level" IS 'Sensitivity level for sensitivity-based keys'; COMMENT ON COLUMN "encryption_keys"."purpose_of_use" IS 'Purpose of use for purpose-based keys'; COMMENT ON COLUMN "encryption_keys"."key_size" IS 'Key size in bits'; COMMENT ON COLUMN "encryption_keys"."encrypted_key" IS 'The actual encryption key, encrypted with master key'; COMMENT ON COLUMN "encryption_keys"."key_derivation_salt" IS 'Salt used for key derivation'; COMMENT ON COLUMN "encryption_keys"."initialization_vector" IS 'IV used for key encryption'; COMMENT ON COLUMN "encryption_keys"."version" IS 'Key version for rotation tracking'; COMMENT ON COLUMN "encryption_keys"."parent_key_id" IS 'Parent key for hierarchical key management'; COMMENT ON COLUMN "encryption_keys"."rotated_from_key_id" IS 'Previous key that this rotated from'; COMMENT ON COLUMN "encryption_keys"."effective_date" IS 'When key becomes effective'; COMMENT ON COLUMN "encryption_keys"."expiration_date" IS 'When key expires'; COMMENT ON COLUMN "encryption_keys"."rotation_schedule" IS 'Automatic rotation schedule'; COMMENT ON COLUMN "encryption_keys"."usage_count" IS 'Number of times key has been used'; COMMENT ON COLUMN "encryption_keys"."max_usage_count" IS 'Maximum allowed usage before rotation'; COMMENT ON COLUMN "encryption_keys"."key_strength" IS 'Calculated key strength score'; COMMENT ON COLUMN "encryption_keys"."compliance_flags" IS 'Compliance-related flags and metadata'`);
+        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_KEY_IDENTIFIER" ON "encryption_keys" ("key_identifier") `);
+        await queryRunner.query(`CREATE INDEX "IDX_KEY_TYPE_STATUS" ON "encryption_keys" ("key_type", "key_status") `);
+        await queryRunner.query(`CREATE INDEX "IDX_PATIENT_KEY" ON "encryption_keys" ("patient_identifier", "key_status") `);
+        await queryRunner.query(`CREATE INDEX "IDX_RESOURCE_KEY" ON "encryption_keys" ("fhir_resource_type", "key_status") `);
+        await queryRunner.query(`CREATE INDEX "IDX_KEY_EXPIRATION" ON "encryption_keys" ("expiration_date") `);
+        await queryRunner.query(`CREATE INDEX "IDX_KEY_USAGE" ON "encryption_keys" ("usage_count", "max_usage_count") `);
+        await queryRunner.query(`CREATE TYPE "public"."data_governance_policies_policy_type_enum" AS ENUM('retention', 'anonymization', 'access_control', 'data_classification', 'cross_border', 'privacy_preservation')`);
+        await queryRunner.query(`CREATE TYPE "public"."data_governance_policies_policy_status_enum" AS ENUM('active', 'inactive', 'pending', 'deprecated')`);
+        await queryRunner.query(`CREATE TABLE "data_governance_policies" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "policy_name" character varying NOT NULL, "policy_type" "public"."data_governance_policies_policy_type_enum" NOT NULL, "policy_version" character varying NOT NULL DEFAULT '1.0', "policy_status" "public"."data_governance_policies_policy_status_enum" NOT NULL DEFAULT 'active', "policy_description" text NOT NULL, "policy_rules" jsonb NOT NULL, "applicable_data_types" jsonb, "applicable_jurisdictions" jsonb NOT NULL DEFAULT '["global"]', "sensitivity_levels" jsonb, "is_automated" boolean NOT NULL DEFAULT false, "automation_schedule" jsonb, "regulatory_basis" jsonb, "compliance_frameworks" jsonb NOT NULL DEFAULT '[]', "effective_date" TIMESTAMP NOT NULL, "expiration_date" TIMESTAMP, "review_date" TIMESTAMP, "policy_owner" uuid NOT NULL, "approved_by" uuid, "approval_date" TIMESTAMP, "enforcement_count" bigint NOT NULL DEFAULT '0', "violation_count" bigint NOT NULL DEFAULT '0', "last_enforced_at" TIMESTAMP, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_a9a26d3577ab5d11bd4461ceb72" PRIMARY KEY ("id")); COMMENT ON COLUMN "data_governance_policies"."policy_rules" IS 'JSON object defining the policy rules'; COMMENT ON COLUMN "data_governance_policies"."applicable_data_types" IS 'FHIR resource types this policy applies to'; COMMENT ON COLUMN "data_governance_policies"."sensitivity_levels" IS 'Data sensitivity levels this policy applies to'; COMMENT ON COLUMN "data_governance_policies"."is_automated" IS 'Whether this policy is automatically enforced'; COMMENT ON COLUMN "data_governance_policies"."automation_schedule" IS 'Cron-like schedule for automated enforcement'; COMMENT ON COLUMN "data_governance_policies"."regulatory_basis" IS 'Regulatory requirements this policy addresses'; COMMENT ON COLUMN "data_governance_policies"."review_date" IS 'When this policy should be reviewed'; COMMENT ON COLUMN "data_governance_policies"."enforcement_count" IS 'Number of times this policy has been enforced'; COMMENT ON COLUMN "data_governance_policies"."violation_count" IS 'Number of policy violations detected'`);
+        await queryRunner.query(`CREATE INDEX "IDX_POLICY_TYPE_STATUS" ON "data_governance_policies" ("policy_type", "policy_status") `);
+        await queryRunner.query(`CREATE INDEX "IDX_POLICY_EFFECTIVE" ON "data_governance_policies" ("effective_date", "expiration_date") `);
+        await queryRunner.query(`CREATE INDEX "IDX_POLICY_JURISDICTION" ON "data_governance_policies" ("applicable_jurisdictions") `);
+        await queryRunner.query(`CREATE INDEX "IDX_POLICY_AUTOMATED" ON "data_governance_policies" ("is_automated") `);
+        await queryRunner.query(`CREATE INDEX "IDX_POLICY_REVIEW" ON "data_governance_policies" ("review_date") `);
+        await queryRunner.query(`CREATE TYPE "public"."comprehensive_audit_logs_event_type_enum" AS ENUM('file_upload', 'file_download', 'file_view', 'file_delete', 'file_modify', 'fhir_resource_access', 'patient_data_access', 'fhir_search', 'consent_granted', 'consent_withdrawn', 'consent_modified', 'consent_checked', 'login_success', 'login_failure', 'logout', 'permission_denied', 'emergency_access', 'key_rotation', 'key_generation', 'encryption_event', 'decryption_event', 'compliance_report', 'data_export', 'data_retention', 'anonymization')`);
+        await queryRunner.query(`CREATE TYPE "public"."comprehensive_audit_logs_severity_enum" AS ENUM('low', 'medium', 'high', 'critical')`);
+        await queryRunner.query(`CREATE TABLE "comprehensive_audit_logs" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "event_type" "public"."comprehensive_audit_logs_event_type_enum" NOT NULL, "severity" "public"."comprehensive_audit_logs_severity_enum" NOT NULL DEFAULT 'medium', "compliance_frameworks" jsonb NOT NULL DEFAULT '[]', "user_id" uuid, "user_role" character varying, "session_id" character varying, "patient_identifier" character varying, "resource_id" uuid, "resource_type" character varying, "fhir_resource_type" character varying, "event_description" text NOT NULL, "purpose_of_use" character varying, "access_method" character varying, "ip_address" character varying, "user_agent" text, "request_headers" jsonb, "outcome" character varying NOT NULL, "outcome_reason" text, "authentication_method" character varying, "encryption_used" boolean NOT NULL DEFAULT false, "encryption_key_id" uuid, "is_emergency_access" boolean NOT NULL DEFAULT false, "emergency_justification" text, "data_exported" boolean NOT NULL DEFAULT false, "export_destination" character varying, "data_size" bigint, "retention_period" integer, "minimum_disclosure" boolean NOT NULL DEFAULT true, "consent_checked" boolean NOT NULL DEFAULT false, "consent_id" uuid, "risk_score" integer, "risk_factors" jsonb, "metadata" jsonb, "digital_signature" text, "checksum_hash" character varying, "event_timestamp" TIMESTAMP NOT NULL, "logged_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_81cdf2d42d9d32a3d9f0d0bcdbd" PRIMARY KEY ("id")); COMMENT ON COLUMN "comprehensive_audit_logs"."compliance_frameworks" IS 'Which compliance frameworks this event relates to'; COMMENT ON COLUMN "comprehensive_audit_logs"."user_id" IS 'User who performed the action'; COMMENT ON COLUMN "comprehensive_audit_logs"."user_role" IS 'Role of the user at time of action'; COMMENT ON COLUMN "comprehensive_audit_logs"."session_id" IS 'User session identifier'; COMMENT ON COLUMN "comprehensive_audit_logs"."patient_identifier" IS 'Patient whose data was accessed'; COMMENT ON COLUMN "comprehensive_audit_logs"."resource_id" IS 'File or resource that was accessed'; COMMENT ON COLUMN "comprehensive_audit_logs"."resource_type" IS 'Type of resource (file, folder, patient, etc.)'; COMMENT ON COLUMN "comprehensive_audit_logs"."fhir_resource_type" IS 'FHIR resource type if applicable'; COMMENT ON COLUMN "comprehensive_audit_logs"."event_description" IS 'Human-readable description of the event'; COMMENT ON COLUMN "comprehensive_audit_logs"."purpose_of_use" IS 'Stated purpose for the action'; COMMENT ON COLUMN "comprehensive_audit_logs"."access_method" IS 'How access was obtained (API, web, mobile, etc.)'; COMMENT ON COLUMN "comprehensive_audit_logs"."request_headers" IS 'Relevant HTTP headers'; COMMENT ON COLUMN "comprehensive_audit_logs"."outcome" IS 'SUCCESS, FAILURE, or PARTIAL'; COMMENT ON COLUMN "comprehensive_audit_logs"."outcome_reason" IS 'Reason for failure or additional outcome details'; COMMENT ON COLUMN "comprehensive_audit_logs"."authentication_method" IS 'How user was authenticated'; COMMENT ON COLUMN "comprehensive_audit_logs"."encryption_used" IS 'Whether encryption was involved'; COMMENT ON COLUMN "comprehensive_audit_logs"."encryption_key_id" IS 'Which encryption key was used'; COMMENT ON COLUMN "comprehensive_audit_logs"."data_exported" IS 'Whether data left the system'; COMMENT ON COLUMN "comprehensive_audit_logs"."export_destination" IS 'Where data was exported to'; COMMENT ON COLUMN "comprehensive_audit_logs"."data_size" IS 'Size of data involved in bytes'; COMMENT ON COLUMN "comprehensive_audit_logs"."retention_period" IS 'How long this log should be retained (days)'; COMMENT ON COLUMN "comprehensive_audit_logs"."minimum_disclosure" IS 'Whether minimum necessary disclosure was followed'; COMMENT ON COLUMN "comprehensive_audit_logs"."consent_checked" IS 'Whether patient consent was verified'; COMMENT ON COLUMN "comprehensive_audit_logs"."consent_id" IS 'Which consent record was used'; COMMENT ON COLUMN "comprehensive_audit_logs"."risk_score" IS 'Calculated risk score (0-100)'; COMMENT ON COLUMN "comprehensive_audit_logs"."risk_factors" IS 'Factors that contributed to risk score'; COMMENT ON COLUMN "comprehensive_audit_logs"."metadata" IS 'Additional event-specific metadata'; COMMENT ON COLUMN "comprehensive_audit_logs"."digital_signature" IS 'Digital signature for tamper detection'; COMMENT ON COLUMN "comprehensive_audit_logs"."checksum_hash" IS 'Hash of the complete log entry'; COMMENT ON COLUMN "comprehensive_audit_logs"."event_timestamp" IS 'When the actual event occurred'; COMMENT ON COLUMN "comprehensive_audit_logs"."logged_at" IS 'When this log entry was created'`);
+        await queryRunner.query(`CREATE INDEX "IDX_AUDIT_EVENT_TYPE" ON "comprehensive_audit_logs" ("event_type") `);
+        await queryRunner.query(`CREATE INDEX "IDX_AUDIT_USER" ON "comprehensive_audit_logs" ("user_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_AUDIT_PATIENT" ON "comprehensive_audit_logs" ("patient_identifier") `);
+        await queryRunner.query(`CREATE INDEX "IDX_AUDIT_TIMESTAMP" ON "comprehensive_audit_logs" ("event_timestamp") `);
+        await queryRunner.query(`CREATE INDEX "IDX_AUDIT_SEVERITY" ON "comprehensive_audit_logs" ("severity") `);
+        await queryRunner.query(`CREATE INDEX "IDX_AUDIT_OUTCOME" ON "comprehensive_audit_logs" ("outcome") `);
+        await queryRunner.query(`CREATE INDEX "IDX_AUDIT_EMERGENCY" ON "comprehensive_audit_logs" ("is_emergency_access") `);
+        await queryRunner.query(`CREATE INDEX "IDX_AUDIT_COMPLIANCE" ON "comprehensive_audit_logs" ("compliance_frameworks") `);
+        await queryRunner.query(`CREATE INDEX "IDX_AUDIT_RISK" ON "comprehensive_audit_logs" ("risk_score") `);
+        await queryRunner.query(`CREATE INDEX "IDX_AUDIT_TAMPER" ON "comprehensive_audit_logs" ("checksum_hash") `);
+        await queryRunner.query(`CREATE TABLE "fhir_search_logs" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "search_criteria" jsonb NOT NULL, "result_count" integer NOT NULL, "ip_address" character varying, "user_agent" text, "searched_at" TIMESTAMP NOT NULL DEFAULT now(), "metadata" jsonb, CONSTRAINT "PK_be6901e2b226ed7fed8a0d66928" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_FHIR_SEARCH_USER" ON "fhir_search_logs" ("user_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_FHIR_SEARCH_TIME" ON "fhir_search_logs" ("searched_at") `);
+        await queryRunner.query(`CREATE INDEX "IDX_FHIR_SEARCH_RESULTS" ON "fhir_search_logs" ("result_count") `);
+        await queryRunner.query(`CREATE TYPE "public"."patient_access_logs_access_type_enum" AS ENUM('view', 'download', 'search', 'create', 'update', 'delete')`);
+        await queryRunner.query(`CREATE TABLE "patient_access_logs" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "patient_identifier" character varying NOT NULL, "user_id" uuid NOT NULL, "access_type" "public"."patient_access_logs_access_type_enum" NOT NULL, "ip_address" character varying, "user_agent" text, "accessed_at" TIMESTAMP NOT NULL DEFAULT now(), "metadata" jsonb, CONSTRAINT "PK_23ea28ad8f4740f8a1619c5dd89" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_PATIENT_ACCESS_PATIENT" ON "patient_access_logs" ("patient_identifier") `);
+        await queryRunner.query(`CREATE INDEX "IDX_PATIENT_ACCESS_USER" ON "patient_access_logs" ("user_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_PATIENT_ACCESS_TIME" ON "patient_access_logs" ("accessed_at") `);
+        await queryRunner.query(`CREATE TABLE "consent_access_logs" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "consent_id" uuid NOT NULL, "accessed_by" uuid NOT NULL, "access_type" character varying NOT NULL, "purpose_of_use" character varying NOT NULL, "ip_address" character varying, "user_agent" text, "access_granted" boolean NOT NULL, "deny_reason" text, "is_emergency_access" boolean NOT NULL DEFAULT false, "emergency_justification" text, "metadata" jsonb, "accessed_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_999ae1768658cc45700822ee19a" PRIMARY KEY ("id")); COMMENT ON COLUMN "consent_access_logs"."access_type" IS 'Type of access (view, download, modify, etc.)'; COMMENT ON COLUMN "consent_access_logs"."purpose_of_use" IS 'Stated purpose of use for this access'; COMMENT ON COLUMN "consent_access_logs"."access_granted" IS 'Whether access was granted or denied'; COMMENT ON COLUMN "consent_access_logs"."deny_reason" IS 'Reason for access denial'; COMMENT ON COLUMN "consent_access_logs"."is_emergency_access" IS 'Whether this was emergency break-glass access'`);
+        await queryRunner.query(`CREATE INDEX "IDX_CONSENT_ACCESS_CONSENT" ON "consent_access_logs" ("consent_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_CONSENT_ACCESS_USER" ON "consent_access_logs" ("accessed_by") `);
+        await queryRunner.query(`CREATE INDEX "IDX_CONSENT_ACCESS_DATE" ON "consent_access_logs" ("accessed_at") `);
+        await queryRunner.query(`CREATE INDEX "IDX_EMERGENCY_ACCESS" ON "consent_access_logs" ("is_emergency_access") `);
+        await queryRunner.query(`ALTER TABLE "patient_consents" ADD CONSTRAINT "FK_587a53049652bd0088f6d8300a0" FOREIGN KEY ("grantor") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "patient_consents" ADD CONSTRAINT "FK_10407d3c4398b7b65466b9fa072" FOREIGN KEY ("witness") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "patient_consents" ADD CONSTRAINT "FK_bc933396033838dbd6274674e31" FOREIGN KEY ("withdrawn_by") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "encryption_keys" ADD CONSTRAINT "FK_1b5b797cb2b993e65861ad0e06b" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "encryption_keys" ADD CONSTRAINT "FK_5e16846d40ebb0609c42f823490" FOREIGN KEY ("parent_key_id") REFERENCES "encryption_keys"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "encryption_keys" ADD CONSTRAINT "FK_414da271d9d58f837b47039efc1" FOREIGN KEY ("rotated_from_key_id") REFERENCES "encryption_keys"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "data_governance_policies" ADD CONSTRAINT "FK_d2d80df1c03f4ba929875800719" FOREIGN KEY ("policy_owner") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "data_governance_policies" ADD CONSTRAINT "FK_565e48405816d4d11259c549b9d" FOREIGN KEY ("approved_by") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "comprehensive_audit_logs" ADD CONSTRAINT "FK_7e9d5926ad3c730a68e8270f315" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "comprehensive_audit_logs" ADD CONSTRAINT "FK_c4f87a79a111c1062adf5d29f22" FOREIGN KEY ("resource_id") REFERENCES "document_files"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "comprehensive_audit_logs" ADD CONSTRAINT "FK_9b7fceaa2538f3ac5bacf419700" FOREIGN KEY ("encryption_key_id") REFERENCES "encryption_keys"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "comprehensive_audit_logs" ADD CONSTRAINT "FK_c4caf2c0b97c8a1205b9c1610d8" FOREIGN KEY ("consent_id") REFERENCES "patient_consents"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "fhir_search_logs" ADD CONSTRAINT "FK_26e8f0a5b49747a4bb12c6cc173" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "patient_access_logs" ADD CONSTRAINT "FK_98886c37cc4ffebd7dd267e3e6c" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "consent_access_logs" ADD CONSTRAINT "FK_a2dcae50386383523440eaa65e1" FOREIGN KEY ("consent_id") REFERENCES "patient_consents"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "consent_access_logs" ADD CONSTRAINT "FK_c4ff741f8a996566167f3d0627f" FOREIGN KEY ("accessed_by") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+    }
+
+    async down(queryRunner) {
+        await queryRunner.query(`ALTER TABLE "consent_access_logs" DROP CONSTRAINT "FK_c4ff741f8a996566167f3d0627f"`);
+        await queryRunner.query(`ALTER TABLE "consent_access_logs" DROP CONSTRAINT "FK_a2dcae50386383523440eaa65e1"`);
+        await queryRunner.query(`ALTER TABLE "patient_access_logs" DROP CONSTRAINT "FK_98886c37cc4ffebd7dd267e3e6c"`);
+        await queryRunner.query(`ALTER TABLE "fhir_search_logs" DROP CONSTRAINT "FK_26e8f0a5b49747a4bb12c6cc173"`);
+        await queryRunner.query(`ALTER TABLE "comprehensive_audit_logs" DROP CONSTRAINT "FK_c4caf2c0b97c8a1205b9c1610d8"`);
+        await queryRunner.query(`ALTER TABLE "comprehensive_audit_logs" DROP CONSTRAINT "FK_9b7fceaa2538f3ac5bacf419700"`);
+        await queryRunner.query(`ALTER TABLE "comprehensive_audit_logs" DROP CONSTRAINT "FK_c4f87a79a111c1062adf5d29f22"`);
+        await queryRunner.query(`ALTER TABLE "comprehensive_audit_logs" DROP CONSTRAINT "FK_7e9d5926ad3c730a68e8270f315"`);
+        await queryRunner.query(`ALTER TABLE "data_governance_policies" DROP CONSTRAINT "FK_565e48405816d4d11259c549b9d"`);
+        await queryRunner.query(`ALTER TABLE "data_governance_policies" DROP CONSTRAINT "FK_d2d80df1c03f4ba929875800719"`);
+        await queryRunner.query(`ALTER TABLE "encryption_keys" DROP CONSTRAINT "FK_414da271d9d58f837b47039efc1"`);
+        await queryRunner.query(`ALTER TABLE "encryption_keys" DROP CONSTRAINT "FK_5e16846d40ebb0609c42f823490"`);
+        await queryRunner.query(`ALTER TABLE "encryption_keys" DROP CONSTRAINT "FK_1b5b797cb2b993e65861ad0e06b"`);
+        await queryRunner.query(`ALTER TABLE "patient_consents" DROP CONSTRAINT "FK_bc933396033838dbd6274674e31"`);
+        await queryRunner.query(`ALTER TABLE "patient_consents" DROP CONSTRAINT "FK_10407d3c4398b7b65466b9fa072"`);
+        await queryRunner.query(`ALTER TABLE "patient_consents" DROP CONSTRAINT "FK_587a53049652bd0088f6d8300a0"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_EMERGENCY_ACCESS"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_CONSENT_ACCESS_DATE"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_CONSENT_ACCESS_USER"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_CONSENT_ACCESS_CONSENT"`);
+        await queryRunner.query(`DROP TABLE "consent_access_logs"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_PATIENT_ACCESS_TIME"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_PATIENT_ACCESS_USER"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_PATIENT_ACCESS_PATIENT"`);
+        await queryRunner.query(`DROP TABLE "patient_access_logs"`);
+        await queryRunner.query(`DROP TYPE "public"."patient_access_logs_access_type_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_FHIR_SEARCH_RESULTS"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_FHIR_SEARCH_TIME"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_FHIR_SEARCH_USER"`);
+        await queryRunner.query(`DROP TABLE "fhir_search_logs"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_AUDIT_TAMPER"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_AUDIT_RISK"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_AUDIT_COMPLIANCE"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_AUDIT_EMERGENCY"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_AUDIT_OUTCOME"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_AUDIT_SEVERITY"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_AUDIT_TIMESTAMP"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_AUDIT_PATIENT"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_AUDIT_USER"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_AUDIT_EVENT_TYPE"`);
+        await queryRunner.query(`DROP TABLE "comprehensive_audit_logs"`);
+        await queryRunner.query(`DROP TYPE "public"."comprehensive_audit_logs_severity_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."comprehensive_audit_logs_event_type_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_POLICY_REVIEW"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_POLICY_AUTOMATED"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_POLICY_JURISDICTION"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_POLICY_EFFECTIVE"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_POLICY_TYPE_STATUS"`);
+        await queryRunner.query(`DROP TABLE "data_governance_policies"`);
+        await queryRunner.query(`DROP TYPE "public"."data_governance_policies_policy_status_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."data_governance_policies_policy_type_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_KEY_USAGE"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_KEY_EXPIRATION"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_RESOURCE_KEY"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_PATIENT_KEY"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_KEY_TYPE_STATUS"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_KEY_IDENTIFIER"`);
+        await queryRunner.query(`DROP TABLE "encryption_keys"`);
+        await queryRunner.query(`DROP TYPE "public"."encryption_keys_algorithm_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."encryption_keys_key_status_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."encryption_keys_key_type_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_CONSENT_SCOPE"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_CONSENT_STATUS"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_CONSENT_EFFECTIVE"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_PATIENT_CONSENT"`);
+        await queryRunner.query(`DROP TABLE "patient_consents"`);
+        await queryRunner.query(`DROP TYPE "public"."patient_consents_consent_scope_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."patient_consents_consent_status_enum"`);
+    }
+}

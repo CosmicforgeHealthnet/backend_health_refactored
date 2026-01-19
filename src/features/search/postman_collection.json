@@ -1,0 +1,102 @@
+{
+  "info": {
+    "name": "CosmicForge - Search Feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Universal search across accessible entities",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Perform a universal search across all entities the user has access to.\nResults are filtered based on user role and permissions.\n\n**Searchable entities vary by role:**\n- **Patient**: Can search doctors, their own appointments, transactions, and subscriptions\n- **Doctor**: Can search their patients, appointments, and transactions\n- **Admin**: Can search across all entities with appropriate permissions\n"
+      }
+    },
+    {
+      "name": "Get search suggestions",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/search/suggestions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "search",
+            "suggestions"
+          ],
+          "variable": []
+        },
+        "description": "Get search suggestions based on a partial query.\nSuggestions are tailored to the user's role and common search patterns.\n"
+      }
+    },
+    {
+      "name": "Get searchable entities for current user",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/search/entities",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "search",
+            "entities"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve the list of entity types that the current user can search.\nThis is useful for building search interfaces and understanding search scope.\n"
+      }
+    },
+    {
+      "name": "Get search analytics and metrics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/search/analytics",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "search",
+            "analytics"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve comprehensive search analytics including usage statistics,\npopular search terms, and performance metrics.\n\n**Admin access only** - This endpoint provides system-wide search insights.\n"
+      }
+    },
+    {
+      "name": "Advanced FHIR search",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/fhir/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "fhir",
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Perform advanced search across FHIR files with multiple filter criteria.\nSupports complex queries combining patient, resource type, sensitivity,\nsecurity labels, date ranges, and text search.\n"
+      }
+    }
+  ]
+}

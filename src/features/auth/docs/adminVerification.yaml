@@ -1,0 +1,308 @@
+paths:
+  /api/auth/verification/queue:
+    get:
+      summary: Get verification items for manual review
+      tags:
+        - Admin Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by verification status
+        - name: country
+          in: query
+          schema:
+            type: string
+          description: Filter by country code
+        - name: priority
+          in: query
+          schema:
+            type: string
+          description: Filter by priority level
+        - name: assigned
+          in: query
+          schema:
+            type: string
+            enum: [me, unassigned]
+          description: Filter by assignment status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10000
+          description: Items per page
+      responses:
+        '200':
+          description: Paginated list of queue items with filtering and summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminQueueResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/verification/{id}/documents:
+    get:
+      summary: Get verification documents for admin review
+      description: Retrieve all documents associated with a verification request for admin review
+      tags:
+        - Admin Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VerificationRequestId'
+      responses:
+        '200':
+          description: Documents retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDocumentsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/documents/{documentId}/view:
+    get:
+      summary: View specific document (admin only)
+      description: View document content directly in browser
+      tags:
+        - Admin Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Document ID
+      responses:
+        '200':
+          description: Document content
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/documents/{documentId}/download:
+    get:
+      summary: Download specific document (admin only)
+      description: Download document as attachment
+      tags:
+        - Admin Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Document ID
+      responses:
+        '200':
+          description: Document file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/documents/{documentId}/thumbnail:
+    get:
+      summary: Get document thumbnail (admin only)
+      description: Get thumbnail for image documents
+      tags:
+        - Admin Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Document ID
+      responses:
+        '200':
+          description: Thumbnail image
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Thumbnails only available for image documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/auth/verification/statistics:
+    get:
+      summary: Get verification statistics
+      tags:
+        - Admin Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Optional start date for stats
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Optional end date for stats
+      responses:
+        '200':
+          description: Aggregated verification statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationStatisticsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/verification/{id}:
+    get:
+      summary: Get verification details for review
+      tags:
+        - Admin Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VerificationRequestId'
+      responses:
+        '200':
+          description: Detailed data for a single verification request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationDetailsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/auth/verification/{id}/assign:
+    post:
+      summary: Assign a verification request to an admin
+      tags:
+        - Admin Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VerificationRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignVerificationRequest'
+      responses:
+        '200':
+          description: Assignment successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignVerificationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/auth/verification/{id}/approve:
+    post:
+      summary: Approve a verification request
+      tags:
+        - Admin Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VerificationRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveVerificationRequest'
+      responses:
+        '200':
+          description: Approval successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApproveVerificationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/auth/verification/{id}/reject:
+    post:
+      summary: Reject a verification request
+      tags:
+        - Admin Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VerificationRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectVerificationRequest'
+      responses:
+        '200':
+          description: Rejection successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectVerificationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'

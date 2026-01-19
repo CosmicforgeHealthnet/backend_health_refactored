@@ -1,0 +1,510 @@
+components:
+  schemas:
+    # ================================
+    # FHIR COMPLIANCE SCHEMAS
+    # ================================
+    
+    # Patient Summary Response
+    PatientSummaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        patient:
+          $ref: '#/components/schemas/PatientSummary'
+        
+    PatientSummary:
+      type: object
+      properties:
+        patientIdentifier:
+          type: string
+          example: "12345"
+        totalFiles:
+          type: integer
+          example: 25
+        resourceTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              resourceType:
+                type: string
+                example: "Observation"
+              count:
+                type: integer
+                example: 10
+              sensitivityBreakdown:
+                type: object
+                properties:
+                  normal:
+                    type: integer
+                    example: 5
+                  high:
+                    type: integer
+                    example: 4
+                  very_high:
+                    type: integer
+                    example: 1
+        lastUpdated:
+          type: string
+          format: date-time
+
+    # FHIR File Response
+    FHIRFileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FHIRFile'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+
+    FHIRFile:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "file-uuid"
+        originalFileName:
+          type: string
+          example: "patient_123_lab_results.json"
+        fhirResourceType:
+          type: string
+          example: "Observation"
+        patientIdentifier:
+          type: string
+          example: "12345"
+        fhirSensitivityLevel:
+          type: string
+          enum: ["normal", "high", "very_high"]
+          example: "high"
+        fhirSecurityLabels:
+          type: array
+          items:
+            type: object
+            properties:
+              system:
+                type: string
+                example: "http://terminology.hl7.org/CodeSystem/v3-Confidentiality"
+              code:
+                type: string
+                example: "R"
+              display:
+                type: string
+                example: "Restricted"
+        createdAt:
+          type: string
+          format: date-time
+        fileSize:
+          type: integer
+          example: 2048
+
+    # FHIR Search Request
+    FHIRSearchRequest:
+      type: object
+      properties:
+        patientIdentifier:
+          type: string
+          description: "Filter by patient identifier"
+          example: "12345"
+        fhirResourceType:
+          type: array
+          items:
+            type: string
+          example: ["Observation", "DiagnosticReport"]
+        fhirSensitivityLevel:
+          type: string
+          enum: ["normal", "high", "very_high"]
+          example: "high"
+        securityLabels:
+          type: array
+          items:
+            type: string
+          example: ["R", "V"]
+        dateFrom:
+          type: string
+          format: date
+          example: "2024-01-01"
+        dateTo:
+          type: string
+          format: date
+          example: "2024-12-31"
+        searchTerm:
+          type: string
+          example: "blood test"
+        page:
+          type: integer
+          default: 1
+        limit:
+          type: integer
+          default: 50
+        sortBy:
+          type: string
+          default: "createdAt"
+        sortOrder:
+          type: string
+          enum: ["ASC", "DESC"]
+          default: "DESC"
+
+    # FHIR Dashboard Response
+    FHIRDashboardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        dashboard:
+          $ref: '#/components/schemas/FHIRDashboard'
+
+    FHIRDashboard:
+      type: object
+      properties:
+        overview:
+          type: object
+          properties:
+            totalFHIRFiles:
+              type: integer
+              example: 1250
+            totalPatients:
+              type: integer
+              example: 450
+            resourceTypes:
+              type: integer
+              example: 8
+            avgSensitivityLevel:
+              type: string
+              example: "high"
+        resourceDistribution:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              total:
+                type: integer
+              byLevel:
+                type: object
+                properties:
+                  normal:
+                    type: integer
+                  high:
+                    type: integer
+                  very_high:
+                    type: integer
+        complianceMetrics:
+          type: object
+          properties:
+            encryptedFiles:
+              type: integer
+              example: 1200
+            encryptionRate:
+              type: number
+              example: 96.0
+            consentVerified:
+              type: integer
+              example: 1150
+            consentRate:
+              type: number
+              example: 92.0
+
+    # FHIR Metadata Update Request
+    FHIRMetadataUpdateRequest:
+      type: object
+      properties:
+        fhirSensitivityLevel:
+          type: string
+          enum: ["normal", "high", "very_high"]
+          example: "very_high"
+        fhirSecurityLabels:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "R"
+              system:
+                type: string
+                example: "http://terminology.hl7.org/CodeSystem/v3-Confidentiality"
+              display:
+                type: string
+                example: "Restricted"
+        consentDirectives:
+          type: object
+          properties:
+            canShare:
+              type: boolean
+              example: false
+            restrictions:
+              type: array
+              items:
+                type: string
+              example: ["research", "marketing"]
+        purposeOfUse:
+          type: array
+          items:
+            type: string
+          example: ["treatment"]
+
+    # Bulk Update Request
+    BulkFHIRUpdateRequest:
+      type: object
+      properties:
+        fileIds:
+          type: array
+          items:
+            type: string
+          example: ["uuid1", "uuid2", "uuid3"]
+          maxItems: 100
+        updateData:
+          $ref: '#/components/schemas/FHIRMetadataUpdateRequest'
+      required:
+        - fileIds
+        - updateData
+
+    # FHIR Compliance Report
+    FHIRComplianceReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        report:
+          $ref: '#/components/schemas/FHIRComplianceReport'
+
+    FHIRComplianceReport:
+      type: object
+      properties:
+        overview:
+          type: object
+          properties:
+            totalFiles:
+              type: integer
+              example: 1250
+            compliantFiles:
+              type: integer
+              example: 1150
+            complianceRate:
+              type: number
+              example: 92.0
+            lastUpdated:
+              type: string
+              format: date-time
+        encryptionCompliance:
+          type: object
+          properties:
+            totalEncrypted:
+              type: integer
+              example: 1200
+            encryptionRate:
+              type: number
+              example: 96.0
+            unencryptedHighSensitivity:
+              type: integer
+              example: 5
+        consentCompliance:
+          type: object
+          properties:
+            withConsent:
+              type: integer
+              example: 1150
+            withoutConsent:
+              type: integer
+              example: 100
+            consentRate:
+              type: number
+              example: 92.0
+        securityLabels:
+          type: object
+          properties:
+            labeled:
+              type: integer
+              example: 1000
+            unlabeled:
+              type: integer
+              example: 250
+            labelingRate:
+              type: number
+              example: 80.0
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              priority:
+                type: string
+                enum: ["low", "medium", "high", "critical"]
+              category:
+                type: string
+                example: "encryption"
+              recommendation:
+                type: string
+                example: "Encrypt all high sensitivity files"
+              affectedFiles:
+                type: integer
+                example: 50
+
+    # Related Files Response
+    RelatedFilesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        relatedFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/FHIRFile'
+        baseFile:
+          $ref: '#/components/schemas/FHIRFile'
+        relationshipType:
+          type: string
+          example: "same_patient"
+
+    # Resource Types Response
+    ResourceTypesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        resourceTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              resourceType:
+                type: string
+                example: "Observation"
+              count:
+                type: integer
+                example: 350
+              sensitivityBreakdown:
+                type: object
+                properties:
+                  normal:
+                    type: integer
+                    example: 200
+                  high:
+                    type: integer
+                    example: 120
+                  very_high:
+                    type: integer
+                    example: 30
+
+    # Statistics Response
+    FHIRStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        stats:
+          type: object
+          properties:
+            totalFHIRFiles:
+              type: integer
+              example: 1250
+            totalPatients:
+              type: integer
+              example: 450
+            resourceTypes:
+              type: integer
+              example: 8
+            sensitivityLevels:
+              type: object
+              properties:
+                normal:
+                  type: integer
+                  example: 600
+                high:
+                  type: integer
+                  example: 500
+                very_high:
+                  type: integer
+                  example: 150
+
+    # Common schemas
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 50
+        total:
+          type: integer
+          example: 1250
+        totalPages:
+          type: integer
+          example: 25
+
+  parameters:
+    PatientIdParam:
+      name: patientId
+      in: path
+      description: "Patient identifier"
+      required: true
+      schema:
+        type: string
+        example: "12345"
+
+    ResourceTypeParam:
+      name: resourceType
+      in: path
+      description: "FHIR resource type"
+      required: true
+      schema:
+        type: string
+        example: "Observation"
+
+    FileIdParam:
+      name: fileId
+      in: path
+      description: "File identifier"
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    FHIRBadRequest:
+      description: Bad request - Invalid FHIR parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    FHIRUnauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    FHIRForbidden:
+      description: Access forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    FHIRNotFound:
+      description: FHIR resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    FHIRInternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

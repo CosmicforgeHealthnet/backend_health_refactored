@@ -1,0 +1,726 @@
+components:
+  schemas:
+    # ================================
+    # CONSENT MANAGEMENT SCHEMAS
+    # ================================
+    
+    # Consent Creation Request
+    ConsentCreateRequest:
+      type: object
+      properties:
+        patientIdentifier:
+          type: string
+          description: "Unique patient identifier"
+          example: "12345"
+        consentScope:
+          type: string
+          enum: ["full_access", "limited_access", "treatment_only", "emergency_only", "no_access"]
+          description: "Level of access granted"
+          example: "limited_access"
+        allowedPurposes:
+          type: array
+          items:
+            type: string
+            enum: ["treatment", "payment", "healthcare_operations", "research", "public_health", "quality_assurance", "emergency"]
+          description: "Permitted purposes for data use"
+          example: ["treatment", "healthcare_operations"]
+        allowedUsers:
+          type: array
+          items:
+            type: string
+          description: "Specific users permitted access (for limited_access scope)"
+          example: ["user-uuid-1", "user-uuid-2"]
+        allowedResourceTypes:
+          type: array
+          items:
+            type: string
+          description: "FHIR resource types that can be accessed"
+          example: ["Patient", "Observation"]
+        restrictedResourceTypes:
+          type: array
+          items:
+            type: string
+          description: "FHIR resource types explicitly restricted"
+          example: ["DiagnosticReport"]
+        effectiveDate:
+          type: string
+          format: date-time
+          description: "When consent becomes effective"
+          example: "2024-01-01T00:00:00Z"
+        expirationDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "When consent expires (null for no expiration)"
+          example: "2025-12-31T23:59:59Z"
+        allowEmergencyAccess:
+          type: boolean
+          default: true
+          description: "Allow emergency break-glass access"
+          example: true
+        consentMethod:
+          type: string
+          description: "How consent was obtained"
+          example: "electronic"
+        consentLanguage:
+          type: string
+          default: "en"
+          description: "Language of consent"
+          example: "en"
+        witness:
+          type: string
+          nullable: true
+          description: "User ID of consent witness"
+          example: "witness-user-uuid"
+      required:
+        - patientIdentifier
+        - consentScope
+        - allowedPurposes
+
+    # Consent Response
+    ConsentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Patient consent created successfully"
+        consent:
+          $ref: '#/components/schemas/ConsentDetails'
+
+    ConsentDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "consent-uuid"
+        patientIdentifier:
+          type: string
+          example: "12345"
+        consentScope:
+          type: string
+          example: "limited_access"
+        allowedPurposes:
+          type: array
+          items:
+            type: string
+          example: ["treatment", "healthcare_operations"]
+        effectiveDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+          nullable: true
+        allowEmergencyAccess:
+          type: boolean
+          example: true
+        version:
+          type: integer
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+
+    # Consent Status Response
+    ConsentStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        status:
+          $ref: '#/components/schemas/ConsentStatus'
+
+    ConsentStatus:
+      type: object
+      properties:
+        hasActiveConsent:
+          type: boolean
+          example: true
+        patientIdentifier:
+          type: string
+          example: "12345"
+        consentScope:
+          type: string
+          example: "limited_access"
+        allowedPurposes:
+          type: array
+          items:
+            type: string
+          example: ["treatment"]
+        effectiveDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+          nullable: true
+        allowEmergencyAccess:
+          type: boolean
+          example: true
+        version:
+          type: integer
+          example: 1
+
+    # Permission Check Request
+    PermissionCheckRequest:
+      type: object
+      properties:
+        patientIdentifier:
+          type: string
+          description: "Patient whose data is being accessed"
+          example: "12345"
+        purposeOfUse:
+          type: string
+          enum: ["treatment", "payment", "healthcare_operations", "research", "public_health", "quality_assurance", "emergency"]
+          description: "Purpose for accessing the data"
+          example: "treatment"
+        resourceType:
+          type: string
+          description: "FHIR resource type being accessed"
+          example: "Patient"
+        isEmergency:
+          type: boolean
+          default: false
+          description: "Whether this is an emergency access request"
+          example: false
+        emergencyJustification:
+          type: string
+          description: "Justification for emergency access (required if isEmergency=true)"
+          example: "Life-threatening emergency requiring immediate access"
+      required:
+        - patientIdentifier
+        - purposeOfUse
+
+    # Permission Check Response
+    PermissionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        permission:
+          $ref: '#/components/schemas/Permission'
+
+    Permission:
+      type: object
+      properties:
+        granted:
+          type: boolean
+          example: true
+        reason:
+          type: string
+          example: "Access granted based on consent"
+        isEmergencyAccess:
+          type: boolean
+          example: false
+        consentId:
+          type: string
+          format: uuid
+          example: "consent-uuid"
+        consentScope:
+          type: string
+          example: "limited_access"
+        allowedPurposes:
+          type: array
+          items:
+            type: string
+          example: ["treatment"]
+
+    # Consent Update Request
+    ConsentUpdateRequest:
+      type: object
+      properties:
+        consentScope:
+          type: string
+          enum: ["full_access", "limited_access", "treatment_only", "emergency_only", "no_access"]
+          example: "full_access"
+        allowedPurposes:
+          type: array
+          items:
+            type: string
+          example: ["treatment", "payment", "healthcare_operations"]
+        allowedUsers:
+          type: array
+          items:
+            type: string
+          example: ["user-uuid-1", "user-uuid-2", "user-uuid-3"]
+        allowedResourceTypes:
+          type: array
+          items:
+            type: string
+          example: ["Patient", "Observation", "DiagnosticReport"]
+        restrictedResourceTypes:
+          type: array
+          items:
+            type: string
+          example: []
+        expirationDate:
+          type: string
+          format: date-time
+          example: "2026-12-31T23:59:59Z"
+        allowEmergencyAccess:
+          type: boolean
+          example: true
+
+    # Consent Withdrawal Request
+    ConsentWithdrawalRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: "Reason for withdrawing consent"
+          example: "Patient requested data deletion"
+      required:
+        - reason
+
+    # Consent History Response
+    ConsentHistoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        consents:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsentHistoryEntry'
+        total:
+          type: integer
+          example: 5
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        totalPages:
+          type: integer
+          example: 1
+
+    ConsentHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        consentScope:
+          type: string
+        consentStatus:
+          type: string
+          enum: ["active", "inactive", "withdrawn", "expired"]
+        version:
+          type: integer
+        effectiveDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+          nullable: true
+        withdrawnAt:
+          type: string
+          format: date-time
+          nullable: true
+        withdrawalReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    # Consent Access Log Response
+    ConsentAccessLogResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsentAccessLogEntry'
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 50
+        totalPages:
+          type: integer
+          example: 2
+        patientIdentifier:
+          type: string
+          example: "12345"
+        consentId:
+          type: string
+          format: uuid
+
+    ConsentAccessLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+          example: "Dr. Smith"
+        accessType:
+          type: string
+          example: "view"
+        purposeOfUse:
+          type: string
+          example: "treatment"
+        accessGranted:
+          type: boolean
+          example: true
+        isEmergencyAccess:
+          type: boolean
+          example: false
+        emergencyJustification:
+          type: string
+          nullable: true
+        accessedAt:
+          type: string
+          format: date-time
+        ipAddress:
+          type: string
+          example: "192.168.1.1"
+
+    # Emergency Access Events Response
+    EmergencyAccessEventsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmergencyAccessEvent'
+        total:
+          type: integer
+          example: 25
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 50
+        totalPages:
+          type: integer
+          example: 1
+
+    EmergencyAccessEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientIdentifier:
+          type: string
+          example: "12345"
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+          example: "Dr. Emergency"
+        accessType:
+          type: string
+          example: "emergency_view"
+        purposeOfUse:
+          type: string
+          example: "emergency"
+        emergencyJustification:
+          type: string
+          example: "Patient in critical condition requiring immediate access"
+        accessedAt:
+          type: string
+          format: date-time
+        ipAddress:
+          type: string
+          example: "10.0.1.100"
+        accessGranted:
+          type: boolean
+          example: true
+
+    # Bulk Update Request
+    BulkConsentUpdateRequest:
+      type: object
+      properties:
+        patientIdentifiers:
+          type: array
+          items:
+            type: string
+          example: ["12345", "67890", "11111"]
+          maxItems: 100
+        updateData:
+          $ref: '#/components/schemas/ConsentUpdateRequest'
+      required:
+        - patientIdentifiers
+        - updateData
+
+    # Patients Requiring Renewal Response
+    PatientsRequiringRenewalResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        patients:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientRenewalInfo'
+        totalRequiringRenewal:
+          type: integer
+          example: 15
+        daysAhead:
+          type: integer
+          example: 30
+
+    PatientRenewalInfo:
+      type: object
+      properties:
+        patientIdentifier:
+          type: string
+          example: "12345"
+        consentId:
+          type: string
+          format: uuid
+        consentScope:
+          type: string
+          example: "limited_access"
+        expirationDate:
+          type: string
+          format: date-time
+        daysUntilExpiration:
+          type: integer
+          example: 15
+
+    # Compliance Report Response
+    ConsentComplianceReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        report:
+          $ref: '#/components/schemas/ConsentComplianceReport'
+
+    ConsentComplianceReport:
+      type: object
+      properties:
+        overview:
+          type: object
+          properties:
+            totalConsents:
+              type: integer
+              example: 1000
+            activeConsents:
+              type: integer
+              example: 850
+            withdrawnConsents:
+              type: integer
+              example: 100
+            expiredConsents:
+              type: integer
+              example: 50
+            consentRate:
+              type: number
+              example: 85.0
+        renewals:
+          type: object
+          properties:
+            patientsRequiringRenewal:
+              type: integer
+              example: 25
+            upcomingExpirations:
+              type: array
+              items:
+                $ref: '#/components/schemas/PatientRenewalInfo'
+              maxItems: 10
+        emergencyAccess:
+          type: object
+          properties:
+            totalEmergencyAccesses:
+              type: integer
+              example: 45
+            last30Days:
+              type: integer
+              example: 12
+        generatedAt:
+          type: string
+          format: date-time
+
+    # Statistics Response
+    ConsentStatisticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        statistics:
+          $ref: '#/components/schemas/ConsentStatistics'
+
+    ConsentStatistics:
+      type: object
+      properties:
+        timeRange:
+          type: integer
+          example: 30
+        overview:
+          type: object
+          properties:
+            totalConsents:
+              type: integer
+              example: 150
+            activeConsents:
+              type: integer
+              example: 120
+            withdrawnConsents:
+              type: integer
+              example: 20
+            expiredConsents:
+              type: integer
+              example: 10
+            emergencyAccessAllowed:
+              type: integer
+              example: 100
+        scopeDistribution:
+          type: array
+          items:
+            type: object
+            properties:
+              scope:
+                type: string
+                example: "limited_access"
+              count:
+                type: integer
+                example: 75
+        dailyActivity:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: "2024-01-15"
+              count:
+                type: integer
+                example: 5
+        generatedAt:
+          type: string
+          format: date-time
+
+    # Validation Response
+    ConsentValidationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        validation:
+          $ref: '#/components/schemas/ConsentValidation'
+
+    ConsentValidation:
+      type: object
+      properties:
+        isValid:
+          type: boolean
+          example: true
+        error:
+          type: string
+          nullable: true
+          example: null
+        checkedFields:
+          type: array
+          items:
+            type: string
+          example: ["patientIdentifier", "consentScope", "allowedPurposes", "expirationDate"]
+
+    # Template Response
+    ConsentTemplateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        template:
+          $ref: '#/components/schemas/ConsentTemplate'
+        availableTypes:
+          type: array
+          items:
+            type: string
+          example: ["general", "research", "full_access", "minimal"]
+
+    ConsentTemplate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "General Healthcare Consent"
+        consentScope:
+          type: string
+          example: "limited_access"
+        allowedPurposes:
+          type: array
+          items:
+            type: string
+          example: ["treatment", "healthcare_operations"]
+        allowEmergencyAccess:
+          type: boolean
+          example: true
+        description:
+          type: string
+          example: "Standard consent for general healthcare activities"
+
+  parameters:
+    PatientIdParam:
+      name: patientId
+      in: path
+      description: "Patient identifier"
+      required: true
+      schema:
+        type: string
+        example: "12345"
+
+  responses:
+    ConsentBadRequest:
+      description: Bad request - Invalid consent parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ConsentUnauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ConsentNotFound:
+      description: Consent not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ConsentInternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

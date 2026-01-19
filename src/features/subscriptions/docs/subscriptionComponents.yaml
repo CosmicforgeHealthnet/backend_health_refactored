@@ -1,0 +1,915 @@
+# docs/transactions/subscriptionComponents.yaml
+components:
+  schemas:
+    # Core Subscription Schemas
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        tier:
+          type: string
+          enum: [free, basic, standard, medium, premium, professional, gold_elite]
+        planType:
+          type: string
+          enum: [doctor, patient]
+        status:
+          type: string
+          enum: [active, pending, expired, canceled, paused]
+        price:
+          type: number
+          format: decimal
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        commissionRate:
+          type: number
+          format: decimal
+          description: "Commission rate for doctors (percentage)"
+        features:
+          type: array
+          items:
+            type: string
+          description: "Array of enabled features"
+        monthlyLimits:
+          type: object
+          description: "Monthly usage limits"
+          properties:
+            maxPatients:
+              type: integer
+            aiResponses:
+              type: integer
+            aiChatbotResponses:
+              type: integer
+            aiDiagnosticRequests:
+              type: integer
+        currentUsage:
+          type: object
+          description: "Current month usage tracking"
+          properties:
+            patients:
+              type: integer
+            aiResponses:
+              type: integer
+            aiChatbotResponses:
+              type: integer
+            aiDiagnosticRequests:
+              type: integer
+        familyMembers:
+          type: integer
+          description: "Number of family members allowed"
+        billingCycle:
+          type: string
+          enum: [monthly, quarterly, yearly]
+        autoRenew:
+          type: boolean
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        nextBillingDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        canceledAt:
+          type: string
+          format: date-time
+
+    # Plan Information with Dynamic Currency
+    SubscriptionPlan:
+      type: object
+      properties:
+        tier:
+          type: string
+        planType:
+          type: string
+          enum: [doctor, patient]
+        name:
+          type: string
+        price:
+          type: number
+          description: "Current price (converted to requested currency)"
+        originalPrice:
+          type: number
+          description: "Original price before discount (converted)"
+        currency:
+          type: string
+          description: "Currency based on country code"
+        countryCode:
+          type: string
+          description: "ISO country code used for conversion"
+        conversionRate:
+          type: number
+          description: "Exchange rate used for conversion"
+        convertedAt:
+          type: string
+          format: date-time
+          description: "When currency conversion was performed"
+        isPredefined:
+          type: boolean
+          description: "Whether price was predefined (like NGN) or converted"
+        isFallback:
+          type: boolean
+          description: "Whether fallback currency was used"
+        discountAmount:
+          type: number
+          description: "Amount saved with discount"
+        discountPercentage:
+          type: integer
+          description: "Percentage discount applied"
+        features:
+          type: array
+          items:
+            type: string
+        monthlyLimits:
+          type: object
+        commissionRate:
+          type: number
+          description: "Commission rate for doctor plans"
+        familyMembers:
+          type: integer
+          description: "Family members for patient plans"
+
+    # Updated Available Plans Response with Currency Info
+    AvailablePlansResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            userType:
+              type: string
+              enum: [doctor, patient]
+            countryCode:
+              type: string
+              description: "Country code used for pricing"
+            currency:
+              type: string
+              description: "Currency for the country"
+            timestamp:
+              type: string
+              format: date-time
+              description: "When prices were calculated"
+            plans:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/SubscriptionPlan'
+            supportedCurrencies:
+              type: object
+              properties:
+                paystack:
+                  type: array
+                  items:
+                    type: string
+                  description: "Currencies supported by Paystack"
+                flutterwave:
+                  type: array
+                  items:
+                    type: string
+                  description: "Currencies supported by Flutterwave"
+                recommended:
+                  type: string
+                  description: "Recommended payment provider for this currency"
+
+    # Updated Current Subscription Response with Dynamic Pricing
+    CurrentSubscriptionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            tier:
+              type: string
+            planType:
+              type: string
+            status:
+              type: string
+            # Dynamic pricing fields
+            price:
+              type: number
+              description: "Current price converted to requested currency"
+            originalPrice:
+              type: number
+              description: "Original price converted to requested currency"
+            currency:
+              type: string
+              description: "Currency based on country code"
+            # Currency conversion info
+            countryCode:
+              type: string
+              description: "Country code used for conversion"
+            conversionRate:
+              type: number
+              description: "Exchange rate used"
+            convertedAt:
+              type: string
+              format: date-time
+              description: "When conversion was performed"
+            isPredefined:
+              type: boolean
+              description: "Whether price was predefined or converted"
+            isFallback:
+              type: boolean
+              description: "Whether fallback currency was used"
+            # Original stored data
+            storedPrice:
+              type: number
+              description: "Original stored price in database"
+            storedCurrency:
+              type: string
+              description: "Original stored currency in database"
+            # Rest of subscription data
+            commissionRate:
+              type: number
+            features:
+              type: array
+              items:
+                type: string
+            monthlyLimits:
+              type: object
+            currentUsage:
+              type: object
+            familyMembers:
+              type: integer
+            startDate:
+              type: string
+              format: date-time
+            endDate:
+              type: string
+              format: date-time
+            autoRenew:
+              type: boolean
+            autoBillingEnabled:
+              type: boolean
+            isActive:
+              type: boolean
+            isExpired:
+              type: boolean
+            isPremium:
+              type: boolean
+            daysRemaining:
+              type: integer
+
+    # Updated Plan Pricing Response with Dynamic Currency
+    PlanPricingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            planType:
+              type: string
+              enum: [doctor, patient]
+              example: "patient"
+            tier:
+              type: string
+              example: "premium"
+            name:
+              type: string
+              example: "Premium Plan"
+            price:
+              type: number
+              format: float
+              description: "Current discounted price (converted)"
+              example: 32.99
+            originalPrice:
+              type: number
+              format: float
+              description: "Original price before discount (converted)"
+              example: 41.24
+            currency:
+              type: string
+              example: "GBP"
+            countryCode:
+              type: string
+              example: "GB"
+            conversionRate:
+              type: number
+              format: float
+              description: "Exchange rate used for conversion"
+              example: 0.73
+            convertedAt:
+              type: string
+              format: date-time
+              description: "When conversion was performed"
+              example: "2025-01-20T10:30:00Z"
+            isPredefined:
+              type: boolean
+              description: "Whether price was predefined (like NGN)"
+              example: false
+            isFallback:
+              type: boolean
+              description: "Whether fallback currency was used"
+              example: false
+            discountAmount:
+              type: number
+              format: float
+              description: "Amount saved (converted)"
+              example: 8.25
+            discountPercentage:
+              type: integer
+              description: "Percentage discount"
+              example: 20
+            features:
+              type: array
+              items:
+                type: string
+              description: "List of plan features"
+            monthlyLimits:
+              type: object
+              description: "Usage limits for the plan"
+            commissionRate:
+              type: number
+              format: float
+              description: "Commission rate for doctor plans"
+              example: 15.0
+            familyMembers:
+              type: integer
+              description: "Family members for patient plans"
+              example: 5
+
+    # Updated Subscription Payment Request
+    CreateSubscriptionPaymentRequest:
+      type: object
+      required:
+        - planType
+        - tier
+        - serviceType
+      properties:
+        planType:
+          type: string
+          enum: [doctor, patient]
+          description: "Type of subscription plan"
+          example: "patient"
+        tier:
+          type: string
+          enum: [basic, standard, medium, premium, professional, gold_elite]
+          description: "Plan tier to upgrade to"
+          example: "premium"
+        serviceType:
+          type: string
+          description: "Service type for the transaction"
+          example: "subscription_upgrade"
+        countryCode:
+          type: string
+          description: "ISO country code for currency conversion"
+          example: "GB"
+          default: "US"
+        paymentProvider:
+          type: string
+          enum: [flutterwave, paystack, auto]
+          default: "auto"
+          description: "Payment provider (auto-selects best for currency)"
+          example: "auto"
+        enableAutoBilling:
+          type: boolean
+          default: false
+          description: "Enable auto-billing for future renewals"
+          example: true
+
+    # Updated Payment Response with Currency Info
+    CreateSubscriptionPaymentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            transactionId:
+              type: string
+              format: uuid
+              description: "Payment transaction ID"
+              example: "550e8400-e29b-41d4-a716-446655440000"
+            redirectUrl:
+              type: string
+              description: "Direct URL to payment provider"
+              example: "https://checkout.flutterwave.com/v3/hosted/pay/abc123"
+            planType:
+              type: string
+              example: "patient"
+            tier:
+              type: string
+              example: "premium"
+            planName:
+              type: string
+              example: "Premium Plan"
+            amount:
+              type: number
+              format: float
+              description: "Final amount to pay (converted)"
+              example: 32.99
+            originalAmount:
+              type: number
+              format: float
+              description: "Original price (converted)"
+              example: 41.24
+            discountAmount:
+              type: number
+              format: float
+              description: "Amount saved (converted)"
+              example: 8.25
+            discountPercentage:
+              type: integer
+              description: "Percentage saved"
+              example: 20
+            currency:
+              type: string
+              description: "Final currency used for payment"
+              example: "GBP"
+            countryCode:
+              type: string
+              description: "Country code used"
+              example: "GB"
+            paymentProvider:
+              type: string
+              description: "Selected payment provider"
+              example: "flutterwave"
+            enableAutoBilling:
+              type: boolean
+              description: "Whether auto-billing will be enabled"
+              example: true
+            currencyInfo:
+              type: object
+              properties:
+                requested:
+                  type: string
+                  description: "Originally requested currency"
+                  example: "GBP"
+                final:
+                  type: string
+                  description: "Final currency used"
+                  example: "GBP"
+                rate:
+                  type: number
+                  description: "Exchange rate used"
+                  example: 0.73
+                fallback:
+                  type: boolean
+                  description: "Whether fallback currency was used"
+                  example: false
+
+    # Upgrade Subscription
+    UpgradeSubscriptionRequest:
+      type: object
+      required:
+        - newTier
+      properties:
+        newTier:
+          type: string
+          enum: [free, basic, standard, medium, premium, professional, gold_elite]
+        planType:
+          type: string
+          enum: [doctor, patient]
+          description: "Optional - defaults based on user role"
+
+    UpgradeSubscriptionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            previousTier:
+              type: string
+            newTier:
+              type: string
+            planType:
+              type: string
+            price:
+              type: object
+              properties:
+                USD:
+                  type: number
+                NGN:
+                  type: number
+            commissionRate:
+              type: number
+            features:
+              type: array
+              items:
+                type: string
+            limits:
+              type: object
+
+    # Cancel Subscription
+    CancelSubscriptionRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: "Optional cancellation reason"
+
+    CancelSubscriptionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            cancelledAt:
+              type: string
+              format: date-time
+            reason:
+              type: string
+
+    # Feature Access
+    FeatureAccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            feature:
+              type: string
+            hasAccess:
+              type: boolean
+            userId:
+              type: string
+              format: uuid
+
+    # Usage Information
+    UsageInfoResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            subscriptionTier:
+              type: string
+            planType:
+              type: string
+            usage:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  allowed:
+                    type: boolean
+                  used:
+                    type: integer
+                  limit:
+                    oneOf:
+                      - type: integer
+                      - type: string
+                        enum: [unlimited]
+                  remaining:
+                    oneOf:
+                      - type: integer
+                      - type: string
+                        enum: [unlimited]
+
+    UsageSummaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            subscription:
+              type: object
+              properties:
+                tier:
+                  type: string
+                planType:
+                  type: string
+                planName:
+                  type: string
+                status:
+                  type: string
+                isActive:
+                  type: boolean
+                isPremium:
+                  type: boolean
+                daysRemaining:
+                  type: integer
+            usage:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  used:
+                    type: integer
+                  limit:
+                    oneOf:
+                      - type: integer
+                      - type: string
+                        enum: [Unlimited]
+                  remaining:
+                    oneOf:
+                      - type: integer
+                      - type: string
+                        enum: [Unlimited]
+                  percentage:
+                    type: integer
+                  isUnlimited:
+                    type: boolean
+                  isOverLimit:
+                    type: boolean
+                  isNearLimit:
+                    type: boolean
+                  isWarning:
+                    type: boolean
+                  displayName:
+                    type: string
+                  description:
+                    type: string
+                  icon:
+                    type: string
+                  color:
+                    type: string
+                    enum: [green, yellow, orange, red]
+            stats:
+              type: object
+              properties:
+                totalLimits:
+                  type: integer
+                limitsWithUsage:
+                  type: integer
+                overLimitCount:
+                  type: integer
+                nearLimitCount:
+                  type: integer
+                unlimitedFeatures:
+                  type: integer
+            status:
+              type: object
+              properties:
+                healthy:
+                  type: boolean
+                warnings:
+                  type: array
+                  items:
+                    type: string
+                errors:
+                  type: array
+                  items:
+                    type: string
+            lastUpdated:
+              type: string
+              format: date-time
+            resetDate:
+              type: string
+              format: date-time
+
+    UsageStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            tier:
+              type: string
+            planType:
+              type: string
+            status:
+              type: string
+            overLimit:
+              type: integer
+              description: "Number of features over limit"
+            nearLimit:
+              type: integer  
+              description: "Number of features near limit (80%+)"
+            totalLimits:
+              type: integer
+              description: "Total number of limited features"
+            healthy:
+              type: boolean
+              description: "True if no features are over limit"
+            needsAttention:
+              type: boolean
+              description: "True if any features over/near limit"
+
+    # Auto-billing Schemas
+    AutoBillingSettingsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            autoBillingEnabled:
+              type: boolean
+            preferredPaymentMethodId:
+              type: string
+              format: uuid
+            autoBillingFailureCount:
+              type: integer
+            lastAutoBillingAttempt:
+              type: string
+              format: date-time
+            canEnableAutoBilling:
+              type: boolean
+            availablePaymentMethods:
+              type: array
+              items:
+                type: object
+            nextBillingDate:
+              type: string
+              format: date-time
+
+    EnableAutoBillingRequest:
+      type: object
+      required:
+        - paymentMethodId
+      properties:
+        paymentMethodId:
+          type: string
+          format: uuid
+          description: "ID of payment method to use for auto-billing"
+
+    EnableAutoBillingResponse:
+      type: object
+      properties:
+        autoBillingEnabled:
+          type: boolean
+        paymentMethodId:
+          type: string
+          format: uuid
+        enabledAt:
+          type: string
+          format: date-time
+
+    DisableAutoBillingResponse:
+      type: object
+      properties:
+        autoBillingEnabled:
+          type: boolean
+        disabledAt:
+          type: string
+          format: date-time
+
+    # Subscription Analytics (Admin)
+    SubscriptionAnalytics:
+      type: object
+      properties:
+        totalSubscriptions:
+          type: integer
+        activeSubscriptions:
+          type: integer
+        expiredSubscriptions:
+          type: integer
+        doctorSubscriptions:
+          type: integer
+        patientSubscriptions:
+          type: integer
+        monthlyRevenue:
+          type: number
+
+    SubscriptionAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/SubscriptionAnalytics'
+
+    # Common Response Schemas
+    SubscriptionSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    SubscriptionErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+  # Response definitions
+  responses:
+    SubscriptionBadRequest:
+      description: Bad request - Invalid subscription parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubscriptionErrorResponse'
+          example:
+            success: false
+            error: "Invalid subscription parameters"
+    
+    SubscriptionUnauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubscriptionErrorResponse'
+          example:
+            success: false
+            error: "Authentication required"
+    
+    SubscriptionForbidden:
+      description: Access forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubscriptionErrorResponse'
+          example:
+            success: false
+            error: "Access denied"
+    
+    SubscriptionNotFound:
+      description: Subscription not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubscriptionErrorResponse'
+          example:
+            success: false
+            error: "Subscription not found"
+
+    AutoBillingUnauthorized:
+      description: Authentication required for auto-billing
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubscriptionErrorResponse'
+          example:
+            success: false
+            error: "Authentication required"
+
+    AutoBillingBadRequest:
+      description: Bad request - Invalid auto-billing parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubscriptionErrorResponse'
+          example:
+            success: false
+            error: "Invalid auto-billing parameters"

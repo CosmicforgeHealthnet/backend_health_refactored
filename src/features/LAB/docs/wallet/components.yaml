@@ -1,0 +1,747 @@
+# src/docs/wallet/components.yaml
+components:
+  schemas:
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440007"
+        userId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        facilityId:
+          type: string
+          format: uuid
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        walletType:
+          type: string
+          enum: [patient, facility]
+          example: "patient"
+        status:
+          type: string
+          enum: [active, suspended, frozen, closed]
+          example: "active"
+        balance:
+          type: number
+          format: decimal
+          example: 150.75
+        pendingBalance:
+          type: number
+          format: decimal
+          example: 25.00
+        frozenBalance:
+          type: number
+          format: decimal
+          example: 0.00
+        currency:
+          type: string
+          length: 3
+          example: "USD"
+        dailySpendLimit:
+          type: number
+          format: decimal
+          nullable: true
+          example: 500.00
+        monthlySpendLimit:
+          type: number
+          format: decimal
+          nullable: true
+          example: 2000.00
+        minimumBalance:
+          type: number
+          format: decimal
+          example: 0.00
+        lastTransactionAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T14:30:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T10:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T14:30:00Z"
+        user:
+          $ref: '#/components/schemas/User'
+        facility:
+          $ref: '#/components/schemas/LabFacility'
+
+    WalletTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440008"
+        transactionNumber:
+          type: string
+          example: "TXN-2024-001234"
+        walletId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440007"
+        userId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        type:
+          type: string
+          enum: [credit, debit, payment, refund, topup, transfer, fee, earning, withdrawal]
+          example: "payment"
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, cancelled, reversed]
+          example: "completed"
+        amount:
+          type: number
+          format: decimal
+          example: 75.00
+        fee:
+          type: number
+          format: decimal
+          example: 2.50
+        netAmount:
+          type: number
+          format: decimal
+          example: 72.50
+        currency:
+          type: string
+          example: "USD"
+        balanceBefore:
+          type: number
+          format: decimal
+          example: 150.75
+        balanceAfter:
+          type: number
+          format: decimal
+          example: 75.75
+        paymentMethod:
+          type: string
+          enum: [credit_card, debit_card, bank_transfer, digital_wallet, paypal, stripe, wallet_balance]
+          nullable: true
+          example: "wallet_balance"
+        externalTransactionId:
+          type: string
+          nullable: true
+          example: "ext_abc123def456"
+        externalReference:
+          type: string
+          nullable: true
+          example: "ref_payment_789"
+        orderId:
+          type: string
+          format: uuid
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        facilityId:
+          type: string
+          format: uuid
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        description:
+          type: string
+          example: "Payment for lab order #ORD-2024-001234"
+        metadata:
+          type: object
+          nullable: true
+          example: {
+            "orderId": "550e8400-e29b-41d4-a716-446655440003",
+            "paymentMethod": "wallet_balance"
+          }
+        notes:
+          type: string
+          nullable: true
+          example: "Automated payment processing"
+        processedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T14:30:00Z"
+        failureReason:
+          type: string
+          nullable: true
+          example: "Insufficient balance"
+        retryCount:
+          type: integer
+          example: 0
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T14:25:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T14:30:00Z"
+        wallet:
+          $ref: '#/components/schemas/Wallet'
+        user:
+          $ref: '#/components/schemas/User'
+        order:
+          $ref: '#/components/schemas/LabOrder'
+
+    WalletTopUp:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440009"
+        topupNumber:
+          type: string
+          example: "TOP-2024-001234"
+        userId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        walletId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440007"
+        amount:
+          type: number
+          format: decimal
+          example: 100.00
+        currency:
+          type: string
+          example: "USD"
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, cancelled]
+          example: "completed"
+        paymentMethod:
+          type: string
+          enum: [credit_card, debit_card, bank_transfer, digital_wallet, paypal, stripe]
+          example: "credit_card"
+        paymentIntentId:
+          type: string
+          nullable: true
+          example: "pi_abc123def456"
+        paymentReference:
+          type: string
+          nullable: true
+          example: "ref_topup_789"
+        initiatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T14:00:00Z"
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T14:05:00Z"
+        failedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        failureReason:
+          type: string
+          nullable: true
+          example: null
+        metadata:
+          type: object
+          nullable: true
+          example: {
+            "initiatedFrom": "mobile_app",
+            "userAgent": "iOS 15.0"
+          }
+        notes:
+          type: string
+          nullable: true
+          example: "Emergency top-up for medical expenses"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T14:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T14:05:00Z"
+        user:
+          $ref: '#/components/schemas/User'
+        wallet:
+          $ref: '#/components/schemas/Wallet'
+
+    WalletCreation:
+      type: object
+      properties:
+        walletType:
+          type: string
+          enum: [patient, facility]
+          default: patient
+          example: "patient"
+        facilityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Required when creating facility wallet"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    TopUpRequest:
+      type: object
+      required:
+        - amount
+        - paymentMethod
+      properties:
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          maximum: 10000
+          example: 100.00
+        paymentMethod:
+          type: string
+          enum: [credit_card, debit_card, bank_transfer, digital_wallet, paypal, stripe]
+          example: "credit_card"
+        notes:
+          type: string
+          maxLength: 500
+          nullable: true
+          example: "Top-up for upcoming medical expenses"
+
+    PinRequest:
+      type: object
+      required:
+        - pin
+      properties:
+        pin:
+          type: string
+          pattern: "^\\d{4,6}$"
+          example: "1234"
+          description: "4-6 digit PIN"
+
+    TransferRequest:
+      type: object
+      required:
+        - toWalletId
+        - amount
+        - description
+      properties:
+        toWalletId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440010"
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          example: 50.00
+        description:
+          type: string
+          minLength: 5
+          maxLength: 200
+          example: "Payment for shared lab test"
+        pin:
+          type: string
+          pattern: "^\\d{4,6}$"
+          example: "1234"
+          description: "Wallet PIN for authorization"
+
+    AdminCreditRequest:
+      type: object
+      required:
+        - walletId
+        - amount
+        - description
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440007"
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          example: 100.00
+        description:
+          type: string
+          minLength: 10
+          maxLength: 500
+          example: "Refund for cancelled lab order - customer service adjustment"
+
+    PaymentWebhook:
+      type: object
+      required:
+        - topupId
+        - status
+      properties:
+        topupId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440009"
+        status:
+          type: string
+          enum: [completed, failed, cancelled]
+          example: "completed"
+        paymentReference:
+          type: string
+          nullable: true
+          example: "ref_payment_success_123"
+        externalTransactionId:
+          type: string
+          nullable: true
+          example: "txn_external_456"
+
+    WalletStats:
+      type: object
+      properties:
+        wallet:
+          type: object
+          properties:
+            balance:
+              type: number
+              format: decimal
+              example: 150.75
+            pendingBalance:
+              type: number
+              format: decimal
+              example: 25.00
+            frozenBalance:
+              type: number
+              format: decimal
+              example: 0.00
+            status:
+              type: string
+              example: "active"
+        transactionStats:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: object
+              properties:
+                count:
+                  type: integer
+                totalAmount:
+                  type: number
+                  format: decimal
+          example: {
+            "payment": {
+              "completed": {
+                "count": 5,
+                "totalAmount": 375.00
+              }
+            },
+            "topup": {
+              "completed": {
+                "count": 2,
+                "totalAmount": 200.00
+              }
+            }
+          }
+        recentTransactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WalletTransaction'
+
+    SystemWalletStats:
+      type: object
+      properties:
+        totalBalance:
+          type: object
+          properties:
+            totalBalance:
+              type: number
+              format: decimal
+              example: 45750.25
+            totalWallets:
+              type: integer
+              example: 1250
+        transactionStats:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: object
+              properties:
+                count:
+                  type: integer
+                totalAmount:
+                  type: number
+                  format: decimal
+          example: {
+            "payment": {
+              "completed": {
+                "count": 2500,
+                "totalAmount": 187500.00
+              }
+            },
+            "topup": {
+              "completed": {
+                "count": 1200,
+                "totalAmount": 95000.00
+              }
+            }
+          }
+        systemHealth:
+          type: object
+          properties:
+            activeWallets:
+              type: integer
+              example: 1250
+            totalCirculation:
+              type: number
+              format: decimal
+              example: 45750.25
+
+  parameters:
+    WalletId:
+      name: walletId
+      in: path
+      required: true
+      description: Wallet UUID
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440007"
+
+    TransactionLimit:
+      name: limit
+      in: query
+      required: false
+      description: Number of transactions to return
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+        example: 20
+
+    TransactionOffset:
+      name: offset
+      in: query
+      required: false
+      description: Number of transactions to skip
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        example: 0
+
+    SearchQuery:
+      name: q
+      in: query
+      required: true
+      description: Search query for transactions
+      schema:
+        type: string
+        minLength: 2
+        example: "payment"
+
+  responses:
+    WalletFound:
+      description: Wallet retrieved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Wallet retrieved successfully"
+              data:
+                $ref: '#/components/schemas/Wallet'
+
+    WalletCreated:
+      description: Wallet created successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Wallet created successfully"
+              data:
+                $ref: '#/components/schemas/Wallet'
+
+    TransactionHistory:
+      description: Transaction history retrieved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Transaction history retrieved successfully"
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WalletTransaction'
+              count:
+                type: integer
+                example: 15
+
+    WalletStatistics:
+      description: Wallet statistics retrieved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Wallet statistics retrieved successfully"
+              data:
+                $ref: '#/components/schemas/WalletStats'
+
+    TopUpCreated:
+      description: Top-up initiated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Top-up initiated successfully"
+              data:
+                $ref: '#/components/schemas/WalletTopUp'
+
+    PinSet:
+      description: Wallet PIN set successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Wallet PIN set successfully"
+
+    PinVerified:
+      description: PIN verified successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "PIN verified successfully"
+              data:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+
+    TransferCompleted:
+      description: Transfer completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Transfer completed successfully"
+              data:
+                type: object
+                properties:
+                  debitTransaction:
+                    $ref: '#/components/schemas/WalletTransaction'
+                  creditTransaction:
+                    $ref: '#/components/schemas/WalletTransaction'
+                  fromWallet:
+                    $ref: '#/components/schemas/Wallet'
+                  toWallet:
+                    $ref: '#/components/schemas/Wallet'
+
+    SystemStatistics:
+      description: System wallet statistics retrieved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "System wallet statistics retrieved successfully"
+              data:
+                $ref: '#/components/schemas/SystemWalletStats'
+
+    WalletNotFound:
+      description: Wallet not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Wallet not found"
+
+    InsufficientBalance:
+      description: Insufficient wallet balance
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Insufficient wallet balance"
+
+    WalletLocked:
+      description: Wallet is locked due to failed PIN attempts
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Too many failed attempts. Wallet locked for 30 minutes."
+
+    InvalidPin:
+      description: Invalid PIN provided
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Invalid PIN. 2 attempts remaining."
+
+    WalletAccessDenied:
+      description: Access denied to wallet
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Access denied"

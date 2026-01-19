@@ -1,0 +1,2908 @@
+# paths:
+#   /support/insurance:
+#     get:
+#       tags:
+#         - Support
+#       summary: Get all insurance tickets
+#       security:
+#         - bearerAuth: []
+#       responses:
+#         '200':
+#           description: Insurance tickets retrieved successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/InsuranceTicketsResponse'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#     post:
+#       tags:
+#         - Support
+#       summary: Create insurance ticket
+#       security:
+#         - bearerAuth: []
+#       requestBody:
+#         required: true
+#         content:
+#           application/json:
+#             schema:
+#               $ref: '#/components/schemas/CreateInsuranceRequest'
+#       responses:
+#         '201':
+#           description: Insurance ticket created successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/InsuranceResponse'
+#         '400':
+#           $ref: '#/components/responses/BadRequest'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#   /support/insurance/{id}:
+#     get:
+#       tags:
+#         - Support
+#       summary: Get insurance ticket by ID
+#       security:
+#         - bearerAuth: []
+#       parameters:
+#         - $ref: '#/components/parameters/InsuranceId'
+#       responses:
+#         '200':
+#           description: Insurance ticket retrieved successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/InsuranceResponse'
+#         '404':
+#           $ref: '#/components/responses/NotFound'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#     put:
+#       tags:
+#         - Support
+#       summary: Update insurance ticket
+#       security:
+#         - bearerAuth: []
+#       parameters:
+#         - $ref: '#/components/parameters/InsuranceId'
+#       requestBody:
+#         required: true
+#         content:
+#           application/json:
+#             schema:
+#               $ref: '#/components/schemas/UpdateInsuranceRequest'
+#       responses:
+#         '200':
+#           description: Insurance ticket updated successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/InsuranceResponse'
+#         '400':
+#           $ref: '#/components/responses/BadRequest'
+#         '404':
+#           $ref: '#/components/responses/NotFound'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#   /support/insurance/user/{userId}:
+#     get:
+#       tags:
+#         - Support
+#       summary: Get user's insurance tickets
+#       security:
+#         - bearerAuth: []
+#       parameters:
+#         - $ref: '#/components/parameters/UserId'
+#       responses:
+#         '200':
+#           description: User insurance tickets retrieved successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/InsuranceTicketsResponse'
+#         '404':
+#           $ref: '#/components/responses/NotFound'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#   /support/reports:
+#     get:
+#       tags:
+#         - Support
+#       summary: Get all reports
+#       security:
+#         - bearerAuth: []
+#       responses:
+#         '200':
+#           description: Reports retrieved successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/ReportsResponse'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#     post:
+#       tags:
+#         - Support
+#       summary: Create report
+#       security:
+#         - bearerAuth: []
+#       requestBody:
+#         required: true
+#         content:
+#           application/json:
+#             schema:
+#               $ref: '#/components/schemas/CreateReportRequest'
+#       responses:
+#         '201':
+#           description: Report created successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/ReportResponse'
+#         '400':
+#           $ref: '#/components/responses/BadRequest'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#   /support/reports/{id}:
+#     get:
+#       tags:
+#         - Support
+#       summary: Get report by ID
+#       security:
+#         - bearerAuth: []
+#       parameters:
+#         - $ref: '#/components/parameters/ReportId'
+#       responses:
+#         '200':
+#           description: Report retrieved successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/ReportResponse'
+#         '404':
+#           $ref: '#/components/responses/NotFound'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#     put:
+#       tags:
+#         - Support
+#       summary: Update report
+#       security:
+#         - bearerAuth: []
+#       parameters:
+#         - $ref: '#/components/parameters/ReportId'
+#       requestBody:
+#         required: true
+#         content:
+#           application/json:
+#             schema:
+#               $ref: '#/components/schemas/UpdateReportRequest'
+#       responses:
+#         '200':
+#           description: Report updated successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/ReportResponse'
+#         '400':
+#           $ref: '#/components/responses/BadRequest'
+#         '404':
+#           $ref: '#/components/responses/NotFound'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#   /support/reports/user/{userId}:
+#     get:
+#       tags:
+#         - Support
+#       summary: Get user's reports
+#       security:
+#         - bearerAuth: []
+#       parameters:
+#         - $ref: '#/components/parameters/UserId'
+#       responses:
+#         '200':
+#           description: User reports retrieved successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/ReportsResponse'
+#         '404':
+#           $ref: '#/components/responses/NotFound'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#   /support/disputes:
+#     get:
+#       tags:
+#         - Support
+#       summary: Get all disputes
+#       security:
+#         - bearerAuth: []
+#       responses:
+#         '200':
+#           description: Disputes retrieved successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/DisputesResponse'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#     post:
+#       tags:
+#         - Support
+#       summary: Create dispute
+#       security:
+#         - bearerAuth: []
+#       requestBody:
+#         required: true
+#         content:
+#           application/json:
+#             schema:
+#               $ref: '#/components/schemas/CreateDisputeRequest'
+#       responses:
+#         '201':
+#           description: Dispute created successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/DisputeResponse'
+#         '400':
+#           $ref: '#/components/responses/BadRequest'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#   /support/disputes/{id}:
+#     get:
+#       tags:
+#         - Support
+#       summary: Get dispute by ID
+#       security:
+#         - bearerAuth: []
+#       parameters:
+#         - $ref: '#/components/parameters/DisputeId'
+#       responses:
+#         '200':
+#           description: Dispute retrieved successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/DisputeResponse'
+#         '404':
+#           $ref: '#/components/responses/NotFound'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#     put:
+#       tags:
+#         - Support
+#       summary: Update dispute
+#       security:
+#         - bearerAuth: []
+#       parameters:
+#         - $ref: '#/components/parameters/DisputeId'
+#       requestBody:
+#         required: true
+#         content:
+#           application/json:
+#             schema:
+#               $ref: '#/components/schemas/UpdateDisputeRequest'
+#       responses:
+#         '200':
+#           description: Dispute updated successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/DisputeResponse'
+#         '400':
+#           $ref: '#/components/responses/BadRequest'
+#         '404':
+#           $ref: '#/components/responses/NotFound'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+#   /support/disputes/user/{userId}:
+#     get:
+#       tags:
+#         - Support
+#       summary: Get user's disputes
+#       security:
+#         - bearerAuth: []
+#       parameters:
+#         - $ref: '#/components/parameters/UserId'
+#       responses:
+#         '200':
+#           description: User disputes retrieved successfully
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/DisputesResponse'
+#         '404':
+#           $ref: '#/components/responses/NotFound'
+#         '500':
+#           $ref: '#/components/responses/InternalServerError'
+
+
+# components:
+#   parameters:
+#     UserId:
+#       name: userId
+#       in: path
+#       required: true
+#       description: User ID
+#       schema:
+#         type: string
+#         format: uuid
+
+#     InsuranceId:
+#       name: id
+#       in: path
+#       required: true
+#       description: Insurance ticket ID
+#       schema:
+#         type: string
+#         format: uuid
+
+#     ProviderId:
+#       name: id
+#       in: path
+#       required: true
+#       description: Healthcare provider ID
+#       schema:
+#         type: string
+#         format: uuid
+
+#     ReportId:
+#       name: id
+#       in: path
+#       required: true
+#       description: Report ID
+#       schema:
+#         type: string
+#         format: uuid
+
+#     TransactionId:
+#       name: id
+#       in: path
+#       required: true
+#       description: Transaction ID
+#       schema:
+#         type: string
+#         format: uuid
+
+#     DisputeId:
+#       name: id
+#       in: path
+#       required: true
+#       description: Dispute ID
+#       schema:
+#         type: string
+#         format: uuid
+
+#   schemas:
+#     User:
+#       type: object
+#       properties:
+#         id:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         name:
+#           type: string
+#           example: "Grace"
+#         email:
+#           type: string
+#           format: email
+#           example: "grace@example.com"
+#         profileImage:
+#           type: string
+#           example: "https://example.com/images/grace.jpg"
+#         createdAt:
+#           type: string
+#           format: date-time
+#         updatedAt:
+#           type: string
+#           format: date-time
+
+#     CreateUserRequest:
+#       type: object
+#       required:
+#         - name
+#         - email
+#       properties:
+#         name:
+#           type: string
+#           example: "Grace"
+#         email:
+#           type: string
+#           format: email
+#           example: "grace@example.com"
+#         profileImage:
+#           type: string
+#           example: "https://example.com/images/grace.jpg"
+
+#     UpdateUserRequest:
+#       type: object
+#       properties:
+#         name:
+#           type: string
+#           example: "Grace"
+#         email:
+#           type: string
+#           format: email
+#           example: "grace@example.com"
+#         profileImage:
+#           type: string
+#           example: "https://example.com/images/grace.jpg"
+
+#     Insurance:
+#       type: object
+#       properties:
+#         id:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         userId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         issueType:
+#           type: string
+#           enum: [insurance_not_recognized, policy_details_incorrect, claim_status_delay, coverage_rejected, upload_document_error, wrong_billing]
+#           example: "insurance_not_recognized"
+#         insuranceProviderName:
+#           type: string
+#           example: "Blue Cross Blue Shield"
+#         policyNumber:
+#           type: string
+#           example: "23ert7899"
+#         serviceAffected:
+#           type: string
+#           enum: [consultation, lab, pharmacy]
+#           example: "consultation"
+#         description:
+#           type: string
+#           example: "Insurance not being recognized by the system"
+#         screenshotUrl:
+#           type: string
+#           example: "https://example.com/screenshots/insurance_issue.jpg"
+#         status:
+#           type: string
+#           enum: [pending, in_progress, resolved, closed]
+#           example: "pending"
+#         createdAt:
+#           type: string
+#           format: date-time
+#         updatedAt:
+#           type: string
+#           format: date-time
+#         user:
+#           $ref: '#/components/schemas/User'
+
+#     CreateInsuranceRequest:
+#       type: object
+#       required:
+#         - userId
+#         - issueType
+#       properties:
+#         userId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         issueType:
+#           type: string
+#           enum: [insurance_not_recognized, policy_details_incorrect, claim_status_delay, coverage_rejected, upload_document_error, wrong_billing]
+#           example: "insurance_not_recognized"
+#         insuranceProviderName:
+#           type: string
+#           example: "Blue Cross Blue Shield"
+#         policyNumber:
+#           type: string
+#           example: "23ert7899"
+#         serviceAffected:
+#           type: string
+#           enum: [consultation, lab, pharmacy]
+#           example: "consultation"
+#         description:
+#           type: string
+#           example: "Insurance not being recognized by the system"
+#         screenshotUrl:
+#           type: string
+#           example: "https://example.com/screenshots/insurance_issue.jpg"
+
+#     UpdateInsuranceRequest:
+#       type: object
+#       properties:
+#         issueType:
+#           type: string
+#           enum: [insurance_not_recognized, policy_details_incorrect, claim_status_delay, coverage_rejected, upload_document_error, wrong_billing]
+#         insuranceProviderName:
+#           type: string
+#         policyNumber:
+#           type: string
+#         serviceAffected:
+#           type: string
+#           enum: [consultation, lab, pharmacy]
+#         description:
+#           type: string
+#         screenshotUrl:
+#           type: string
+#         status:
+#           type: string
+#           enum: [pending, in_progress, resolved, closed]
+
+#     HealthcareProvider:
+#       type: object
+#       properties:
+#         id:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         name:
+#           type: string
+#           example: "Dr Andrew Adegbite"
+#         specialization:
+#           type: string
+#           example: "MBBS, General Medicine"
+#         rating:
+#           type: number
+#           format: float
+#           example: 5.0
+#         profileImage:
+#           type: string
+#           example: "https://example.com/images/dr_andrew.jpg"
+#         type:
+#           type: string
+#           enum: [doctor, lab, pharmacy]
+#           example: "doctor"
+#         createdAt:
+#           type: string
+#           format: date-time
+
+#     CreateProviderRequest:
+#       type: object
+#       required:
+#         - name
+#         - specialization
+#         - type
+#       properties:
+#         name:
+#           type: string
+#           example: "Dr Andrew Adegbite"
+#         specialization:
+#           type: string
+#           example: "MBBS, General Medicine"
+#         rating:
+#           type: number
+#           format: float
+#           example: 5.0
+#         profileImage:
+#           type: string
+#           example: "https://example.com/images/dr_andrew.jpg"
+#         type:
+#           type: string
+#           enum: [doctor, lab, pharmacy]
+#           example: "doctor"
+
+#     UpdateProviderRequest:
+#       type: object
+#       properties:
+#         name:
+#           type: string
+#         specialization:
+#           type: string
+#         rating:
+#           type: number
+#           format: float
+#         profileImage:
+#           type: string
+#         type:
+#           type: string
+#           enum: [doctor, lab, pharmacy]
+
+#     Report:
+#       type: object
+#       properties:
+#         id:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         userId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         providerId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         providerType:
+#           type: string
+#           enum: [healthcare_provider, lab, pharmacy]
+#           example: "healthcare_provider"
+#         issueType:
+#           type: string
+#           enum: [unprofessional_behavior, harassment_verbal_abuse, medical_negligence, fraud_fake_profile, wrong_diagnosis, appointment_issues, prescription_error, privacy_violation, wrong_lab_result, lab_misconduct, pharmacy_misconduct]
+#           example: "unprofessional_behavior"
+#         description:
+#           type: string
+#           example: "Doctor was unprofessional during consultation"
+#         screenshotUrl:
+#           type: string
+#           example: "https://example.com/screenshots/report_evidence.jpg"
+#         status:
+#           type: string
+#           enum: [pending, under_review, resolved, closed]
+#           example: "pending"
+#         createdAt:
+#           type: string
+#           format: date-time
+#         updatedAt:
+#           type: string
+#           format: date-time
+#         user:
+#           $ref: '#/components/schemas/User'
+#         provider:
+#           $ref: '#/components/schemas/HealthcareProvider'
+
+#     CreateReportRequest:
+#       type: object
+#       required:
+#         - userId
+#         - providerId
+#         - providerType
+#         - issueType
+#       properties:
+#         userId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         providerId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         providerType:
+#           type: string
+#           enum: [healthcare_provider, lab, pharmacy]
+#           example: "healthcare_provider"
+#         issueType:
+#           type: string
+#           enum: [unprofessional_behavior, harassment_verbal_abuse, medical_negligence, fraud_fake_profile, wrong_diagnosis, appointment_issues, prescription_error, privacy_violation, wrong_lab_result, lab_misconduct, pharmacy_misconduct]
+#           example: "unprofessional_behavior"
+#         description:
+#           type: string
+#           example: "Doctor was unprofessional during consultation"
+#         screenshotUrl:
+#           type: string
+#           example: "https://example.com/screenshots/report_evidence.jpg"
+
+#     UpdateReportRequest:
+#       type: object
+#       properties:
+#         issueType:
+#           type: string
+#           enum: [unprofessional_behavior, harassment_verbal_abuse, medical_negligence, fraud_fake_profile, wrong_diagnosis, appointment_issues, prescription_error, privacy_violation, wrong_lab_result, lab_misconduct, pharmacy_misconduct]
+#         description:
+#           type: string
+#         screenshotUrl:
+#           type: string
+#         status:
+#           type: string
+#           enum: [pending, under_review, resolved, closed]
+
+#     Transaction:
+#       type: object
+#       properties:
+#         id:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         userId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         providerId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         type:
+#           type: string
+#           enum: [consultation_fee, cart_payment, subscription]
+#           example: "consultation_fee"
+#         amount:
+#           type: number
+#           format: decimal
+#           example: 1600.00
+#         status:
+#           type: string
+#           enum: [successful, failed, pending]
+#           example: "successful"
+#         description:
+#           type: string
+#           example: "Consultation Fee for Dr J. Adegbite"
+#         transactionDate:
+#           type: string
+#           format: date-time
+#         createdAt:
+#           type: string
+#           format: date-time
+#         user:
+#           $ref: '#/components/schemas/User'
+#         provider:
+#           $ref: '#/components/schemas/HealthcareProvider'
+
+#     CreateTransactionRequest:
+#       type: object
+#       required:
+#         - userId
+#         - type
+#         - amount
+#         - status
+#       properties:
+#         userId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         providerId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         type:
+#           type: string
+#           enum: [consultation_fee, cart_payment, subscription]
+#           example: "consultation_fee"
+#         amount:
+#           type: number
+#           format: decimal
+#           example: 1600.00
+#         status:
+#           type: string
+#           enum: [successful, failed, pending]
+#           example: "successful"
+#         description:
+#           type: string
+#           example: "Consultation Fee for Dr J. Adegbite"
+
+#     UpdateTransactionRequest:
+#       type: object
+#       properties:
+#         type:
+#           type: string
+#           enum: [consultation_fee, cart_payment, subscription]
+#         amount:
+#           type: number
+#           format: decimal
+#         status:
+#           type: string
+#           enum: [successful, failed, pending]
+#         description:
+#           type: string
+
+#     Dispute:
+#       type: object
+#       properties:
+#         id:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         userId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         transactionId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         disputeType:
+#           type: string
+#           enum: [incorrect_billing, doctor_no_show, poor_service_quality, refund_request, transaction_issues]
+#           example: "incorrect_billing"
+#         description:
+#           type: string
+#           example: "I was charged incorrectly for the consultation"
+#         screenshotUrl:
+#           type: string
+#           example: "https://example.com/screenshots/dispute_evidence.jpg"
+#         status:
+#           type: string
+#           enum: [pending, under_review, resolved, closed]
+#           example: "pending"
+#         createdAt:
+#           type: string
+#           format: date-time
+#         updatedAt:
+#           type: string
+#           format: date-time
+#         user:
+#           $ref: '#/components/schemas/User'
+#         transaction:
+#           $ref: '#/components/schemas/Transaction'
+
+#     CreateDisputeRequest:
+#       type: object
+#       required:
+#         - userId
+#         - transactionId
+#         - disputeType
+#       properties:
+#         userId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         transactionId:
+#           type: string
+#           format: uuid
+#           example: "123e4567-e89b-12d3-a456-426614174000"
+#         disputeType:
+#           type: string
+#           enum: [incorrect_billing, doctor_no_show, poor_service_quality, refund_request, transaction_issues]
+#           example: "incorrect_billing"
+#         description:
+#           type: string
+#           example: "I was charged incorrectly for the consultation"
+#         screenshotUrl:
+#           type: string
+#           example: "https://example.com/screenshots/dispute_evidence.jpg"
+
+#     UpdateDisputeRequest:
+#       type: object
+#       properties:
+#         disputeType:
+#           type: string
+#           enum: [incorrect_billing, doctor_no_show, poor_service_quality, refund_request, transaction_issues]
+#         description:
+#           type: string
+#         screenshotUrl:
+#           type: string
+#         status:
+#           type: string
+#           enum: [pending, under_review, resolved, closed]
+
+#     GetUploadUrlRequest:
+#       type: object
+#       required:
+#         - fileType
+#         - fileName
+#       properties:
+#         fileType:
+#           type: string
+#           example: "image/jpeg"
+#         fileName:
+#           type: string
+#           example: "screenshot.jpg"
+
+#     UploadUrlResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           type: object
+#           properties:
+#             uploadUrl:
+#               type: string
+#               example: "https://upload.example.com/signed-url"
+
+#     HealthResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         message:
+#           type: string
+#           example: "Healthcare Support API is running"
+#         timestamp:
+#           type: string
+#           format: date-time
+
+#     SuccessResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         message:
+#           type: string
+#           example: "Operation completed successfully"
+
+#     ErrorResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: false
+#         message:
+#           type: string
+#           example: "Error message"
+
+#     UserResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           $ref: '#/components/schemas/User'
+
+#     UsersResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/User'
+
+#     InsuranceResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           $ref: '#/components/schemas/Insurance'
+
+#     InsuranceTicketsResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/Insurance'
+
+#     ProviderResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           $ref: '#/components/schemas/HealthcareProvider'
+
+#     ProvidersResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/HealthcareProvider'
+
+#     ReportResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           $ref: '#/components/schemas/Report'
+
+#     ReportsResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/Report'
+
+#     TransactionResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           $ref: '#/components/schemas/Transaction'
+
+#     TransactionsResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/Transaction'
+
+#     DisputeResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           $ref: '#/components/schemas/Dispute'
+
+#     DisputesResponse:
+#       type: object
+#       properties:
+#         success:
+#           type: boolean
+#           example: true
+#         data:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/Dispute'
+
+#   responses:
+#     BadRequest:
+#       description: Bad request
+#       content:
+#         application/json:
+#           schema:
+#             $ref: '#/components/schemas/ErrorResponse'
+#           example:
+#             success: false
+#             message: "Invalid input parameters"
+
+#     NotFound:
+#       description: Resource not found
+#       content:
+#         application/json:
+#           schema:
+#             $ref: '#/components/schemas/ErrorResponse'
+#           example:
+#             success: false
+#             message: "Resource not found"
+
+#     InternalServerError:
+#       description: Internal server error
+#       content:
+#         application/json:
+#           schema:
+#             $ref: '#/components/schemas/ErrorResponse'
+#           example:
+#             success: false
+#             message: "Internal server error"
+
+#   securitySchemes:
+#     bearerAuth:
+#       type: http
+#       scheme: bearer
+#       bearerFormat: JWT
+#       description: 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+
+# tags:
+#   - name: Support
+#     description: Support management operations
+
+paths:
+  # ===================================
+  # USER SUPPORT DASHBOARD ROUTES
+  # ===================================
+  /api/support/user/{userId}/dashboard:
+    get:
+      tags:
+        - Support
+      summary: Get user's complete support dashboard
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User support dashboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSupportDashboardResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/user/{userId}/activity:
+    get:
+      tags:
+        - Support
+      summary: Get user's support activity/history
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - name: days
+          in: query
+          description: Number of days to look back for activity
+          required: false
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 365
+      responses:
+        '200':
+          description: User support activity retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSupportActivityResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/user/{userId}/{ticketType}/{ticketId}:
+    get:
+      tags:
+        - Support
+      summary: Get specific ticket details
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - name: ticketType
+          in: path
+          required: true
+          description: Type of ticket
+          schema:
+            type: string
+            enum: [account, insurance, report, dispute]
+        - name: ticketId
+          in: path
+          required: true
+          description: Ticket ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ticket details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketDetailsResponse'
+        '403':
+          description: Access denied - ticket does not belong to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. This ticket does not belong to you."
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ===================================
+  # ACCOUNT SUPPORT ROUTES
+  # ===================================
+  /api/support/account:
+    get:
+      tags:
+        - Support
+      summary: Get all account tickets
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          description: Filter by user ID
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: issueType
+          in: query
+          description: Filter by issue type
+          required: false
+          schema:
+            type: string
+            enum: [account_information_error, dependent_account_issue, unable_to_update_profile, deactivation_request, double_accounts_conflict]
+        - name: status
+          in: query
+          description: Filter by status
+          required: false
+          schema:
+            type: string
+            enum: [pending, in_progress, resolved, closed]
+        - name: priority
+          in: query
+          description: Filter by priority
+          required: false
+          schema:
+            type: string
+            enum: [low, medium, high, urgent]
+        - name: assignedTo
+          in: query
+          description: Filter by assigned agent
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Account tickets retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTicketsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Support
+      summary: Create account ticket
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountTicketRequest'
+      responses:
+        '201':
+          description: Account ticket created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/account/{id}:
+    get:
+      tags:
+        - Support
+      summary: Get account ticket by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Account ticket ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Account ticket retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTicketResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Support
+      summary: Update account ticket
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Account ticket ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountTicketRequest'
+      responses:
+        '200':
+          description: Account ticket updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/account/user/{userId}:
+    get:
+      tags:
+        - Support
+      summary: Get user's account tickets
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - name: status
+          in: query
+          description: Filter by status
+          required: false
+          schema:
+            type: string
+            enum: [pending, in_progress, resolved, closed]
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: User account tickets retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTicketsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/account/{id}/assign:
+    post:
+      tags:
+        - Support
+      summary: Assign account ticket to support agent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Account ticket ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTicketRequest'
+      responses:
+        '200':
+          description: Account ticket assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/account/{id}/resolve:
+    post:
+      tags:
+        - Support
+      summary: Mark account ticket as resolved
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Account ticket ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveTicketRequest'
+      responses:
+        '200':
+          description: Account ticket resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ===================================
+  # EXISTING SUPPORT ROUTES (UNCHANGED)
+  # ===================================
+  /api/support/insurance:
+    get:
+      tags:
+        - Support
+      summary: Get all insurance tickets
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Insurance tickets retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsuranceTicketsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Support
+      summary: Create insurance ticket
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInsuranceRequest'
+      responses:
+        '201':
+          description: Insurance ticket created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsuranceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/insurance/{id}:
+    get:
+      tags:
+        - Support
+      summary: Get insurance ticket by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/InsuranceId'
+      responses:
+        '200':
+          description: Insurance ticket retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsuranceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Support
+      summary: Update insurance ticket
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/InsuranceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInsuranceRequest'
+      responses:
+        '200':
+          description: Insurance ticket updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsuranceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/insurance/user/{userId}:
+    get:
+      tags:
+        - Support
+      summary: Get user's insurance tickets
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User insurance tickets retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsuranceTicketsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/reports:
+    get:
+      tags:
+        - Support
+      summary: Get all reports
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Reports retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Support
+      summary: Create report
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReportRequest'
+      responses:
+        '201':
+          description: Report created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/reports/{id}:
+    get:
+      tags:
+        - Support
+      summary: Get report by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReportId'
+      responses:
+        '200':
+          description: Report retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Support
+      summary: Update report
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReportId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReportRequest'
+      responses:
+        '200':
+          description: Report updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/reports/user/{userId}:
+    get:
+      tags:
+        - Support
+      summary: Get user's reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User reports retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/disputes:
+    get:
+      tags:
+        - Support
+      summary: Get all disputes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Disputes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputesResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Support
+      summary: Create dispute
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDisputeRequest'
+      responses:
+        '201':
+          description: Dispute created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/disputes/{id}:
+    get:
+      tags:
+        - Support
+      summary: Get dispute by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      responses:
+        '200':
+          description: Dispute retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Support
+      summary: Update dispute
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDisputeRequest'
+      responses:
+        '200':
+          description: Dispute updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/support/disputes/user/{userId}:
+    get:
+      tags:
+        - Support
+      summary: Get user's disputes
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User disputes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputesResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+components:
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: User ID
+      schema:
+        type: string
+        format: uuid
+
+    InsuranceId:
+      name: id
+      in: path
+      required: true
+      description: Insurance ticket ID
+      schema:
+        type: string
+        format: uuid
+
+    ProviderId:
+      name: id
+      in: path
+      required: true
+      description: Healthcare provider ID
+      schema:
+        type: string
+        format: uuid
+
+    ReportId:
+      name: id
+      in: path
+      required: true
+      description: Report ID
+      schema:
+        type: string
+        format: uuid
+
+    TransactionId:
+      name: id
+      in: path
+      required: true
+      description: Transaction ID
+      schema:
+        type: string
+        format: uuid
+
+    DisputeId:
+      name: id
+      in: path
+      required: true
+      description: Dispute ID
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    # ===================================
+    # ACCOUNT SUPPORT SCHEMAS
+    # ===================================
+    AccountTicket:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        issueType:
+          type: string
+          enum: [account_information_error, dependent_account_issue, unable_to_update_profile, deactivation_request, double_accounts_conflict]
+          example: "account_information_error"
+        description:
+          type: string
+          example: "My profile shows incorrect personal information that I cannot update"
+        screenshotUrl:
+          type: string
+          example: "https://example.com/screenshots/account_issue.jpg"
+        status:
+          type: string
+          enum: [pending, in_progress, resolved, closed]
+          example: "pending"
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          example: "medium"
+        assignedTo:
+          type: string
+          example: "support_agent_001"
+        resolutionNotes:
+          type: string
+          example: "Profile information has been corrected and user has been notified"
+        resolvedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+
+    CreateAccountTicketRequest:
+      type: object
+      required:
+        - userId
+        - issueType
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        issueType:
+          type: string
+          enum: [account_information_error, dependent_account_issue, unable_to_update_profile, deactivation_request, double_accounts_conflict]
+          example: "account_information_error"
+        description:
+          type: string
+          example: "My profile shows incorrect personal information that I cannot update"
+        screenshotUrl:
+          type: string
+          example: "https://example.com/screenshots/account_issue.jpg"
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          example: "medium"
+
+    UpdateAccountTicketRequest:
+      type: object
+      properties:
+        issueType:
+          type: string
+          enum: [account_information_error, dependent_account_issue, unable_to_update_profile, deactivation_request, double_accounts_conflict]
+        description:
+          type: string
+        screenshotUrl:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, resolved, closed]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        assignedTo:
+          type: string
+        resolutionNotes:
+          type: string
+
+    AssignTicketRequest:
+      type: object
+      required:
+        - assignedTo
+      properties:
+        assignedTo:
+          type: string
+          example: "support_agent_001"
+
+    ResolveTicketRequest:
+      type: object
+      required:
+        - resolutionNotes
+      properties:
+        resolutionNotes:
+          type: string
+          example: "Profile information has been corrected and user has been notified"
+
+    AccountTicketResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/AccountTicket'
+
+    AccountTicketsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountTicket'
+        pagination:
+          type: object
+          properties:
+            currentPage:
+              type: integer
+              example: 1
+            totalPages:
+              type: integer
+              example: 5
+            totalItems:
+              type: integer
+              example: 100
+            itemsPerPage:
+              type: integer
+              example: 20
+            hasNextPage:
+              type: boolean
+              example: true
+            hasPreviousPage:
+              type: boolean
+              example: false
+
+    # ===================================
+    # USER SUPPORT DASHBOARD SCHEMAS
+    # ===================================
+    UserSupportDashboard:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            totalTickets:
+              type: integer
+              example: 15
+            activeTickets:
+              type: integer
+              example: 8
+            accountIssues:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  example: 3
+                pending:
+                  type: integer
+                  example: 2
+                inProgress:
+                  type: integer
+                  example: 1
+                resolved:
+                  type: integer
+                  example: 0
+            insuranceIssues:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  example: 5
+                pending:
+                  type: integer
+                  example: 3
+                inProgress:
+                  type: integer
+                  example: 1
+                resolved:
+                  type: integer
+                  example: 1
+            reports:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  example: 4
+                pending:
+                  type: integer
+                  example: 2
+                underReview:
+                  type: integer
+                  example: 1
+                resolved:
+                  type: integer
+                  example: 1
+            disputes:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  example: 3
+                pending:
+                  type: integer
+                  example: 1
+                underReview:
+                  type: integer
+                  example: 1
+                resolved:
+                  type: integer
+                  example: 1
+        tickets:
+          type: object
+          properties:
+            account:
+              type: array
+              items:
+                $ref: '#/components/schemas/AccountTicket'
+            insurance:
+              type: array
+              items:
+                $ref: '#/components/schemas/Insurance'
+            reports:
+              type: array
+              items:
+                $ref: '#/components/schemas/Report'
+            disputes:
+              type: array
+              items:
+                $ref: '#/components/schemas/Dispute'
+
+    UserSupportDashboardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/UserSupportDashboard'
+
+    SupportActivity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [account, insurance, report, dispute]
+          example: "account"
+        action:
+          type: string
+          example: "created"
+        title:
+          type: string
+          example: "Account Issue: account information error"
+        status:
+          type: string
+          example: "pending"
+        priority:
+          type: string
+          example: "medium"
+        date:
+          type: string
+          format: date-time
+        description:
+          type: string
+          example: "My profile shows incorrect personal information"
+        provider:
+          type: string
+          example: "Dr Andrew Adegbite"
+        amount:
+          type: number
+          format: decimal
+          example: 1600.00
+
+    UserSupportActivity:
+      type: object
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupportActivity'
+        summary:
+          type: object
+          properties:
+            totalActivities:
+              type: integer
+              example: 10
+            period:
+              type: string
+              example: "30 days"
+            byType:
+              type: object
+              properties:
+                account:
+                  type: integer
+                  example: 3
+                insurance:
+                  type: integer
+                  example: 2
+                reports:
+                  type: integer
+                  example: 3
+                disputes:
+                  type: integer
+                  example: 2
+
+    UserSupportActivityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/UserSupportActivity'
+
+    TicketDetailsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/AccountTicket'
+            - $ref: '#/components/schemas/Insurance'
+            - $ref: '#/components/schemas/Report'
+            - $ref: '#/components/schemas/Dispute'
+
+    # ===================================
+    # EXISTING SCHEMAS (UNCHANGED)
+    # ===================================
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "Grace"
+        email:
+          type: string
+          format: email
+          example: "grace@example.com"
+        profileImage:
+          type: string
+          example: "https://example.com/images/grace.jpg"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+          example: "Grace"
+        email:
+          type: string
+          format: email
+          example: "grace@example.com"
+        profileImage:
+          type: string
+          example: "https://example.com/images/grace.jpg"
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Grace"
+        email:
+          type: string
+          format: email
+          example: "grace@example.com"
+        profileImage:
+          type: string
+          example: "https://example.com/images/grace.jpg"
+
+    Insurance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        issueType:
+          type: string
+          enum: [insurance_not_recognized, policy_details_incorrect, claim_status_delay, coverage_rejected, upload_document_error, wrong_billing]
+          example: "insurance_not_recognized"
+        insuranceProviderName:
+          type: string
+          example: "Blue Cross Blue Shield"
+        policyNumber:
+          type: string
+          example: "23ert7899"
+        serviceAffected:
+          type: string
+          enum: [consultation, lab, pharmacy]
+          example: "consultation"
+        description:
+          type: string
+          example: "Insurance not being recognized by the system"
+        screenshotUrl:
+          type: string
+          example: "https://example.com/screenshots/insurance_issue.jpg"
+        status:
+          type: string
+          enum: [pending, in_progress, resolved, closed]
+          example: "pending"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+
+    CreateInsuranceRequest:
+      type: object
+      required:
+        - userId
+        - issueType
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        issueType:
+          type: string
+          enum: [insurance_not_recognized, policy_details_incorrect, claim_status_delay, coverage_rejected, upload_document_error, wrong_billing]
+          example: "insurance_not_recognized"
+        insuranceProviderName:
+          type: string
+          example: "Blue Cross Blue Shield"
+        policyNumber:
+          type: string
+          example: "23ert7899"
+        serviceAffected:
+          type: string
+          enum: [consultation, lab, pharmacy]
+          example: "consultation"
+        description:
+          type: string
+          example: "Insurance not being recognized by the system"
+        screenshotUrl:
+          type: string
+          example: "https://example.com/screenshots/insurance_issue.jpg"
+
+    UpdateInsuranceRequest:
+      type: object
+      properties:
+        issueType:
+          type: string
+          enum: [insurance_not_recognized, policy_details_incorrect, claim_status_delay, coverage_rejected, upload_document_error, wrong_billing]
+        insuranceProviderName:
+          type: string
+        policyNumber:
+          type: string
+        serviceAffected:
+          type: string
+          enum: [consultation, lab, pharmacy]
+        description:
+          type: string
+        screenshotUrl:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, resolved, closed]
+
+    HealthcareProvider:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "Dr Andrew Adegbite"
+        specialization:
+          type: string
+          example: "MBBS, General Medicine"
+        rating:
+          type: number
+          format: float
+          example: 5.0
+        profileImage:
+          type: string
+          example: "https://example.com/images/dr_andrew.jpg"
+        type:
+          type: string
+          enum: [doctor, lab, pharmacy]
+          example: "doctor"
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateProviderRequest:
+      type: object
+      required:
+        - name
+        - specialization
+        - type
+      properties:
+        name:
+          type: string
+          example: "Dr Andrew Adegbite"
+        specialization:
+          type: string
+          example: "MBBS, General Medicine"
+        rating:
+          type: number
+          format: float
+          example: 5.0
+        profileImage:
+          type: string
+          example: "https://example.com/images/dr_andrew.jpg"
+        type:
+          type: string
+          enum: [doctor, lab, pharmacy]
+          example: "doctor"
+
+    UpdateProviderRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        specialization:
+          type: string
+        rating:
+          type: number
+          format: float
+        profileImage:
+          type: string
+        type:
+          type: string
+          enum: [doctor, lab, pharmacy]
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        providerId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        providerType:
+          type: string
+          enum: [healthcare_provider, lab, pharmacy]
+          example: "healthcare_provider"
+        issueType:
+          type: string
+          enum: [unprofessional_behavior, harassment_verbal_abuse, medical_negligence, fraud_fake_profile, wrong_diagnosis, appointment_issues, prescription_error, privacy_violation, wrong_lab_result, lab_misconduct, pharmacy_misconduct]
+          example: "unprofessional_behavior"
+        description:
+          type: string
+          example: "Doctor was unprofessional during consultation"
+        screenshotUrl:
+          type: string
+          example: "https://example.com/screenshots/report_evidence.jpg"
+        status:
+          type: string
+          enum: [pending, under_review, resolved, closed]
+          example: "pending"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+        provider:
+          $ref: '#/components/schemas/HealthcareProvider'
+
+    CreateReportRequest:
+      type: object
+      required:
+        - userId
+        - providerId
+        - providerType
+        - issueType
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        providerId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        providerType:
+          type: string
+          enum: [healthcare_provider, lab, pharmacy]
+          example: "healthcare_provider"
+        issueType:
+          type: string
+          enum: [unprofessional_behavior, harassment_verbal_abuse, medical_negligence, fraud_fake_profile, wrong_diagnosis, appointment_issues, prescription_error, privacy_violation, wrong_lab_result, lab_misconduct, pharmacy_misconduct]
+          example: "unprofessional_behavior"
+        description:
+          type: string
+          example: "Doctor was unprofessional during consultation"
+        screenshotUrl:
+          type: string
+          example: "https://example.com/screenshots/report_evidence.jpg"
+
+    UpdateReportRequest:
+      type: object
+      properties:
+        issueType:
+          type: string
+          enum: [unprofessional_behavior, harassment_verbal_abuse, medical_negligence, fraud_fake_profile, wrong_diagnosis, appointment_issues, prescription_error, privacy_violation, wrong_lab_result, lab_misconduct, pharmacy_misconduct]
+        description:
+          type: string
+        screenshotUrl:
+          type: string
+        status:
+          type: string
+          enum: [pending, under_review, resolved, closed]
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        providerId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          type: string
+          enum: [consultation_fee, cart_payment, subscription]
+          example: "consultation_fee"
+        amount:
+          type: number
+          format: decimal
+          example: 1600.00
+        status:
+          type: string
+          enum: [successful, failed, pending]
+          example: "successful"
+        description:
+          type: string
+          example: "Consultation Fee for Dr J. Adegbite"
+        transactionDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+        provider:
+          $ref: '#/components/schemas/HealthcareProvider'
+
+    CreateTransactionRequest:
+      type: object
+      required:
+        - userId
+        - type
+        - amount
+        - status
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        providerId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          type: string
+          enum: [consultation_fee, cart_payment, subscription]
+          example: "consultation_fee"
+        amount:
+          type: number
+          format: decimal
+          example: 1600.00
+        status:
+          type: string
+          enum: [successful, failed, pending]
+          example: "successful"
+        description:
+          type: string
+          example: "Consultation Fee for Dr J. Adegbite"
+
+    UpdateTransactionRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [consultation_fee, cart_payment, subscription]
+        amount:
+          type: number
+          format: decimal
+        status:
+          type: string
+          enum: [successful, failed, pending]
+        description:
+          type: string
+
+    Dispute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        transactionId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        disputeType:
+          type: string
+          enum: [incorrect_billing, doctor_no_show, poor_service_quality, refund_request, transaction_issues]
+          example: "incorrect_billing"
+        description:
+          type: string
+          example: "I was charged incorrectly for the consultation"
+        screenshotUrl:
+          type: string
+          example: "https://example.com/screenshots/dispute_evidence.jpg"
+        status:
+          type: string
+          enum: [pending, under_review, resolved, closed]
+          example: "pending"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+        transaction:
+          $ref: '#/components/schemas/Transaction'
+
+    CreateDisputeRequest:
+      type: object
+      required:
+        - userId
+        - transactionId
+        - disputeType
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        transactionId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        disputeType:
+          type: string
+          enum: [incorrect_billing, doctor_no_show, poor_service_quality, refund_request, transaction_issues]
+          example: "incorrect_billing"
+        description:
+          type: string
+          example: "I was charged incorrectly for the consultation"
+        screenshotUrl:
+          type: string
+          example: "https://example.com/screenshots/dispute_evidence.jpg"
+
+    UpdateDisputeRequest:
+      type: object
+      properties:
+        disputeType:
+          type: string
+          enum: [incorrect_billing, doctor_no_show, poor_service_quality, refund_request, transaction_issues]
+        description:
+          type: string
+        screenshotUrl:
+          type: string
+        status:
+          type: string
+          enum: [pending, under_review, resolved, closed]
+
+    GetUploadUrlRequest:
+      type: object
+      required:
+        - fileType
+        - fileName
+      properties:
+        fileType:
+          type: string
+          example: "image/jpeg"
+        fileName:
+          type: string
+          example: "screenshot.jpg"
+
+    UploadUrlResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            uploadUrl:
+              type: string
+              example: "https://upload.example.com/signed-url"
+
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Healthcare Support API is running"
+        timestamp:
+          type: string
+          format: date-time
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"
+
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/User'
+
+    UsersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+
+    InsuranceResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Insurance'
+
+    InsuranceTicketsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Insurance'
+
+    ProviderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/HealthcareProvider'
+
+    ProvidersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthcareProvider'
+
+    ReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Report'
+
+    ReportsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+
+    TransactionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Transaction'
+
+    TransactionsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+
+    DisputeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Dispute'
+
+    DisputesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dispute'
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Invalid input parameters"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Resource not found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Internal server error"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+
+tags:
+  - name: User Support
+    description: User support dashboard and activity management
+  - name: Account Support
+    description: Account-related support ticket management
+  - name: Support
+    description: General support management operations

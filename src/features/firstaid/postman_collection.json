@@ -1,0 +1,448 @@
+{
+  "info": {
+    "name": "CosmicForge - Firstaid Feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get all emergency conditions",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/conditions/emergency",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "conditions",
+            "emergency"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all emergency first aid conditions for mobile app (public endpoint)"
+      }
+    },
+    {
+      "name": "Get all non-emergency conditions",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/conditions/non-emergency",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "conditions",
+            "non-emergency"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all non-emergency first aid conditions for mobile app (public endpoint)"
+      }
+    },
+    {
+      "name": "Get condition by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/conditions/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "conditions",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve a specific first aid condition by its ID (public endpoint)"
+      }
+    },
+    {
+      "name": "Update condition (Admin)",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/conditions/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "conditions",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Update an existing first aid condition with optional file upload - admin access required"
+      }
+    },
+    {
+      "name": "Delete condition (Admin)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/conditions/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "conditions",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Delete a first aid condition - admin access required"
+      }
+    },
+    {
+      "name": "Get all conditions (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/conditions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "conditions"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all conditions with optional filters - admin access required"
+      }
+    },
+    {
+      "name": "Create new condition (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/conditions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "conditions"
+          ],
+          "variable": []
+        },
+        "description": "Create a new first aid condition with optional file upload - admin access required"
+      }
+    },
+    {
+      "name": "Toggle condition active status (Admin)",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/conditions/{id}/toggle",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "conditions",
+            ":id",
+            "toggle"
+          ],
+          "variable": []
+        },
+        "description": "Toggle the active status of a first aid condition - admin access required"
+      }
+    },
+    {
+      "name": "Upload images for condition (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/conditions/{id}/image",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "conditions",
+            ":id",
+            "image"
+          ],
+          "variable": []
+        },
+        "description": "Upload images for an existing first aid condition - admin access required"
+      }
+    },
+    {
+      "name": "Get steps by condition ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/steps/condition/{conditionId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "steps",
+            "condition",
+            ":conditionId"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all steps for a specific condition, with optional category filter (public endpoint)"
+      }
+    },
+    {
+      "name": "Get all steps (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/steps",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "steps"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all emergency steps - admin access required"
+      }
+    },
+    {
+      "name": "Create new step (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/steps",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "steps"
+          ],
+          "variable": []
+        },
+        "description": "Create a new emergency step with optional image upload - admin access required"
+      }
+    },
+    {
+      "name": "Get step by ID (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/steps/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "steps",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve a specific emergency step by its ID - admin access required"
+      }
+    },
+    {
+      "name": "Update step (Admin)",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/steps/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "steps",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Update an existing emergency step with optional image upload - admin access required"
+      }
+    },
+    {
+      "name": "Delete step (Admin)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/steps/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "steps",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Delete an emergency step - admin access required"
+      }
+    },
+    {
+      "name": "Upload image for step (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/steps/{id}/image",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "steps",
+            ":id",
+            "image"
+          ],
+          "variable": []
+        },
+        "description": "Upload images for an existing emergency step category - admin access required"
+      }
+    },
+    {
+      "name": "Get offline manifest for mobile apps",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/sync/offline-manifest",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "sync",
+            "offline-manifest"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve complete first aid content manifest for mobile app offline functionality (public endpoint)"
+      }
+    },
+    {
+      "name": "Get web manifest for PWA",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/sync/web-manifest",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "sync",
+            "web-manifest"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve lightweight first aid content manifest optimized for Progressive Web Apps (public endpoint)"
+      }
+    },
+    {
+      "name": "Check for content updates",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/sync/check-updates",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "sync",
+            "check-updates"
+          ],
+          "variable": []
+        },
+        "description": "Check if client needs to update content based on version comparison (public endpoint)"
+      }
+    },
+    {
+      "name": "Get sync system health status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/firstaid/content/sync/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "firstaid",
+            "content",
+            "sync",
+            "health"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve health status and metrics for the sync system (public endpoint)"
+      }
+    }
+  ]
+}

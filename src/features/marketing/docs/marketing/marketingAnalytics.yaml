@@ -1,0 +1,636 @@
+paths:
+  /api/marketing/analytics/signups:
+    get:
+      tags:
+        - Marketing Analytics
+      summary: Get signup analytics by period
+      description: |
+        Retrieve signup analytics grouped by time period (day, week, or month).
+        Returns total signups broken down by doctors and patients.
+      operationId: getSignupAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PeriodParam'
+        - $ref: '#/components/parameters/StartDateParam'
+        - $ref: '#/components/parameters/EndDateParam'
+      responses:
+        '200':
+          description: Signup analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupAnalyticsResponse'
+              examples:
+                dailyAnalytics:
+                  summary: Daily signup analytics
+                  value:
+                    success: true
+                    data:
+                      - period: "2025-07-16"
+                        totalSignups: 25
+                        doctorSignups: 5
+                        patientSignups: 20
+                      - period: "2025-07-15"
+                        totalSignups: 18
+                        doctorSignups: 3
+                        patientSignups: 15
+                    period: "day"
+                    filters:
+                      startDate: null
+                      endDate: null
+                weeklyAnalytics:
+                  summary: Weekly signup analytics
+                  value:
+                    success: true
+                    data:
+                      - period: "2025-W29"
+                        totalSignups: 145
+                        doctorSignups: 25
+                        patientSignups: 120
+                      - period: "2025-W28"
+                        totalSignups: 132
+                        doctorSignups: 22
+                        patientSignups: 110
+                    period: "week"
+                    filters:
+                      startDate: null
+                      endDate: null
+        '400':
+          $ref: '#/components/responses/MarketingBadRequest'
+        '401':
+          $ref: '#/components/responses/MarketingUnauthorized'
+        '403':
+          $ref: '#/components/responses/MarketingForbidden'
+        '500':
+          $ref: '#/components/responses/MarketingInternalError'
+
+  /api/marketing/analytics/totals:
+    get:
+      tags:
+        - Marketing Analytics
+      summary: Get total signup counts
+      description: |
+        Retrieve overall total counts for all users, doctors, and patients.
+      operationId: getTotalSignups
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Total signup counts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalSignupsResponse'
+              example:
+                success: true
+                data:
+                  total: 1250
+                  doctors: 150
+                  patients: 1100
+        '401':
+          $ref: '#/components/responses/MarketingUnauthorized'
+        '403':
+          $ref: '#/components/responses/MarketingForbidden'
+        '500':
+          $ref: '#/components/responses/MarketingInternalError'
+
+  /api/marketing/emails:
+    get:
+      tags:
+        - Marketing Analytics
+      summary: Get user email list
+      description: |
+        Retrieve email addresses and basic info for users by role.
+        Can filter by doctors, patients, or get all users.
+      operationId: getUserEmails
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoleParam'
+      responses:
+        '200':
+          description: User emails retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEmailsResponse'
+              examples:
+                doctorEmails:
+                  summary: Doctor email list
+                  value:
+                    success: true
+                    data:
+                      - email: "dr.smith@example.com"
+                        fullName: "Dr. John Smith"
+                        role: "doctor"
+                        createdAt: "2025-07-16T10:30:00Z"
+                      - email: "dr.jones@example.com"
+                        fullName: "Dr. Sarah Jones"
+                        role: "doctor"
+                        createdAt: "2025-07-15T14:20:00Z"
+                    count: 2
+                    role: "doctor"
+                allEmails:
+                  summary: All user emails
+                  value:
+                    success: true
+                    data:
+                      - email: "patient@example.com"
+                        fullName: "John Doe"
+                        role: "patient"
+                        createdAt: "2025-07-16T09:15:00Z"
+                      - email: "dr.smith@example.com"
+                        fullName: "Dr. John Smith"
+                        role: "doctor"
+                        createdAt: "2025-07-16T10:30:00Z"
+                    count: 2
+                    role: "all"
+        '400':
+          $ref: '#/components/responses/MarketingBadRequest'
+        '401':
+          $ref: '#/components/responses/MarketingUnauthorized'
+        '403':
+          $ref: '#/components/responses/MarketingForbidden'
+        '500':
+          $ref: '#/components/responses/MarketingInternalError'
+
+  /api/marketing/analytics/trends:
+    get:
+      tags:
+        - Marketing Analytics
+      summary: Get signup trends with comparison
+      description: |
+        Retrieve signup trends showing comparison between current and previous periods.
+        Includes trend direction and percentage change.
+      operationId: getSignupTrends
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PeriodParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Signup trends retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupTrendsResponse'
+              example:
+                success: true
+                data:
+                  trend: "up"
+                  percentageChange: 15.5
+                  currentPeriod:
+                    period: "2025-07-16"
+                    totalSignups: 25
+                    doctorSignups: 5
+                    patientSignups: 20
+                  previousPeriod:
+                    period: "2025-07-15"
+                    totalSignups: 18
+                    doctorSignups: 3
+                    patientSignups: 15
+                  data:
+                    - period: "2025-07-16"
+                      totalSignups: 25
+                      doctorSignups: 5
+                      patientSignups: 20
+                    - period: "2025-07-15"
+                      totalSignups: 18
+                      doctorSignups: 3
+                      patientSignups: 15
+        '400':
+          $ref: '#/components/responses/MarketingBadRequest'
+        '401':
+          $ref: '#/components/responses/MarketingUnauthorized'
+        '403':
+          $ref: '#/components/responses/MarketingForbidden'
+        '500':
+          $ref: '#/components/responses/MarketingInternalError'
+
+  /api/marketing/analytics/growth:
+    get:
+      tags:
+        - Marketing Analytics
+      summary: Get user growth rate
+      description: |
+        Calculate growth rate comparing current period with previous period.
+        Default comparison is 30 days vs previous 30 days.
+      operationId: getUserGrowthRate
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DaysParam'
+      responses:
+        '200':
+          description: Growth rate retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrowthRateResponse'
+              example:
+                success: true
+                data:
+                  currentPeriod: 85
+                  previousPeriod: 72
+                  growthRate: 18.06
+                  period: "30 days"
+        '400':
+          $ref: '#/components/responses/MarketingBadRequest'
+        '401':
+          $ref: '#/components/responses/MarketingUnauthorized'
+        '403':
+          $ref: '#/components/responses/MarketingForbidden'
+        '500':
+          $ref: '#/components/responses/MarketingInternalError'
+
+  /api/marketing/dashboard:
+    get:
+      tags:
+        - Marketing Analytics
+      summary: Get comprehensive marketing dashboard
+      description: |
+        Retrieve all marketing analytics data in a single request.
+        Includes totals, recent analytics, trends, and growth rate.
+      operationId: getMarketingDashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PeriodParam'
+      responses:
+        '200':
+          description: Marketing dashboard data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketingDashboardResponse'
+              example:
+                success: true
+                data:
+                  totals:
+                    total: 1250
+                    doctors: 150
+                    patients: 1100
+                  analytics:
+                    - period: "2025-07-16"
+                      totalSignups: 25
+                      doctorSignups: 5
+                      patientSignups: 20
+                    - period: "2025-07-15"
+                      totalSignups: 18
+                      doctorSignups: 3
+                      patientSignups: 15
+                  trends:
+                    trend: "up"
+                    percentageChange: 15.5
+                    currentPeriod:
+                      period: "2025-07-16"
+                      totalSignups: 25
+                      doctorSignups: 5
+                      patientSignups: 20
+                    previousPeriod:
+                      period: "2025-07-15"
+                      totalSignups: 18
+                      doctorSignups: 3
+                      patientSignups: 15
+                  growthRate:
+                    currentPeriod: 85
+                    previousPeriod: 72
+                    growthRate: 18.06
+                    period: "30 days"
+                period: "day"
+        '400':
+          $ref: '#/components/responses/MarketingBadRequest'
+        '401':
+          $ref: '#/components/responses/MarketingUnauthorized'
+        '403':
+          $ref: '#/components/responses/MarketingForbidden'
+        '500':
+          $ref: '#/components/responses/MarketingInternalError'
+
+components:
+  schemas:
+    # Include all schemas from marketingComponents.yaml
+    MarketingAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: "Analytics data varies by endpoint"
+        message:
+          type: string
+          nullable: true
+          description: "Optional message"
+
+    SignupAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignupAnalyticsPeriod'
+        period:
+          type: string
+          enum: [day, week, month]
+          description: "Time period for analytics"
+          example: "day"
+        filters:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date
+              nullable: true
+            endDate:
+              type: string
+              format: date
+              nullable: true
+
+    SignupAnalyticsPeriod:
+      type: object
+      properties:
+        period:
+          type: string
+          description: "Time period identifier"
+          example: "2025-07-16"
+        totalSignups:
+          type: integer
+          minimum: 0
+          example: 25
+        doctorSignups:
+          type: integer
+          minimum: 0
+          example: 5
+        patientSignups:
+          type: integer
+          minimum: 0
+          example: 20
+
+    TotalSignupsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/TotalSignupStats'
+
+    TotalSignupStats:
+      type: object
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          example: 1250
+        doctors:
+          type: integer
+          minimum: 0
+          example: 150
+        patients:
+          type: integer
+          minimum: 0
+          example: 1100
+
+    UserEmailsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserEmailInfo'
+        count:
+          type: integer
+          minimum: 0
+          example: 150
+        role:
+          type: string
+          enum: [doctor, patient, all]
+          example: "doctor"
+
+    UserEmailInfo:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: "doctor@example.com"
+        fullName:
+          type: string
+          example: "Dr. John Smith"
+        role:
+          type: string
+          enum: [doctor, patient, admin, super_admin, pharmacy, lab]
+          example: "doctor"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-16T10:30:00Z"
+
+    SignupTrendsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/SignupTrends'
+
+    SignupTrends:
+      type: object
+      properties:
+        trend:
+          type: string
+          enum: [up, down, neutral]
+          example: "up"
+        percentageChange:
+          type: number
+          format: float
+          example: 15.5
+        currentPeriod:
+          $ref: '#/components/schemas/SignupAnalyticsPeriod'
+        previousPeriod:
+          $ref: '#/components/schemas/SignupAnalyticsPeriod'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignupAnalyticsPeriod'
+
+    GrowthRateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/GrowthRateStats'
+
+    GrowthRateStats:
+      type: object
+      properties:
+        currentPeriod:
+          type: integer
+          minimum: 0
+          example: 85
+        previousPeriod:
+          type: integer
+          minimum: 0
+          example: 72
+        growthRate:
+          type: number
+          format: float
+          example: 18.06
+        period:
+          type: string
+          example: "30 days"
+
+    MarketingDashboardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/MarketingDashboard'
+        period:
+          type: string
+          enum: [day, week, month]
+          example: "day"
+
+    MarketingDashboard:
+      type: object
+      properties:
+        totals:
+          $ref: '#/components/schemas/TotalSignupStats'
+        analytics:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignupAnalyticsPeriod'
+        trends:
+          $ref: '#/components/schemas/SignupTrends'
+        growthRate:
+          $ref: '#/components/schemas/GrowthRateStats'
+
+    MarketingErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        details:
+          type: object
+          nullable: true
+
+  responses:
+    MarketingBadRequest:
+      description: Bad request - Invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MarketingErrorResponse'
+
+    MarketingUnauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MarketingErrorResponse'
+
+    MarketingForbidden:
+      description: Access forbidden - Admin/Super Admin required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MarketingErrorResponse'
+
+    MarketingInternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MarketingErrorResponse'
+
+  parameters:
+    PeriodParam:
+      name: period
+      in: query
+      description: "Time period for analytics"
+      required: false
+      schema:
+        type: string
+        enum: [day, week, month]
+        default: day
+
+    StartDateParam:
+      name: startDate
+      in: query
+      description: "Start date for filtering (YYYY-MM-DD)"
+      required: false
+      schema:
+        type: string
+        format: date
+
+    EndDateParam:
+      name: endDate
+      in: query
+      description: "End date for filtering (YYYY-MM-DD)"
+      required: false
+      schema:
+        type: string
+        format: date
+
+    RoleParam:
+      name: role
+      in: query
+      description: "User role filter"
+      required: false
+      schema:
+        type: string
+        enum: [doctor, patient, all]
+        default: all
+
+    LimitParam:
+      name: limit
+      in: query
+      description: "Limit number of results"
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 365
+        default: 30
+
+    DaysParam:
+      name: days
+      in: query
+      description: "Number of days for growth rate calculation"
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 365
+        default: 30
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Marketing Analytics
+    description: Marketing analytics and user signup tracking endpoints

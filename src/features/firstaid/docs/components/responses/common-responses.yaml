@@ -1,0 +1,40 @@
+NotFoundResponse:
+  description: Resource not found
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: false
+          error:
+            type: string
+            example: Emergency information not found for this location
+          timestamp:
+            type: string
+            format: date-time
+ValidationErrorResponse:
+  description: Validation error
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: false
+          error:
+            type: string
+            example: Invalid parameters provided
+          details:
+            type: array
+            items:
+              type: object
+              properties:
+                field:
+                  type: string
+                  example: emergencyType
+                message:
+                  type: string
+                  example: "Must be one of: police, fire, medical, general"

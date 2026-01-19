@@ -1,0 +1,1577 @@
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the user
+        fullName:
+          type: string
+          description: User's full name
+        email:
+          type: string
+          description: User's email address
+        role:
+          type: string
+          enum: [patient, doctor, pharmacy, lab, admin, super_admin]
+          description: User's role in the system
+        status:
+          type: string
+          enum: [pending_email_verification, active, pending_doctor_verification, doctor_active, locked]
+          description: User's account status
+        isOnline:
+          type: boolean
+          description: Whether the user is currently online
+        profileImageUrl:
+          type: string
+          nullable: true
+          description: URL to the user's profile image
+        provider:
+          type: string
+          enum: [local, google]
+          description: Authentication provider
+        mfaEnabled:
+          type: boolean
+          description: Whether multi-factor authentication is enabled
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the user was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the user was last updated
+      required:
+        - id
+        - fullName
+        - email
+        - role
+        - status
+        - isOnline
+        - mfaEnabled
+        - createdAt
+        - updatedAt
+
+    UpdateAuthRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          description: User's full name
+        profileImageUrl:
+          type: string
+          nullable: true
+          description: URL to the user's profile image
+        bannerUrl:
+          type: string
+          nullable: true
+          description: URL to the user's banner image
+        departmentSpecialty:
+          type: string
+          nullable: true
+          description: Medical specialty or department (for doctors)
+      minProperties: 1
+      example:
+        fullName: "Dr. John Smith"
+        profileImageUrl: "https://example.com/images/dr-smith.jpg"
+        bannerUrl: "https://example.com/banner/dr-smith.jpg"
+        departmentSpecialty: "paediatrician"
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the request was successful
+        message:
+          type: string
+          description: Human-readable message about the operation
+      required:
+        - success
+        - message
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or token invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Authentication required or token invalid"
+              code:
+                type: string
+                example: "UNAUTHORIZED"
+
+    BadRequestError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Invalid request data"
+              code:
+                type: string
+                example: "BAD_REQUEST"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Internal server error"
+              code:
+                type: string
+                example: "INTERNAL_ERROR"
+
+paths:
+  /user/doctors:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Retrieve all doctors
+      description: Fetches a list of all users with the doctor role.
+      responses:
+        '200':
+          description: Successfully retrieved list of doctors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+              example:
+                success: true
+                data:
+                  - id: "user123"
+                    fullName: "Dr. Johnson"
+                    email: "dr.johnson@hospital.com"
+                    role: "doctor"
+                    status: "doctor_active"
+                    isOnline: true
+                    profileImageUrl: "https://example.com/images/dr-johnson.jpg"
+                    provider: "local"
+                    mfaEnabled: false
+                    createdAt: "2025-06-14T10:00:00Z"
+                    updatedAt: "2025-06-14T10:00:00Z"
+                message: "Doctors retrieved successfully"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/doctors-completed:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Retrieve all doctors completed profile
+      description: Fetches a list of all users with the doctor role.
+      responses:
+        '200':
+          description: Successfully retrieved list of doctors completed profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+              example:
+                success: true
+                data:
+                  - id: "user123"
+                    fullName: "Dr. Johnson"
+                    email: "dr.johnson@hospital.com"
+                    role: "doctor"
+                    status: "doctor_active"
+                    isOnline: true
+                    profileImageUrl: "https://example.com/images/dr-johnson.jpg"
+                    provider: "local"
+                    mfaEnabled: false
+                    createdAt: "2025-06-14T10:00:00Z"
+                    updatedAt: "2025-06-14T10:00:00Z"
+                message: "Doctors retrieved successfully"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/doctors-verified:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Retrieve all verified doctors
+      description: Fetches a list of all users with the doctor role.
+      responses:
+        '200':
+          description: Successfully retrieved list of verified doctors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+              example:
+                success: true
+                data:
+                  - id: "user123"
+                    fullName: "Dr. Johnson"
+                    email: "dr.johnson@hospital.com"
+                    role: "doctor"
+                    status: "doctor_active"
+                    isOnline: true
+                    profileImageUrl: "https://example.com/images/dr-johnson.jpg"
+                    provider: "local"
+                    mfaEnabled: false
+                    createdAt: "2025-06-14T10:00:00Z"
+                    updatedAt: "2025-06-14T10:00:00Z"
+                message: "Doctors retrieved successfully"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /user/doctors/{userId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Get a doctor's information
+      description: Retrieves the information of a specified doctor by their user ID.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID of the doctor
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully retrieved list of doctors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+              example:
+                success: true
+                data:
+                  - id: "user123"
+                    fullName: "Dr. Johnson"
+                    email: "dr.johnson@hospital.com"
+                    role: "doctor"
+                    status: "doctor_active"
+                    isOnline: true
+                    profileImageUrl: "https://example.com/images/dr-johnson.jpg"
+                    provider: "local"
+                    mfaEnabled: false
+                    createdAt: "2025-06-14T10:00:00Z"
+                    updatedAt: "2025-06-14T10:00:00Z"
+                message: "Doctors retrieved successfully"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/doctors/online:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Filter doctors by online status
+      description: Retrieves a list of doctors filtered by their online status (true for online, false for offline).
+      parameters:
+        - name: isOnline
+          in: query
+          required: true
+          description: Filter doctors by online status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Successfully retrieved list of online or offline doctors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+              example:
+                success: true
+                data:
+                  - id: "user123"
+                    fullName: "Dr. Johnson"
+                    email: "dr.johnson@hospital.com"
+                    role: "doctor"
+                    status: "doctor_active"
+                    isOnline: true
+                    profileImageUrl: "https://example.com/images/dr-johnson.jpg"
+                    provider: "local"
+                    mfaEnabled: false
+                    createdAt: "2025-06-14T10:00:00Z"
+                    updatedAt: "2025-06-14T10:00:00Z"
+                message: "Online doctors retrieved successfully"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/doctors/search:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Search doctors by email or username
+      description: Searches for doctors by email or username (fullName) using a query string.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query for email or username
+          schema:
+            type: string
+            minLength: 3
+      responses:
+        '200':
+          description: Successfully retrieved search results for doctors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+              example:
+                success: true
+                data:
+                  - id: "user123"
+                    fullName: "Dr. Johnson"
+                    email: "dr.johnson@hospital.com"
+                    role: "doctor"
+                    status: "doctor_active"
+                    isOnline: true
+                    profileImageUrl: "https://example.com/images/dr-johnson.jpg"
+                    provider: "local"
+                    mfaEnabled: false
+                    createdAt: "2025-06-14T10:00:00Z"
+                    updatedAt: "2025-06-14T10:00:00Z"
+                message: "Search results retrieved successfully"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/auth:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Update user authentication information
+      description: Updates the authenticated user's information, excluding email (e.g., fullName, profileImageUrl).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAuthRequest'
+      responses:
+        '200':
+          description: Successfully updated authentication information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+              example:
+                success: true
+                data:
+                  id: "user123"
+                  fullName: "Dr. John Smith"
+                  email: "dr.johnson@hospital.com"
+                  role: "doctor"
+                  status: "doctor_active"
+                  provider: "local"
+                  isOnline: true
+                  profileImageUrl: "https://example.com/images/dr-smith.jpg"
+                  mfaEnabled: true
+                  createdAt: "2025-06-14T10:00:00Z"
+                  updatedAt: "2025-06-14T10:30:00Z"
+                message: "Authentication information updated successfully"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/doctors/status:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Update a doctor's online status
+      description: Updates the online status of a specified doctor (requires the requesting user to be the doctor or an admin/super_admin).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOnlineStatusRequest'
+      responses:
+        '200':
+          description: Successfully updated doctor's online status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/OnlineStatusResponse'
+                  message:
+                    type: string
+              example:
+                success: true
+                data:
+                  id: "user123"
+                  isOnline: true
+                message: "Online status updated successfully"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/doctors/{userId}/status:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Get a doctor's online status
+      description: Retrieves the online status of a specified doctor by their user ID.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID of the doctor
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully retrieved doctor's online status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/OnlineStatusResponse'
+                  message:
+                    type: string
+              example:
+                success: true
+                data:
+                  id: "user123"
+                  isOnline: true
+                message: "Online status retrieved successfully"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/doctors/{doctorId}/pricing:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Set doctor pricing for consultation types
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - consultationType
+                - price
+              properties:
+                consultationType:
+                  type: string
+                  enum: [consultation, follow-up, routine-checkup, urgent]
+                price:
+                  type: number
+                  multipleOf: 0.01
+                  minimum: 0
+                currency:
+                  type: string
+                  enum: [NGN, USD, EUR, GBP]
+                  default: "NGN"
+                duration:
+                  type: integer
+                  minimum: 15
+                  maximum: 240
+                  default: 30
+            examples:
+              consultation_pricing:
+                summary: Set consultation pricing
+                value:
+                  consultationType: "consultation"
+                  price: 150.00
+                  currency: "NGN"
+                  duration: 30
+      responses:
+        '201':
+          description: Pricing set successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  pricing:
+                    type: object
+                  message:
+                    type: string
+                    example: "Pricing set successfully"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Get doctor pricing for all consultation types
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Doctor pricing retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  pricing:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        consultationType:
+                          type: string
+                        price:
+                          type: number
+                        currency:
+                          type: string
+                        duration:
+                          type: integer
+                        isActive:
+                          type: boolean
+
+  /user/doctors/{doctorId}/pricing/{pricingId}:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Update doctor pricing
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: pricingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                price:
+                  type: number
+                  multipleOf: 0.01
+                currency:
+                  type: string
+                  enum: [NGN, USD, EUR, GBP]
+                duration:
+                  type: integer
+                  minimum: 15
+                  maximum: 240
+      responses:
+        '200':
+          description: Pricing updated successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Delete doctor pricing
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: pricingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pricing deleted successfully
+
+  /user/doctors/{doctorId}/availability:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Set doctor weekly availability
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                required:
+                  - dayOfWeek
+                  - startTime
+                  - endTime
+                properties:
+                  dayOfWeek:
+                    type: string
+                    enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+                  startTime:
+                    type: string
+                    pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+                    example: "09:00"
+                  endTime:
+                    type: string
+                    pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+                    example: "17:00"
+                  slotDuration:
+                    type: integer
+                    minimum: 15
+                    maximum: 120
+                    default: 30
+                  breakTime:
+                    type: integer
+                    minimum: 0
+                    maximum: 60
+                    default: 0
+                  maxAppointments:
+                    type: integer
+                    minimum: 1
+                    nullable: true
+                  timezone:
+                    type: string
+                    default: "UTC"
+            examples:
+              weekly_schedule:
+                summary: Set weekly availability
+                value:
+                  - dayOfWeek: "monday"
+                    startTime: "09:00"
+                    endTime: "17:00"
+                    slotDuration: 30
+                    breakTime: 5
+                    maxAppointments: 16
+                  - dayOfWeek: "tuesday"
+                    startTime: "09:00"
+                    endTime: "17:00"
+                    slotDuration: 30
+                    breakTime: 0
+      responses:
+        '201':
+          description: Availability set successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+    
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Replace doctor weekly availability
+      description: |
+        Replace existing availability schedule for specified days.
+        This will delete existing availability for the specified days and create new ones.
+        Prevents duplicate days in the same request.
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                required:
+                  - dayOfWeek
+                  - startTime
+                  - endTime
+                properties:
+                  dayOfWeek:
+                    type: string
+                    enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+                  startTime:
+                    type: string
+                    pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+                    example: "09:00"
+                  endTime:
+                    type: string
+                    pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+                    example: "17:00"
+                  slotDuration:
+                    type: integer
+                    minimum: 15
+                    maximum: 120
+                    default: 30
+                  breakTime:
+                    type: integer
+                    minimum: 0
+                    maximum: 60
+                    default: 0
+                  maxAppointments:
+                    type: integer
+                    minimum: 1
+                    nullable: true
+                  timezone:
+                    type: string
+                    default: "UTC"
+            examples:
+              replace_weekdays:
+                summary: Replace weekday schedule
+                value:
+                  - dayOfWeek: "monday"
+                    startTime: "08:00"
+                    endTime: "18:00"
+                    slotDuration: 30
+                    breakTime: 5
+                    maxAppointments: 20
+                  - dayOfWeek: "tuesday"
+                    startTime: "09:00"
+                    endTime: "17:00"
+                    slotDuration: 45
+                    breakTime: 10
+                  - dayOfWeek: "wednesday"
+                    startTime: "08:00"
+                    endTime: "16:00"
+                    slotDuration: 30
+                    breakTime: 0
+                    maxAppointments: 16
+              replace_weekend:
+                summary: Replace weekend schedule
+                value:
+                  - dayOfWeek: "saturday"
+                    startTime: "10:00"
+                    endTime: "14:00"
+                    slotDuration: 60
+                    breakTime: 15
+                    maxAppointments: 4
+                  - dayOfWeek: "sunday"
+                    startTime: "09:00"
+                    endTime: "13:00"
+                    slotDuration: 30
+                    breakTime: 0
+                    maxAppointments: 8
+      responses:
+        '200':
+          description: Availability replaced successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  availability:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        doctorId:
+                          type: string
+                          format: uuid
+                        dayOfWeek:
+                          type: string
+                          example: "monday"
+                        startTime:
+                          type: string
+                          example: "08:00"
+                        endTime:
+                          type: string
+                          example: "18:00"
+                        slotDuration:
+                          type: integer
+                          example: 30
+                        breakTime:
+                          type: integer
+                          example: 5
+                        maxAppointments:
+                          type: integer
+                          example: 20
+                        isAvailable:
+                          type: boolean
+                          example: true
+                        timezone:
+                          type: string
+                          example: "UTC"
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                  message:
+                    type: string
+                    example: "Availability replaced successfully"
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+              examples:
+                duplicate_days:
+                  summary: Duplicate days in request
+                  value:
+                    success: false
+                    error: "Duplicate days found in request: monday, tuesday"
+                invalid_time:
+                  summary: Invalid time format
+                  value:
+                    success: false
+                    error: "Invalid time format. Use HH:MM format (24-hour)"
+                time_conflict:
+                  summary: Start time after end time
+                  value:
+                    success: false
+                    error: "Start time must be before end time"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Get doctor availability schedule
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Doctor availability retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  availability:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        dayOfWeek:
+                          type: string
+                        startTime:
+                          type: string
+                        endTime:
+                          type: string
+                        slotDuration:
+                          type: integer
+                        breakTime:
+                          type: integer
+                        maxAppointments:
+                          type: integer
+                        timezone:
+                          type: string
+
+  /user/doctors/{doctorId}/availability/slots:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Get available time slots for specific date
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2025-06-25"
+      responses:
+        '200':
+          description: Available slots retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  date:
+                    type: string
+                    format: date
+                  doctorId:
+                    type: string
+                    format: uuid
+                  availableSlots:
+                    type: array
+                    items:
+                      type: string
+                    example: ["09:00", "09:35", "10:10", "10:45", "15:00", "15:35"]
+                  dayOfWeek:
+                    type: string
+                    example: "wednesday"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /user/doctors/{doctorId}/unavailability:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Set doctor unavailability period
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - startDate
+                - endDate
+              properties:
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-06-20"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-06-25"
+                startTime:
+                  type: string
+                  pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+                  nullable: true
+                  description: "If null, entire day is unavailable"
+                endTime:
+                  type: string
+                  pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+                  nullable: true
+                  description: "If null, entire day is unavailable"
+                reason:
+                  type: string
+                  maxLength: 255
+                  example: "Summer vacation"
+                type:
+                  type: string
+                  enum: [vacation, sick, meeting, personal, other]
+                  default: "other"
+            examples:
+              vacation_period:
+                summary: Set vacation period
+                value:
+                  startDate: "2025-06-20"
+                  endDate: "2025-06-25"
+                  reason: "Summer vacation"
+                  type: "vacation"
+              partial_day_unavailable:
+                summary: Set partial day unavailability
+                value:
+                  startDate: "2025-06-22"
+                  endDate: "2025-06-22"
+                  startTime: "14:00"
+                  endTime: "16:00"
+                  reason: "Medical conference"
+                  type: "meeting"
+      responses:
+        '201':
+          description: Unavailability period set successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  unavailability:
+                    type: object
+                  message:
+                    type: string
+                    example: "Unavailability period set successfully"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+ 
+  /user/doctors/{doctorId}/availability/{availabilityId}:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Update doctor availability schedule
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: availabilityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                startTime:
+                  type: string
+                  pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+                  example: "08:00"
+                endTime:
+                  type: string
+                  pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+                  example: "18:00"
+                slotDuration:
+                  type: integer
+                  minimum: 15
+                  maximum: 120
+                  example: 45
+                breakTime:
+                  type: integer
+                  minimum: 0
+                  maximum: 60
+                  example: 10
+                maxAppointments:
+                  type: integer
+                  minimum: 1
+                  nullable: true
+                  example: 20
+                isAvailable:
+                  type: boolean
+                  example: true
+                timezone:
+                  type: string
+                  example: "America/New_York"
+            examples:
+              update_hours:
+                summary: Update working hours
+                value:
+                  startTime: "08:00"
+                  endTime: "18:00"
+                  slotDuration: 45
+                  maxAppointments: 20
+              update_availability:
+                summary: Disable availability
+                value:
+                  isAvailable: false
+      responses:
+        '200':
+          description: Availability updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  availability:
+                    type: object
+                  message:
+                    type: string
+                    example: "Availability updated successfully"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Delete doctor availability schedule
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: availabilityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Availability deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Availability deleted successfully"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /user/doctors/{doctorId}/unavailability/{unavailabilityId}:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Update doctor unavailability period
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: unavailabilityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-06-20"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-06-30"
+                startTime:
+                  type: string
+                  pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+                  nullable: true
+                  example: "14:00"
+                endTime:
+                  type: string
+                  pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+                  nullable: true
+                  example: "16:00"
+                reason:
+                  type: string
+                  maxLength: 255
+                  example: "Extended summer vacation"
+                type:
+                  type: string
+                  enum: [vacation, sick, meeting, personal, other]
+                  example: "vacation"
+                isActive:
+                  type: boolean
+                  example: true
+            examples:
+              extend_vacation:
+                summary: Extend vacation period
+                value:
+                  endDate: "2025-06-30"
+                  reason: "Extended summer vacation"
+              update_partial_unavailability:
+                summary: Update partial day unavailability
+                value:
+                  startTime: "13:00"
+                  endTime: "17:00"
+                  reason: "Medical conference extended"
+              disable_unavailability:
+                summary: Disable unavailability period
+                value:
+                  isActive: false
+      responses:
+        '200':
+          description: Unavailability updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  unavailability:
+                    type: object
+                  message:
+                    type: string
+                    example: "Unavailability updated successfully"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Delete doctor unavailability period
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: unavailabilityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Unavailability deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Unavailability deleted successfully"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /user/rating:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Add or update a rating for a user
+      description: Submit a new rating (1–5) for a specific user. The API will recalculate the average automatically.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: ID of the user to rate
+                rating:
+                  type: number
+                  format: float
+                  minimum: 1
+                  maximum: 5
+                message:
+                  type: string
+                  description: "message to users"
+              required:
+                - userId
+                - rating
+            example:
+              userId: "cbe928f3-71e1-4d6a-89f0-3dcfd99ef02f"
+              rating: 4.5
+              message: "Great experience!"
+      responses:
+        '200':
+          description: Rating added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  averageRating:
+                    type: number
+                    format: float
+                  totalRatings:
+                    type: integer
+              example:
+                message: Rating added successfully
+                averageRating: 4.3
+                totalRatings: 10
+  
+  /user/rating/{userId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User Management
+      summary: Get a user's ratings summary
+      description: >
+        Fetches the average rating, total ratings, and optionally the last
+        messages for the user.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "12345"
+      responses:
+        "200":
+          description: User rating info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  averageRating:
+                    type: number
+                    example: 4.3
+                  totalRatings:
+                    type: integer
+                    example: 12
+                  recentMessages:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      - "Great experience!"
+                      - "Fast service!"
+        "404":
+          description: User not found
+
+tags:
+  - name: User Management
+    description: Operations for managing user information and authentication
+
+x-error-codes:
+  description: |
+    ## Error Handling
+    The API returns consistent error responses with the following structure:
+    ```json
+    {
+      "success": false,
+      "message": "Human-readable error message",
+      "error": "ERROR_CODE"
+    }
+    ```
+    ### Common Error Codes
+    - **UNAUTHORIZED**: Authentication required or token invalid
+    - **BAD_REQUEST**: Invalid request data
+    - **INTERNAL_ERROR**: Internal server error
+    - **INVALID_SEARCH_QUERY**: Search query must be at least 3 characters long
+    - **MISSING_FIELDS**: At least one field is required for update

@@ -1,0 +1,415 @@
+# chatComponent.yaml
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from authentication endpoint
+
+  parameters:
+    RoomId:
+      name: roomId
+      in: path
+      required: true
+      description: Unique identifier of the chat room
+      schema:
+        type: string
+        format: uuid
+
+    MessageId:
+      name: messageId
+      in: path
+      required: true
+      description: Unique identifier of the message
+      schema:
+        type: string
+        format: uuid
+
+    AppointmentChatId:
+      name: appointmentChatId
+      in: path
+      required: true
+      description: Unique identifier of the appointment chat
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [patient, doctor, nurse, admin]
+        profileImageUrl:
+          type: string
+          format: uri
+        isOnline:
+          type: boolean
+        lastSeenAt:
+          type: string
+          format: date-time
+
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [direct, group, appointment, support]
+        isPrivate:
+          type: boolean
+        maxParticipants:
+          type: integer
+        settings:
+          type: object
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RoomDetails:
+      allOf:
+        - $ref: '#/components/schemas/Room'
+        - type: object
+          properties:
+            participants:
+              type: array
+              items:
+                $ref: '#/components/schemas/Participant'
+            createdBy:
+              $ref: '#/components/schemas/User'
+
+    RoomWithStats:
+      allOf:
+        - $ref: '#/components/schemas/RoomDetails'
+        - type: object
+          properties:
+            participantCount:
+              type: integer
+            unreadCount:
+              type: integer
+            lastMessage:
+              $ref: '#/components/schemas/Message'
+
+    Participant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [admin, moderator, member]
+        permissions:
+          type: object
+        isActive:
+          type: boolean
+        lastReadAt:
+          type: string
+          format: date-time
+        joinedAt:
+          type: string
+          format: date-time
+        leftAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        type:
+          type: string
+          enum: [text, image, file, system, typing]
+        metadata:
+          type: object
+        edited:
+          type: boolean
+        editHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              content:
+                type: string
+              editedAt:
+                type: string
+                format: date-time
+        deleted:
+          type: boolean
+        deletedAt:
+          type: string
+          format: date-time
+        readBy:
+          type: array
+          items:
+            type: string
+            format: uuid
+        sender:
+          $ref: '#/components/schemas/User'
+        room:
+          $ref: '#/components/schemas/Room'
+        replyTo:
+          $ref: '#/components/schemas/Message'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AppointmentChat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [scheduled, active, completed, cancelled]
+        scheduledStartTime:
+          type: string
+          format: date-time
+        scheduledEndTime:
+          type: string
+          format: date-time
+        actualStartTime:
+          type: string
+          format: date-time
+        actualEndTime:
+          type: string
+          format: date-time
+        autoCloseEnabled:
+          type: boolean
+        preJoinAllowed:
+          type: boolean
+        postChatDuration:
+          type: integer
+          description: Seconds after end time before auto-close
+        settings:
+          type: object
+        room:
+          $ref: '#/components/schemas/Room'
+        doctor:
+          $ref: '#/components/schemas/User'
+        patient:
+          $ref: '#/components/schemas/User'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AppointmentChatStatus:
+      allOf:
+        - $ref: '#/components/schemas/AppointmentChat'
+        - type: object
+          properties:
+            timeStatus:
+              type: string
+              enum: [before, active, post_session, expired]
+              description: Current status relative to scheduled time
+            timeUntilStart:
+              type: integer
+              description: Milliseconds until scheduled start time
+            timeUntilEnd:
+              type: integer
+              description: Milliseconds until scheduled end time
+            timeUntilClose:
+              type: integer
+              description: Milliseconds until auto-close
+
+    CreateRoomRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Room name
+        description:
+          type: string
+          description: Room description
+        type:
+          type: string
+          enum: [group, support]
+          default: group
+        isPrivate:
+          type: boolean
+          default: false
+        maxParticipants:
+          type: integer
+          minimum: 2
+          maximum: 1000
+          default: 50
+        settings:
+          type: object
+          description: Room-specific settings
+        metadata:
+          type: object
+          description: Additional room metadata
+
+    SendMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          maxLength: 4000
+          description: Message content
+        type:
+          type: string
+          enum: [text, image, file, system]
+          default: text
+        metadata:
+          type: object
+          description: Additional message metadata
+        replyToId:
+          type: string
+          format: uuid
+          description: ID of message being replied to
+
+    CreateAppointmentChatRequest:
+      type: object
+      required:
+        - patientId
+        - scheduledStartTime
+        - scheduledEndTime
+      properties:
+        appointmentId:
+          type: string
+          format: uuid
+          description: Associated appointment ID (optional)
+        patientId:
+          type: string
+          format: uuid
+          description: Patient user ID
+        scheduledStartTime:
+          type: string
+          format: date-time
+          description: When the appointment chat is scheduled to start
+        scheduledEndTime:
+          type: string
+          format: date-time
+          description: When the appointment chat is scheduled to end
+        settings:
+          type: object
+          properties:
+            autoCloseEnabled:
+              type: boolean
+              default: true
+            preJoinAllowed:
+              type: boolean
+              default: false
+            postChatDuration:
+              type: integer
+              default: 300
+              description: Seconds to keep chat open after end time
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Error message
+        error:
+          type: string
+          description: Error code or type
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or token invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Authentication required"
+            error: "UNAUTHORIZED"
+
+    ForbiddenError:
+      description: Access denied - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Access denied"
+            error: "FORBIDDEN"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Resource not found"
+            error: "NOT_FOUND"
+
+    BadRequestError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Invalid request data"
+            error: "BAD_REQUEST"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Internal server error"
+            error: "INTERNAL_ERROR"

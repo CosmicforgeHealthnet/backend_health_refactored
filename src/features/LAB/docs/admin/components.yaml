@@ -1,0 +1,178 @@
+components:
+  schemas:
+    FacilityRejection:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          example: "Missing required accreditation documents. Please provide valid certification from authorized medical board."
+
+    FacilityStats:
+      type: object
+      properties:
+        statusCounts:
+          type: object
+          properties:
+            pending_approval:
+              type: integer
+              example: 5
+            approved:
+              type: integer
+              example: 25
+            rejected:
+              type: integer
+              example: 3
+            suspended:
+              type: integer
+              example: 1
+            active:
+              type: integer
+              example: 22
+        recentRegistrations:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabFacility'
+        totalFacilities:
+          type: integer
+          example: 56
+
+  parameters:
+    AdminFacilityId:
+      name: id
+      in: path
+      required: true
+      description: Lab facility UUID for admin operations
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+    AdminLimit:
+      name: limit
+      in: query
+      required: false
+      description: Number of results to return for admin queries (max 50)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+        example: 10
+
+  responses:
+    FacilityApproved:
+      description: Lab facility approved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Facility approved successfully. Lab admin account created and invitation sent."
+              data:
+                $ref: '#/components/schemas/LabFacility'
+
+    FacilityRejected:
+      description: Lab facility rejected
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Facility registration rejected. Notification sent to applicant."
+              data:
+                $ref: '#/components/schemas/LabFacility'
+
+    PendingFacilities:
+      description: Pending facilities retrieved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Pending facilities retrieved successfully"
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LabFacility'
+              count:
+                type: integer
+                example: 5
+
+    FacilityStatistics:
+      description: Facility statistics retrieved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Facility statistics retrieved successfully"
+              data:
+                $ref: '#/components/schemas/FacilityStats'
+
+    RecentRegistrations:
+      description: Recent registrations retrieved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Recent registrations retrieved successfully"
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LabFacility'
+              count:
+                type: integer
+                example: 10
+
+    AdminUnauthorized:
+      description: Platform admin authorization required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            insufficient_privileges:
+              summary: Insufficient admin privileges
+              value:
+                success: false
+                message: "Access denied. Platform administrator privileges required."
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token required for authenticated endpoints.
+        Include as: `Authorization: Bearer <token>`
+        Platform admin role required for these endpoints.

@@ -1,0 +1,135 @@
+# 2. src/docs/pharmacy/auth/pharmacyAuthComponents.yaml
+components:
+  schemas:
+    PharmacySignUp:
+      type: object
+      required:
+        - fullName
+        - email
+        - password
+        - pharmacyName
+        - registrationNumber
+        - preferredUsername
+      properties:
+        fullName:
+          type: string
+          example: "John Doe"
+          description: Full name of the primary contact person
+        email:
+          type: string
+          format: email
+          example: "contact@healthplus.com"
+          description: Email address for the pharmacy account
+        password:
+          type: string
+          minLength: 12
+          example: "SecurePassword123!"
+          description: Password for the pharmacy account
+        pharmacyName:
+          type: string
+          example: "HealthPlus Pharmacy"
+          description: Official name of the pharmacy
+        registrationNumber:
+          type: string
+          example: "NG-PH-123456"
+          description: Pharmacy registration number issued by regulatory authority
+        address:
+          type: string
+          example: "123 Wellness Ave, Lagos, Nigeria"
+          description: Physical address of the pharmacy
+        phone:
+          type: string
+          example: "+2341234567890"
+          description: Contact phone number
+        primaryContactPerson:
+          type: string
+          example: "Jane Smith"
+          description: Name of the primary contact person
+        preferredUsername:
+          type: string
+          example: "healthplus"
+          description: Unique username for the pharmacy profile
+
+    PharmacyLogin:
+      type: object
+      required:
+        - email
+        - password
+        - deviceFingerprint
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        deviceFingerprint:
+          type: string
+
+    PharmacyRegistrationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Pharmacy registration successful"
+        pharmacy:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            pharmacyName:
+              type: string
+            username:
+              type: string
+            verificationStatus:
+              type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            fullName:
+              type: string
+            email:
+              type: string
+            status:
+              type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        payload:
+          type: object
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    PharmacyProfileResponse:
+      type: object
+      properties:
+        pharmacy:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            pharmacyName:
+              type: string
+            registrationNumber:
+              type: string
+            address:
+              type: string
+            phone:
+              type: string
+            primaryContactPerson:
+              type: string
+            email:
+              type: string
+            username:
+              type: string
+            verificationStatus:
+              type: string
+            isActive:
+              type: boolean

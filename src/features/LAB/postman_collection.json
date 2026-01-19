@@ -1,0 +1,1023 @@
+{
+  "info": {
+    "name": "CosmicForge - LAB Feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register a new lab facility",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            "register"
+          ],
+          "variable": []
+        },
+        "description": "Register a new lab facility for approval. This endpoint does not require authentication.\nThe facility will be pending approval until reviewed by platform administrators.\n"
+      }
+    },
+    {
+      "name": "Register lab facility - Step 1 (Admin Information)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/register/step1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            "register",
+            "step1"
+          ],
+          "variable": []
+        },
+        "description": "First step of facility registration. Collects administrator information.\nReturns facilityId to use in subsequent steps.\n"
+      }
+    },
+    {
+      "name": "Register lab facility - Step 2 (Facility Information)",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/register/step2/{facilityId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            "register",
+            "step2",
+            ":facilityId"
+          ],
+          "variable": []
+        },
+        "description": "Second step of facility registration. Collects facility details, \nregistration and license information.\n"
+      }
+    },
+    {
+      "name": "Register lab facility - Step 3 (Address & Finalization)",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/register/step3/{facilityId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            "register",
+            "step3",
+            ":facilityId"
+          ],
+          "variable": []
+        },
+        "description": "Final step of facility registration. Collects address and operational details.\nCompletes registration and triggers approval workflow.\n"
+      }
+    },
+    {
+      "name": "Get facility details by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/{facilityId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            ":facilityId"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve detailed information about a specific lab facility"
+      }
+    },
+    {
+      "name": "Update facility information",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/{facilityId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            ":facilityId"
+          ],
+          "variable": []
+        },
+        "description": "Update facility information (lab admin only)"
+      }
+    },
+    {
+      "name": "Search lab facilities",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Search for lab facilities by name, city, or email"
+      }
+    },
+    {
+      "name": "Get facilities by location",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/location",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            "location"
+          ],
+          "variable": []
+        },
+        "description": "Find lab facilities in a specific city and state"
+      }
+    },
+    {
+      "name": "Get facilities managed by current lab admin",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/my/managed",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            "my",
+            "managed"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve facilities managed by the authenticated lab admin"
+      }
+    },
+    {
+      "name": "Invite personnel to facility",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/{id}/personnel/invite",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            ":id",
+            "personnel",
+            "invite"
+          ],
+          "variable": []
+        },
+        "description": "Invite personnel to join the lab facility (lab admin only).\nThis sends a registration email with instructions for creating their account.\n"
+      }
+    },
+    {
+      "name": "Get facility personnel",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/{id}/personnel",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            ":id",
+            "personnel"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all personnel for a specific facility (lab admin only)"
+      }
+    },
+    {
+      "name": "Get personnel statistics for facility",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/{id}/personnel/stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            ":id",
+            "personnel",
+            "stats"
+          ],
+          "variable": []
+        },
+        "description": "Get personnel statistics grouped by role and status (lab admin only)"
+      }
+    },
+    {
+      "name": "Get personnel details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/personnel/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "personnel",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Get specific personnel details (lab admin only)"
+      }
+    },
+    {
+      "name": "Remove personnel from facility",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/personnel/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "personnel",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Remove personnel from facility (lab admin only)"
+      }
+    },
+    {
+      "name": "Update personnel status",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/personnel/{id}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "personnel",
+            ":id",
+            "status"
+          ],
+          "variable": []
+        },
+        "description": "Update personnel status (lab admin only)"
+      }
+    },
+    {
+      "name": "Update personnel role",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/personnel/{id}/role",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "personnel",
+            ":id",
+            "role"
+          ],
+          "variable": []
+        },
+        "description": "Update personnel role (lab admin only)"
+      }
+    },
+    {
+      "name": "Get current user's personnel roles",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/personnel/my/roles",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "personnel",
+            "my",
+            "roles"
+          ],
+          "variable": []
+        },
+        "description": "Get personnel roles across all facilities for the authenticated user"
+      }
+    },
+    {
+      "name": "Get registration token information",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/personnel/registration/{token}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "personnel",
+            "registration",
+            ":token"
+          ],
+          "variable": []
+        },
+        "description": "Get information about a registration token for the registration form.\nThis is used by the frontend to display pre-filled registration information.\n"
+      }
+    },
+    {
+      "name": "Complete personnel registration",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/personnel/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "personnel",
+            "register"
+          ],
+          "variable": []
+        },
+        "description": "Complete personnel registration using the invitation token.\nThis creates the user account and links it to the personnel record.\n"
+      }
+    },
+    {
+      "name": "Create a new lab order",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders"
+          ],
+          "variable": []
+        },
+        "description": "Create a new lab order as a patient. The order will be pending approval\nand payment processing by the lab facility.\n"
+      }
+    },
+    {
+      "name": "Get order details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve detailed information about a specific order.\nAccess is restricted based on user role and relationship to the order.\n"
+      }
+    },
+    {
+      "name": "Cancel order",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Cancel a lab order. Only patients and lab administrators can cancel orders.\nSome statuses may prevent cancellation.\n"
+      }
+    },
+    {
+      "name": "Get patient's orders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/my/patient",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            "my",
+            "patient"
+          ],
+          "variable": []
+        },
+        "description": "Get all orders for the authenticated patient"
+      }
+    },
+    {
+      "name": "Get facility orders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/facilities/{facilityId}/orders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "facilities",
+            ":facilityId",
+            "orders"
+          ],
+          "variable": []
+        },
+        "description": "Get all orders for a specific facility (lab admin only)"
+      }
+    },
+    {
+      "name": "Review order and send invoice",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/{id}/review",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            ":id",
+            "review"
+          ],
+          "variable": []
+        },
+        "description": "Review a patient's order and send payment invoice (lab admin only).\nThis transitions the order from 'created' to 'pending_payment' status.\n"
+      }
+    },
+    {
+      "name": "Confirm payment",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/{id}/payment/confirm",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            ":id",
+            "payment",
+            "confirm"
+          ],
+          "variable": []
+        },
+        "description": "Confirm payment for an order (internal/webhook endpoint).\nThis is typically called by payment processors or internal systems.\n"
+      }
+    },
+    {
+      "name": "Assign personnel to order",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/{id}/assign",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            ":id",
+            "assign"
+          ],
+          "variable": []
+        },
+        "description": "Assign laboratory personnel to handle an order (lab admin only).\nOrder must be in 'payment_confirmed' status.\n"
+      }
+    },
+    {
+      "name": "Schedule appointment",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/{id}/schedule",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            ":id",
+            "schedule"
+          ],
+          "variable": []
+        },
+        "description": "Schedule appointment for sample collection or radiology service.\nOnly assigned personnel can schedule appointments.\n"
+      }
+    },
+    {
+      "name": "Complete sample collection or radiology",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/{id}/complete-collection",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            ":id",
+            "complete-collection"
+          ],
+          "variable": []
+        },
+        "description": "Mark sample collection or radiology service as completed.\nOnly assigned personnel can complete collection.\n"
+      }
+    },
+    {
+      "name": "Start processing tests",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/{id}/start-processing",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            ":id",
+            "start-processing"
+          ],
+          "variable": []
+        },
+        "description": "Start processing laboratory tests (lab technician only).\nSamples must be collected before processing can begin.\n"
+      }
+    },
+    {
+      "name": "Upload test results",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/{id}/upload-results",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            ":id",
+            "upload-results"
+          ],
+          "variable": []
+        },
+        "description": "Upload completed test results (lab technician only).\nOrder must be in 'processing' status.\n"
+      }
+    },
+    {
+      "name": "Review and approve results",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/{id}/review-results",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            ":id",
+            "review-results"
+          ],
+          "variable": []
+        },
+        "description": "Review test results for quality assurance and approve for delivery (result reviewer only).\nResults must be uploaded before they can be reviewed.\n"
+      }
+    },
+    {
+      "name": "Get personnel assignments",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/my/assignments",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            "my",
+            "assignments"
+          ],
+          "variable": []
+        },
+        "description": "Get orders assigned to the authenticated personnel member.\nShows tasks for sample collectors, technicians, radiologists, and reviewers.\n"
+      }
+    },
+    {
+      "name": "Search orders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Search orders by order number, patient name, or other criteria.\nResults are filtered based on user access rights.\n"
+      }
+    },
+    {
+      "name": "Get order statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/orders/statistics",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "orders",
+            "statistics"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve comprehensive order statistics and metrics.\nResults are filtered based on user access rights.\n"
+      }
+    },
+    {
+      "name": "Join lab registration waitlist",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/waitlist/join",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "waitlist",
+            "join"
+          ],
+          "variable": []
+        },
+        "description": "Join the lab registration waitlist. This endpoint does not require authentication.\nUsers will receive a confirmation email and be notified when lab registration opens.\n"
+      }
+    },
+    {
+      "name": "Check if email exists in waitlist",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/waitlist/check",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "waitlist",
+            "check"
+          ],
+          "variable": []
+        },
+        "description": "Check if an email address is already registered in the waitlist"
+      }
+    },
+    {
+      "name": "Get all waitlist entries",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/admin/waitlist",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "admin",
+            "waitlist"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all waitlist entries with optional filtering (admin only)"
+      }
+    },
+    {
+      "name": "Search waitlist entries",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/admin/waitlist/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "admin",
+            "waitlist",
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Search waitlist entries by name, email, or facility name (admin only)"
+      }
+    },
+    {
+      "name": "Get waitlist entry by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/admin/waitlist/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "admin",
+            "waitlist",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve a specific waitlist entry (admin only)"
+      }
+    },
+    {
+      "name": "Update waitlist entry status",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/admin/waitlist/{id}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "admin",
+            "waitlist",
+            ":id",
+            "status"
+          ],
+          "variable": []
+        },
+        "description": "Update the status of a waitlist entry (admin only)"
+      }
+    },
+    {
+      "name": "Send launch notifications to all pending entries",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/admin/waitlist/send-launch-notifications",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "admin",
+            "waitlist",
+            "send-launch-notifications"
+          ],
+          "variable": []
+        },
+        "description": "Send launch notification emails to all pending waitlist entries (admin only)"
+      }
+    },
+    {
+      "name": "Send launch notification to specific entry",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/admin/waitlist/{id}/send-launch-notification",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "admin",
+            "waitlist",
+            ":id",
+            "send-launch-notification"
+          ],
+          "variable": []
+        },
+        "description": "Send launch notification email to a specific waitlist entry (admin only)"
+      }
+    },
+    {
+      "name": "Get waitlist statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/admin/waitlist/stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "admin",
+            "waitlist",
+            "stats"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve comprehensive waitlist statistics (admin only)"
+      }
+    },
+    {
+      "name": "Get waitlist entries by location",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/admin/waitlist/location",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "admin",
+            "waitlist",
+            "location"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve waitlist entries filtered by city and/or state (admin only)"
+      }
+    },
+    {
+      "name": "Get recent waitlist registrations",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/admin/waitlist/recent",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "admin",
+            "waitlist",
+            "recent"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve recent waitlist entries (admin only)"
+      }
+    },
+    {
+      "name": "Cleanup old waitlist entries",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab_pharm/admin/waitlist/cleanup",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab_pharm",
+            "admin",
+            "waitlist",
+            "cleanup"
+          ],
+          "variable": []
+        },
+        "description": "Remove old declined waitlist entries (admin only)"
+      }
+    },
+    {
+      "name": "Verify email token (use main auth endpoint)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/auth/verify-email",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "verify-email"
+          ],
+          "variable": []
+        },
+        "description": "Use the main application's email verification endpoint: GET /auth/verify-email"
+      }
+    },
+    {
+      "name": "Login (use main auth endpoint)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ],
+          "variable": []
+        },
+        "description": "Use the main application's login endpoint: POST /auth/login"
+      }
+    }
+  ]
+}

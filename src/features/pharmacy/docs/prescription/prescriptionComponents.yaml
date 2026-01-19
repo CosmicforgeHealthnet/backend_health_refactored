@@ -1,0 +1,333 @@
+components:
+  schemas:
+    CreatePrescriptionRequest:
+      type: object
+      required:
+        - patientId
+        - medications
+      properties:
+        patientId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: ID of the patient
+        medications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Medication'
+          description: List of medications in the prescription
+        consultationId:
+          type: string
+          format: uuid
+          example: "789e4567-e89b-12d3-a456-426614174000"
+          description: ID of the associated consultation
+        doctorNotes:
+          type: string
+          example: "Take medication with food"
+          description: Additional notes from the doctor
+
+    Medication:
+      type: object
+      required:
+        - name
+        - dosage
+        - frequency
+        - duration
+        - quantity
+      properties:
+        name:
+          type: string
+          example: "Amoxicillin"
+          description: Name of the medication
+        dosage:
+          type: string
+          example: "500mg"
+          description: Dosage of the medication
+        frequency:
+          type: string
+          example: "Twice daily"
+          description: Frequency of administration
+        duration:
+          type: string
+          example: "7 days"
+          description: Duration of the medication course
+        quantity:
+          type: integer
+          example: 14
+          description: Total quantity of medication units
+
+    AssignPharmacyRequest:
+      type: object
+      required:
+        - pharmacyId
+      properties:
+        pharmacyId:
+          type: string
+          format: uuid
+          example: "456e4567-e89b-12d3-a456-426614174000"
+          description: ID of the pharmacy to assign
+        deliveryDetails:
+          type: object
+          properties:
+            address:
+              type: string
+              example: "123 Wellness Ave, Lagos, Nigeria"
+              description: Delivery address
+            instructions:
+              type: string
+              example: "Leave at front desk"
+              description: Delivery instructions
+
+    StartProcessingRequest:
+      type: object
+      required:
+        - pharmacistId
+      properties:
+        pharmacistId:
+          type: string
+          format: uuid
+          example: "789e4567-e89b-12d3-a456-426614174000"
+          description: ID of the assigned pharmacist
+
+    ProvideCostsRequest:
+      type: object
+      required:
+        - items
+        - paymentMethod
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceItem'
+          description: List of medication items with costs
+        deliveryFee:
+          type: number
+          example: 10.00
+          description: Delivery fee for the prescription
+        paymentMethod:
+          type: string
+          example: "credit_card"
+          description: Payment method for the prescription
+
+    InvoiceItem:
+      type: object
+      required:
+        - name
+        - unitPrice
+        - quantity
+      properties:
+        name:
+          type: string
+          example: "Amoxicillin"
+          description: Name of the medication
+        unitPrice:
+          type: number
+          example: 5.00
+          description: Price per unit of the medication
+        quantity:
+          type: integer
+          example: 14
+          description: Quantity of the medication
+
+    ChatMessageRequest:
+      type: object
+      required:
+        - message
+        - senderType
+      properties:
+        message:
+          type: string
+          example: "Can you confirm delivery time?"
+          description: Content of the chat message
+        senderType:
+          type: string
+          enum: ['patient', 'pharmacy']
+          example: "patient"
+          description: Type of sender (patient or pharmacy)
+
+    MarkReadyRequest:
+      type: object
+      required:
+        - readyType
+      properties:
+        readyType:
+          type: string
+          enum: ['delivery', 'pickup']
+          example: "delivery"
+          description: Type of readiness (delivery or pickup)
+        expectedDate:
+          type: string
+          format: date-time
+          example: "2025-08-30T10:00:00Z"
+          description: Expected delivery or pickup date (optional)
+
+    CancelPrescriptionRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          example: "Patient no longer needs medication"
+          description: Reason for cancelling the prescription
+
+    PrescriptionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: ID of the prescription
+        reference:
+          type: string
+          example: "RX-2025-0001"
+          description: Unique reference number for the prescription
+        doctorId:
+          type: string
+          format: uuid
+          example: "456e4567-e89b-12d3-a456-426614174000"
+          description: ID of the prescribing doctor
+        patientId:
+          type: string
+          format: uuid
+          example: "789e4567-e89b-12d3-a456-426614174000"
+          description: ID of the patient
+        consultationId:
+          type: string
+          format: uuid
+          example: "012e4567-e89b-12d3-a456-426614174000"
+          description: ID of the associated consultation
+        pharmacyId:
+          type: string
+          format: uuid
+          example: "345e4567-e89b-12d3-a456-426614174000"
+          description: ID of the assigned pharmacy
+        assignedPharmacistId:
+          type: string
+          format: uuid
+          example: "678e4567-e89b-12d3-a456-426614174000"
+          description: ID of the assigned pharmacist
+        medications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Medication'
+          description: List of medications in the prescription
+        doctorNotes:
+          type: string
+          example: "Take medication with food"
+          description: Additional notes from the doctor
+        status:
+          type: string
+          enum: ['PENDING', 'PATIENT_UPLOADED', 'PHARMACY_ASSIGNED', 'PHARMACY_PROCESSING', 'READY_FOR_DELIVERY', 'READY_FOR_PICKUP', 'COMPLETED', 'CANCELLED']
+          example: "PENDING"
+          description: Current status of the prescription
+        paymentStatus:
+          type: string
+          enum: ['UNPAID', 'PAID', 'CANCELLED']
+          example: "UNPAID"
+          description: Payment status of the prescription
+        deliveryAddress:
+          type: string
+          example: "123 Wellness Ave, Lagos, Nigeria"
+          description: Delivery address for the prescription
+        deliveryInstructions:
+          type: string
+          example: "Leave at front desk"
+          description: Delivery instructions
+        expectedDeliveryDate:
+          type: string
+          format: date-time
+          example: "2025-08-30T10:00:00Z"
+          description: Expected delivery date
+        actualDeliveryDate:
+          type: string
+          format: date-time
+          example: "2025-08-30T12:00:00Z"
+          description: Actual delivery or pickup date
+        fulfillmentHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/FulfillmentHistory'
+          description: History of status changes
+        chatMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+          description: List of chat messages related to the prescription
+        invoiceItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceItem'
+          description: List of invoice items for the prescription
+        deliveryFee:
+          type: number
+          example: 10.00
+          description: Delivery fee for the prescription
+        totalDue:
+          type: number
+          example: 80.00
+          description: Total amount due for the prescription
+        paymentMethod:
+          type: string
+          example: "credit_card"
+          description: Payment method for the prescription
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-08-26T12:00:00Z"
+          description: Creation date of the prescription
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-08-26T12:30:00Z"
+          description: Last update date of the prescription
+
+    FulfillmentHistory:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: ['PENDING', 'PATIENT_UPLOADED', 'PHARMACY_ASSIGNED', 'PHARMACY_PROCESSING', 'READY_FOR_DELIVERY', 'READY_FOR_PICKUP', 'COMPLETED', 'CANCELLED']
+          example: "PENDING"
+          description: Status at the time of the history entry
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-08-26T12:00:00Z"
+          description: Timestamp of the status change
+        note:
+          type: string
+          example: "Prescription created by doctor"
+          description: Note describing the status change
+
+    ChatMessage:
+      type: object
+      properties:
+        senderId:
+          type: string
+          format: uuid
+          example: "789e4567-e89b-12d3-a456-426614174000"
+          description: ID of the sender (patient or pharmacy)
+        senderType:
+          type: string
+          enum: ['patient', 'pharmacy']
+          example: "patient"
+          description: Type of sender
+        message:
+          type: string
+          example: "Can you confirm delivery time?"
+          description: Content of the message
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-08-26T12:00:00Z"
+          description: Timestamp of the message
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Invalid request data"
+          description: Error message describing the issue

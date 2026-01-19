@@ -1,0 +1,281 @@
+paths:
+  /api/payments/options:
+    get:
+      tags:
+        - Payments
+      summary: Get payment options with provider fees
+      description: Compare Flutterwave and Paystack fees and get recommendations for a specific payment amount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: 0.01
+            example: 5000.00
+          description: "Payment amount to calculate fees for"
+        - name: currency
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [NGN, GHS, USD, EUR, GBP]
+            example: "NGN"
+          description: "Currency for the payment"
+        - name: paymentMethodId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: "Optional payment method ID to check auto-billing eligibility"
+      responses:
+        '200':
+          description: Payment options retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentComponents.yaml#/components/schemas/PaymentOptionsResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '429':
+          $ref: '../components/transactionComponents.yaml#/components/responses/TooManyRequests'
+
+  /api/payments/initiate:
+    post:
+      tags:
+        - Payments
+      summary: Initiate a payment transaction
+      description: Create a new payment transaction for medical services with enhanced appointment logic and funds management
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/paymentComponents.yaml#/components/schemas/InitiatePaymentRequest'
+      responses:
+        '201':
+          description: Payment initiated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentComponents.yaml#/components/schemas/InitiatePaymentResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '429':
+          $ref: '../components/transactionComponents.yaml#/components/responses/TooManyRequests'
+          
+  /api/payments/callback:
+    get:
+      tags:
+        - Payments
+      summary: Handle payment callback from provider
+      description: Process payment callback from Flutterwave or Paystack after user completes payment
+      parameters:
+        - name: reference
+          in: query
+          schema:
+            type: string
+          description: "Payment reference from provider"
+        - name: tx_ref
+          in: query
+          schema:
+            type: string
+          description: "Transaction reference (Flutterwave)"
+        - name: transaction_id
+          in: query
+          schema:
+            type: string
+          description: "Transaction ID (Flutterwave)"
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: "Payment status"
+        - name: returnUrl
+          in: query
+          schema:
+            type: string
+          description: "Return URL for redirect"
+      responses:
+        '302':
+          description: Redirect to success/failure page
+        '400':
+          description: Invalid callback parameters
+
+  /api/payments/process:
+    post:
+      tags:
+        - Payments
+      summary: Process payment with selected provider
+      description: Complete payment processing with Flutterwave or Paystack, supporting both new card payments and stored payment methods
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/paymentComponents.yaml#/components/schemas/ProcessPaymentRequest'
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentComponents.yaml#/components/schemas/ProcessPaymentResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '429':
+          $ref: '../components/transactionComponents.yaml#/components/responses/TooManyRequests'
+
+  /api/payments/transaction/{transactionId}:
+    get:
+      tags:
+        - Payments
+      summary: Get transaction by ID with enhanced funds status
+      description: Retrieve transaction details with appointment-specific funds status, dispute windows, and timing information
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Transaction ID"
+      responses:
+        '200':
+          description: Transaction retrieved successfully with enhanced status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentComponents.yaml#/components/schemas/EnhancedTransaction'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+
+  /api/payments/history:
+    get:
+      tags:
+        - Payments
+      summary: Get user transaction history with enhanced status
+      description: Retrieve paginated transaction history with appointment timing information and funds status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: "Page number for pagination"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: "Number of items per page"
+        - name: serviceType
+          in: query
+          schema:
+            type: string
+            enum: [appointment, subscription, consultation, medication, lab_test]
+          description: "Filter by service type"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed, disputed, refunded, cancelled]
+          description: "Filter by transaction status"
+        - name: currency
+          in: query
+          schema:
+            type: string
+            enum: [NGN, GHS, USD, EUR, GBP]
+          description: "Filter by currency"
+      responses:
+        '200':
+          description: Transaction history retrieved successfully with enhanced status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentComponents.yaml#/components/schemas/TransactionHistoryResponse'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+
+  /api/payments/webhook/{provider}:
+    post:
+      tags:
+        - Payments
+      summary: Handle payment provider webhooks
+      description: Process webhooks from Flutterwave or Paystack with enhanced appointment logic and funds management
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [flutterwave, paystack]
+          description: "Payment provider name"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: "Webhook payload from payment provider"
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'

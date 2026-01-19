@@ -1,0 +1,61 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Heading -->
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+        Complete Your Withdrawal
+    </h1>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>{{fullName}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
+        Your withdrawal of <strong>{{currency}} {{amount}}</strong> to <strong>{{accountName}}</strong> 
+        has been initiated successfully!
+    </p>
+
+    <!-- Instructions -->
+    <p style="font-size: 16px; margin-bottom: 30px;">
+        To complete your withdrawal, you need to verify it with a One-Time Password (OTP). 
+        Click the button below to enter your OTP:
+    </p>
+
+    <!-- Button -->
+    {{> button url=otpCompletionUrl text="Complete Withdrawal" }}
+
+    <!-- Withdrawal Details Box -->
+    <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="font-size: 14px; margin: 0 0 10px 0; font-weight: bold; color: #374151;">
+            Withdrawal Details:
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #6b7280;">Amount: {{currency}} {{amount}}</p>
+        <p style="font-size: 14px; margin: 5px 0; color: #6b7280;">Account: {{accountName}}</p>
+        <p style="font-size: 14px; margin: 5px 0; color: #6b7280;">Reference: #{{withdrawalId}}</p>
+    </div>
+
+    <!-- Fallback link -->
+    <p style="font-size: 14px; color: #555; word-break: break-all; margin-bottom: 20px;">
+        If the button doesn't work, copy and paste this link into your browser:<br />
+        <a href="{{otpCompletionUrl}}" style="color: #272EA7;">{{otpCompletionUrl}}</a>
+    </p>
+
+    <!-- Important notice -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+        <p style="font-size: 14px; margin: 0; color: #92400e;">
+            <strong>Important:</strong> You will receive an OTP from Paystack to complete this withdrawal.
+            Please check your email and SMS for the OTP code.
+        </p>
+    </div>
+
+    <!-- Security notice -->
+    <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
+        If you didn't request this withdrawal, please contact our support team immediately.
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px;">
+        The CosmicForge Team
+    </p>
+
+</div>

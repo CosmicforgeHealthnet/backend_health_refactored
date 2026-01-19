@@ -1,0 +1,100 @@
+components:
+  schemas:
+    # =============================================================================
+    # ACTIVITY LOG SCHEMAS
+    # =============================================================================
+    
+    AccessType:
+      type: string
+      enum:
+        - view
+        - download
+        - upload
+        - delete
+        - share
+        - modify
+      description: "Type of access action"
+      example: "download"
+    
+    ActivityLogsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        activity:
+          type: object
+          properties:
+            logs:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  accessType:
+                    $ref: "#/components/schemas/AccessType"
+                  ipAddress:
+                    type: string
+                    example: "192.168.1.100"
+                  userAgent:
+                    type: string
+                    example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+                  downloadDuration:
+                    type: integer
+                    description: "Duration in milliseconds (for downloads)"
+                    example: 1250
+                  accessedAt:
+                    type: string
+                    format: date-time
+                    example: "2024-06-13T10:30:00Z"
+                  metadata:
+                    type: object
+                    description: "Additional context data"
+                    example:
+                      action: "file_downloaded"
+                      fileSize: 2048576
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "987fcdeb-51a2-43d1-9c4e-123456789abc"
+                      fullName:
+                        type: string
+                        example: "Dr. John Smith"
+                  folder:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "456789ab-cdef-1234-5678-90abcdef1234"
+                      name:
+                        type: string
+                        example: "Medical Records 2024"
+                  file:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "fedcba98-7654-3210-fedc-ba9876543210"
+                      originalFileName:
+                        type: string
+                        example: "lab_results_june.pdf"
+            total:
+              type: integer
+              example: 150
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 50
+            totalPages:
+              type: integer
+              example: 3

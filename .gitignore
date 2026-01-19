@@ -1,0 +1,46 @@
+# Node modules
+node_modules/
+
+# Environment files
+.env*
+!.env.example
+.env.development
+.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Build output
+dist/
+build/
+
+# TypeORM generated files (if any)
+*.tsbuildinfo
+
+# Coverage reports
+coverage/
+
+# Runtime files
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# OS files
+.DS_Store
+
+# IDE/editor settings
+.vscode/
+.idea/
+
+#BASH SYSTEM
+.connect_db.sh
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+*.env

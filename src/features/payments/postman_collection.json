@@ -1,0 +1,1127 @@
+{
+  "info": {
+    "name": "CosmicForge - Payments Feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get user's wallet",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/my",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "my"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve the authenticated user's wallet information including balance,\nstatus, and recent activity. Auto-creates wallet for patients if not exists.\n"
+      }
+    },
+    {
+      "name": "Create wallet for user",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/create",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "create"
+          ],
+          "variable": []
+        },
+        "description": "Create a new wallet for the authenticated user. Users can only have one wallet.\nFacility wallets require a valid facility ID.\n"
+      }
+    },
+    {
+      "name": "Search transactions (admin only)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/admin/transactions/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "admin",
+            "transactions",
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Search across all wallet transactions using transaction number,\ndescription, or external reference. Admin access required.\n"
+      }
+    },
+    {
+      "name": "Get system wallet statistics (admin only)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/admin/stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "admin",
+            "stats"
+          ],
+          "variable": []
+        },
+        "description": "Get comprehensive system-wide wallet statistics including total balance,\ntransaction volumes, and system health metrics. Admin access required.\n"
+      }
+    },
+    {
+      "name": "Manually credit wallet (admin only)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/admin/credit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "admin",
+            "credit"
+          ],
+          "variable": []
+        },
+        "description": "Manually add money to any wallet for administrative purposes\nsuch as refunds, adjustments, or customer service credits.\n"
+      }
+    },
+    {
+      "name": "Process payment webhook",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/webhook/payment",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "webhook",
+            "payment"
+          ],
+          "variable": []
+        },
+        "description": "Internal endpoint for processing payment webhooks from payment providers.\nUsed to complete top-up transactions after successful payment processing.\n\n**Note:** In production, this endpoint should be secured with webhook\nsignature verification and IP allowlisting.\n"
+      }
+    },
+    {
+      "name": "Get wallet transaction history",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/my/transactions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "my",
+            "transactions"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve paginated transaction history for the user's wallet.\nIncludes all transaction types: payments, top-ups, refunds, transfers.\n"
+      }
+    },
+    {
+      "name": "Get wallet statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/my/stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "my",
+            "stats"
+          ],
+          "variable": []
+        },
+        "description": "Get comprehensive wallet statistics including balance breakdown,\ntransaction summaries, and recent activity analytics.\n"
+      }
+    },
+    {
+      "name": "Create wallet top-up",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/topup",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "topup"
+          ],
+          "variable": []
+        },
+        "description": "Initiate a wallet top-up using various payment methods.\nAmount must be between $0.01 and $10,000.\n"
+      }
+    },
+    {
+      "name": "Set wallet PIN",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/my/pin",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "my",
+            "pin"
+          ],
+          "variable": []
+        },
+        "description": "Set a 4-6 digit PIN for wallet security. PIN is required for\nsensitive operations like transfers and large payments.\n"
+      }
+    },
+    {
+      "name": "Verify wallet PIN",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/my/verify-pin",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "my",
+            "verify-pin"
+          ],
+          "variable": []
+        },
+        "description": "Verify wallet PIN for authorization. Failed attempts are tracked\nand wallet will be locked after 3 consecutive failures.\n"
+      }
+    },
+    {
+      "name": "Transfer money between wallets",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/wallet/transfer",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "wallet",
+            "transfer"
+          ],
+          "variable": []
+        },
+        "description": "Transfer money from user's wallet to another wallet.\nRequires sufficient balance and optional PIN verification.\n"
+      }
+    },
+    {
+      "name": "Create appointment payment with provider redirect",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/appointment/create",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "appointment",
+            "create"
+          ],
+          "variable": []
+        },
+        "description": "Create appointment payment and get direct redirect URL to payment provider (Flutterwave/Paystack)"
+      }
+    },
+    {
+      "name": "Retry failed appointment payment",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/appointment/{transactionId}/retry",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "appointment",
+            ":transactionId",
+            "retry"
+          ],
+          "variable": []
+        },
+        "description": "Retry a failed appointment payment with same or different provider"
+      }
+    },
+    {
+      "name": "Get cancelled appointment transactions summary",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/cancelled-transactions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "cancelled-transactions"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve summary of cancelled appointment transactions (users see own, admins see all)"
+      }
+    },
+    {
+      "name": "Handle appointment date change",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/appointment/date-change",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "appointment",
+            "date-change"
+          ],
+          "variable": []
+        },
+        "description": "Update appointment date and recalculate funds timing and dispute windows"
+      }
+    },
+    {
+      "name": "Get appointment payment status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/appointment/{transactionId}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "appointment",
+            ":transactionId",
+            "status"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve current status of an appointment payment including funds status and timing"
+      }
+    },
+    {
+      "name": "Cancel appointment payment",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/appointment/{transactionId}/cancel",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "appointment",
+            ":transactionId",
+            "cancel"
+          ],
+          "variable": []
+        },
+        "description": "Cancel an appointment payment and process refund (keeps service fees/VAT, refunds appointment fee)"
+      }
+    },
+    {
+      "name": "Reschedule appointment payment",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/appointment/{transactionId}/reschedule",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "appointment",
+            ":transactionId",
+            "reschedule"
+          ],
+          "variable": []
+        },
+        "description": "Update appointment date and recalculate funds timing and dispute windows"
+      }
+    },
+    {
+      "name": "Get appointment reschedule history",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/appointment/{transactionId}/history",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "appointment",
+            ":transactionId",
+            "history"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve reschedule history and current status for a specific appointment payment"
+      }
+    },
+    {
+      "name": "Get cancelled appointments summary",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/appointments/cancelled",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "appointments",
+            "cancelled"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve summary of cancelled appointment payments (users see own, admins see all)"
+      }
+    },
+    {
+      "name": "Get appointment payment overview",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/appointments/overview",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "appointments",
+            "overview"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve appointment payments grouped by status (waiting for appointment, pending dispute, released)"
+      }
+    },
+    {
+      "name": "Create a refund request",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/disputes/create",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "disputes",
+            "create"
+          ],
+          "variable": []
+        },
+        "description": "Patient creates a dispute for transaction refund"
+      }
+    },
+    {
+      "name": "Respond to dispute",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/disputes/respond",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "disputes",
+            "respond"
+          ],
+          "variable": []
+        },
+        "description": "Doctor approves or escalates a dispute"
+      }
+    },
+    {
+      "name": "Get disputes for doctor",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/disputes/doctor",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "disputes",
+            "doctor"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all disputes for authenticated doctor"
+      }
+    },
+    {
+      "name": "Get disputes for patient",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/disputes/patient",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "disputes",
+            "patient"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all disputes for authenticated patient"
+      }
+    },
+    {
+      "name": "Get all pending disputes (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/disputes/pending",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "disputes",
+            "pending"
+          ],
+          "variable": []
+        },
+        "description": "Admin endpoint to retrieve all pending disputes"
+      }
+    },
+    {
+      "name": "Get payment options with provider fees",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/options",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "options"
+          ],
+          "variable": []
+        },
+        "description": "Compare Flutterwave and Paystack fees and get recommendations for a specific payment amount"
+      }
+    },
+    {
+      "name": "Initiate a payment transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/initiate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "initiate"
+          ],
+          "variable": []
+        },
+        "description": "Create a new payment transaction for medical services with enhanced appointment logic and funds management"
+      }
+    },
+    {
+      "name": "Handle payment callback from provider",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/callback",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "callback"
+          ],
+          "variable": []
+        },
+        "description": "Process payment callback from Flutterwave or Paystack after user completes payment"
+      }
+    },
+    {
+      "name": "Process payment with selected provider",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/process",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "process"
+          ],
+          "variable": []
+        },
+        "description": "Complete payment processing with Flutterwave or Paystack, supporting both new card payments and stored payment methods"
+      }
+    },
+    {
+      "name": "Get transaction by ID with enhanced funds status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/transaction/{transactionId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "transaction",
+            ":transactionId"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve transaction details with appointment-specific funds status, dispute windows, and timing information"
+      }
+    },
+    {
+      "name": "Get user transaction history with enhanced status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/history",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "history"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve paginated transaction history with appointment timing information and funds status"
+      }
+    },
+    {
+      "name": "Handle payment provider webhooks",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/webhook/{provider}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "webhook",
+            ":provider"
+          ],
+          "variable": []
+        },
+        "description": "Process webhooks from Flutterwave or Paystack with enhanced appointment logic and funds management"
+      }
+    },
+    {
+      "name": "Get doctor wallet",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve doctor's wallet with balance and currency conversion.\n\n**Note**: Wallets are automatically created when doctor verification is approved.\nIf you don't have a wallet, complete your doctor verification first.\n"
+      }
+    },
+    {
+      "name": "Update wallet display currency",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/currency",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "currency"
+          ],
+          "variable": []
+        },
+        "description": "Change the preferred display currency for wallet balance display"
+      }
+    },
+    {
+      "name": "Get supported currencies",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/supported-currencies",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "supported-currencies"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve list of supported currencies from both Flutterwave and Paystack for wallet operations.\nUse this to populate currency selection dropdown when updating display currency.\n\n**Features:**\n- Real-time currency support from both processors\n- Exchange rates from USD\n- Fee information per processor\n- Recommended currencies highlighted\n"
+      }
+    },
+    {
+      "name": "Get supported banks",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/supported-banks",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "supported-banks"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve list of supported banks from both Flutterwave and Paystack.\nUse this to populate bank selection dropdown for withdrawals.\n"
+      }
+    },
+    {
+      "name": "Resolve bank account details",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/resolve-account",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "resolve-account"
+          ],
+          "variable": []
+        },
+        "description": "Automatically resolve and validate bank account details using account number and bank code.\nThis uses smart routing to try both Flutterwave and Paystack for the best results.\n\n**Use Case**: Call this after user selects bank and enters account number to auto-fill account name.\n"
+      }
+    },
+    {
+      "name": "Complete withdrawal with custom OTP verification",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/withdraw/{withdrawalId}/verify-otp",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "withdraw",
+            ":withdrawalId",
+            "verify-otp"
+          ],
+          "variable": []
+        },
+        "description": "Complete a withdrawal using custom OTP sent via email.\nReplace the old Paystack OTP system with CosmicForge's own OTP.\n"
+      }
+    },
+    {
+      "name": "Resend OTP for withdrawal",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/withdraw/{withdrawalId}/resend-otp",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "withdraw",
+            ":withdrawalId",
+            "resend-otp"
+          ],
+          "variable": []
+        },
+        "description": "Generate and send a new OTP code for withdrawal verification"
+      }
+    },
+    {
+      "name": "Set wallet password",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "password"
+          ],
+          "variable": []
+        },
+        "description": "Set a password for wallet operations (first time setup)"
+      }
+    },
+    {
+      "name": "Update wallet password",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "password"
+          ],
+          "variable": []
+        },
+        "description": "Change existing wallet password (requires current password)"
+      }
+    },
+    {
+      "name": "Request wallet password reset",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/password/reset-request",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "password",
+            "reset-request"
+          ],
+          "variable": []
+        },
+        "description": "Send password reset email to doctor"
+      }
+    },
+    {
+      "name": "Reset wallet password with token",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/password/reset",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "password",
+            "reset"
+          ],
+          "variable": []
+        },
+        "description": "Reset password using token from email (public endpoint)"
+      }
+    },
+    {
+      "name": "Verify password reset token",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/password/reset/verify/{token}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "password",
+            "reset",
+            "verify",
+            ":token"
+          ],
+          "variable": []
+        },
+        "description": "Check if reset token is valid (public endpoint for frontend)"
+      }
+    },
+    {
+      "name": "Check if wallet password is set",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/password/check",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "password",
+            "check"
+          ],
+          "variable": []
+        },
+        "description": "Check whether doctor has set a wallet password"
+      }
+    },
+    {
+      "name": "Verify wallet password",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/password/verify",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "password",
+            "verify"
+          ],
+          "variable": []
+        },
+        "description": "Verify wallet password for sensitive operations"
+      }
+    },
+    {
+      "name": "Initiate withdrawal request (Smart Routing)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/withdraw",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "withdraw"
+          ],
+          "variable": []
+        },
+        "description": "Request withdrawal from doctor wallet to bank account using smart routing.\n\n**Smart Routing Features:**\n- Automatically checks real-time balances on both Flutterwave and Paystack\n- Routes to processor with sufficient funds\n- Splits withdrawal across both processors if needed\n- Optimizes for best success rates and fees\n\n**Requirements:**\n- Minimum withdrawal: $10 USD\n- Available balance must cover withdrawal amount\n- Wallet must not be frozen\n- Rate limited: 3 withdrawals per day\n\n**Tip**: Use `/resolve-account` endpoint first to auto-fill account details.\n"
+      }
+    },
+    {
+      "name": "Get withdrawal history (Enhanced with Smart Routing info)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/withdrawals",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "withdrawals"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve paginated withdrawal history for doctor including smart routing information.\nShows which processor(s) were used for each withdrawal.\n"
+      }
+    },
+    {
+      "name": "Create wallet for doctor (Admin only)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/create",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "create"
+          ],
+          "variable": []
+        },
+        "description": "Manually create a wallet for a doctor (typically done automatically)"
+      }
+    },
+    {
+      "name": "Freeze wallet (Admin only)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/freeze",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "freeze"
+          ],
+          "variable": []
+        },
+        "description": "Freeze a doctor's wallet to prevent withdrawals"
+      }
+    },
+    {
+      "name": "Unfreeze wallet (Admin only)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/wallet/unfreeze",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "wallet",
+            "unfreeze"
+          ],
+          "variable": []
+        },
+        "description": "Unfreeze a doctor's wallet to allow withdrawals"
+      }
+    }
+  ]
+}

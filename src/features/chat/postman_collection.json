@@ -1,0 +1,215 @@
+{
+  "info": {
+    "name": "CosmicForge - Chat Feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create appointment chat",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/appointment",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "appointment"
+          ],
+          "variable": []
+        },
+        "description": "Create a scheduled chat session for medical appointments (doctors only).\n\n**WebSocket Integration:**\n- **Event: appointment_joined**: Notifies when the appointment chat is joined.\n  ```javascript\n  socket.on('appointment_joined', (data) => {\n    console.log('Joined appointment chat:', data.appointmentChat);\n    initializeAppointmentUI(data.room);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function createAppointmentChat() {\n  const appointmentData = {\n    appointmentId: \"apt123\",\n    patientId: \"user789\",\n    scheduledStartTime: \"2025-06-15T14:00:00Z\",\n    scheduledEndTime: \"2025-06-15T14:30:00Z\",\n    settings: { autoCloseEnabled: true, preJoinAllowed: false, postChatDuration: 300 }\n  };\n  const response = await chatService.createAppointmentChat(appointmentData);\n  console.log('Appointment chat created:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Get user's appointment chats",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/appointment",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "appointment"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve appointment chats for the authenticated user (as doctor or patient).\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function getAppointmentChats(status) {\n  const response = await chatService.getAppointmentChats(status);\n  console.log('Appointment chats:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Get appointment chat status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/appointment/{appointmentChatId}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "appointment",
+            ":appointmentChatId",
+            "status"
+          ],
+          "variable": []
+        },
+        "description": "Get detailed status and timing information for an appointment chat.\n\n**WebSocket Integration:**\n- **Event: check_appointment_status**: Client emits to check appointment status.\n  ```javascript\n  socket.emit('check_appointment_status', {\n    appointmentChatId: 'appointment-uuid'\n  });\n  ```\n- **Event: appointment_status**: Notifies of appointment status updates.\n  ```javascript\n  socket.on('appointment_status', (status) => {\n    console.log('Appointment status:', status.timeStatus);\n    console.log('Time until start:', status.timeUntilStart);\n    updateAppointmentTimer(status);\n  });\n  ```\n\n**Frontend Example (React Component):**\n```typescript\nuseEffect(() => {\n  socket?.emit('check_appointment_status', { appointmentChatId });\n  socket?.on('appointment_status', (status) => {\n    setAppointmentStatus(status);\n    setCanJoin(status.timeStatus === 'active' || status.preJoinAllowed);\n  });\n}, [socket, appointmentChatId]);\n```\n"
+      }
+    },
+    {
+      "name": "Join appointment chat",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/appointment/{appointmentChatId}/join",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "appointment",
+            ":appointmentChatId",
+            "join"
+          ],
+          "variable": []
+        },
+        "description": "Join a scheduled appointment chat session.\n\n**WebSocket Integration:**\n- **Event: join_appointment_chat**: Client emits to join an appointment chat.\n  ```javascript\n  socket.emit('join_appointment_chat', {\n    appointmentChatId: 'appointment-uuid'\n  });\n  ```\n- **Event: appointment_joined**: Notifies when successfully joined.\n  ```javascript\n  socket.on('appointment_joined', (data) => {\n    console.log('Joined appointment chat:', data.appointmentChat);\n    initializeAppointmentUI(data.room);\n  });\n  ```\n- **Event: appointment_join_denied**: Notifies if join attempt is denied.\n  ```javascript\n  socket.on('appointment_join_denied', (data) => {\n    console.log('Cannot join:', data.reason);\n    if (data.availableAt) {\n      console.log('Available at:', data.availableAt);\n    }\n  });\n  ```\n- **Event: appointment_participant_joined**: Notifies when another participant joins.\n  ```javascript\n  socket.on('appointment_participant_joined', (data) => {\n    console.log(`${data.user.name} joined the appointment`);\n  });\n  ```\n\n**Frontend Example (React Component):**\n```typescript\nconst joinAppointment = () => {\n  socket?.emit('join_appointment_chat', { appointmentChatId });\n};\n```\n"
+      }
+    },
+    {
+      "name": "End appointment chat",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/appointment/{appointmentChatId}/end",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "appointment",
+            ":appointmentChatId",
+            "end"
+          ],
+          "variable": []
+        },
+        "description": "End an active appointment chat session.\n\n**WebSocket Integration:**\n- **Event: appointment_ended**: Notifies when the appointment chat ends.\n  ```javascript\n  socket.on('appointment_ended', (data) => {\n    console.log('Appointment ended');\n    showAppointmentEndedUI(data.appointmentChat);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function endAppointmentChat(appointmentChatId) {\n  await chatService.endAppointmentChat(appointmentChatId);\n  console.log('Appointment chat ended');\n}\n```\n"
+      }
+    },
+    {
+      "name": "General AI Chat",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chatbot/chat",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chatbot",
+            "chat"
+          ],
+          "variable": []
+        },
+        "description": "AI-Doctor endpoint for patient consultations and general health queries.\nProvides medical information, symptom analysis, and health advice.\nIntegrates with Flask backend AI service for intelligent responses.\n"
+      }
+    },
+    {
+      "name": "Medical Assistant for Healthcare Professionals",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chatbot/doctorchat",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chatbot",
+            "doctorchat"
+          ],
+          "variable": []
+        },
+        "description": "Specialized AI chat endpoint for doctors and healthcare professionals.\nProvides detailed medical information, drug interactions, treatment protocols,\nclinical decision support, and professional medical guidance.\nRequires doctor role authentication.\n"
+      }
+    },
+    {
+      "name": "Get User's Chat Sessions",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chatbot/sessions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chatbot",
+            "sessions"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all chat sessions for the authenticated user.\nSessions are ordered by last activity (most recent first).\nSupports filtering by session type.\n"
+      }
+    },
+    {
+      "name": "Get Session Details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chatbot/sessions/{sessionId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chatbot",
+            "sessions",
+            ":sessionId"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve a specific chat session with all messages.\nMessages are ordered chronologically (oldest first).\nOnly the session owner can access the session.\n"
+      }
+    },
+    {
+      "name": "Check Chatbot Service Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chatbot/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chatbot",
+            "health"
+          ],
+          "variable": []
+        },
+        "description": "Check the health status of the chatbot service and Flask backend connectivity.\nUseful for monitoring and debugging the AI service integration.\n"
+      }
+    }
+  ]
+}

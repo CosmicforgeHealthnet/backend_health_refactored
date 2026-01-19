@@ -1,0 +1,74 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Status Banner -->
+    <div style="background: linear-gradient(135deg, #7c3aed, #5b21b6); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Consultation Completed</h2>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Well done, <strong>Dr. {{doctorName}}</strong>!
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your consultation with <strong>{{patientName}}</strong> has been completed and the meeting has been automatically ended.
+    </p>
+
+    <!-- Consultation Summary -->
+    <div style="background-color: #f3e8ff; border-left: 4px solid #7c3aed; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #5b21b6; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Consultation Summary
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Patient:</strong> {{patientName}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Completed:</strong> {{endTime}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>End Reason:</strong> {{endReason}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Appointment ID:</strong> #{{appointmentId}}
+        </p>
+    </div>
+
+    <!-- Next Steps -->
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #15803d; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Next Steps
+        </h3>
+        <ul style="color: #166534; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+            <li>Add consultation notes and treatment plan</li>
+            <li>Issue any necessary prescriptions</li>
+            <li>Schedule follow-up appointments if needed</li>
+            <li>Order lab tests or investigations</li>
+            <li>Send any additional instructions to patient</li>
+        </ul>
+    </div>
+
+    <!-- Action Buttons -->
+    {{!-- <div style="text-align: center; margin: 30px 0;">
+        {{> button url=addNotesLink text="Add Notes" }}
+    </div> --}}
+
+    <div style="text-align: center; margin: 20px 0;">
+        <a href="{{dashboardLink}}" style="color: #3964EA; text-decoration: none; font-weight: bold;">
+            📋 View Dashboard
+        </a>
+    </div>
+
+    <!-- Important Reminder -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #92400e; margin: 0; font-weight: 600; text-align: center; font-size: 14px;">
+            Please complete your consultation notes within the next 24 hours while the details are fresh in your memory.
+        </p>
+    </div>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px; text-align: center;">
+        Thank you for providing excellent healthcare through our platform.<br><br>
+        <strong>The CosmicForge Health Team</strong>
+    </p>
+
+</div>

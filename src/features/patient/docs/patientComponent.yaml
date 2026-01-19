@@ -1,0 +1,377 @@
+components:
+  schemas:
+    PatientProfile:
+      type: object
+      required:
+        # - fullName
+        # - email
+      properties:
+        # fullName:
+        #   type: string
+        #   example: John Doe
+        profilePhoto:
+          type: string
+          format: uri
+          example: https://example.com/photos/patient.jpg
+          description: URL to the patient's profile photo
+        gender:
+          type: string
+          example: Male
+        dateOfBirth:
+          type: string
+          format: date
+          example: 1980-01-01
+        genotype:
+          type: string
+          example: AA
+        bloodGroup:
+          type: string
+          example: O+
+        nationality:
+          type: string
+          example: Nigerian
+        language:
+          type: string
+          example: English
+        mobileNumber:
+          type: string
+          example: +234123456789
+        # email:
+        #   type: string
+        #   format: email
+        #   example: john.doe@example.com
+        address:
+          type: string
+          example: 123 Main St, Lagos
+        emergencyContactFullName:
+          type: string
+          example: Jane Doe
+        emergencyContactMobile:
+          type: string
+          example: +234987654321
+        emergencyContactRelationship:
+          type: string
+          example: Spouse
+        height:
+          type: number
+          format: float
+          example: 175.5
+        weight:
+          type: number
+          format: float
+          example: 70.2
+        bmi:
+          type: number
+          format: float
+          example: 22.8
+        bloodPressure:
+          type: string
+          example: 120/80
+        heartRate:
+          type: integer
+          example: 72
+        respiratoryRate:
+          type: integer
+          example: 16
+        temperature:
+          type: number
+          format: float
+          example: 36.6
+        spO2:
+          type: integer
+          example: 98
+        bloodGlucose:
+          type: number
+          format: float
+          example: 90.5
+        smokes:
+          type: boolean
+          example: false
+        drinksAlcohol:
+          type: boolean
+          example: false
+        physicalActivityLevel:
+          type: string
+          example: Moderate
+        dietType:
+          type: string
+          example: Omnivore
+        sleepDuration:
+          type: number
+          format: float
+          example: 7.5
+        profileType:
+          type: string
+          example: individual
+        medicalConditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalCondition'
+        surgeries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Surgery'
+        allergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Allergy'
+        familyHistories:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyHistory'
+        medications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Medication'
+        immunizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Immunization'
+        healthInsurance:
+          $ref: '#/components/schemas/HealthInsurance'
+        disability:
+          $ref: '#/components/schemas/Disability'
+        consent:
+          $ref: '#/components/schemas/Consent'
+
+    MedicalCondition:
+      type: object
+      required:
+        - name
+        - year
+        - status
+      properties:
+        name:
+          type: string
+          example: Diabetes
+        year:
+          type: integer
+          example: 2020
+        status:
+          type: string
+          example: Active
+
+    Surgery:
+      type: object
+      required:
+        - name
+        - date
+      properties:
+        name:
+          type: string
+          example: Appendectomy
+        date:
+          type: string
+          format: date
+          example: 2015-06-10
+        location:
+          type: string
+          example: Lagos General Hospital
+
+    Allergy:
+      type: object
+      required:
+        - type
+        - allergen
+      properties:
+        type:
+          type: string
+          example: Food
+        allergen:
+          type: string
+          example: Peanuts
+        description:
+          type: string
+          example: Severe allergic reaction to peanuts
+
+    FamilyHistory:
+      type: object
+      required:
+        - medicalCondition
+        - affectedRelative
+      properties:
+        medicalCondition:
+          type: string
+          example: Heart Disease
+        affectedRelative:
+          type: string
+          example: Father
+
+    Medication:
+      type: object
+      required:
+        - name
+        - dose
+        - frequency
+      properties:
+        name:
+          type: string
+          example: Metformin
+        dose:
+          type: string
+          example: 500mg
+        frequency:
+          type: string
+          example: Twice daily
+
+    Immunization:
+      type: object
+      required:
+        - vaccine
+        - date
+        - dose
+      properties:
+        vaccine:
+          type: string
+          example: Pfizer COVID-19
+        certificateUrl:
+          type: string
+          format: uri
+          example: https://example.com/certificate.pdf
+        date:
+          type: string
+          format: date
+          example: 2021-12-01
+        dose:
+          type: string
+          example: Second
+
+    HealthInsurance:
+      type: object
+      required:
+        - providerName
+        - validityDate
+        - policyNo
+      properties:
+        providerName:
+          type: string
+          example: HealthPlus
+        validityDate:
+          type: string
+          format: date
+          example: 2026-05-31
+        policyNo:
+          type: string
+          example: HP123456
+        healthCardUrl:
+          type: string
+          format: uri
+          example: https://example.com/healthcard.pdf
+
+    Disability:
+      type: object
+      required:
+        - hasDisability
+      properties:
+        hasDisability:
+          type: boolean
+          example: false
+
+    Consent:
+      type: object
+      required:
+        - telemedicine
+        - dataCollection
+        - recordSharing
+        - emergencyContact
+        - preferredCommunication
+        - languagePreference
+        - healthTips
+        - familyAccess
+        - notificationsAppointments
+        - notificationsPrescriptions
+        - notificationsTestResults
+        - notificationsPromotions
+        - signature
+      properties:
+        telemedicine:
+          type: boolean
+          example: true
+        dataCollection:
+          type: boolean
+          example: true
+        recordSharing:
+          type: boolean
+          example: false
+        emergencyContact:
+          type: boolean
+          example: true
+        preferredCommunication:
+          type: string
+          example: Email
+        languagePreference:
+          type: string
+          example: English
+        healthTips:
+          type: boolean
+          example: true
+        familyAccess:
+          type: boolean
+          example: false
+        notificationsAppointments:
+          type: boolean
+          example: true
+        notificationsPrescriptions:
+          type: boolean
+          example: true
+        notificationsTestResults:
+          type: boolean
+          example: true
+        notificationsPromotions:
+          type: boolean
+          example: false
+        signature:
+          type: string
+          example: John Doe
+
+    PatientProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        fullName:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        profileType:
+          type: string
+          example: individual
+        createdAt:
+          type: string
+          format: date-time
+          example: 2025-05-31T15:47:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2025-05-31T15:47:00Z
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Patient profile not found
+
+  parameters:
+    PatientProfileId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The UUID of the patient profile
+
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The UUID of the associated user

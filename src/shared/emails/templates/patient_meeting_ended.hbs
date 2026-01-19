@@ -1,0 +1,84 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Status Banner -->
+    <div style="background: linear-gradient(135deg, #10b981, #059669); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Consultation Completed</h2>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Thank you, <strong>{{patientName}}</strong>!
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your consultation with <strong>Dr. {{doctorName}}</strong> has been completed. 
+        We hope you received the care and answers you needed.
+    </p>
+
+    <!-- Consultation Summary -->
+    <div style="background-color: #F5F8FF; border-left: 4px solid #3964EA; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #3964EA; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Consultation Summary
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Doctor:</strong> Dr. {{doctorName}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Completed:</strong> {{endTime}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>End Reason:</strong> {{endReason}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Appointment ID:</strong> #{{appointmentId}}
+        </p>
+    </div>
+
+    <!-- What's Next -->
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #15803d; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            What's Next?
+        </h3>
+        <ul style="color: #166534; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+            <li>Dr. {{doctorName}} will add consultation notes and treatment plan</li>
+            <li>Check for any prescriptions or recommendations</li>
+            <li>Watch for follow-up instructions via email</li>
+            <li>Book follow-up appointments if recommended</li>
+            <li>Complete any ordered lab tests or investigations</li>
+        </ul>
+    </div>
+
+    <!-- Action Buttons -->
+    {{!-- <div style="text-align: center; margin: 30px 0;">
+        {{> button url=feedbackLink text="Leave Feedback" }}
+    </div> --}}
+
+    <div style="text-align: center; margin: 20px 0;">
+        <a href="{{dashboardLink}}" style="color: #3964EA; text-decoration: none; font-weight: bold;">
+            📋 View My Appointments
+        </a>
+    </div>
+
+    <!-- Health Tip -->
+    <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #0c4a6e; margin: 0; font-weight: 600; text-align: center; font-size: 14px;">
+            <strong>Health Tip:</strong> Follow Dr. {{doctorName}}'s recommendations and don't hesitate to book 
+            another consultation if you have concerns.
+        </p>
+    </div>
+
+    <!-- Feedback Reminder -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #92400e; margin: 0; font-weight: 600; text-align: center; font-size: 14px;">
+            Your feedback helps us improve our service and helps other patients choose the right doctor. 
+            Please take a moment to share your experience.
+        </p>
+    </div>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px; text-align: center;">
+        We hope you feel better soon! If you have any questions, don't hesitate to reach out.<br><br>
+        <strong>The CosmicForge Health Team</strong>
+    </p>
+
+</div>

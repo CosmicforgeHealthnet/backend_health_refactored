@@ -1,0 +1,127 @@
+{
+  "info": {
+    "name": "CosmicForge - NOTIFICATION Feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get user notifications",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/notifications",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "notifications"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve notifications for the authenticated user with filtering and pagination options.\n\n**WebSocket Integration:**\n- **Event: notification**: Sent when a new notification is created.\n  ```javascript\n  socket.on('notification', (notification) => {\n    console.log('New notification:', notification.message);\n    displayNotification(notification);\n  });\n  ```\n\n**Frontend Example (React Hook):**\n```typescript\nimport { useNotifications } from './hooks/useNotifications';\nconst { notifications, counts } = useNotifications(token);\nuseEffect(() => {\n  console.log('Notifications:', notifications);\n  console.log('Unread count:', counts.unread);\n}, [notifications, counts]);\n```\n"
+      }
+    },
+    {
+      "name": "Create notification",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/notifications",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "notifications"
+          ],
+          "variable": []
+        },
+        "description": "Create a new notification for a specific user.\n\n**WebSocket Integration:**\n- **Event: notification**: Automatically sent to the target user.\n  ```javascript\n  socket.on('notification', (notification) => {\n    console.log('New notification:', notification.message);\n    updateNotificationUI(notification);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst notificationService = new NotificationAPIService('https://api.example.com', token);\nasync function createNotification() {\n  const notificationData = {\n    userId: \"user456\",\n    type: \"alert\",\n    message: \"Critical lab results require immediate attention\",\n    metadata: { labResultId: \"lab123\", priority: \"high\" }\n  };\n  const response = await notificationService.createNotification(notificationData);\n  console.log('Notification created:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Get notification counts",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/notifications/counts",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "notifications",
+            "counts"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve notification counts and statistics for the authenticated user.\n\n**WebSocket Integration:**\n- **Event: get_notification_counts**: Client can request counts via WebSocket.\n  ```javascript\n  socket.emit('get_notification_counts', userId);\n  socket.on('notification_counts', (counts) => {\n    console.log('Notification counts:', counts);\n    updateBadgeCount(counts.unread);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst notificationService = new NotificationAPIService('https://api.example.com', token);\nasync function getNotificationCounts() {\n  const response = await notificationService.getNotificationCounts();\n  console.log('Counts:', response.data);\n  updateNotificationBadge(response.data.unread);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Mark notification as read",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/notifications/{id}/read",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "notifications",
+            ":id",
+            "read"
+          ],
+          "variable": []
+        },
+        "description": "Mark a specific notification as read.\n\n**WebSocket Integration:**\n- **Event: mark_notification_read**: Client can mark as read via WebSocket.\n  ```javascript\n  socket.emit('mark_notification_read', {\n    notificationId: 'notif123',\n    userId: 'user456'\n  });\n  ```\n- **Event: notification_read**: Confirmation that notification was marked as read.\n  ```javascript\n  socket.on('notification_read', (data) => {\n    console.log('Notification marked as read:', data.id);\n    updateNotificationStatus(data.id, 'read');\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst notificationService = new NotificationAPIService('https://api.example.com', token);\nasync function markAsRead(notificationId) {\n  const response = await notificationService.markAsRead(notificationId);\n  console.log('Marked as read:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Mark all notifications as read",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/notifications/read-all",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "notifications",
+            "read-all"
+          ],
+          "variable": []
+        },
+        "description": "Mark all unread notifications as read for the authenticated user.\n\n**WebSocket Integration:**\n- **Event: all_notifications_read**: Notifies that all notifications were marked as read.\n  ```javascript\n  socket.on('all_notifications_read', (data) => {\n    console.log('All notifications marked as read for user:', data.userId);\n    markAllNotificationsAsRead();\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst notificationService = new NotificationAPIService('https://api.example.com', token);\nasync function markAllAsRead() {\n  await notificationService.markAllAsRead();\n  console.log('All notifications marked as read');\n  clearUnreadBadge();\n}\n```\n"
+      }
+    },
+    {
+      "name": "Delete notification",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/notifications/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "notifications",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Delete a specific notification (soft delete).\n\n**WebSocket Integration:**\n- **Event: notification_deleted**: Notifies that a notification was deleted.\n  ```javascript\n  socket.on('notification_deleted', (data) => {\n    console.log('Notification deleted:', data.id);\n    removeNotificationFromUI(data.id);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst notificationService = new NotificationAPIService('https://api.example.com', token);\nasync function deleteNotification(notificationId) {\n  await notificationService.deleteNotification(notificationId);\n  console.log('Notification deleted:', notificationId);\n}\n```\n"
+      }
+    }
+  ]
+}

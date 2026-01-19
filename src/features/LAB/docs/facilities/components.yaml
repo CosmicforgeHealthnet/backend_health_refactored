@@ -1,0 +1,719 @@
+components:
+  schemas:
+    LabFacilityRegistration:
+      type: object
+      required:
+        - facilityName
+        - facilityType
+        - registrationNumber
+        - licenseNumber
+        - email
+        - phone
+        - address
+        - city
+        - state
+        - country
+        - postalCode
+        - adminFullName
+        - adminEmail
+      properties:
+        facilityName:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Central Medical Laboratory"
+        facilityType:
+          type: string
+          enum:
+            [
+              diagnostic_lab,
+              pathology_lab,
+              radiology_center,
+              medical_center,
+              hospital_lab,
+            ]
+          example: "diagnostic_lab"
+        registrationNumber:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "REG123456789"
+        licenseNumber:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "LIC987654321"
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: "info@centralmedlab.com"
+        phone:
+          type: string
+          minLength: 7
+          maxLength: 20
+          example: "+1234567890"
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          example: "https://centralmedlab.com"
+        address:
+          type: string
+          minLength: 5
+          maxLength: 500
+          example: "123 Medical Center Drive"
+        city:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "New York"
+        state:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "NY"
+        country:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "United States"
+        postalCode:
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: "10001"
+        adminFullName:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Dr. John Smith"
+        adminEmail:
+          type: string
+          format: email
+          maxLength: 255
+          example: "admin@centralmedlab.com"
+        adminPhone:
+          type: string
+          minLength: 7
+          maxLength: 20
+          example: "+1234567891"
+        operatingHours:
+          type: object
+          properties:
+            monday:
+              type: string
+              example: "08:00-17:00"
+            tuesday:
+              type: string
+              example: "08:00-17:00"
+            wednesday:
+              type: string
+              example: "08:00-17:00"
+            thursday:
+              type: string
+              example: "08:00-17:00"
+            friday:
+              type: string
+              example: "08:00-17:00"
+            saturday:
+              type: string
+              example: "09:00-13:00"
+            sunday:
+              type: string
+              example: "closed"
+        servicesOffered:
+          type: array
+          items:
+            type: string
+          example: ["Blood Tests", "Urine Analysis", "X-Ray", "MRI"]
+        equipmentList:
+          type: array
+          items:
+            type: string
+          example: ["Centrifuge", "Microscope", "X-Ray Machine", "MRI Scanner"]
+        licenseDocument:
+          type: string
+          format: uri
+          example: "https://storage.com/license.pdf"
+        registrationDocument:
+          type: string
+          format: uri
+          example: "https://storage.com/registration.pdf"
+        accreditationDocument:
+          type: string
+          format: uri
+          example: "https://storage.com/accreditation.pdf"
+
+    LabFacility:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        facilityName:
+          type: string
+          example: "Central Medical Laboratory"
+        facilityType:
+          type: string
+          enum:
+            [
+              diagnostic_lab,
+              pathology_lab,
+              radiology_center,
+              medical_center,
+              hospital_lab,
+            ]
+          example: "diagnostic_lab"
+        registrationNumber:
+          type: string
+          example: "REG123456789"
+        licenseNumber:
+          type: string
+          example: "LIC987654321"
+        email:
+          type: string
+          format: email
+          example: "info@centralmedlab.com"
+        phone:
+          type: string
+          example: "+1234567890"
+        website:
+          type: string
+          format: uri
+          example: "https://centralmedlab.com"
+        address:
+          type: string
+          example: "123 Medical Center Drive"
+        city:
+          type: string
+          example: "New York"
+        state:
+          type: string
+          example: "NY"
+        country:
+          type: string
+          example: "United States"
+        postalCode:
+          type: string
+          example: "10001"
+        adminFullName:
+          type: string
+          example: "Dr. John Smith"
+        adminEmail:
+          type: string
+          format: email
+          example: "admin@centralmedlab.com"
+        adminPhone:
+          type: string
+          example: "+1234567891"
+        status:
+          type: string
+          enum: [pending_approval, approved, rejected, suspended, active]
+          example: "pending_approval"
+        operatingHours:
+          type: object
+          example: { "monday": "08:00-17:00", "tuesday": "08:00-17:00" }
+        servicesOffered:
+          type: array
+          items:
+            type: string
+          example: ["Blood Tests", "Urine Analysis"]
+        equipmentList:
+          type: array
+          items:
+            type: string
+          example: ["Centrifuge", "Microscope"]
+        adminUserCreated:
+          type: boolean
+          example: false
+        adminInvitationSent:
+          type: boolean
+          example: false
+        approvedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        rejectedAt:
+          type: string
+          format: date-time
+          example: null
+        rejectionReason:
+          type: string
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-10T09:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-10T09:00:00Z"
+        adminUser:
+          $ref: "#/components/schemas/LabUser"
+        approvedBy:
+          $ref: "#/components/schemas/LabUser"
+        personnel:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabPersonnel"
+
+    LabUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        fullName:
+          type: string
+          example: "Dr. John Smith"
+        email:
+          type: string
+          format: email
+          example: "admin@centralmedlab.com"
+        role:
+          type: string
+          enum:
+            [
+              lab_admin,
+              lab_manager,
+              sample_collector,
+              lab_technician,
+              radiologist,
+              result_reviewer,
+            ]
+          example: "lab_admin"
+        status:
+          type: string
+          enum: [active, suspended, terminated]
+          example: "active"
+        profileImageUrl:
+          type: string
+          format: uri
+          example: "https://storage.com/profile.jpg"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-10T09:00:00Z"
+
+    FacilityUpdate:
+      type: object
+      properties:
+        facilityName:
+          type: string
+          minLength: 2
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        phone:
+          type: string
+          minLength: 7
+          maxLength: 20
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+        address:
+          type: string
+          minLength: 5
+          maxLength: 500
+        operatingHours:
+          type: object
+        servicesOffered:
+          type: array
+          items:
+            type: string
+        equipmentList:
+          type: array
+          items:
+            type: string
+
+    FacilityRejection:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          example: "Missing required accreditation documents. Please provide valid certification from authorized medical board."
+
+    FacilityStats:
+      type: object
+      properties:
+        statusCounts:
+          type: object
+          properties:
+            pending_approval:
+              type: integer
+              example: 5
+            approved:
+              type: integer
+              example: 25
+            rejected:
+              type: integer
+              example: 3
+            suspended:
+              type: integer
+              example: 1
+            active:
+              type: integer
+              example: 22
+        recentRegistrations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabFacility"
+        totalFacilities:
+          type: integer
+          example: 56
+
+    # Step 1 Schema
+    LabFacilityStep1:
+      type: object
+      required:
+        - adminFullName
+        - adminEmail
+      properties:
+        adminFullName:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Dr. John Smith"
+        adminEmail:
+          type: string
+          format: email
+          maxLength: 255
+          example: "admin@centralmedlab.com"
+        adminPhone:
+          type: string
+          minLength: 7
+          maxLength: 20
+          example: "+1234567891"
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          example: "https://centralmedlab.com"
+
+    # Step 2 Schema
+    LabFacilityStep2:
+      type: object
+      required:
+        - facilityName
+        - facilityType
+        - registrationNumber
+        - licenseNumber
+      properties:
+        facilityName:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Central Medical Laboratory"
+        facilityType:
+          type: string
+          enum: [diagnostic_lab, pathology_lab, radiology_center, medical_center, hospital_lab]
+          example: "diagnostic_lab"
+        registrationNumber:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "REG123456789"
+        licenseNumber:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "LIC987654321"
+        licenseDocument:
+          type: string
+          format: uri
+          example: "https://storage.com/license.pdf"
+        registrationDocument:
+          type: string
+          format: uri
+          example: "https://storage.com/registration.pdf"
+        accreditationDocument:
+          type: string
+          format: uri
+          example: "https://storage.com/accreditation.pdf"
+        servicesOffered:
+          type: array
+          items:
+            type: string
+          example: ["Blood Tests", "Urine Analysis", "X-Ray", "MRI"]
+        equipmentList:
+          type: array
+          items:
+            type: string
+          example: ["Centrifuge", "Microscope", "X-Ray Machine", "MRI Scanner"]
+
+    # Step 3 Schema
+    LabFacilityStep3:
+      type: object
+      required:
+        # - email
+        # - phone
+        - address
+        - city
+        - state
+        - country
+        - postalCode
+      properties:
+        # email:
+        #   type: string
+        #   format: email
+        #   maxLength: 255
+        #   example: "info@centralmedlab.com"
+        # phone:
+        #   type: string
+        #   minLength: 7
+        #   maxLength: 20
+        #   example: "+1234567890"
+        address:
+          type: string
+          minLength: 5
+          maxLength: 500
+          example: "123 Medical Center Drive"
+        city:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "New York"
+        state:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "NY"
+        country:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "United States"
+        postalCode:
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: "10001"
+        operatingHours:
+          type: object
+          properties:
+            monday:
+              type: string
+              example: "08:00-17:00"
+            tuesday:
+              type: string
+              example: "08:00-17:00"
+            wednesday:
+              type: string
+              example: "08:00-17:00"
+            thursday:
+              type: string
+              example: "08:00-17:00"
+            friday:
+              type: string
+              example: "08:00-17:00"
+            saturday:
+              type: string
+              example: "09:00-13:00"
+            sunday:
+              type: string
+              example: "closed"
+
+      parameters:
+        FacilityId:
+          name: id
+          in: path
+          required: true
+          description: Lab facility UUID
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+
+        SearchQuery:
+          name: q
+          in: query
+          required: true
+          description: Search query string
+          schema:
+            type: string
+            minLength: 2
+            example: "central medical"
+
+        City:
+          name: city
+          in: query
+          required: true
+          description: City name
+          schema:
+            type: string
+            example: "New York"
+
+        State:
+          name: state
+          in: query
+          required: true
+          description: State name
+          schema:
+            type: string
+            example: "NY"
+
+        Limit:
+          name: limit
+          in: query
+          required: false
+          description: Number of results to return (max 50)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+            example: 10
+
+    RegistrationStepResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Step 1 completed successfully"
+        data:
+          type: object
+          properties:
+            facilityId:
+              type: string
+              format: uuid
+              example: "550e8400-e29b-41d4-a716-446655440000"
+            step:
+              type: integer
+              example: 1
+            nextStep:
+              type: string
+              example: "/api/lab/facilities/register/step2"
+  
+  responses:
+    FacilityRegistered:
+      description: Lab facility registered successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Lab facility registered successfully. Awaiting admin approval."
+              data:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  facilityName:
+                    type: string
+                  status:
+                    type: string
+                    example: "pending_approval"
+                  adminEmail:
+                    type: string
+                    format: email
+                  submittedAt:
+                    type: string
+                    format: date-time
+
+    FacilityFound:
+      description: Lab facility found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Facility retrieved successfully"
+              data:
+                $ref: "#/components/schemas/LabFacility"
+
+    FacilitiesFound:
+      description: Lab facilities found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Facilities retrieved successfully"
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LabFacility"
+              count:
+                type: integer
+                example: 5
+
+    FacilityApproved:
+      description: Lab facility approved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Facility approved successfully. Lab admin account created and invitation sent."
+              data:
+                $ref: "#/components/schemas/LabFacility"
+
+    FacilityRejected:
+      description: Lab facility rejected
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Facility registration rejected. Notification sent to applicant."
+              data:
+                $ref: "#/components/schemas/LabFacility"
+
+    FacilityNotFound:
+      description: Lab facility not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Facility not found"
+
+    Unauthorized:
+      description: Unauthorized access
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Access denied. Platform administrator privileges required."

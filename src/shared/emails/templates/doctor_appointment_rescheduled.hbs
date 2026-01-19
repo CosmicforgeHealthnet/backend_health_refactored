@@ -1,0 +1,98 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Status Banner -->
+    <div style="background: linear-gradient(135deg, #f59e0b, #d97706); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Appointment Rescheduled</h2>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Schedule Update, <strong>Dr. {{doctorName}}</strong>
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your appointment with <strong>{{patientName}}</strong> has been rescheduled to a new date and time.
+    </p>
+
+    <!-- Schedule Comparison -->
+    <div style="margin: 30px 0;">
+        <!-- Old Schedule -->
+        <div style="background-color: #fee2e2; border-left: 4px solid #dc2626; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+            <h3 style="color: #b91c1c; margin: 0; font-size: 16px; font-weight: bold; text-align: center;">
+                Previous Schedule
+            </h3>
+            <p style="color: #7f1d1d; margin: 10px 0 0 0; text-align: center; font-weight: 600;">
+                {{oldDate}} at {{oldTime}}
+            </p>
+        </div>
+
+        <!-- New Schedule -->
+        <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px;">
+            <h3 style="color: #15803d; margin: 0; font-size: 16px; font-weight: bold; text-align: center;">
+                New Schedule
+            </h3>
+            <p style="color: #14532d; margin: 10px 0 0 0; text-align: center; font-weight: 600;">
+                {{newDate}} at {{newTime}}
+            </p>
+        </div>
+    </div>
+
+    <!-- Reschedule Details -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #92400e; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Reschedule Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #78350f;">
+            <strong>Patient:</strong> {{patientName}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #78350f;">
+            <strong>Rescheduled By:</strong> {{rescheduledBy}}
+        </p>
+        {{#if rescheduleReason}}
+        <p style="font-size: 14px; margin: 5px 0; color: #78350f;">
+            <strong>Reason:</strong> {{rescheduleReason}}
+        </p>
+        {{/if}}
+        <p style="font-size: 14px; margin: 5px 0; color: #78350f;">
+            <strong>Appointment ID:</strong> #{{appointmentId}}
+        </p>
+    </div>
+
+    <!-- Meeting Link -->
+    {{#if meetingLink}}
+    <div style="background-color: #f0f7ff; border-left: 4px solid #2563eb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #1e40af; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Updated Meeting Link
+        </h3>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            {{> button url=meetingLink text="Join Meeting" }}
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- Dashboard Link -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{dashboardLink}}" style="color: #3964EA; text-decoration: none; font-weight: bold;">
+            📋 View Dashboard
+        </a>
+    </div>
+
+    <!-- Calendar Update Note -->
+    <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #0c4a6e; margin: 0; font-weight: 600; text-align: center; font-size: 14px;">
+            <strong>Calendar Updated:</strong> Your schedule has been automatically updated with the new appointment time.
+        </p>
+    </div>
+
+    <!-- Support info -->
+    <p style="font-size: 14px; color: #555; margin: 20px 0; text-align: center;">
+        If you have any concerns about this reschedule, please contact our <a href="{{supportLink}}" style="color: #3964EA; text-decoration: none;">support team</a>.
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px; text-align: center;">
+        <strong>The CosmicForge Health Team</strong>
+    </p>
+
+</div>

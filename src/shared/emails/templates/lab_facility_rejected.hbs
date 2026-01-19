@@ -1,0 +1,29 @@
+<div style="padding: 20px; font-family: Arial, sans-serif;"></div>
+  <h2 style="color: #dc3545; margin-bottom: 20px;">Registration Update Required</h2>
+  
+  <p>Dear {{ownerName}},</p>
+  
+  <p>Thank you for your interest in joining CosmicForge Health. After reviewing your lab facility registration for <strong>{{facilityName}}</strong>, we need some additional information or corrections before we can proceed.</p>
+  
+  <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #721c24;">Review Feedback:</h3>
+    <p>{{rejectionReason}}</p>
+  </div>
+  
+  <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <p><strong>Registration Details:</strong></p>
+    <p><strong>Facility:</strong> {{facilityName}}</p>
+    <p><strong>Registration Number:</strong> {{registrationNumber}}</p>
+    <p><strong>Review Date:</strong> {{rejectedAt}}</p>
+  </div>
+  
+  <p>Please review our <a href="{{guidelinesLink}}">registration guidelines</a> and resubmit your application with the requested updates.</p>
+  
+  {{> button url=resubmitLink text="Resubmit Registration" color="#007bff"}}
+  
+  <p>If you need assistance or have questions about the feedback, please contact our <a href="{{supportLink}}">support team</a>.</p>
+  
+  <p>Thank you for your understanding.</p>
+  
+  <p>Best regards,<br>The CosmicForge Health Team</p>
+</div>

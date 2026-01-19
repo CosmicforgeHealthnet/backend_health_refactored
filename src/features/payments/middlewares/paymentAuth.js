@@ -1,0 +1,81 @@
+// ================================
+// 4. PAYMENT AUTH MIDDLEWARE
+// ================================
+
+// src/middlewares/paymentAuth.js
+const { authenticateJWT, authorizeRoles } = require('../../auth/middlewares/authMiddleware');
+const userRepository = require('../../auth/repositories/userRepository');
+
+class PaymentAuthMiddleware {
+  /**
+   * Enhanced JWT verification for payment operations
+   */
+  static async verifyPaymentAuth(req, res, next) {
+    authenticateJWT(req, res, async (error) => {
+      if (error) return;
+
+      try {
+        const user = await userRepository.findById(req.user.sub);
+
+        if (!user) {
+          return res.status(401).json({ error: 'User not found' });
+        }
+
+        if (user.status === 'locked') {
+          return res.status(403).json({ error: 'Account is locked. Contact support.' });
+        }
+
+        req.fullUser = user;
+        next();
+      } catch (error) {
+        return res.status(500).json({ error: 'Authentication error' });
+      }
+    });
+  }
+
+  /**
+   * Check ownership or admin access
+   */
+  static requireOwnershipOrAdmin(resourceField = 'userId') {
+    return (req, res, next) => {
+      const resourceUserId = req.params[resourceField] || req.body[resourceField];
+
+      if (req.user.sub !== resourceUserId && !['admin', 'super_admin'].includes(req.user.role)) {
+        return res.status(403).json({ error: 'Access denied. You can only access your own resources.' });
+      }
+      next();
+    };
+  }
+
+  /**
+   * Verify patient can make payments
+   */
+  static requireActivePatient(req, res, next) {
+    if (req.user.role !== 'patient') {
+      return res.status(403).json({ error: 'Only patients can make payments' });
+    }
+
+    if (!['active', 'pending_email_verification'].includes(req.user.status)) {
+      return res.status(403).json({ error: 'Account must be active to make payments' });
+    }
+
+    next();
+  }
+
+  /**
+   * Verify doctor can receive payments
+   */
+  static requireVerifiedDoctor(req, res, next) {
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ error: 'Only doctors can access wallet features' });
+    }
+
+    if (req.user.status !== 'doctor_active') {
+      return res.status(403).json({ error: 'Doctor account must be verified to access wallet' });
+    }
+
+    next();
+  }
+}
+
+module.exports = PaymentAuthMiddleware;

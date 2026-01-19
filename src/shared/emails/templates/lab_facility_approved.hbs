@@ -1,0 +1,40 @@
+<div style="padding: 20px; font-family: Arial, sans-serif;"></div>
+  <div style="text-align: center; margin-bottom: 20px;">
+    <h1 style="color: #28a745; margin: 0;">🎉 Congratulations!</h1>
+    <h2 style="color: #007bff; margin: 10px 0;">Your Lab Facility Has Been Approved!</h2>
+  </div>
+  
+  <p>Dear {{ownerName}},</p>
+  
+  <p>We're excited to inform you that <strong>{{facilityName}}</strong> has been approved and is now active on the CosmicForge Health platform!</p>
+  
+  <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #155724;">Facility Information:</h3>
+    <p><strong>Name:</strong> {{facilityName}}</p>
+    <p><strong>Type:</strong> {{facilityType}}</p>
+    <p><strong>Registration Number:</strong> {{registrationNumber}}</p>
+    <p><strong>Approved:</strong> {{approvedAt}}</p>
+  </div>
+  
+  <div style="background-color: #cce5ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #333;">You're now the Lab Admin!</h3>
+    <p>As the facility owner, you've been automatically assigned as the Lab Admin. You can now:</p>
+    <ul>
+      <li>Invite and manage lab personnel</li>
+      <li>Configure facility settings</li>
+      <li>Manage lab operations</li>
+      <li>Access comprehensive reporting</li>
+    </ul>
+  </div>
+  
+  <div style="text-align: center; margin: 30px 0;">
+    {{> button url=dashboardLink text="Go to Lab Dashboard" color="#007bff"}}
+    {{> button url=personnelLink text="Invite Personnel" color="#28a745"}}
+  </div>
+  
+  <p><a href="{{setupGuideLink}}">📚 Read our Lab Setup Guide</a> to get started quickly.</p>
+  
+  <p>Welcome to CosmicForge Health! We're here to support your success.</p>
+  
+  <p>Best regards,<br>The CosmicForge Health Team</p>
+</div>

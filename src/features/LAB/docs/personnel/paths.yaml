@@ -1,0 +1,445 @@
+paths:
+  /lab/facilities/{id}/personnel/invite:
+    post:
+      tags:
+        - Lab Personnel
+      summary: Invite personnel to facility
+      description: |
+        Invite personnel to join the lab facility (lab admin only).
+        This sends a registration email with instructions for creating their account.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonnelInvitation'
+            examples:
+              lab_technician:
+                summary: Lab Technician Invitation
+                value:
+                  fullName: "Jane Doe"
+                  email: "jane.doe@centralmedlab.com"
+                  role: "lab_technician"
+                  phone: "+1234567892"
+                  licenseNumber: "TECH123456"
+                  specialization: "Clinical Chemistry"
+                  yearsOfExperience: 5
+                  qualifications: ["Bachelor's in Medical Technology", "Certified Medical Technologist"]
+                  permissions: ["view_results", "edit_results"]
+                  departments: ["Chemistry", "Hematology"]
+              sample_collector:
+                summary: Sample Collector Invitation
+                value:
+                  fullName: "Bob Johnson"
+                  email: "bob.johnson@centralmedlab.com"
+                  role: "sample_collector"
+                  phone: "+1234567893"
+                  licenseNumber: "PHLE789012"
+                  specialization: "Phlebotomy"
+                  yearsOfExperience: 3
+                  qualifications: ["Certified Phlebotomist"]
+                  permissions: ["collect_samples", "schedule_appointments"]
+                  departments: ["Outpatient", "Home Services"]
+      responses:
+        '201':
+          $ref: '#/components/responses/PersonnelInvited'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                duplicate_email:
+                  summary: Personnel with email already exists
+                  value:
+                    success: false
+                    error: "Personnel with this email already exists"
+                validation_error:
+                  summary: Validation errors
+                  value:
+                    success: false
+                    error: "Validation failed"
+                    details:
+                      - field: "fullName"
+                        message: "Full name is required"
+                        value: ""
+                      - field: "email"
+                        message: "Valid email is required"
+                        value: "invalid-email"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. Only lab administrators can invite personnel."
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Facility not found"
+
+  /lab/facilities/{id}/personnel:
+    get:
+      tags:
+        - Lab Personnel
+      summary: Get facility personnel
+      description: Retrieve all personnel for a specific facility (lab admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      responses:
+        '200':
+          $ref: '#/components/responses/PersonnelList'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. Only lab administrators can view personnel."
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Facility not found"
+
+  /lab/facilities/{id}/personnel/stats:
+    get:
+      tags:
+        - Lab Personnel
+      summary: Get personnel statistics for facility
+      description: Get personnel statistics grouped by role and status (lab admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      responses:
+        '200':
+          description: Personnel statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Personnel statistics retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/PersonnelStats'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. Only lab administrators can view personnel statistics."
+
+  /lab/personnel/{id}:
+    get:
+      tags:
+        - Lab Personnel
+      summary: Get personnel details
+      description: Get specific personnel details (lab admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PersonnelId'
+      responses:
+        '200':
+          $ref: '#/components/responses/PersonnelFound'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. Only lab administrators can view personnel details."
+        '404':
+          $ref: '#/components/responses/PersonnelNotFound'
+
+    delete:
+      tags:
+        - Lab Personnel
+      summary: Remove personnel from facility
+      description: Remove personnel from facility (lab admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PersonnelId'
+      responses:
+        '200':
+          $ref: '#/components/responses/PersonnelRemoved'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. Only lab administrators can remove personnel."
+        '404':
+          $ref: '#/components/responses/PersonnelNotFound'
+
+  /lab/personnel/{id}/status:
+    put:
+      tags:
+        - Lab Personnel
+      summary: Update personnel status
+      description: Update personnel status (lab admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PersonnelId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonnelStatusUpdate'
+            examples:
+              activate:
+                summary: Activate personnel
+                value:
+                  status: "active"
+              suspend:
+                summary: Suspend personnel
+                value:
+                  status: "suspended"
+              terminate:
+                summary: Terminate personnel
+                value:
+                  status: "terminated"
+      responses:
+        '200':
+          $ref: '#/components/responses/PersonnelUpdated'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_status:
+                  summary: Invalid status
+                  value:
+                    success: false
+                    error: "Invalid status. Must be one of: pending_registration, invitation_sent, registered, active, suspended, terminated"
+                missing_status:
+                  summary: Missing status
+                  value:
+                    success: false
+                    error: "Status is required"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. Only lab administrators can update personnel status."
+        '404':
+          $ref: '#/components/responses/PersonnelNotFound'
+
+  /lab/personnel/{id}/role:
+    put:
+      tags:
+        - Lab Personnel
+      summary: Update personnel role
+      description: Update personnel role (lab admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PersonnelId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonnelRoleUpdate'
+            examples:
+              promote_to_manager:
+                summary: Promote to Lab Manager
+                value:
+                  role: "lab_manager"
+              change_to_technician:
+                summary: Change to Lab Technician
+                value:
+                  role: "lab_technician"
+      responses:
+        '200':
+          description: Personnel role updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Personnel role updated successfully"
+                  data:
+                    $ref: '#/components/schemas/LabPersonnel'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_role:
+                  summary: Invalid role
+                  value:
+                    success: false
+                    error: "Invalid role. Must be one of: lab_manager, sample_collector, lab_technician, radiologist, result_reviewer"
+                missing_role:
+                  summary: Missing role
+                  value:
+                    success: false
+                    error: "Role is required"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. Only lab administrators can update personnel roles."
+        '404':
+          $ref: '#/components/responses/PersonnelNotFound'
+
+  /lab/personnel/my/roles:
+    get:
+      tags:
+        - Lab Personnel
+      summary: Get current user's personnel roles
+      description: Get personnel roles across all facilities for the authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User personnel roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Your personnel roles retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LabPersonnel'
+                  count:
+                    type: integer
+                    example: 2
+
+  /lab/personnel/registration/{token}:
+    get:
+      tags:
+        - Lab Personnel Registration
+      summary: Get registration token information
+      description: |
+        Get information about a registration token for the registration form.
+        This is used by the frontend to display pre-filled registration information.
+      parameters:
+        - $ref: '#/components/parameters/RegistrationToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/TokenInfo'
+        '404':
+          $ref: '#/components/responses/InvalidToken'
+
+  /lab/personnel/register:
+    post:
+      tags:
+        - Lab Personnel Registration
+      summary: Complete personnel registration
+      description: |
+        Complete personnel registration using the invitation token.
+        This creates the user account and links it to the personnel record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonnelRegistration'
+            example:
+              registrationToken: "abc123def456ghi789jkl012mno345pqr678"
+              email: "jane.doe@centralmedlab.com"
+              password: "SecurePass123!"
+              confirmPassword: "SecurePass123!"
+      responses:
+        '201':
+          $ref: '#/components/responses/PersonnelRegistered'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                password_mismatch:
+                  summary: Password confirmation mismatch
+                  value:
+                    success: false
+                    error: "Password and confirm password do not match"
+                weak_password:
+                  summary: Weak password
+                  value:
+                    success: false
+                    error: "Password must be at least 8 characters long"
+                invalid_token:
+                  summary: Invalid or expired token
+                  value:
+                    success: false
+                    error: "Invalid registration token"
+                token_expired:
+                  summary: Token expired
+                  value:
+                    success: false
+                    error: "Registration token has expired"
+                user_exists:
+                  summary: User already exists
+                  value:
+                    success: false
+                    error: "User account already exists. Please login instead."
+                email_mismatch:
+                  summary: Email mismatch
+                  value:
+                    success: false
+                    error: "Email does not match registration"

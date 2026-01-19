@@ -1,0 +1,344 @@
+# docs/search/searchComponents.yaml
+components:
+  schemas:
+    # Search Request/Response Schemas
+    SearchQuery:
+      type: object
+      required:
+        - q
+      properties:
+        q:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: "Search query string"
+          example: "doctor cardiology"
+        category:
+          type: string
+          nullable: true
+          description: "Optional category filter"
+          enum: [user, appointment, transaction, subscription]
+          example: "user"
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+          description: "Maximum number of results to return"
+          example: 10
+
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Entity ID"
+        entityType:
+          type: string
+          description: "Type of entity"
+          example: "User"
+        title:
+          type: string
+          description: "Display title for the result"
+          example: "Dr. John Smith"
+        description:
+          type: string
+          nullable: true
+          description: "Additional description"
+          example: "Cardiology specialist"
+        relevanceScore:
+          type: number
+          format: float
+          description: "Relevance score for ranking"
+          example: 85.5
+        _meta:
+          type: object
+          properties:
+            entityType:
+              type: string
+              example: "User"
+            searchable:
+              type: boolean
+              example: true
+            updatedAt:
+              type: string
+              format: date-time
+              example: "2023-12-01T10:00:00Z"
+
+    SearchResults:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "Sanitized search query"
+          example: "doctor cardiology"
+        results:
+          type: object
+          description: "Search results grouped by entity type"
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/SearchResult'
+          example:
+            user:
+              - id: "123e4567-e89b-12d3-a456-426614174000"
+                entityType: "User"
+                title: "Dr. John Smith"
+                description: "Cardiology specialist"
+                relevanceScore: 95.0
+            appointment:
+              - id: "123e4567-e89b-12d3-a456-426614174001"
+                entityType: "Appointment"
+                title: "Cardiology Consultation"
+                description: "Scheduled for tomorrow"
+                relevanceScore: 78.5
+        total:
+          type: integer
+          minimum: 0
+          description: "Total number of results across all categories"
+          example: 15
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: "Search suggestions based on query"
+          example: ["doctor appointment", "cardiology consultation"]
+        searchTime:
+          type: integer
+          description: "Search execution timestamp"
+          example: 1640995200000
+
+    SearchSuggestions:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: "List of search suggestions"
+          example: ["doctor appointment", "cardiology consultation", "heart specialist"]
+
+    SearchableEntities:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            type: string
+          description: "List of entity types the user can search"
+          example: ["User", "Appointment", "Transaction", "Subscription"]
+
+    # Search Analytics Schemas
+    SearchAnalytics:
+      type: object
+      properties:
+        totalSearches:
+          type: integer
+          minimum: 0
+          description: "Total number of searches performed"
+          example: 1250
+        searchesLast24Hours:
+          type: integer
+          minimum: 0
+          description: "Number of searches in the last 24 hours"
+          example: 85
+        searchesLast7Days:
+          type: integer
+          minimum: 0
+          description: "Number of searches in the last 7 days"
+          example: 420
+        searchesLast30Days:
+          type: integer
+          minimum: 0
+          description: "Number of searches in the last 30 days"
+          example: 1250
+        topSearchTerms:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchTerm'
+          description: "Most popular search terms"
+        searchesByRole:
+          type: object
+          properties:
+            patient:
+              type: integer
+              example: 800
+            doctor:
+              type: integer
+              example: 350
+            admin:
+              type: integer
+              example: 100
+        searchesByCategory:
+          type: object
+          properties:
+            user:
+              type: integer
+              example: 450
+            appointment:
+              type: integer
+              example: 380
+            transaction:
+              type: integer
+              example: 220
+            subscription:
+              type: integer
+              example: 200
+        averageResultsPerSearch:
+          type: number
+          format: float
+          description: "Average number of results per search"
+          example: 7.5
+        averageSearchTime:
+          type: number
+          format: float
+          description: "Average search execution time in milliseconds"
+          example: 125.5
+
+    SearchTerm:
+      type: object
+      properties:
+        term:
+          type: string
+          description: "Search term"
+          example: "doctor"
+        count:
+          type: integer
+          minimum: 0
+          description: "Number of times this term was searched"
+          example: 156
+        lastSearched:
+          type: string
+          format: date-time
+          description: "When this term was last searched"
+          example: "2023-12-01T10:00:00Z"
+
+    # Response Wrappers
+    SearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Search completed successfully"
+        data:
+          $ref: '#/components/schemas/SearchResults'
+
+    SearchSuggestionsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Suggestions retrieved successfully"
+        data:
+          $ref: '#/components/schemas/SearchSuggestions'
+
+    SearchEntitiesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Searchable entities retrieved successfully"
+        data:
+          $ref: '#/components/schemas/SearchableEntities'
+
+    SearchAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Search analytics retrieved successfully"
+        data:
+          $ref: '#/components/schemas/SearchAnalytics'
+
+    # Error Response Schemas
+    SearchErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: "Error message"
+        details:
+          type: object
+          nullable: true
+          description: "Additional error details"
+
+  # Search Response definitions
+  responses:
+    SearchBadRequest:
+      description: Bad request - Invalid search parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SearchErrorResponse'
+          examples:
+            queryTooShort:
+              summary: Query too short
+              value:
+                success: false
+                error: "Search query must be at least 2 characters long"
+            invalidCategory:
+              summary: Invalid category
+              value:
+                success: false
+                error: "Invalid category specified"
+            invalidLimit:
+              summary: Invalid limit
+              value:
+                success: false
+                error: "Limit must be between 1 and 50"
+
+    SearchUnauthorized:
+      description: Authentication required for search
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SearchErrorResponse'
+          example:
+            success: false
+            error: "Authentication required"
+
+    SearchForbidden:
+      description: Access forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SearchErrorResponse'
+          example:
+            success: false
+            error: "Access denied to search analytics"
+
+    SearchRateLimited:
+      description: Too many search requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SearchErrorResponse'
+          example:
+            success: false
+            error: "Rate limit exceeded. Please try again later."
+
+    SearchInternalError:
+      description: Internal server error during search
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SearchErrorResponse'
+          example:
+            success: false
+            error: "Search failed due to internal error"

@@ -1,0 +1,132 @@
+{
+  "info": {
+    "name": "CosmicForge - Marketing Feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get signup analytics by period",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/marketing/analytics/signups",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "marketing",
+            "analytics",
+            "signups"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve signup analytics grouped by time period (day, week, or month).\nReturns total signups broken down by doctors and patients.\n"
+      }
+    },
+    {
+      "name": "Get total signup counts",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/marketing/analytics/totals",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "marketing",
+            "analytics",
+            "totals"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve overall total counts for all users, doctors, and patients.\n"
+      }
+    },
+    {
+      "name": "Get user email list",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/marketing/emails",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "marketing",
+            "emails"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve email addresses and basic info for users by role.\nCan filter by doctors, patients, or get all users.\n"
+      }
+    },
+    {
+      "name": "Get signup trends with comparison",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/marketing/analytics/trends",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "marketing",
+            "analytics",
+            "trends"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve signup trends showing comparison between current and previous periods.\nIncludes trend direction and percentage change.\n"
+      }
+    },
+    {
+      "name": "Get user growth rate",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/marketing/analytics/growth",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "marketing",
+            "analytics",
+            "growth"
+          ],
+          "variable": []
+        },
+        "description": "Calculate growth rate comparing current period with previous period.\nDefault comparison is 30 days vs previous 30 days.\n"
+      }
+    },
+    {
+      "name": "Get comprehensive marketing dashboard",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/marketing/dashboard",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "marketing",
+            "dashboard"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all marketing analytics data in a single request.\nIncludes totals, recent analytics, trends, and growth rate.\n"
+      }
+    }
+  ]
+}

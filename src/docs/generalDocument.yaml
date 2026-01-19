@@ -1,0 +1,1052 @@
+paths:
+  # =============================================================================
+  # FOLDER MANAGEMENT ENDPOINTS
+  # =============================================================================
+  
+  /api/documents/folders:
+    post:
+      tags:
+        - "Document Folders"
+      summary: "Create a new folder"
+      description: "Create a new document folder for organizing files"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFolderRequest"
+      responses:
+        201:
+          description: "Folder created successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FolderResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+    
+    get:
+      tags:
+        - "Document Folders"
+      summary: "Get user's folders"
+      description: "Retrieve user's folders with pagination and filtering"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: folderType
+          in: query
+          description: "Filter by folder type"
+          schema:
+            $ref: "#/components/schemas/FolderType"
+        - name: search
+          in: query
+          description: "Search term for folder name or description"
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: "Sort field"
+          schema:
+            type: string
+            enum: [createdAt, updatedAt, name]
+            default: createdAt
+        - name: sortOrder
+          in: query
+          description: "Sort order"
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+      responses:
+        200:
+          description: "Folders retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FoldersListResponse"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/documents/folders/recent:
+    get:
+      tags:
+        - "Document Folders"
+      summary: "Get recent folders"
+      description: "Get recently accessed or created folders"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: "Number of recent folders to return"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+      responses:
+        200:
+          description: "Recent folders retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FoldersListResponse"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/folders/search:
+    get:
+      tags:
+        - "Document Folders"
+      summary: "Search folders"
+      description: "Search folders by name, description, or metadata"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: "Search query"
+          schema:
+            type: string
+            minLength: 1
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: folderType
+          in: query
+          description: "Filter by folder type"
+          schema:
+            $ref: "#/components/schemas/FolderType"
+      responses:
+        200:
+          description: "Search results"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FoldersListResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/folders/type/{folderType}:
+    get:
+      tags:
+        - "Document Folders"
+      summary: "Get folders by type"
+      description: "Retrieve all folders of a specific type"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: folderType
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/FolderType"
+      responses:
+        200:
+          description: "Folders by type retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FoldersListResponse"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/folders/{folderId}:
+    get:
+      tags:
+        - "Document Folders"
+      summary: "Get folder by ID"
+      description: "Retrieve a specific folder with its files"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FolderIdParam"
+      responses:
+        200:
+          description: "Folder retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FolderDetailResponse"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+    
+    put:
+      tags:
+        - "Document Folders"
+      summary: "Update folder"
+      description: "Update folder information"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FolderIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFolderRequest"
+      responses:
+        200:
+          description: "Folder updated successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FolderResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+    
+    delete:
+      tags:
+        - "Document Folders"
+      summary: "Delete folder"
+      description: "Soft delete a folder and all its files"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FolderIdParam"
+      responses:
+        200:
+          description: "Folder deleted successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/folders/{folderId}/stats:
+    get:
+      tags:
+        - "Document Folders"
+      summary: "Get folder statistics"
+      description: "Get detailed statistics for a folder"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FolderIdParam"
+      responses:
+        200:
+          description: "Folder statistics retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FolderStatsResponse"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/folders/{folderId}/share:
+    post:
+      tags:
+        - "Document Folders"
+      summary: "Share folder"
+      description: "Make folder public or generate share link"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FolderIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShareFolderRequest"
+      responses:
+        200:
+          description: "Folder shared successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareFolderResponse"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/folders/{folderId}/activity:
+    get:
+      tags:
+        - "Document Folders"
+      summary: "Get folder activity logs"
+      description: "Retrieve activity logs for a folder"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FolderIdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: accessType
+          in: query
+          description: "Filter by access type"
+          schema:
+            $ref: "#/components/schemas/AccessType"
+        - name: startDate
+          in: query
+          description: "Start date for filtering (ISO 8601)"
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: "End date for filtering (ISO 8601)"
+          schema:
+            type: string
+            format: date-time
+      responses:
+        200:
+          description: "Activity logs retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityLogsResponse"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/folders/{folderId}/files:
+    get:
+      tags:
+        - "Document Files"
+      summary: "Get files in folder"
+      description: "Retrieve all files in a specific folder"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FolderIdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: documentType
+          in: query
+          description: "Filter by document type"
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: "Sort field"
+          schema:
+            type: string
+            enum: [createdAt, originalFileName, fileSize]
+            default: createdAt
+        - name: sortOrder
+          in: query
+          description: "Sort order"
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+      responses:
+        200:
+          description: "Files retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilesListResponse"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/folders/{folderId}/upload:
+    post:
+      tags:
+        - "Document Upload"
+      summary: "Upload files to folder"
+      description: "Upload multiple files to a specific folder"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FolderIdParam"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: "Files to upload"
+                documentType_0:
+                  type: string
+                  description: "Document type for first file"
+                  example: "prescription"
+                documentType_1:
+                  type: string
+                  description: "Document type for second file"
+                  example: "lab_result"
+                documentType_2:
+                  type: string
+                  description: "Document type for third file"
+                  example: "medical_record"
+                documentType:
+                  type: string
+                  description: "Default document type for all files"
+                  example: "verification"
+      responses:
+        201:
+          description: "Files uploaded successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileUploadResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  # =============================================================================
+  # FILE MANAGEMENT ENDPOINTS
+  # =============================================================================
+
+  /api/documents/files/search:
+    get:
+      tags:
+        - "Document Files"
+      summary: "Search files"
+      description: "Search files across all user folders"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: "Search query"
+          schema:
+            type: string
+            minLength: 1
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: documentType
+          in: query
+          description: "Filter by document type"
+          schema:
+            type: string
+        - name: folderType
+          in: query
+          description: "Filter by folder type"
+          schema:
+            $ref: "#/components/schemas/FolderType"
+      responses:
+        200:
+          description: "Search results"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilesListResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/files/recent:
+    get:
+      tags:
+        - "Document Files"
+      summary: "Get recent files"
+      description: "Get recently uploaded or accessed files"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: "Number of recent files to return"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        200:
+          description: "Recent files retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilesListResponse"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/files/stats:
+    get:
+      tags:
+        - "Document Files"
+      summary: "Get file statistics"
+      description: "Get user's file statistics and usage metrics"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "File statistics retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileStatsResponse"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/files/type/{documentType}:
+    get:
+      tags:
+        - "Document Files"
+      summary: "Get files by document type"
+      description: "Retrieve files filtered by document type"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentType
+          in: path
+          required: true
+          description: "Document type to filter by"
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: "Number of files to return"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        200:
+          description: "Files by type retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilesListResponse"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/files/bulk:
+    delete:
+      tags:
+        - "Document Files"
+      summary: "Bulk delete files"
+      description: "Delete multiple files at once"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkDeleteRequest"
+      responses:
+        200:
+          description: "Files deleted successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/files/{fileId}:
+    get:
+      tags:
+        - "Document Files"
+      summary: "Get file metadata"
+      description: "Retrieve file metadata and information"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FileIdParam"
+      responses:
+        200:
+          description: "File metadata retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileDetailResponse"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+    
+    put:
+      tags:
+        - "Document Files"
+      summary: "Update file metadata"
+      description: "Update file metadata and properties"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FileIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFileRequest"
+      responses:
+        200:
+          description: "File updated successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+    
+    delete:
+      tags:
+        - "Document Files"
+      summary: "Delete file"
+      description: "Soft delete a file"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FileIdParam"
+      responses:
+        200:
+          description: "File deleted successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/files/{fileId}/download:
+    get:
+      tags:
+        - "Document Files"
+      summary: "Download file"
+      description: "Download file content with optional signed URL authentication"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FileIdParam"
+        - name: token
+          in: query
+          description: "Signed URL token (optional)"
+          schema:
+            type: string
+        - name: expires
+          in: query
+          description: "Token expiration timestamp (optional)"
+          schema:
+            type: string
+        - name: thumbnail
+          in: query
+          description: "Download thumbnail instead of full file"
+          schema:
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: "File content"
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        403:
+          description: "Invalid or expired download link"
+        404:
+          $ref: "#/components/responses/NotFound"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/files/{fileId}/stream:
+    get:
+      tags:
+        - "Document Files"
+      summary: "Stream file"
+      description: "Stream file content for large files"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FileIdParam"
+        - name: token
+          in: query
+          description: "Signed URL token (optional)"
+          schema:
+            type: string
+        - name: expires
+          in: query
+          description: "Token expiration timestamp (optional)"
+          schema:
+            type: string
+      responses:
+        200:
+          description: "File stream"
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        403:
+          description: "Invalid or expired stream link"
+        404:
+          $ref: "#/components/responses/NotFound"
+
+  /files/{fileId}:
+    get:
+      tags:
+        - "File Serving"
+      summary: "Serve file with signed URL"
+      description: "Serve file content using signed URL authentication (no bearer token required)"
+      parameters:
+        - $ref: "#/components/parameters/FileIdParam"
+        - name: token
+          in: query
+          required: true
+          description: "Signed URL token"
+          schema:
+            type: string
+            example: "911b5d0f833f7a90dee9a8be80e49f99d36d92b753b686fb7af41534741eaa5e"
+        - name: expires
+          in: query
+          required: true
+          description: "Token expiration timestamp"
+          schema:
+            type: string
+            example: "1750082981946"
+        - name: thumbnail
+          in: query
+          description: "Serve thumbnail instead of full file"
+          schema:
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: "File content"
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+            image/*:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        400:
+          description: "Missing required parameters"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: "Invalid or expired token"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: "File not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/documents/files/{fileId}/preview:
+    get:
+      tags:
+        - "Document Files"
+      summary: "Get file preview"
+      description: "Get file preview or thumbnail"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/FileIdParam"
+      responses:
+        200:
+          description: "File preview"
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        404:
+          description: "Preview not available"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  # =============================================================================
+  # UPLOAD ENDPOINTS
+  # =============================================================================
+
+  /api/documents/upload:
+    post:
+      tags:
+        - "Document Upload"
+      summary: "Upload files"
+      description: "Upload files and automatically create folder if needed"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: "Files to upload"
+                folderId:
+                  type: string
+                  format: uuid
+                  description: "Existing folder ID (optional)"
+                folderName:
+                  type: string
+                  description: "New folder name (if creating new folder)"
+                  example: "Upload Session 2024"
+                folderDescription:
+                  type: string
+                  description: "New folder description"
+                  example: "Documents uploaded on 2024-06-13"
+                folderType:
+                  type: string
+                  enum: [verification, medical_records, prescription, lab_results, profile, other]
+                  description: "Folder type"
+                  example: "medical_records"
+                metadata:
+                  type: string
+                  description: "JSON string of metadata"
+                  example: '{"sessionId": "abc123", "uploadSource": "mobile"}'
+                createNewFolder:
+                  type: boolean
+                  description: "Force creation of new folder"
+                  default: false
+                documentType:
+                  type: string
+                  description: "Default document type for all files"
+                  example: "prescription"
+                documentType_0:
+                  type: string
+                  description: "Document type for first file"
+                  example: "prescription"
+                documentType_1:
+                  type: string
+                  description: "Document type for second file"
+                  example: "lab_result"
+                documentType_2:
+                  type: string
+                  description: "Document type for third file"
+                  example: "medical_record"
+                documentType_3:
+                  type: string
+                  description: "Document type for fourth file"
+                  example: "verification"
+                documentType_4:
+                  type: string
+                  description: "Document type for fifth file"
+                  example: "profile"
+      responses:
+        201:
+          description: "Files uploaded successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileUploadResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  # =============================================================================
+  # ANALYTICS ENDPOINTS
+  # =============================================================================
+
+  /api/documents/analytics/dashboard:
+    get:
+      tags:
+        - "Document Analytics"
+      summary: "Get analytics dashboard"
+      description: "Get comprehensive analytics dashboard for user"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          description: "Number of days for analytics period"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+      responses:
+        200:
+          description: "Dashboard analytics retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardAnalyticsResponse"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/analytics/overview:
+    get:
+      tags:
+        - "Document Analytics"
+      summary: "Get analytics overview"
+      description: "Get quick overview of user statistics"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Overview retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOverviewResponse"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/analytics/storage:
+    get:
+      tags:
+        - "Document Analytics"
+      summary: "Get storage analytics"
+      description: "Get detailed storage usage analytics"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Storage analytics retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageAnalyticsResponse"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/analytics/security:
+    get:
+      tags:
+        - "Document Analytics"
+      summary: "Get security analytics"
+      description: "Get security metrics and suspicious activity detection"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          description: "Number of days for analytics period"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 90
+            default: 30
+      responses:
+        200:
+          description: "Security analytics retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityAnalyticsResponse"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/analytics/reports:
+    post:
+      tags:
+        - "Document Analytics"
+      summary: "Generate analytics report"
+      description: "Generate custom analytics report"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateReportRequest"
+      responses:
+        200:
+          description: "Report generated successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsReportResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/documents/analytics/export:
+    get:
+      tags:
+        - "Document Analytics"
+      summary: "Export analytics data"
+      description: "Export analytics data in various formats"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: "Report type"
+          schema:
+            type: string
+            enum: [comprehensive, storage, security, activity]
+            default: comprehensive
+        - name: days
+          in: query
+          description: "Number of days for analytics period"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+        - name: format
+          in: query
+          description: "Export format"
+          schema:
+            type: string
+            enum: [json]
+            default: json
+      responses:
+        200:
+          description: "Analytics data exported successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsReportResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"

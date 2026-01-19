@@ -1,0 +1,147 @@
+paths:
+  /lab/admin/facilities/pending:
+    get:
+      tags:
+        - Platform Admin
+      summary: Get pending facility registrations
+      description: Retrieve all facilities pending approval (platform admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/PendingFacilities'
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab/admin/facilities/{id}/approve:
+    put:
+      tags:
+        - Platform Admin
+      summary: Approve facility registration
+      description: |
+        Approve a pending facility registration (platform admin only).
+        This will create a lab admin user account and send welcome email.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AdminFacilityId'
+      responses:
+        '200':
+          $ref: '#/components/responses/FacilityApproved'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_pending:
+                  summary: Facility not pending approval
+                  value:
+                    success: false
+                    message: "Facility is not pending approval"
+                user_exists:
+                  summary: Admin user already exists
+                  value:
+                    success: false
+                    message: "User with email admin@facility.com already exists. Please use a different email for the lab admin."
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Facility not found"
+
+  /lab/admin/facilities/{id}/reject:
+    put:
+      tags:
+        - Platform Admin
+      summary: Reject facility registration
+      description: Reject a pending facility registration with reason (platform admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AdminFacilityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityRejection'
+            example:
+              reason: "Missing required accreditation documents. Please provide valid certification from authorized medical board and resubmit your application."
+      responses:
+        '200':
+          $ref: '#/components/responses/FacilityRejected'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_reason:
+                  summary: Missing rejection reason
+                  value:
+                    success: false
+                    message: "Rejection reason is required"
+                not_pending:
+                  summary: Facility not pending approval
+                  value:
+                    success: false
+                    message: "Facility is not pending approval"
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Facility not found"
+
+  /lab/admin/facilities/stats:
+    get:
+      tags:
+        - Platform Admin
+      summary: Get facility statistics
+      description: Get comprehensive facility statistics (platform admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/FacilityStatistics'
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab/admin/facilities/recent:
+    get:
+      tags:
+        - Platform Admin
+      summary: Get recent facility registrations
+      description: Get recent facility registrations (platform admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AdminLimit'
+      responses:
+        '200':
+          $ref: '#/components/responses/RecentRegistrations'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Limit cannot exceed 50"
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'

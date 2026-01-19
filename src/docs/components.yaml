@@ -1,0 +1,1911 @@
+components:
+  schemas:
+    UserCredentials:
+      type: object
+      required:
+        - email
+        - password
+        - deviceFingerprint
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 12
+        mfaToken:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: 6-digit code from authenticator app (required if user has 2FA enabled)
+          example: "123456"
+        deviceFingerprint:
+          type: string
+          description: Client-generated device fingerprint to bind refresh token
+
+    UserSignUp:
+      type: object
+      required:
+        - fullName
+        - email
+        - password
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 12
+        role:
+          type: string
+          enum:
+            - patient
+            - doctor
+            - pharmacy
+            - lab
+          default: patient
+        phoneNumber:
+          type: string
+          nullable: true
+          description: Phone number (optional, primarily for doctors)
+          example: "+234-123-456-7890"
+        departmentSpecialty:
+          type: string
+          nullable: true
+          description: Medical specialty or department (optional, for doctors)
+          example: "Cardiology"
+
+    EmailRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    AuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    VerifyEmailToken:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+      description: Email verification token
+
+    PasswordResetRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    PasswordReset:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+          minLength: 12
+
+    MagicLinkRequest:
+      type: object
+      required:
+        - email
+        - deviceFingerprint
+      properties:
+        email:
+          type: string
+          format: email
+        deviceFingerprint:
+          type: string
+          description: Client-generated device fingerprint to bind the magic link
+        fullName:
+          type: string
+          description: Required if creating a new user
+        role:
+          type: string
+          enum:
+            - patient
+            - doctor
+            - pharmacy
+            - lab
+          default: patient
+
+    MagicLinkResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    MagicLoginResponse:
+      type: object
+      properties:
+        payload:
+          type: object
+          description: User details (excluding any secrets)
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    RefreshRequest:
+      type: object
+      required:
+        - refreshToken
+        - deviceFingerprint
+      properties:
+        refreshToken:
+          type: string
+        deviceFingerprint:
+          type: string
+
+    RefreshResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    PatientProfile:
+      type: object
+      required: null
+      properties:
+        fullName:
+          type: string
+          example: John Doe
+        gender:
+          type: string
+          example: Male
+        dateOfBirth:
+          type: string
+          format: date
+          example: 1980-01-01
+        genotype:
+          type: string
+          example: AA
+        bloodGroup:
+          type: string
+          example: O+
+        nationality:
+          type: string
+          example: Nigerian
+        language:
+          type: string
+          example: English
+        mobileNumber:
+          type: string
+          example: 234123456789
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        address:
+          type: string
+          example: 123 Main St, Lagos
+        emergencyContactFullName:
+          type: string
+          example: Jane Doe
+        emergencyContactMobile:
+          type: string
+          example: 234987654321
+        emergencyContactRelationship:
+          type: string
+          example: Spouse
+        height:
+          type: number
+          format: float
+          example: 175.5
+        weight:
+          type: number
+          format: float
+          example: 70.2
+        bmi:
+          type: number
+          format: float
+          example: 22.8
+        bloodPressure:
+          type: string
+          example: 120/80
+        heartRate:
+          type: integer
+          example: 72
+        respiratoryRate:
+          type: integer
+          example: 16
+        temperature:
+          type: number
+          format: float
+          example: 36.6
+        spO2:
+          type: integer
+          example: 98
+        bloodGlucose:
+          type: number
+          format: float
+          example: 90.5
+        smokes:
+          type: boolean
+          example: false
+        drinksAlcohol:
+          type: boolean
+          example: false
+        physicalActivityLevel:
+          type: string
+          example: Moderate
+        dietType:
+          type: string
+          example: Omnivore
+        sleepDuration:
+          type: number
+          format: float
+          example: 7.5
+        profileType:
+          type: string
+          example: individual
+        userId:
+          type: string
+          format: uuid
+          description: Optional ID of the associated user
+          example: 123e4567-e89b-12d3-a456-426614174000
+        medicalConditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/MedicalCondition"
+        surgeries:
+          type: array
+          items:
+            $ref: "#/components/schemas/Surgery"
+        allergies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Allergy"
+        familyHistories:
+          type: array
+          items:
+            $ref: "#/components/schemas/FamilyHistory"
+        medications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Medication"
+        immunizations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Immunization"
+        healthInsurance:
+          $ref: "#/components/schemas/HealthInsurance"
+        disability:
+          $ref: "#/components/schemas/Disability"
+        consent:
+          $ref: "#/components/schemas/Consent"
+        profilePhoto:
+          type: string
+          format: uri
+          example: https://example.com/photos/patient.jpg
+          description: URL to the patient's profile photo
+
+    MedicalCondition:
+      type: object
+      required:
+        - name
+        - year
+        - status
+      properties:
+        name:
+          type: string
+          example: Diabetes
+        year:
+          type: integer
+          example: 2020
+        status:
+          type: string
+          example: Active
+
+    Surgery:
+      type: object
+      required:
+        - name
+        - date
+      properties:
+        name:
+          type: string
+          example: Appendectomy
+        date:
+          type: string
+          format: date
+          example: 2015-06-10
+        location:
+          type: string
+          example: Lagos General Hospital
+
+    Allergy:
+      type: object
+      required:
+        - type
+        - allergen
+      properties:
+        type:
+          type: string
+          example: Food
+        allergen:
+          type: string
+          example: Peanuts
+        description:
+          type: string
+          example: Severe allergic reaction to peanuts
+
+    FamilyHistory:
+      type: object
+      required:
+        - medicalCondition
+        - affectedRelative
+      properties:
+        medicalCondition:
+          type: string
+          example: Heart Disease
+        affectedRelative:
+          type: string
+          example: Father
+
+    Medication:
+      type: object
+      required:
+        - name
+        - dose
+        - frequency
+      properties:
+        name:
+          type: string
+          example: Metformin
+        dose:
+          type: string
+          example: 500mg
+        frequency:
+          type: string
+          example: Twice daily
+
+    Immunization:
+      type: object
+      required:
+        - vaccine
+        - date
+        - dose
+      properties:
+        vaccine:
+          type: string
+          example: Pfizer COVID-19
+        certificateUrl:
+          type: string
+          format: uri
+          example: https://example.com/certificate.pdf
+        date:
+          type: string
+          format: date
+          example: 2021-12-01
+        dose:
+          type: string
+          example: Second
+
+    HealthInsurance:
+      type: object
+      required:
+        - providerName
+        - validityDate
+        - policyNo
+      properties:
+        providerName:
+          type: string
+          example: HealthPlus
+        validityDate:
+          type: string
+          format: date
+          example: 2026-05-31
+        policyNo:
+          type: string
+          example: HP123456
+        healthCardUrl:
+          type: string
+          format: uri
+          example: https://example.com/healthcard.pdf
+
+    Disability:
+      type: object
+      required:
+        - hasDisability
+      properties:
+        hasDisability:
+          type: boolean
+          example: false
+
+    Consent:
+      type: object
+      required:
+        - telemedicine
+        - dataCollection
+        - recordSharing
+        - emergencyContact
+        - preferredCommunication
+        - languagePreference
+        - healthTips
+        - familyAccess
+        - notificationsAppointments
+        - notificationsPrescriptions
+        - notificationsTestResults
+        - notificationsPromotions
+        - signature
+      properties:
+        telemedicine:
+          type: boolean
+          example: true
+        dataCollection:
+          type: boolean
+          example: true
+        recordSharing:
+          type: boolean
+          example: false
+        emergencyContact:
+          type: boolean
+          example: true
+        preferredCommunication:
+          type: string
+          example: Email
+        languagePreference:
+          type: string
+          example: English
+        healthTips:
+          type: boolean
+          example: true
+        familyAccess:
+          type: boolean
+          example: false
+        notificationsAppointments:
+          type: boolean
+          example: true
+        notificationsPrescriptions:
+          type: boolean
+          example: true
+        notificationsTestResults:
+          type: boolean
+          example: true
+        notificationsPromotions:
+          type: boolean
+          example: false
+        signature:
+          type: string
+          example: John Doe
+
+    PatientProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        fullName:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        profileType:
+          type: string
+          example: individual
+        createdAt:
+          type: string
+          format: date-time
+          example: 2025-05-31T15:47:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2025-05-31T15:47:00Z
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Doctor profile not found
+
+    DoctorProfile:
+      type: object
+      required:
+        - professionalLicense
+      properties:
+        profilePhoto:
+          type: string
+          format: uri
+          example: https://example.com/photos/doctor.jpg
+          description: URL to the doctor's profile photo
+        fullName:
+          type: string
+          example: Dr. Jane Smith
+        gender:
+          type: string
+          enum:
+            - male
+            - female
+            - other
+          example: female
+        dateOfBirth:
+          type: string
+          format: date
+          example: 1980-05-15
+        nationality:
+          type: string
+          example: Nigerian
+        contactNumber:
+          type: string
+          example: +234-123-456-7890
+        email:
+          type: string
+          format: email
+          example: jane.smith@hospital.com
+        residentialAddress:
+          type: string
+          example: 123 Health St, Lagos, Nigeria
+        professionalLicense:
+          $ref: "#/components/schemas/ProfessionalLicense"
+        professionalCertificate:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfessionalCertificate"
+        clinicalPractice:
+          $ref: "#/components/schemas/ClinicalPractice"
+        digitalHealthTools:
+          $ref: "#/components/schemas/DigitalHealthTools"
+        wallet:
+          $ref: "#/components/schemas/Wallet"
+
+    ProfessionalLicense:
+      type: object
+      required:
+        - medicalLicenseNumber
+        - countryOfLicense
+        - licenseAuthority
+        - licenseExpiryDate
+      properties:
+        medicalLicenseNumber:
+          type: string
+          example: NG-MD-123456
+        countryOfLicense:
+          type: string
+          example: Nigeria
+        licenseAuthority:
+          type: string
+          example: Medical and Dental Council of Nigeria (MDCN)
+        licenseExpiryDate:
+          type: string
+          format: date
+          example: 2027-12-31
+        licenseDocument:
+          type: string
+          format: uri
+          example: https://example.com/docs/license.pdf
+          description: URL to the license document
+        yearsOfExperience:
+          type: integer
+          example: 10
+        areasOfSpecialization:
+          type: array
+          items:
+            type: string
+            example: Cardiology
+        subspecialty:
+          type: string
+          example: Interventional Cardiology
+        medicalInstitution:
+          type: string
+          example: Lagos University Teaching Hospital
+
+    ProfessionalCertificate:
+      type: object
+      required:
+        - institution
+        - degree
+        - fieldOfStudy
+        - startYear
+        - endYear
+        - certificateName
+        - issuingBody
+        - issueDate
+      properties:
+        institution:
+          type: string
+          example: University of Lagos
+        degree:
+          type: string
+          example: MBBS
+        fieldOfStudy:
+          type: string
+          example: Medicine
+        startYear:
+          type: integer
+          example: 2000
+        endYear:
+          type: integer
+          example: 2006
+        certificateName:
+          type: string
+          example: Bachelor of Medicine, Bachelor of Surgery
+        issuingBody:
+          type: string
+          example: University of Lagos
+        issueDate:
+          type: string
+          format: date
+          example: 2006-07-15
+        expiryDate:
+          type: string
+          format: date
+          example: 2030-07-15
+          nullable: true
+        certificateDocument:
+          type: string
+          format: uri
+          example: https://example.com/docs/certificate.pdf
+        verificationLink:
+          type: string
+          format: uri
+          example: https://verify.unilag.edu.ng/cert/123456
+          nullable: true
+
+    ClinicalPractice:
+      type: object
+      required:
+        - clinicName
+        - location
+        - daysAvailableFrom
+        - daysAvailableTo
+        - timeAvailableFrom
+        - timeAvailableTo
+        - consultationFee
+      properties:
+        clinicName:
+          type: string
+          example: HealthPlus Clinic
+        location:
+          type: string
+          example: 456 Wellness Ave, Abuja, Nigeria
+        daysAvailableFrom:
+          type: string
+          enum:
+            - Monday
+            - Tuesday
+            - Wednesday
+            - Thursday
+            - Friday
+            - Saturday
+            - Sunday
+          example: Monday
+        daysAvailableTo:
+          type: string
+          enum:
+            - Monday
+            - Tuesday
+            - Wednesday
+            - Thursday
+            - Friday
+            - Saturday
+            - Sunday
+          example: Friday
+        timeAvailableFrom:
+          type: string
+          format: time
+          example: 09:00:00
+        timeAvailableTo:
+          type: string
+          format: time
+          example: 17:00:00
+        consultationFee:
+          type: number
+          format: float
+          example: 5000
+          description: Consultation fee in NGN
+
+    DigitalHealthTools:
+      type: object
+      required:
+        - consentToUseAITools
+      properties:
+        consentToUseAITools:
+          type: boolean
+          example: true
+        usageDescription:
+          type: string
+          example: Use AI for patient diagnostics and treatment planning
+          nullable: true
+        useARVR:
+          type: boolean
+          example: false
+          description: Willingness to use AR/VR tools
+
+    Wallet:
+      type: object
+      required:
+        - paymentMethod
+        - bankName
+        - accountNumber
+        - accountName
+      properties:
+        paymentMethod:
+          type: string
+          enum:
+            - bank_transfer
+            - mobile_money
+          example: bank_transfer
+        bankName:
+          type: string
+          example: First Bank of Nigeria
+        accountNumber:
+          type: string
+          example: 1234567890
+        accountName:
+          type: string
+          example: Jane Smith
+        swiftCode:
+          type: string
+          example: FBNINGLA
+          nullable: true
+        sortCode:
+          type: string
+          example: 123-456
+          nullable: true
+        frequencyPayout:
+          type: string
+          enum:
+            - daily
+            - weekly
+            - monthly
+          example: monthly
+
+    DoctorProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174002
+        profilePhoto:
+          type: string
+          format: uri
+          example: https://example.com/photos/doctor.jpg
+        fullName:
+          type: string
+          example: Dr. Jane Smith
+        email:
+          type: string
+          format: email
+          example: jane.smith@hospital.com
+        createdAt:
+          type: string
+          format: date-time
+          example: 2025-06-01T15:47:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2025-06-01T15:47:00Z
+
+    ProfileOption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        profileType:
+          type: string
+        field:
+          type: string
+        value:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProfileOptions:
+      type: object
+      properties:
+        patientProfileOptions:
+          type: object
+          properties:
+            gender:
+              type: array
+              items:
+                type: string
+              example:
+                - male
+                - female
+                - other
+            bloodGroup:
+              type: array
+              items:
+                type: string
+              example:
+                - A+
+                - A-
+                - B+
+                - B-
+                - AB+
+                - AB-
+                - O+
+                - O-
+            genotype:
+              type: array
+              items:
+                type: string
+              example:
+                - AA
+                - AS
+                - SS
+                - AC
+                - SC
+            profileType:
+              type: array
+              items:
+                type: string
+              example:
+                - individual
+                - group
+            physicalActivityLevel:
+              type: array
+              items:
+                type: string
+              example:
+                - sedentary
+                - light
+                - moderate
+                - active
+                - very active
+            dietType:
+              type: array
+              items:
+                type: string
+              example:
+                - omnivore
+                - vegetarian
+                - vegan
+                - pescatarian
+                - keto
+            preferredCommunication:
+              type: array
+              items:
+                type: string
+              example:
+                - email
+                - phone
+                - sms
+            languagePreference:
+              type: array
+              items:
+                type: string
+              example:
+                - english
+                - yoruba
+                - hausa
+                - igbo
+            note:
+              type: string
+              example: All string fields are case-insensitive (e.g., "Male", "MALE", "male" are accepted for gender).
+        doctorProfileOptions:
+          type: object
+          properties:
+            gender:
+              type: array
+              items:
+                type: string
+              example:
+                - male
+                - female
+                - other
+            daysAvailableFrom:
+              type: array
+              items:
+                type: string
+              example:
+                - monday
+                - tuesday
+                - wednesday
+                - thursday
+                - friday
+                - saturday
+                - sunday
+            daysAvailableTo:
+              type: array
+              items:
+                type: string
+              example:
+                - monday
+                - tuesday
+                - wednesday
+                - thursday
+                - friday
+                - saturday
+                - sunday
+            paymentMethod:
+              type: array
+              items:
+                type: string
+              example:
+                - bank_transfer
+                - mobile_money
+            frequencyPayout:
+              type: array
+              items:
+                type: string
+              example:
+                - daily
+                - weekly
+                - monthly
+            note:
+              type: string
+              example: All string fields are case-insensitive (e.g., "Monday", "MONDAY", "monday" are accepted for daysAvailableFrom).
+
+    # Verification schemas
+    SubmitVerificationRequest:
+      type: object
+      required:
+        - licenseNumber
+        - countryCode
+      properties:
+        licenseNumber:
+          type: string
+        countryCode:
+          type: string
+          description: ISO 2-letter country code
+        issuingAuthority:
+          type: string
+          nullable: true
+        licenseType:
+          type: string
+          nullable: true
+        issueDate:
+          type: string
+          format: date
+          nullable: true
+        expiryDate:
+          type: string
+          format: date
+          nullable: true
+
+    SubmitVerificationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        verificationRequest:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              type: string
+            method:
+              type: string
+            tier:
+              type: string
+            submittedAt:
+              type: string
+              format: date-time
+            expiresAt:
+              type: string
+              format: date-time
+
+    UploadDocumentsResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        documents:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              documentType:
+                type: string
+              originalFileName:
+                type: string
+              status:
+                type: string
+              uploadedAt:
+                type: string
+                format: date-time
+
+    VerificationStatusResponse:
+      type: object
+      properties:
+        hasVerification:
+          type: boolean
+        message:
+          type: string
+        currentVerification:
+          type: object
+          description: Detailed info about the latest request
+        verificationHistory:
+          type: array
+          items:
+            type: object
+
+    SupportedCountriesResponse:
+      type: object
+      properties:
+        countries:
+          type: array
+          items:
+            type: object
+            properties:
+              countryCode:
+                type: string
+              countryName:
+                type: string
+              tier:
+                type: string
+              method:
+                type: string
+              avgProcessingTime:
+                type: string
+        totalSupported:
+          type: integer
+
+    CountryRequirementsResponse:
+      type: object
+      properties:
+        countryCode:
+          type: string
+        countryName:
+          type: string
+        regulatoryBody:
+          type: string
+        tier:
+          type: string
+        method:
+          type: string
+        avgProcessingTime:
+          type: string
+        maxProcessingTime:
+          type: string
+        requiresManualReview:
+          type: boolean
+        requiredDocuments:
+          type: array
+          items:
+            type: string
+        optionalDocuments:
+          type: array
+          items:
+            type: string
+        hasApi:
+          type: boolean
+        notes:
+          type: string
+
+    ResubmitVerificationRequest:
+      type: object
+      properties:
+        licenseNumber:
+          type: string
+        countryCode:
+          type: string
+        issuingAuthority:
+          type: string
+        licenseType:
+          type: string
+        issueDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+
+    AssignVerificationRequest:
+      type: object
+      required:
+        - assignTo
+      properties:
+        assignTo:
+          type: string
+          format: uuid
+          description: User ID of the admin to assign to
+
+    AssignVerificationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        assignedTo:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            fullName:
+              type: string
+            email:
+              type: string
+              format: email
+
+    ApproveVerificationRequest:
+      type: object
+      properties:
+        approvalNotes:
+          type: string
+          description: Optional admin notes on approval
+
+    ApproveVerificationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        verificationRequest:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              type: string
+            approvedAt:
+              type: string
+              format: date-time
+            confidenceScore:
+              type: number
+              format: float
+
+    RejectVerificationRequest:
+      type: object
+      required:
+        - rejectionReason
+      properties:
+        rejectionReason:
+          type: string
+          description: Reason for rejection
+
+    RejectVerificationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        verificationRequest:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              type: string
+            rejectedAt:
+              type: string
+              format: date-time
+            rejectionReason:
+              type: string
+
+    AdminVerificationDetailsResponse:
+      type: object
+      properties:
+        verificationRequest:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            doctor:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                fullName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                createdAt:
+                  type: string
+                  format: date-time
+            licenseNumber:
+              type: string
+            countryCode:
+              type: string
+            issuingAuthority:
+              type: string
+              nullable: true
+            licenseType:
+              type: string
+              nullable: true
+            issueDate:
+              type: string
+              format: date
+              nullable: true
+            expiryDate:
+              type: string
+              format: date
+              nullable: true
+            status:
+              type: string
+            method:
+              type: string
+            tier:
+              type: string
+            confidenceScore:
+              type: number
+              format: float
+            apiVerificationData:
+              type: object
+              additionalProperties: true
+            apiErrors:
+              type: array
+              items:
+                type: string
+            submittedAt:
+              type: string
+              format: date-time
+            approvedAt:
+              type: string
+              format: date-time
+              nullable: true
+            rejectedAt:
+              type: string
+              format: date-time
+              nullable: true
+            rejectionReason:
+              type: string
+              nullable: true
+            assignedReviewer:
+              type: object
+              nullable: true
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                fullName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+            documents:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  documentType:
+                    type: string
+                  originalFileName:
+                    type: string
+                  status:
+                    type: string
+                  uploadedAt:
+                    type: string
+                    format: date-time
+                  verifiedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  rejectionReason:
+                    type: string
+                    nullable: true
+                  ocrConfidence:
+                    type: number
+                    format: float
+                    nullable: true
+                  extractedData:
+                    type: object
+                    additionalProperties: true
+            statusHistory:
+              type: array
+              items:
+                type: object
+                properties:
+                  fromStatus:
+                    type: string
+                  toStatus:
+                    type: string
+                  changedAt:
+                    type: string
+                    format: date-time
+                  changeReason:
+                    type: string
+                    nullable: true
+                  automatedChange:
+                    type: boolean
+                  changedBy:
+                    type: object
+                    nullable: true
+                    properties:
+                      fullName:
+                        type: string
+                      email:
+                        type: string
+                        format: email
+
+    AdminDocumentsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            verificationRequestId:
+              type: string
+              format: uuid
+            doctorId:
+              type: string
+              format: uuid
+            doctorInfo:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  example: "Dr. John Doe"
+                email:
+                  type: string
+                  format: email
+            verificationStatus:
+              type: string
+              example: "pending"
+            documents:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  originalFileName:
+                    type: string
+                    example: "medical_license.pdf"
+                  customDocumentName:
+                    type: string
+                    example: "Medical License - MDCN"
+                  displayName:
+                    type: string
+                    example: "Medical License - MDCN"
+                  documentDescription:
+                    type: string
+                    example: "Medical License: Medical License - MDCN"
+                  documentType:
+                    type: string
+                    example: "medical_license"
+                  documentCategory:
+                    type: string
+                    example: "Medical License"
+                  folderName:
+                    type: string
+                    example: "Verification Documents"
+                  status:
+                    type: string
+                    example: "ready"
+                  fileSize:
+                    type: integer
+                    example: 2048576
+                  mimeType:
+                    type: string
+                    example: "application/pdf"
+                  uploadedAt:
+                    type: string
+                    format: date-time
+                  verifiedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  rejectionReason:
+                    type: string
+                    nullable: true
+                  ocrConfidence:
+                    type: number
+                    format: float
+                    nullable: true
+                  extractedData:
+                    type: object
+                    additionalProperties: true
+                    nullable: true
+                  fhirResourceType:
+                    type: string
+                    nullable: true
+                  patientIdentifier:
+                    type: string
+                    nullable: true
+                  fhirSensitivityLevel:
+                    type: string
+                    nullable: true
+                  viewUrl:
+                    type: string
+                    example: "/api/admin/documents/123e4567-e89b-12d3-a456-426614174000/view"
+                  downloadUrl:
+                    type: string
+                    example: "/api/admin/documents/123e4567-e89b-12d3-a456-426614174000/download"
+                  thumbnailUrl:
+                    type: string
+                    nullable: true
+            documentsByCategory:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: object
+              example:
+                "Medical License": [{}]
+                "Government ID": [{}]
+            totalDocuments:
+              type: integer
+              example: 3
+            summary:
+              type: object
+              properties:
+                totalSize:
+                  type: integer
+                  example: 6291456
+                  description: "Total size of all documents in bytes"
+                categories:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Medical License", "Government ID"]
+                fhirDocuments:
+                  type: integer
+                  example: 1
+                  description: "Number of FHIR-compliant documents"
+                encryptedDocuments:
+                  type: integer
+                  example: 2
+                  description: "Number of encrypted documents"
+
+
+    # MISSING SCHEMAS - ADDED HERE
+    AdminQueueResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        queueItems:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              doctor:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  fullName:
+                    type: string
+                  email:
+                    type: string
+                    format: email
+              licenseNumber:
+                type: string
+              countryCode:
+                type: string
+              status:
+                type: string
+              tier:
+                type: string
+              submittedAt:
+                type: string
+                format: date-time
+              priority:
+                type: string
+                default: normal
+              assignedTo:
+                type: string
+                format: uuid
+                nullable: true
+              slaTarget:
+                type: string
+                format: date-time
+                nullable: true
+              slaBreached:
+                type: boolean
+                default: false
+              complexity:
+                type: string
+                default: medium
+              method:
+                type: string
+              confidenceScore:
+                type: number
+                format: float
+                nullable: true
+              reviewStartedAt:
+                type: string
+                format: date-time
+                nullable: true
+              approvedAt:
+                type: string
+                format: date-time
+                nullable: true
+              rejectedAt:
+                type: string
+                format: date-time
+                nullable: true
+              rejectionReason:
+                type: string
+                nullable: true
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 10000
+            total:
+              type: integer
+              example: 150
+            totalPages:
+              type: integer
+              example: 8
+            hasNextPage:
+              type: boolean
+              example: true
+            hasPrevPage:
+              type: boolean
+              example: false
+        filters:
+          type: object
+          properties:
+            status:
+              type: string
+              nullable: true
+            country:
+              type: string
+              nullable: true
+            priority:
+              type: string
+              nullable: true
+            assigned:
+              type: string
+              nullable: true
+        summary:
+          type: object
+          properties:
+            totalItems:
+              type: integer
+              example: 45
+            statusBreakdown:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                pending: 20
+                approved: 15
+                rejected: 10
+            countryBreakdown:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                NG: 30
+                US: 10
+                UK: 5
+
+    VerificationStatisticsResponse:
+      type: object
+      properties:
+        overview:
+          type: object
+          properties:
+            totalRequests:
+              type: integer
+              example: 1250
+            pendingReview:
+              type: integer
+              example: 45
+            approved:
+              type: integer
+              example: 950
+            rejected:
+              type: integer
+              example: 255
+            avgProcessingTime:
+              type: string
+              example: "2.5 days"
+        statusBreakdown:
+          type: object
+          properties:
+            submitted:
+              type: integer
+              example: 20
+            pending_review:
+              type: integer
+              example: 25
+            approved:
+              type: integer
+              example: 950
+            rejected:
+              type: integer
+              example: 255
+        byCountry:
+          type: array
+          items:
+            type: object
+            properties:
+              countryCode:
+                type: string
+                example: "NG"
+              countryName:
+                type: string
+                example: "Nigeria"
+              total:
+                type: integer
+                example: 450
+              approved:
+                type: integer
+                example: 380
+              rejected:
+                type: integer
+                example: 70
+              avgProcessingTime:
+                type: string
+                example: "1.8 days"
+        byMethod:
+          type: object
+          properties:
+            automated:
+              type: integer
+              example: 800
+            manual:
+              type: integer
+              example: 450
+        recentActivity:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: "2025-06-09"
+              submitted:
+                type: integer
+                example: 15
+              approved:
+                type: integer
+                example: 12
+              rejected:
+                type: integer
+                example: 3
+        dateRange:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date
+              example: "2025-05-01"
+            endDate:
+              type: string
+              format: date
+              example: "2025-06-09"
+
+    # File schemas
+    FileUploadRequest:
+      type: object
+      required:
+        - uploadBy
+        - fileUrl
+        - fileName
+        - folderName
+        - fileId
+      properties:
+        uploadBy:
+          type: string
+          format: uuid
+          description: User ID of the uploader
+        fileUrl:
+          type: string
+          format: uri
+        fileName:
+          type: string
+        folderName:
+          type: string
+        fileId:
+          type: string
+          description: Provider's file‐identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the file was uploaded; defaults to now
+
+    FileUpdateRequest:
+      type: object
+      properties:
+        fileName:
+          type: string
+        folderName:
+          type: string
+
+    FileRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        uploadBy:
+          type: string
+          format: uuid
+        fileUrl:
+          type: string
+          format: uri
+        fileName:
+          type: string
+        folderName:
+          type: string
+        fileId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    FileListResponse:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileRecord'
+        total:
+          type: integer
+
+  parameters:
+    FileId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of the file record
+
+    UploadBy:
+      name: uploadBy
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Filter files by uploader user ID
+
+    MagicLoginToken:
+      name: token
+      in: query
+      required: true
+      schema:
+        type: string
+      description: The one-time magic link token
+
+    MagicLoginFingerprint:
+      name: deviceFingerprint
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Client-generated fingerprint to bind the refresh token
+
+    GoogleCallbackFingerprint:
+      name: deviceFingerprint
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Client-generated fingerprint to bind the refresh token
+
+    GoogleAuthRole:
+      name: role
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - patient
+          - doctor
+          - pharmacy
+          - lab
+        default: patient
+      description: |
+        Desired user role for new Google sign-ups.
+        This value is passed through the OAuth state parameter
+        and determines which type of user account will be created
+        on first-time signup.
+
+    PatientProfileId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The UUID of the patient profile
+
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The UUID of the associated user
+
+    DoctorProfileId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The UUID of the doctor profile
+
+    VerificationRequestId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of the verification request
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

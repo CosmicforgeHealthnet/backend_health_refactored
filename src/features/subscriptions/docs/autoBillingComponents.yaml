@@ -1,0 +1,328 @@
+# docs/transactions/autoBillingComponents.yaml
+components:
+  schemas:
+    # Auto-Billing Settings
+    AutoBillingSettings:
+      type: object
+      properties:
+        autoBillingEnabled:
+          type: boolean
+          description: "Whether auto-billing is enabled for the subscription"
+        preferredPaymentMethodId:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Payment method ID to use for auto-billing"
+        autoBillingFailureCount:
+          type: integer
+          minimum: 0
+          description: "Number of consecutive auto-billing failures"
+        lastAutoBillingAttempt:
+          type: string
+          format: date-time
+          nullable: true
+          description: "When auto-billing was last attempted"
+        canEnableAutoBilling:
+          type: boolean
+          description: "Whether user can enable auto-billing (has premium subscription and valid payment methods)"
+        reason:
+          type: string
+          nullable: true
+          description: "Reason why auto-billing cannot be enabled (if applicable)"
+        availablePaymentMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/AutoBillingPaymentMethod'
+          description: "Payment methods available for auto-billing"
+        nextBillingDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Next scheduled billing date"
+
+    AutoBillingPaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        cardLast4:
+          type: string
+          minLength: 4
+          maxLength: 4
+        cardType:
+          type: string
+        cardBrand:
+          type: string
+        canAutoCharge:
+          type: boolean
+          description: "Whether this payment method can be used for auto-billing"
+        autoBillingSuccessCount:
+          type: integer
+          minimum: 0
+          description: "Number of successful auto-billing charges"
+        autoBillingFailureCount:
+          type: integer
+          minimum: 0
+          description: "Number of failed auto-billing attempts"
+        lastAutoBillingUse:
+          type: string
+          format: date-time
+          nullable: true
+          description: "When this method was last used for auto-billing"
+        tokenExpiryDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the payment token expires"
+        isDefault:
+          type: boolean
+          description: "Whether this is the user's default payment method"
+
+    # Auto-Billing Request/Response Schemas
+    EnableAutoBillingRequest:
+      type: object
+      required:
+        - paymentMethodId
+      properties:
+        paymentMethodId:
+          type: string
+          format: uuid
+          description: "Payment method to use for auto-billing"
+
+    EnableAutoBillingResponse:
+      type: object
+      properties:
+        autoBillingEnabled:
+          type: boolean
+          example: true
+        paymentMethodId:
+          type: string
+          format: uuid
+        enabledAt:
+          type: string
+          format: date-time
+
+    DisableAutoBillingResponse:
+      type: object
+      properties:
+        autoBillingEnabled:
+          type: boolean
+          example: false
+        disabledAt:
+          type: string
+          format: date-time
+
+    # Auto-Billing Analytics
+    AutoBillingAnalytics:
+      type: object
+      properties:
+        totalAutoBillingTransactions:
+          type: integer
+          minimum: 0
+          description: "Total number of auto-billing transactions"
+        successfulAutoBilling:
+          type: integer
+          minimum: 0
+          description: "Number of successful auto-billing transactions"
+        failedAutoBilling:
+          type: integer
+          minimum: 0
+          description: "Number of failed auto-billing transactions"
+        autoBillingSuccessRate:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 100
+          description: "Auto-billing success rate as percentage"
+        revenueFromAutoBilling:
+          type: number
+          format: decimal
+          minimum: 0
+          description: "Total revenue generated from auto-billing (USD)"
+
+    # Payment Method Analytics
+    PaymentMethodAnalytics:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        cardLast4:
+          type: string
+        cardBrand:
+          type: string
+        autoBillingSuccessCount:
+          type: integer
+          minimum: 0
+        autoBillingFailureCount:
+          type: integer
+          minimum: 0
+        successRate:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 100
+          description: "Success rate as percentage"
+        lastAutoBillingUse:
+          type: string
+          format: date-time
+          nullable: true
+        canAutoCharge:
+          type: boolean
+        tokenExpiryDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    PaymentMethodAnalyticsResponse:
+      type: object
+      properties:
+        paymentMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMethodAnalytics'
+        summary:
+          type: object
+          properties:
+            totalMethods:
+              type: integer
+              minimum: 0
+            autoChargingEnabled:
+              type: integer
+              minimum: 0
+              description: "Number of payment methods with auto-charging enabled"
+            averageSuccessRate:
+              type: number
+              format: decimal
+              minimum: 0
+              maximum: 100
+              description: "Average success rate across all payment methods"
+
+    # Toggle Auto-Charging Request
+    ToggleAutoChargingRequest:
+      type: object
+      required:
+        - canAutoCharge
+      properties:
+        canAutoCharge:
+          type: boolean
+          description: "Whether to enable or disable auto-charging for this payment method"
+
+    ToggleAutoChargingResponse:
+      type: object
+      properties:
+        paymentMethodId:
+          type: string
+          format: uuid
+        canAutoCharge:
+          type: boolean
+
+    # Auto-Billing Settings Response
+    AutoBillingSettingsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AutoBillingSettings'
+
+    # Auto-Billing Analytics Response
+    AutoBillingAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AutoBillingAnalytics'
+
+    # Payment Method Analytics Response
+    PaymentMethodAnalyticsFullResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/PaymentMethodAnalyticsResponse'
+
+    # Auto-Billing Payment Methods Response
+    AutoBillingPaymentMethodsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AutoBillingPaymentMethod'
+
+    # Common Auto-Billing Error Responses
+    AutoBillingErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        details:
+          type: object
+          nullable: true
+
+  # Auto-Billing Response definitions
+  responses:
+    AutoBillingBadRequest:
+      description: Bad request - Invalid auto-billing parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AutoBillingErrorResponse'
+          examples:
+            invalidPaymentMethod:
+              summary: Invalid payment method
+              value:
+                success: false
+                error: "Payment method not eligible for auto-billing"
+            noPremiumSubscription:
+              summary: No premium subscription
+              value:
+                success: false
+                error: "Auto-billing only available for premium subscriptions"
+    
+    AutoBillingUnauthorized:
+      description: Authentication required for auto-billing
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AutoBillingErrorResponse'
+          example:
+            success: false
+            error: "Authentication required"
+    
+    AutoBillingForbidden:
+      description: Access forbidden - insufficient permissions for auto-billing
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AutoBillingErrorResponse'
+          example:
+            success: false
+            error: "Access denied to auto-billing settings"
+    
+    AutoBillingNotFound:
+      description: Auto-billing resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AutoBillingErrorResponse'
+          example:
+            success: false
+            error: "Payment method not found or not eligible for auto-billing"

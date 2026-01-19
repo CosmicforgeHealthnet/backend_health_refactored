@@ -1,0 +1,237 @@
+// src/controllers/pharmacy/pharmacyAuthController.js
+const pharmacyRegistrationService = require("../services/pharmacyRegistrationService");
+const authService = require("../../auth/services/authService");
+const userRepo = require("../../auth/repositories/userRepository");
+const bcrypt = require("bcrypt");
+const mfaService = require('../../auth/services/mfa/mfaService');
+
+class PharmacyAuthController {
+  async registerPharmacy(req, res, next) {
+    try {
+      const {
+        fullName,
+        email,
+        password,
+        pharmacyName,
+        registrationNumber,
+        address,
+        phone,
+        primaryContactPerson,
+        preferredUsername
+      } = req.body;
+
+      // Validation
+      if (!fullName || !email || !password || !pharmacyName || !registrationNumber || !preferredUsername) {
+        return res.status(400).json({
+          error: "All required fields must be provided"
+        });
+      }
+
+      const result = await pharmacyRegistrationService.registerPharmacy({
+        fullName,
+        email,
+        password,
+        pharmacyName,
+        registrationNumber,
+        address,
+        phone,
+        primaryContactPerson,
+        preferredUsername
+      });
+
+      return res.status(201).json({
+        message: result.emailSent
+          ? "Pharmacy registration successful. Check your email for a verification link, then upload required documents."
+          : "Pharmacy registration successful, but we couldn't send a verification email. Please retry from your profile.",
+        pharmacy: {
+          id: result.pharmacy.id,
+          pharmacyName: result.pharmacy.pharmacyName,
+          registrationNumber: result.pharmacy.registrationNumber,
+          address: result.pharmacy.address,
+          phone: result.pharmacy.phone,
+          primaryContactPerson: result.pharmacy.primaryContactPerson,
+          email: result.pharmacy.email,
+          username: result.pharmacy.preferredUsername,
+          verificationStatus: result.pharmacy.verificationStatus,
+          isActive: result.pharmacy.isActive,
+          documentsSubmitted: result.pharmacy.documentsSubmitted,
+          createdAt: result.pharmacy.createdAt
+        },
+        user: {
+          id: result.user.id,
+          fullName: result.user.fullName,
+          email: result.user.email,
+          role: result.user.role,
+          status: result.user.status,
+          provider: result.user.provider,
+          profileImageUrl: result.user.profileImageUrl,
+          bannerUrl: result.bannerUrl,
+          isOnline: result.user.isOnline,
+          tier: result.user.tier,
+          createdAt: result.user.createdAt
+        }
+      });
+    } catch (error) {
+      if (error.message.includes("already")) {
+        return res.status(400).json({ error: error.message });
+      }
+      next(error);
+    }
+  }
+
+  async loginPharmacy(req, res, next) {
+    try {
+      const { email, password, mfaToken, deviceFingerprint } = req.body;
+      const userAgent = req.headers["user-agent"];
+
+      if (!email || !password || !deviceFingerprint) {
+        return res.status(400).json({
+          error: "Email, password, and device fingerprint are required"
+        });
+      }
+
+      // 1) Lookup user
+      const user = await userRepo.findByEmail(email);
+      if (!user) {
+        return res.status(401).json({
+          error: "The email address you entered is not registered."
+        });
+      }
+
+      // 2) Check if user is pharmacy
+      if (user.role !== "pharmacy") {
+        return res.status(403).json({
+          error: "Access denied: Not a pharmacy account"
+        });
+      }
+
+      // 3) Guard against non-local accounts
+      if (!user.passwordHash) {
+        return res.status(401).json({
+          error: "This account has no local password. Please log in with Google or your magic link."
+        });
+      }
+
+      // 4) Check password
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        return res.status(401).json({
+          error: "The password you entered is incorrect."
+        });
+      }
+
+      // 5) MFA CHECK
+      if (user.mfaEnabled) {
+        if (!mfaToken) {
+          return res.status(206).json({
+            requiresMFA: true,
+            message: "Please enter your two-factor authentication code",
+            tempUserId: user.id
+          });
+        }
+
+        const mfaValid = mfaService.verifyToken(user.mfaSecret, mfaToken);
+        if (!mfaValid) {
+          return res.status(401).json({
+            error: "Invalid two-factor authentication code"
+          });
+        }
+      }
+
+      // 6) Issue tokens using existing auth service
+      const tokens = await authService.login(
+        { email, password },
+        deviceFingerprint,
+        userAgent
+      );
+
+      // 7) Get full pharmacy profile with relations
+      const pharmacyProfile = await pharmacyRegistrationService.getPharmacyProfile(user.id);
+
+      return res.json({
+        payload: tokens.payload,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        pharmacy: pharmacyProfile ? {
+          id: pharmacyProfile.id,
+          pharmacyName: pharmacyProfile.pharmacyName,
+          registrationNumber: pharmacyProfile.registrationNumber,
+          address: pharmacyProfile.address,
+          phone: pharmacyProfile.phone,
+          primaryContactPerson: pharmacyProfile.primaryContactPerson,
+          email: pharmacyProfile.email,
+          username: pharmacyProfile.preferredUsername,
+          verificationStatus: pharmacyProfile.verificationStatus,
+          documentsSubmitted: pharmacyProfile.documentsSubmitted,  // ADD THIS LINE
+          isActive: pharmacyProfile.isActive,
+          createdAt: pharmacyProfile.createdAt,
+          updatedAt: pharmacyProfile.updatedAt,
+          // Include related data if available
+          documents: pharmacyProfile.documents || [],
+          branches: pharmacyProfile.branches || []
+        } : null
+      });
+
+    } catch (error) {
+      if (error.message === "Invalid credentials") {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+      next(error);
+    }
+  }
+
+  async getPharmacyProfile(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const pharmacyProfile = await pharmacyRegistrationService.getPharmacyProfile(userId);
+
+      if (!pharmacyProfile) {
+        return res.status(404).json({ error: "Pharmacy profile not found" });
+      }
+
+      return res.json({
+        user: {
+          id: req.user.sub,
+          fullName: req.user.fullName,
+          email: req.user.email,
+          role: req.user.role,
+          status: req.user.status,
+          provider: req.user.provider,
+          profileImageUrl: req.user.profileImageUrl,
+          isOnline: req.user.isOnline,
+          tier: req.user.tier,
+          mfaEnabled: req.user.mfaEnabled,
+          createdAt: req.user.createdAt,
+          updatedAt: req.user.updatedAt
+        },
+        pharmacy: {
+          id: pharmacyProfile.id,
+          pharmacyName: pharmacyProfile.pharmacyName,
+          registrationNumber: pharmacyProfile.registrationNumber,
+          address: pharmacyProfile.address,
+          phone: pharmacyProfile.phone,
+          primaryContactPerson: pharmacyProfile.primaryContactPerson,
+          email: pharmacyProfile.email,
+          username: pharmacyProfile.preferredUsername,
+          verificationStatus: pharmacyProfile.verificationStatus,
+          isActive: pharmacyProfile.isActive,
+          description: pharmacyProfile.description,
+          website: pharmacyProfile.website,
+          licenseNumber: pharmacyProfile.licenseNumber,
+          licenseExpiryDate: pharmacyProfile.licenseExpiryDate,
+          operatingHours: pharmacyProfile.operatingHours,
+          documentsSubmitted: pharmacyProfile.documentsSubmitted,  // ADD THIS LINE
+          createdAt: pharmacyProfile.createdAt,
+          updatedAt: pharmacyProfile.updatedAt,
+          // Include related data
+          documents: pharmacyProfile.documents || [],
+          branches: pharmacyProfile.branches || []
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+module.exports = new PharmacyAuthController();

@@ -1,0 +1,303 @@
+# Chatbot Components for Swagger Documentation
+# src/docs/chatbotComponents.yaml
+
+components:
+  schemas:
+    ChatbotMessage:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: User's message to the AI chatbot
+          minLength: 1
+          maxLength: 4000
+          example: "I have been experiencing headaches for the past week. What could be causing this?"
+        sessionId:
+          type: string
+          format: uuid
+          description: Optional session ID to continue existing conversation
+          example: "123e4567-e89b-12d3-a456-426614174000"
+
+    ChatbotResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            sessionId:
+              type: string
+              format: uuid
+              description: Session ID for this conversation
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            answer:
+              type: string
+              description: AI-generated response
+              example: "Headaches can have various causes. Common triggers include stress, dehydration, lack of sleep, or tension. However, if you've been experiencing persistent headaches for a week, I recommend consulting with a healthcare professional for proper evaluation."
+            metadata:
+              type: object
+              properties:
+                processingTime:
+                  type: integer
+                  description: Time taken to process the request in milliseconds
+                  example: 1250
+                messageCount:
+                  type: integer
+                  description: Total messages in this session
+                  example: 4
+                sessionTitle:
+                  type: string
+                  description: Auto-generated session title
+                  example: "Headache consultation..."
+                timestamp:
+                  type: string
+                  format: date-time
+                  example: "2025-08-12T10:30:00Z"
+
+    ChatbotSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        title:
+          type: string
+          example: "Headache consultation..."
+        sessionType:
+          type: string
+          enum: [general, doctor]
+          description: Type of chat session
+          example: "general"
+        messageCount:
+          type: integer
+          example: 6
+        lastActivityAt:
+          type: string
+          format: date-time
+          example: "2025-08-12T10:30:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-08-12T10:00:00Z"
+        isActive:
+          type: boolean
+          example: true
+        lastMessage:
+          type: string
+          description: Preview of the last message (truncated)
+          example: "Thank you for the advice. I'll make sure to stay hydrated and get enough rest..."
+
+    ChatbotSessionDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        title:
+          type: string
+          example: "Headache consultation..."
+        sessionType:
+          type: string
+          enum: [general, doctor]
+          example: "general"
+        messageCount:
+          type: integer
+          example: 6
+        lastActivityAt:
+          type: string
+          format: date-time
+          example: "2025-08-12T10:30:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-08-12T10:00:00Z"
+        isActive:
+          type: boolean
+          example: true
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                example: "456e7890-e89b-12d3-a456-426614174001"
+              content:
+                type: string
+                example: "I have been experiencing headaches for the past week."
+              messageType:
+                type: string
+                enum: [user, bot]
+                example: "user"
+              role:
+                type: string
+                enum: [user, assistant, system]
+                example: "user"
+              createdAt:
+                type: string
+                format: date-time
+                example: "2025-08-12T10:15:00Z"
+              metadata:
+                type: object
+                nullable: true
+
+    ChatbotHealth:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          example: "healthy"
+        flaskBackend:
+          type: string
+          enum: [connected, disconnected]
+          example: "connected"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-08-12T10:30:00Z"
+        error:
+          type: string
+          description: Error message if status is unhealthy
+          example: null
+
+    ChatbotError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error message
+          example: "Message is required and cannot be empty"
+
+  responses:
+    ChatbotSuccess:
+      description: Successful chatbot response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChatbotResponse'
+
+    ChatbotSessionsSuccess:
+      description: Successfully retrieved user sessions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      example: "123e4567-e89b-12d3-a456-426614174000"
+                    title:
+                      type: string
+                      example: "Headache consultation..."
+              pagination:
+                type: object
+                properties:
+                  limit:
+                    type: integer
+                    example: 20
+                  offset:
+                    type: integer
+                    example: 0
+                  total:
+                    type: integer
+                    example: 3
+
+    ChatbotSessionSuccess:
+      description: Successfully retrieved session details
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              data:
+                $ref: '#/components/schemas/ChatbotSessionDetail'
+
+    ChatbotHealthSuccess:
+      description: Chatbot health status
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChatbotHealth'
+
+    ChatbotBadRequest:
+      description: Bad request - validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChatbotError'
+
+    ChatbotUnauthorized:
+      description: Unauthorized - invalid or missing token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChatbotError'
+          example:
+            success: false
+            error: "Authorization header missing or malformed"
+
+    ChatbotForbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChatbotError'
+          example:
+            success: false
+            error: "Access denied. Doctor role required."
+
+    ChatbotNotFound:
+      description: Session not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChatbotError'
+          example:
+            success: false
+            error: "Session not found"
+
+    ChatbotRateLimit:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChatbotError'
+          example:
+            success: false
+            error: "Too many chatbot requests, please try again later"
+
+    ChatbotServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChatbotError'
+          example:
+            success: false
+            error: "Flask API is not responding"

@@ -1,0 +1,85 @@
+# 6. src/docs/pharmacy/admin/pharmacyAdminComponents.yaml
+components:
+  schemas:
+    PendingVerificationsResponse:
+      type: object
+      properties:
+        verifications:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              pharmacyId:
+                type: string
+                format: uuid
+              pharmacyName:
+                type: string
+              registrationNumber:
+                type: string
+              requestType:
+                type: string
+              status:
+                type: string
+              priority:
+                type: string
+              submittedAt:
+                type: string
+                format: date-time
+              assignedTo:
+                type: string
+                format: uuid
+
+    AssignVerificationRequest:
+      type: object
+      properties:
+        adminId:
+          type: string
+          format: uuid
+
+    PharmacyReviewResponse:
+      type: object
+      properties:
+        pharmacy:
+          type: object
+        documents:
+          type: array
+          items:
+            type: object
+
+    DocumentVerificationRequest:
+      type: object
+      required:
+        - isVerified
+      properties:
+        isVerified:
+          type: boolean
+        notes:
+          type: string
+
+    ApprovalRequest:
+      type: object
+      properties:
+        reviewNotes:
+          type: string
+
+    RejectionRequest:
+      type: object
+      required:
+        - rejectionReason
+      properties:
+        rejectionReason:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        error:
+          type: string

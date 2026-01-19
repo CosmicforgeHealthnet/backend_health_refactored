@@ -1,0 +1,245 @@
+# docs/search/searchEndpoints.yaml
+paths:
+  /search:
+    get:
+      tags:
+        - Search
+      summary: Universal search across accessible entities
+      description: |
+        Perform a universal search across all entities the user has access to.
+        Results are filtered based on user role and permissions.
+        
+        **Searchable entities vary by role:**
+        - **Patient**: Can search doctors, their own appointments, transactions, and subscriptions
+        - **Doctor**: Can search their patients, appointments, and transactions
+        - **Admin**: Can search across all entities with appropriate permissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query string (minimum 2 characters)
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          example: "doctor cardiology"
+        - name: category
+          in: query
+          required: false
+          description: Optional category filter to limit search scope
+          schema:
+            type: string
+            enum: [user, appointment, transaction, subscription]
+          example: "user"
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of results to return per category
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          example: 10
+      responses:
+        '200':
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+              examples:
+                doctorSearch:
+                  summary: Search for doctors
+                  value:
+                    success: true
+                    message: "Search completed successfully"
+                    data:
+                      query: "doctor cardiology"
+                      results:
+                        user:
+                          - id: "123e4567-e89b-12d3-a456-426614174000"
+                            entityType: "User"
+                            title: "Dr. John Smith"
+                            description: "Cardiology specialist"
+                            relevanceScore: 95.0
+                            _meta:
+                              entityType: "User"
+                              searchable: true
+                              updatedAt: "2023-12-01T10:00:00Z"
+                        appointment:
+                          - id: "123e4567-e89b-12d3-a456-426614174001"
+                            entityType: "Appointment"
+                            title: "Cardiology Consultation"
+                            description: "Scheduled for tomorrow"
+                            relevanceScore: 78.5
+                            _meta:
+                              entityType: "Appointment"
+                              searchable: true
+                              updatedAt: "2023-12-01T09:30:00Z"
+                      total: 15
+                      suggestions: ["doctor appointment", "cardiology consultation"]
+                      searchTime: 1640995200000
+                emptyResults:
+                  summary: No results found
+                  value:
+                    success: true
+                    message: "Search completed successfully"
+                    data:
+                      query: "nonexistent term"
+                      results: {}
+                      total: 0
+                      suggestions: ["doctor", "appointment", "consultation"]
+                      searchTime: 1640995200000
+        '400':
+          $ref: '#/components/responses/SearchBadRequest'
+        '401':
+          $ref: '#/components/responses/SearchUnauthorized'
+        '429':
+          $ref: '#/components/responses/SearchRateLimited'
+        '500':
+          $ref: '#/components/responses/SearchInternalError'
+
+  /search/suggestions:
+    get:
+      tags:
+        - Search
+      summary: Get search suggestions
+      description: |
+        Get search suggestions based on a partial query.
+        Suggestions are tailored to the user's role and common search patterns.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Partial search query (minimum 1 character)
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 50
+          example: "doc"
+      responses:
+        '200':
+          description: Suggestions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchSuggestionsResponse'
+              examples:
+                doctorSuggestions:
+                  summary: Suggestions for "doc"
+                  value:
+                    success: true
+                    message: "Suggestions retrieved successfully"
+                    data:
+                      suggestions: ["doctor", "doctor appointment", "doctor consultation"]
+                emptySuggestions:
+                  summary: No suggestions found
+                  value:
+                    success: true
+                    message: "Suggestions retrieved successfully"
+                    data:
+                      suggestions: []
+        '401':
+          $ref: '#/components/responses/SearchUnauthorized'
+        '429':
+          $ref: '#/components/responses/SearchRateLimited'
+
+  /search/entities:
+    get:
+      tags:
+        - Search
+      summary: Get searchable entities for current user
+      description: |
+        Retrieve the list of entity types that the current user can search.
+        This is useful for building search interfaces and understanding search scope.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Searchable entities retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchEntitiesResponse'
+              examples:
+                patientEntities:
+                  summary: Entities available to patient
+                  value:
+                    success: true
+                    message: "Searchable entities retrieved successfully"
+                    data:
+                      entities: ["User", "Appointment", "Transaction", "Subscription"]
+                doctorEntities:
+                  summary: Entities available to doctor
+                  value:
+                    success: true
+                    message: "Searchable entities retrieved successfully"
+                    data:
+                      entities: ["User", "Appointment", "Transaction"]
+                adminEntities:
+                  summary: Entities available to admin
+                  value:
+                    success: true
+                    message: "Searchable entities retrieved successfully"
+                    data:
+                      entities: ["User", "Appointment", "Transaction", "Subscription"]
+        '401':
+          $ref: '#/components/responses/SearchUnauthorized'
+
+  /search/analytics:
+    get:
+      tags:
+        - Search
+      summary: Get search analytics and metrics
+      description: |
+        Retrieve comprehensive search analytics including usage statistics,
+        popular search terms, and performance metrics.
+        
+        **Admin access only** - This endpoint provides system-wide search insights.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Search analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchAnalyticsResponse'
+              example:
+                success: true
+                message: "Search analytics retrieved successfully"
+                data:
+                  totalSearches: 1250
+                  searchesLast24Hours: 85
+                  searchesLast7Days: 420
+                  searchesLast30Days: 1250
+                  topSearchTerms:
+                    - term: "doctor"
+                      count: 156
+                      lastSearched: "2023-12-01T10:00:00Z"
+                    - term: "appointment"
+                      count: 134
+                      lastSearched: "2023-12-01T09:45:00Z"
+                    - term: "cardiology"
+                      count: 98
+                      lastSearched: "2023-12-01T09:30:00Z"
+                  searchesByRole:
+                    patient: 800
+                    doctor: 350
+                    admin: 100
+                  searchesByCategory:
+                    user: 450
+                    appointment: 380
+                    transaction: 220
+                    subscription: 200
+                  averageResultsPerSearch: 7.5
+                  averageSearchTime: 125.5
+        '401':
+          $ref: '#/components/responses/SearchUnauthorized'
+        '403':
+          $ref: '#/components/responses/SearchForbidden'

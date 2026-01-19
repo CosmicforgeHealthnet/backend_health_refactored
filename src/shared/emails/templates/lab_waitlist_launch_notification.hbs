@@ -1,0 +1,86 @@
+<!-- Email Template: lab_waitlist_launch_notification.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Registration is Now Open! - CosmicForge Health</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    
+    <div style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="margin: 0; font-size: 32px;">🎉 Lab Registration is NOW OPEN!</h1>
+        <p style="margin: 10px 0 0 0; font-size: 18px;">Your wait is over, {{fullName}}!</p>
+    </div>
+
+    <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+        <p>Dear <strong>{{fullName}}</strong>,</p>
+        
+        <p>The moment you've been waiting for is here! We're thrilled to announce that lab facility registration is now officially open on the CosmicForge Health platform.</p>
+        
+        <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+            <h3 style="margin-top: 0; color: #4CAF50;">✅ You're Ready to Register:</h3>
+            <ul style="margin: 0; padding-left: 20px;">
+                <li><strong>Facility:</strong> {{facilityName}}</li>
+                <li><strong>Waitlist Since:</strong> {{joinedAt}}</li>
+                <li><strong>Launch Date:</strong> {{launchDate}}</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{registerUrl}}" style="background: #4CAF50; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">START REGISTRATION NOW</a>
+        </div>
+
+        <h3 style="color: #4CAF50;">Registration Options:</h3>
+        <div style="display: flex; gap: 15px; margin: 20px 0;">
+            <div style="background: white; padding: 20px; border-radius: 8px; flex: 1; text-align: center; border: 2px solid #4CAF50;">
+                <h4 style="margin-top: 0; color: #4CAF50;">Quick Registration</h4>
+                <p style="font-size: 14px; margin-bottom: 15px;">Complete everything in one go</p>
+                <a href="{{registerUrl}}" style="background: #4CAF50; color: white; padding: 8px 20px; text-decoration: none; border-radius: 4px; font-size: 14px;">Start Now</a>
+            </div>
+            <div style="background: white; padding: 20px; border-radius: 8px; flex: 1; text-align: center; border: 2px solid #2196F3;">
+                <h4 style="margin-top: 0; color: #2196F3;">Step-by-Step</h4>
+                <p style="font-size: 14px; margin-bottom: 15px;">Complete registration in 3 easy steps</p>
+                <a href="{{stepByStepUrl}}" style="background: #2196F3; color: white; padding: 8px 20px; text-decoration: none; border-radius: 4px; font-size: 14px;">Start Step 1</a>
+            </div>
+        </div>
+
+        <h3 style="color: #4CAF50;">What You'll Need:</h3>
+        <ul>
+            <li>✅ Facility registration documents</li>
+            <li>✅ Valid license certificates</li>
+            <li>✅ Administrator contact information</li>
+            <li>✅ Facility address and operational details</li>
+            <li>✅ List of services and equipment</li>
+        </ul>
+
+        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+            <p style="margin: 0;"><strong>⚡ Priority Support:</strong> As a waitlist member, you get priority customer support during registration. Need help? We're here for you!</p>
+        </div>
+
+        <h3 style="color: #4CAF50;">Helpful Resources:</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
+            <a href="{{guidelinesUrl}}" style="background: white; padding: 15px; border-radius: 5px; text-decoration: none; color: #333; border: 1px solid #ddd; text-align: center;">📋 Registration Guidelines</a>
+            <a href="{{requirementsUrl}}" style="background: white; padding: 15px; border-radius: 5px; text-decoration: none; color: #333; border: 1px solid #ddd; text-align: center;">📝 Requirements List</a>
+            <a href="{{faqUrl}}" style="background: white; padding: 15px; border-radius: 5px; text-decoration: none; color: #333; border: 1px solid #ddd; text-align: center;">❓ FAQ</a>
+            <a href="{{supportUrl}}" style="background: white; padding: 15px; border-radius: 5px; text-decoration: none; color: #333; border: 1px solid #ddd; text-align: center;">🆘 Get Support</a>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <p style="font-size: 18px; color: #4CAF50; font-weight: bold;">Ready to transform healthcare delivery?</p>
+            <a href="{{registerUrl}}" style="background: #4CAF50; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">Begin Registration</a>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        
+        <p style="font-size: 14px; color: #666;">
+            Questions? Contact our support team at <a href="{{supportUrl}}" style="color: #4CAF50;">{{supportUrl}}</a>
+        </p>
+        
+        <p style="font-size: 12px; color: #999; margin-top: 20px;">
+            This email was sent to {{email}} because you joined our lab registration waitlist. 
+        </p>
+    </div>
+    
+</body>
+</html>

@@ -1,0 +1,49 @@
+# 4. src/docs/pharmacy/documents/pharmacyDocumentComponents.yaml
+components:
+  schemas:
+    DocumentUpload:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+        documentType_0:
+          type: string
+          enum: [pharmacy_license, government_id, business_registration, tax_certificate, other]
+        documentName_0:
+          type: string
+
+    DocumentUploadResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        documents:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              documentType:
+                type: string
+              documentName:
+                type: string
+              submissionStatus:
+                type: string
+        pharmacy:
+          type: object
+          properties:
+            verificationStatus:
+              type: string
+
+    DocumentListResponse:
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            type: object

@@ -1,0 +1,81 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Status Banner -->
+    <div style="background: linear-gradient(135deg, #059669, #047857); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Meeting Starting Soon</h2>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Ready, <strong>Dr. {{doctorName}}</strong>?
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your consultation with <strong>{{patientName}}</strong> starts in <strong>15 minutes</strong>. 
+        Please prepare to begin the consultation.
+    </p>
+
+    <!-- Meeting Access Card -->
+    {{#if meetingLink}}
+    <div style="background-color: #ecfdf5; border-left: 4px solid #059669; padding: 25px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #047857; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Join Meeting Now
+        </h3>
+        <p style="color: #065f46; margin-bottom: 20px; font-size: 14px;">
+            Meeting starts at {{appointmentTime}} • Appointment ID: #{{appointmentId}}
+        </p>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            {{> button url=meetingLink text="Start Meeting" }}
+        </div>
+        
+        {{#if meetingPassword}}
+        <div style="margin-top: 15px; padding: 15px; background: rgba(5, 150, 105, 0.1); border-radius: 6px;">
+            <p style="margin: 0; color: #047857; font-weight: 600; text-align: center;">
+                <strong>Meeting Password:</strong> 
+                <span style="font-family: monospace; background: #ffffff; padding: 6px 12px; border-radius: 4px; border: 2px solid #059669; margin-left: 10px;">{{meetingPassword}}</span>
+            </p>
+        </div>
+        {{/if}}
+    </div>
+    {{/if}}
+
+    <!-- Dashboard Link -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{dashboardLink}}" style="color: #3964EA; text-decoration: none; font-weight: bold;">
+            📋 Patient Dashboard
+        </a>
+    </div>
+
+    <!-- Last-Minute Checklist -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #92400e; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Last-Minute Checklist
+        </h3>
+        <ul style="color: #78350f; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+            <li>Camera and microphone tested</li>
+            <li>Patient records reviewed</li>
+            <li>Quiet, private environment secured</li>
+            <li>Digital prescription tools ready</li>
+            <li>Good lighting positioned</li>
+        </ul>
+    </div>
+
+    <!-- Urgent Note -->
+    <div style="background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #dc2626; margin: 0; font-weight: 600; text-align: center; font-size: 14px;">
+            Join now to ensure everything is working properly before your patient arrives
+        </p>
+    </div>
+
+    <!-- Support info -->
+    <p style="font-size: 14px; color: #555; margin: 20px 0; text-align: center;">
+        Technical issues? Contact support immediately at <a href="{{supportLink}}" style="color: #3964EA; text-decoration: none;">support center</a>
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px; text-align: center;">
+        <strong>The CosmicForge Health Team</strong>
+    </p>
+
+</div>

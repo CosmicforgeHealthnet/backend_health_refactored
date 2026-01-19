@@ -1,0 +1,300 @@
+paths:
+  /doctor/verification/submit:
+    post:
+      summary: Submit a doctor's verification request
+      tags:
+        - Doctor Verification
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitVerificationRequest'
+      responses:
+        '201':
+          description: Verification request submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitVerificationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /doctor/verification/{id}/documents:
+    post:
+      summary: Upload verification documents with enhanced naming
+      description: Upload documents with custom names, folder organization, and FHIR detection
+      tags:
+        - Doctor Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VerificationRequestId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Document files to upload
+                folderName:
+                  type: string
+                  default: "Verification Documents"
+                  description: Custom folder name for organization
+                documentName:
+                  type: string
+                  description: Custom name for single document
+                documentType:
+                  type: string
+                  enum: [medical_license, medical_degree, government_id, proof_of_practice, board_certification, good_standing_certificate, postgraduate_certificate, passport, national_id, medical_registration, specialty_certificate, fellowship_certificate, cv_resume, recommendation_letter, work_permit, other]
+                  description: Document type for single document
+                # For multiple files, use indexed parameters:
+                documentName_0:
+                  type: string
+                  description: Custom name for first document
+                documentType_0:
+                  type: string
+                  description: Document type for first document
+                documentName_1:
+                  type: string
+                  description: Custom name for second document
+                documentType_1:
+                  type: string
+                  description: Document type for second document
+                # ... continue pattern for more files
+      responses:
+        '201':
+          description: Documents uploaded successfully with enhanced metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnhancedUploadDocumentsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /doctor/verification/status:
+    get:
+      summary: Get current verification status for authenticated doctor
+      tags:
+        - Doctor Verification
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Verification status and history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationStatusResponse'
+  
+  /doctor/verification/{id}/edit:
+    get:
+      summary: Get editable verification info
+      description: Get verification information that can be edited by doctor
+      tags:
+        - Doctor Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VerificationRequestId'
+      responses:
+        '200':
+          description: Editable verification information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditableVerificationInfoResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /doctor/verification/{id}/update:
+    put:
+      summary: Update doctor verification information
+      description: Update verification details (only allowed for certain statuses)
+      tags:
+        - Doctor Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VerificationRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVerificationInfoRequest'
+      responses:
+        '200':
+          description: Verification information updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateVerificationInfoResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /doctor/verification/countries:
+    get:
+      summary: List supported verification countries
+      tags:
+        - Doctor Verification
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Supported countries list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportedCountriesResponse'
+
+  /doctor/verification/countries/{countryCode}/requirements:
+    get:
+      summary: Get verification requirements for a country
+      tags:
+        - Doctor Verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: countryCode
+          in: path
+          required: true
+          schema:
+            type: string
+            description: ISO 2-letter country code
+      responses:
+        '200':
+          description: Country-specific requirements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountryRequirementsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /doctor/verification/resubmit:
+    post:
+      summary: Enhanced resubmit with document options
+      description: Resubmit verification with option to copy previous documents or upload new ones
+      tags:
+        - Doctor Verification
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnhancedResubmitVerificationRequest'
+      responses:
+        '201':
+          description: Resubmission successful with enhanced options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnhancedResubmitVerificationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # NEW ADMIN ENDPOINTS - ADD THESE:
+  /doctor/verification/admin/doctor/{doctorId}/onboarding-status:
+    get:
+      summary: Get doctor onboarding status (Admin/Support)
+      description: Check complete setup status including verification, wallet, and subscription
+      tags:
+        - Doctor Verification Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Doctor's user ID
+      responses:
+        '200':
+          description: Doctor onboarding status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorOnboardingStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /doctor/verification/admin/doctor/{doctorId}/fix-setup:
+    post:
+      summary: Fix doctor setup (Admin)
+      description: Manually fix incomplete wallet/subscription setup for specific doctor
+      tags:
+        - Doctor Verification Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Doctor's user ID
+      responses:
+        '200':
+          description: Doctor setup completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FixDoctorSetupResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /doctor/verification/admin/fix-all-incomplete-setups:
+    post:
+      summary: Fix all incomplete setups (Admin)
+      description: Batch fix all doctors with incomplete wallet/subscription setups
+      tags:
+        - Doctor Verification Admin
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Incomplete setups fixed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FixAllSetupsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'

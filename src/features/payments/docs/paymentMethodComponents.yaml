@@ -1,0 +1,813 @@
+components:
+  schemas:
+    # ================================
+    # SECURE TOKENIZATION
+    # ================================
+    InitializeTokenizationRequest:
+      type: object
+      required:
+        - provider
+        - currency
+      properties:
+        provider:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Payment provider to use for tokenization"
+          example: "flutterwave"
+        currency:
+          type: string
+          enum: [NGN, GHS, USD, EUR, GBP]
+          description: "Currency for validation charge"
+          example: "NGN"
+
+    InitializeTokenizationResponse:
+      type: object
+      properties:
+        authorizationUrl:
+          type: string
+          format: uri
+          description: "URL to redirect user for secure card input"
+          example: "https://checkout.flutterwave.com/tokenize/123456"
+        reference:
+          type: string
+          description: "Tokenization reference ID"
+          example: "TXN_123456789"
+        validationAmount:
+          type: number
+          format: float
+          description: "Validation charge amount (will be refunded)"
+          example: 1.00
+        currency:
+          type: string
+          enum: [NGN, GHS, USD, EUR, GBP]
+          description: "Validation charge currency"
+          example: "NGN"
+        provider:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Payment provider used"
+          example: "flutterwave"
+        expiresAt:
+          type: string
+          format: date-time
+          description: "When the tokenization session expires"
+          example: "2024-02-01T13:00:00Z"
+        instructions:
+          type: string
+          description: "User instructions for tokenization"
+          example: "You will be redirected to flutterwave to securely enter your card details..."
+        securityInfo:
+          type: object
+          properties:
+            pciCompliant:
+              type: boolean
+              description: "Whether tokenization is PCI compliant"
+              example: true
+            cardDataNotStored:
+              type: boolean
+              description: "Whether card data is not stored on our servers"
+              example: true
+            automaticRefund:
+              type: boolean
+              description: "Whether validation charge is automatically refunded"
+              example: true
+
+    TokenizationCallbackRequest:
+      type: object
+      required:
+        - provider
+        - reference
+        - userId
+      properties:
+        provider:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Payment provider name"
+          example: "flutterwave"
+        reference:
+          type: string
+          description: "Tokenization reference ID"
+          example: "TXN_123456789"
+        userId:
+          type: string
+          format: uuid
+          description: "User ID (must match authenticated user)"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [success, failed, cancelled]
+          description: "Tokenization status"
+          example: "success"
+        providerData:
+          type: object
+          description: "Additional data from provider"
+          additionalProperties: true
+
+    TokenizationCallbackResponse:
+      type: object
+      properties:
+        paymentMethodId:
+          type: string
+          format: uuid
+          description: "Created payment method ID"
+          example: "789e4567-e89b-12d3-a456-426614174000"
+        cardLast4:
+          type: string
+          pattern: '^[0-9]{4}$'
+          description: "Last 4 digits of the card"
+          example: "4246"
+        cardBrand:
+          type: string
+          enum: [visa, mastercard, amex, discover, unknown]
+          description: "Detected card brand"
+          example: "visa"
+        cardType:
+          type: string
+          enum: [credit, debit, prepaid, unknown]
+          description: "Detected card type"
+          example: "credit"
+        bankName:
+          type: string
+          description: "Issuing bank name"
+          example: "First Bank of Nigeria"
+        cardCountry:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: "Card issuing country (ISO 2-letter code)"
+          example: "NG"
+        isDefault:
+          type: boolean
+          description: "Whether this is set as default payment method"
+          example: false
+        canAutoCharge:
+          type: boolean
+          description: "Whether auto-charging is enabled"
+          example: true
+        tokenExpiryDate:
+          type: string
+          format: date-time
+          description: "When the tokens expire"
+          example: "2026-02-01T00:00:00Z"
+        validationRefunded:
+          type: boolean
+          description: "Whether validation charge was refunded"
+          example: true
+
+    TokenizationStatusResponse:
+      type: object
+      properties:
+        reference:
+          type: string
+          description: "Tokenization reference ID"
+          example: "TXN_123456789"
+        status:
+          type: string
+          enum: [pending, processing, success, failed, cancelled, expired]
+          description: "Current tokenization status"
+          example: "success"
+        provider:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Payment provider"
+          example: "flutterwave"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Tokenization creation time"
+          example: "2024-02-01T12:00:00Z"
+        completedAt:
+          type: string
+          format: date-time
+          description: "Tokenization completion time"
+          example: "2024-02-01T12:05:00Z"
+        expiresAt:
+          type: string
+          format: date-time
+          description: "Tokenization expiry time"
+          example: "2024-02-01T13:00:00Z"
+        paymentMethodId:
+          type: string
+          format: uuid
+          description: "Created payment method ID (if successful)"
+          example: "789e4567-e89b-12d3-a456-426614174000"
+        errorMessage:
+          type: string
+          description: "Error message (if failed)"
+          example: "Invalid card number"
+
+    RefreshTokensRequest:
+      type: object
+      required:
+        - provider
+      properties:
+        provider:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Payment provider to refresh tokens for"
+          example: "flutterwave"
+
+    RefreshTokensResponse:
+      type: object
+      properties:
+        authorizationUrl:
+          type: string
+          format: uri
+          description: "URL to redirect user for token refresh"
+          example: "https://checkout.flutterwave.com/refresh/123456"
+        reference:
+          type: string
+          description: "Token refresh reference ID"
+          example: "REFRESH_123456789"
+        paymentMethodId:
+          type: string
+          format: uuid
+          description: "Payment method ID being refreshed"
+          example: "789e4567-e89b-12d3-a456-426614174000"
+        instructions:
+          type: string
+          description: "User instructions for token refresh"
+          example: "Please complete the secure re-authentication with flutterwave..."
+
+    # ================================
+    # PAYMENT METHODS
+    # ================================
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Payment method ID"
+          example: "789e4567-e89b-12d3-a456-426614174000"
+        cardLast4:
+          type: string
+          pattern: '^[0-9]{4}$'
+          description: "Last 4 digits of the card"
+          example: "4246"
+        cardBrand:
+          type: string
+          enum: [visa, mastercard, amex, discover, unknown]
+          description: "Card brand"
+          example: "visa"
+        cardType:
+          type: string
+          enum: [credit, debit, prepaid, unknown]
+          description: "Card type"
+          example: "credit"
+        bankName:
+          type: string
+          description: "Issuing bank name"
+          example: "First Bank of Nigeria"
+        cardCountry:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: "Card issuing country (ISO 2-letter code)"
+          example: "NG"
+        isDefault:
+          type: boolean
+          description: "Whether this is the default payment method"
+          example: false
+        canAutoCharge:
+          type: boolean
+          description: "Whether auto-charging is enabled"
+          example: true
+        hasValidTokens:
+          type: boolean
+          description: "Whether payment method has valid tokens"
+          example: true
+        tokenStatus:
+          type: string
+          enum: [valid, expired, expiring_soon, no_tokens]
+          description: "Current token status"
+          example: "valid"
+        flutterwaveSuccessRate:
+          type: number
+          format: float
+          description: "Success rate with Flutterwave"
+          example: 95.5
+        paystackSuccessRate:
+          type: number
+          format: float
+          description: "Success rate with Paystack"
+          example: 92.3
+        lastUsed:
+          type: string
+          format: date-time
+          description: "Last usage timestamp"
+          example: "2024-02-01T12:00:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Creation timestamp"
+          example: "2024-01-15T10:30:00Z"
+        tokenExpiryDate:
+          type: string
+          format: date-time
+          description: "When tokens expire"
+          example: "2026-02-01T00:00:00Z"
+
+    SavePaymentMethodRequest:
+      type: object
+      required:
+        - cardLast4
+        - cardBrand
+        - cardType
+        - provider
+      properties:
+        cardLast4:
+          type: string
+          pattern: '^[0-9]{4}$'
+          description: "Last 4 digits of the card"
+          example: "4246"
+        cardBrand:
+          type: string
+          enum: [visa, mastercard, amex, discover, unknown]
+          description: "Card brand"
+          example: "visa"
+        cardType:
+          type: string
+          enum: [credit, debit, prepaid, unknown]
+          description: "Card type"
+          example: "credit"
+        provider:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Payment provider"
+          example: "flutterwave"
+        bankName:
+          type: string
+          description: "Issuing bank name"
+          example: "First Bank of Nigeria"
+        cardCountry:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: "Card issuing country (ISO 2-letter code)"
+          example: "NG"
+        flutterwaveToken:
+          type: string
+          description: "Flutterwave token (encrypted)"
+          example: "encrypted_token_123"
+        paystackToken:
+          type: string
+          description: "Paystack token (encrypted)"
+          example: "encrypted_token_456"
+        isDefault:
+          type: boolean
+          description: "Whether to set as default"
+          example: false
+        canAutoCharge:
+          type: boolean
+          description: "Whether auto-charging is enabled"
+          example: true
+        autoBillingSuccessCount:
+          type: integer
+          minimum: 0
+          description: "Number of successful auto-billing attempts"
+          example: 15
+        autoBillingFailureCount:
+          type: integer
+          minimum: 0
+          description: "Number of failed auto-billing attempts"
+          example: 2
+        successRate:
+          type: number
+          format: float
+          description: "Success rate percentage"
+          example: 88.24
+        lastAutoBillingUse:
+          type: string
+          format: date-time
+          description: "Last auto-billing usage timestamp"
+          example: "2024-02-01T12:00:00Z"
+        tokenExpiryDate:
+          type: string
+          format: date-time
+          description: "When tokens expire"
+          example: "2026-02-01T00:00:00Z"
+        hasValidTokens:
+          type: boolean
+          description: "Whether payment method has valid tokens"
+          example: true
+        tokenStatus:
+          type: string
+          enum: [valid, expired, expiring_soon, no_tokens]
+          description: "Current token status"
+          example: "valid"
+        hasFlutterwaveToken:
+          type: boolean
+          description: "Whether Flutterwave token is available"
+          example: true
+        hasPaystackToken:
+          type: boolean
+          description: "Whether Paystack token is available"
+          example: true
+
+    SavePaymentMethodResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Created payment method ID"
+          example: "789e4567-e89b-12d3-a456-426614174000"
+        cardLast4:
+          type: string
+          pattern: '^[0-9]{4}$'
+          description: "Last 4 digits of the card"
+          example: "4246"
+        cardBrand:
+          type: string
+          enum: [visa, mastercard, amex, discover, unknown]
+          description: "Card brand"
+          example: "visa"
+        cardType:
+          type: string
+          enum: [credit, debit, prepaid, unknown]
+          description: "Card type"
+          example: "credit"
+        bankName:
+          type: string
+          description: "Issuing bank name"
+          example: "First Bank of Nigeria"
+        cardCountry:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: "Card issuing country (ISO 2-letter code)"
+          example: "NG"
+        isDefault:
+          type: boolean
+          description: "Whether this is the default payment method"
+          example: false
+        canAutoCharge:
+          type: boolean
+          description: "Whether auto-charging is enabled"
+          example: true
+        hasValidTokens:
+          type: boolean
+          description: "Whether payment method has valid tokens"
+          example: true
+        tokenStatus:
+          type: string
+          enum: [valid, expired, expiring_soon, no_tokens]
+          description: "Current token status"
+          example: "valid"
+        flutterwaveSuccessRate:
+          type: number
+          format: float
+          description: "Success rate with Flutterwave"
+          example: 95.5
+        paystackSuccessRate:
+          type: number
+          format: float
+          description: "Success rate with Paystack"
+          example: 92.3
+        lastUsed:
+          type: string
+          format: date-time
+          description: "Last usage timestamp"
+          example: "2024-02-01T12:00:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Creation timestamp"
+          example: "2024-01-15T10:30:00Z"
+        tokenExpiryDate:
+          type: string
+          format: date-time
+          description: "When tokens expire"
+          example: "2026-02-01T00:00:00Z"
+
+    # ================================
+    # AUTO-BILLING
+    # ================================
+    AutoBillingPaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Payment method ID"
+          example: "789e4567-e89b-12d3-a456-426614174000"
+        cardLast4:
+          type: string
+          pattern: '^[0-9]{4}$'
+          description: "Last 4 digits of the card"
+          example: "4246"
+        cardBrand:
+          type: string
+          enum: [visa, mastercard, amex, discover, unknown]
+          description: "Card brand"
+          example: "visa"
+        cardType:
+          type: string
+          enum: [credit, debit, prepaid, unknown]
+          description: "Card type"
+          example: "credit"
+        bankName:
+          type: string
+          description: "Issuing bank name"
+          example: "First Bank of Nigeria"
+        cardCountry:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: "Card issuing country (ISO 2-letter code)"
+          example: "NG"
+        isDefault:
+          type: boolean
+          description: "Whether this is the default payment method"
+          example: false
+        canAutoCharge:
+          type: boolean
+          description: "Whether auto-charging is enabled"
+          example: true
+        hasValidTokens:
+          type: boolean
+          description: "Whether payment method has valid tokens"
+          example: true
+        tokenStatus:
+          type: string
+          enum: [valid, expired, expiring_soon, no_tokens]
+          description: "Current token status"
+          example: "valid"
+        flutterwaveSuccessRate:
+          type: number
+          format: float
+          description: "Success rate with Flutterwave"
+          example: 95.5
+        paystackSuccessRate:
+          type: number
+          format: float
+          description: "Success rate with Paystack"
+          example: 92.3
+        lastUsed:
+          type: string
+          format: date-time
+          description: "Last usage timestamp"
+          example: "2024-02-01T12:00:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Creation timestamp"
+          example: "2024-01-15T10:30:00Z"
+        tokenExpiryDate:
+          type: string
+          format: date-time
+          description: "When tokens expire"
+          example: "2026-02-01T00:00:00Z"
+        autoBillingSuccessCount:
+          type: integer
+          minimum: 0
+          description: "Number of successful auto-billing attempts"
+          example: 15
+        autoBillingFailureCount:
+          type: integer
+          minimum: 0
+          description: "Number of failed auto-billing attempts"
+          example: 2
+        lastAutoBillingUse:
+          type: string
+          format: date-time
+          description: "Last auto-billing usage timestamp"
+          example: "2024-02-01T12:00:00Z"
+        hasFlutterwaveToken:
+          type: boolean
+          description: "Whether Flutterwave token is available"
+          example: true
+        hasPaystackToken:
+          type: boolean
+          description: "Whether Paystack token is available"
+          example: true
+
+    ToggleAutoChargingRequest:
+      type: object
+      required:
+        - canAutoCharge
+      properties:
+        canAutoCharge:
+          type: boolean
+          description: "Whether to enable auto-charging"
+          example: true
+
+    ToggleAutoChargingResponse:
+      type: object
+      properties:
+        paymentMethodId:
+          type: string
+          format: uuid
+          description: "Payment method ID"
+          example: "789e4567-e89b-12d3-a456-426614174000"
+        canAutoCharge:
+          type: boolean
+          description: "Updated auto-charging status"
+          example: true
+
+    PaymentMethodAnalyticsResponse:
+      type: object
+      properties:
+        paymentMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMethodAnalytics'
+          description: "Analytics for each payment method"
+        summary:
+          $ref: '#/components/schemas/PaymentMethodSummary'
+          description: "Overall summary"
+
+    PaymentMethodAnalytics:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Payment method ID"
+          example: "789e4567-e89b-12d3-a456-426614174000"
+        cardLast4:
+          type: string
+          pattern: '^[0-9]{4}$'
+          description: "Last 4 digits of the card"
+          example: "4246"
+        cardBrand:
+          type: string
+          enum: [visa, mastercard, amex, discover, unknown]
+          description: "Card brand"
+          example: "visa"
+        cardType:
+          type: string
+          enum: [credit, debit, prepaid, unknown]
+          description: "Card type"
+          example: "credit"
+        bankName:
+          type: string
+          description: "Issuing bank name"
+          example: "First Bank of Nigeria"
+        cardCountry:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: "Card issuing country (ISO 2-letter code)"
+          example: "NG"
+        isDefault:
+          type: boolean
+          description: "Whether this is the default payment method"
+          example: false
+        canAutoCharge:
+          type: boolean
+          description: "Whether auto-charging is enabled"
+          example: true
+        hasValidTokens:
+          type: boolean
+          description: "Whether payment method has valid tokens"
+          example: true
+        tokenStatus:
+          type: string
+          enum: [valid, expired, expiring_soon, no_tokens]
+          description: "Current token status"
+          example: "valid"
+        flutterwaveSuccessRate:
+          type: number
+          format: float
+          description: "Success rate with Flutterwave"
+          example: 95.5
+        paystackSuccessRate:
+          type: number
+          format: float
+          description: "Success rate with Paystack"
+          example: 92.3
+        lastUsed:
+          type: string
+          format: date-time
+          description: "Last usage timestamp"
+          example: "2024-02-01T12:00:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Creation timestamp"
+          example: "2024-01-15T10:30:00Z"
+        tokenExpiryDate:
+          type: string
+          format: date-time
+          description: "When tokens expire"
+          example: "2026-02-01T00:00:00Z"
+        autoBillingSuccessCount:
+          type: integer
+          minimum: 0
+          description: "Number of successful auto-billing attempts"
+          example: 15
+        autoBillingFailureCount:
+          type: integer
+          minimum: 0
+          description: "Number of failed auto-billing attempts"
+          example: 2
+        successRate:
+          type: number
+          format: float
+          description: "Success rate percentage"
+          example: 88.24
+        lastAutoBillingUse:
+          type: string
+          format: date-time
+          description: "Last auto-billing usage timestamp"
+          example: "2024-02-01T12:00:00Z"
+
+    PaymentMethodSummary:
+      type: object
+      properties:
+        totalMethods:
+          type: integer
+          minimum: 0
+          description: "Total number of payment methods"
+          example: 3
+        autoChargingEnabled:
+          type: integer
+          minimum: 0
+          description: "Number of methods with auto-charging enabled"
+          example: 2
+        withValidTokens:
+          type: integer
+          minimum: 0
+          description: "Number of methods with valid tokens"
+          example: 2
+        averageSuccessRate:
+          type: number
+          format: float
+          description: "Average success rate across all methods"
+          example: 92.5
+
+    # ================================
+    # SUPPORTED OPTIONS
+    # ================================
+    SupportedOptionsResponse:
+      type: object
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupportedProvider'
+          description: "Supported payment providers"
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupportedCurrency'
+          description: "Supported currencies"
+        securityFeatures:
+          type: array
+          items:
+            type: string
+          description: "Security features"
+          example: ["PCI DSS compliant tokenization", "No card details stored on our servers"]
+
+    SupportedProvider:
+      type: object
+      properties:
+        name:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Provider name"
+          example: "flutterwave"
+        displayName:
+          type: string
+          description: "Provider display name"
+          example: "Flutterwave"
+        supportedCurrencies:
+          type: array
+          items:
+            type: string
+            enum: [NGN, GHS, USD, EUR, GBP]
+          description: "Currencies supported by this provider"
+          example: ["NGN", "GHS", "USD", "EUR", "GBP"]
+        features:
+          type: array
+          items:
+            type: string
+          description: "Features supported by this provider"
+          example: ["card_tokenization", "auto_billing", "refunds", "webhooks"]
+        description:
+          type: string
+          description: "Provider description"
+          example: "Secure payment processing across Africa"
+        validationAmounts:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: "Validation amounts for each currency"
+          example:
+            NGN: 100
+            GHS: 1
+            USD: 1
+
+    SupportedCurrency:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [NGN, GHS, USD, EUR, GBP]
+          description: "Currency code"
+          example: "NGN"
+        name:
+          type: string
+          description: "Currency name"
+          example: "Nigerian Naira"
+        symbol:
+          type: string
+          description: "Currency symbol"
+          example: "₦"

@@ -1,0 +1,31 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Heading -->
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+        Verify Account
+    </h1>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>{{fullName}}</strong>,
+    </p>
+
+    <!-- Intro message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
+        Thank you for registering with <strong>CosmicForge HealthNet</strong>! You're now part of a trusted platform 
+        that prioritizes quality healthcare connections and secure medical management.
+    </p>
+
+    <!-- Instructions -->
+    <p style="font-size: 16px; margin-bottom: 30px;">
+        Click the button below to verify your account and get started.
+    </p>
+
+    <!-- Button -->
+    {{> button url=link text="Verify My Email" }}
+
+    <!-- Expiry notice -->
+    <p style="font-size: 14px; color: #555; margin-top: 20px;">
+        This link will expire in <strong>{{expiresInMinutes}}</strong> minutes.
+    </p>
+
+</div>

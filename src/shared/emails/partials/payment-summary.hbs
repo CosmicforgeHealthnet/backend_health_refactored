@@ -1,0 +1,68 @@
+<!-- src/emails/partials/payment-summary.hbs -->
+<div class="payment-summary" style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 25px; margin: 25px 0;">
+    <h3 style="margin: 0 0 20px 0; color: #333; text-align: center;">💳 Payment Summary</h3>
+    
+    <table style="width: 100%; border-collapse: collapse;">
+        {{
+#if
+ transactionId}}
+        <tr>
+            <td style="padding: 8px 0; color: #666;">Transaction ID:</td>
+            <td style="padding: 8px 0; color: #333; text-align: right;">{{transactionId}}</td>
+        </tr>
+        {{
+/if
+}}
+        
+        {{
+#if
+ appointmentFee}}
+        <tr>
+            <td style="padding: 8px 0; color: #666;">Appointment Fee:</td>
+            <td style="padding: 8px 0; color: #333; text-align: right;">${{appointmentFee}}</td>
+        </tr>
+        {{
+/if
+}}
+        
+        {{
+#if
+ serviceFee}}
+        <tr>
+            <td style="padding: 8px 0; color: #666;">Service Fee:</td>
+            <td style="padding: 8px 0; color: #333; text-align: right;">${{serviceFee}}</td>
+        </tr>
+        {{
+/if
+}}
+        
+        {{
+#if
+ vatAmount}}
+        <tr>
+            <td style="padding: 8px 0; color: #666;">VAT:</td>
+            <td style="padding: 8px 0; color: #333; text-align: right;">${{vatAmount}}</td>
+        </tr>
+        {{
+/if
+}}
+        
+        <tr style="border-top: 2px solid #667eea;">
+            <td style="padding: 12px 0 8px 0; color: #333; font-weight: bold; font-size: 18px;">Total:</td>
+            <td style="padding: 12px 0 8px 0; color: #333; font-weight: bold; font-size: 18px; text-align: right;">
+                ${{totalAmount}}
+            </td>
+        </tr>
+        
+        {{
+#if
+ paymentMethod}}
+        <tr>
+            <td style="padding: 8px 0; color: #666;">Payment Method:</td>
+            <td style="padding: 8px 0; color: #333; text-align: right;">{{paymentMethod}}</td>
+        </tr>
+        {{
+/if
+}}
+    </table>
+</div>

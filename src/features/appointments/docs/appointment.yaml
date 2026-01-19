@@ -1,0 +1,2245 @@
+openapi: 3.0.3
+info:
+  title: Authentication API
+  version: 1.0.0
+  description: API for managing user authentication and doctor information in a medical communication system.
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique appointment identifier
+        patientId:
+          type: string
+          format: uuid
+          description: Patient identifier
+        doctorId:
+          type: string
+          format: uuid
+          description: Doctor identifier
+        appointmentDate:
+          type: string
+          format: date
+          example: "2025-06-25"
+        appointmentTime:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: "14:30"
+        duration:
+          type: integer
+          minimum: 15
+          maximum: 240
+          example: 30
+          description: Duration in minutes
+        endTime:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: "15:00"
+        status:
+          $ref: '#/components/schemas/AppointmentStatus'
+        type:
+          $ref: '#/components/schemas/AppointmentType'
+        priority:
+          $ref: '#/components/schemas/AppointmentPriority'
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+          example: "Routine checkup and general consultation"
+        notes:
+          type: string
+          maxLength: 1000
+          example: "Patient reports recurring headaches"
+        symptoms:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+          example: ["headache", "fatigue"]
+        meetingProvider:
+          $ref: '#/components/schemas/MeetingProvider'
+        meetingLink:
+          type: string
+          format: uri
+          example: "https://meet.google.com/abc-defg-hij"
+        meeting Alejandro:
+          type: string
+          example: "abc-defg-hij"
+        eventStatus:
+          type: string
+          example: "confirmed"
+        eventHtmlLink:
+          type: string
+          format: uri
+          example: "https://calendar.google.com/event?eid=..."
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+        startTime:
+          type: string
+          format: date-time
+        consultationFee:
+          type: number
+          multipleOf: 0.01
+          minimum: 0
+          example: 150.00
+        paymentStatus:
+          $ref: '#/components/schemas/PaymentStatus'
+        paymentId:
+          type: string
+        paymentMethod:
+          type: string
+          enum: [card, bank_transfer, wallet, insurance]
+        insuranceCovered:
+          type: boolean
+          default: false
+        copay:
+          type: number
+          multipleOf: 0.01
+          minimum: 0
+        reminderSent:
+          type: boolean
+          default: false
+        reminderSentAt:
+          type: string
+          format: date-time
+        notificationPreferences:
+          $ref: '#/components/schemas/NotificationPreferences'
+        isFirstVisit:
+          type: boolean
+          default: true
+        followUpRequired:
+          type: boolean
+          default: false
+        followUpDate:
+          type: string
+          format: date
+        prescriptions:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+        labOrdersRequired:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        lastModifiedBy:
+          type: string
+        completedAt:
+          type: string
+          format: date-time
+        cancelledAt:
+          type: string
+          format: date-time
+        cancellationReason:
+          type: string
+        cancelledBy:
+          type: string
+
+    JoinInstructions:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "How to Join Your Medical Consultation"
+        appointmentId:
+          type: string
+          format: uuid
+        appointmentDateTime:
+          type: string
+          example: "2025-06-25 at 14:30"
+        meetingDetails:
+          type: object
+          properties:
+            provider:
+              type: string
+              example: "Google Meet"
+            meetingLink:
+              type: string
+              format: uri
+            meetingCode:
+              type: string
+        instructions:
+          type: array
+          items:
+            type: object
+            properties:
+              step:
+                type: integer
+              title:
+                type: string
+              description:
+                type: string
+              timing:
+                type: string
+        technicalRequirements:
+          type: array
+          items:
+            type: string
+          example:
+            - "Stable internet connection (minimum 1 Mbps upload/download)"
+            - "Updated web browser (Chrome, Firefox, Safari, Edge)"
+            - "Camera and microphone (built-in or external)"
+            - "Quiet, private space for consultation"
+            - "Good lighting for video quality"
+        troubleshooting:
+          type: array
+          items:
+            type: object
+            properties:
+              issue:
+                type: string
+              solution:
+                type: string
+        supportContact:
+          type: string
+          example: "For technical issues during your appointment, contact our support team at support@yourplatform.com"
+
+    MeetingStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        meetingStatus:
+          type: object
+          properties:
+            hasMeetingLink:
+              type: boolean
+              example: true
+            meetingProvider:
+              type: string
+              example: "google"
+            meetingLink:
+              type: string
+              format: uri
+              example: "https://meet.google.com/abc-defg-hij"
+            googleMeetCode:
+              type: string
+              example: "abc-defg-hij"
+            status:
+              $ref: '#/components/schemas/AppointmentStatus'
+            paymentStatus:
+              $ref: '#/components/schemas/PaymentStatus'
+
+    MeetingDetailsResponse:
+      type: object
+      properties:
+        meetingProvider:
+          type: string
+          example: "google"
+        meetingDetails:
+          type: object
+          properties:
+            joinUrl:
+              type: string
+              format: uri
+              example: "https://meet.google.com/abc-defg-hij"
+            meetingId:
+              type: string
+              example: "abc-defg-hij"
+            password:
+              type: string
+            googleMeetCode:
+              type: string
+              example: "abc-defg-hij"
+            zoomMeetingId:
+              type: string
+            status:
+              type: string
+              example: "scheduled"
+            startTime:
+              type: string
+              format: date-time
+            duration:
+              type: integer
+              example: 30
+
+    DoctorAvailabilityResponse:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2025-06-25"
+        doctorId:
+          type: string
+          format: uuid
+        availableSlots:
+          type: array
+          items:
+            type: string
+            pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: ["09:00", "09:30", "10:00", "11:30", "15:00", "16:30"]
+        bookedSlots:
+          type: array
+          items:
+            type: string
+            pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: ["10:30", "11:00", "14:00", "14:30", "16:00"]
+       
+
+    CreateAppointmentRequest:
+      type: object
+      required:
+        - patientId
+        - doctorId
+        - appointmentDate
+        - appointmentTime
+        - reason
+      properties:
+        patientId:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+        appointmentDate:
+          type: string
+          format: date
+        appointmentTime:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+        duration:
+          type: integer
+          minimum: 15
+          maximum: 240
+          default: 30
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+        notes:
+          type: string
+          maxLength: 1000
+        symptoms:
+          type: array
+          items:
+            type: string
+            minLength: 2
+            maxLength: 100
+          maxItems: 20
+        type:
+          $ref: '#/components/schemas/AppointmentType'
+        priority:
+          $ref: '#/components/schemas/AppointmentPriority'
+        copay:
+          type: number
+          multipleOf: 0.01
+          minimum: 0
+        notificationPreferences:
+          $ref: '#/components/schemas/NotificationPreferences'
+        isFirstVisit:
+          type: boolean
+          default: true
+        followUpRequired:
+          type: boolean
+          default: false
+        followUpDate:
+          type: string
+          format: date
+        timezone:
+          type: string
+          default: "UTC"
+
+    CreateAppointmentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        appointment:
+          $ref: '#/components/schemas/Appointment'
+        paymentLink:
+          type: string
+          format: uri
+          example: "https://payments.platform.com/pay/uuid"
+        message:
+          type: string
+          example: "Appointment created successfully. Google Meet link will be generated after payment completion."
+        nextSteps:
+          type: array
+          items:
+            type: string
+          example:
+            - "Complete payment to confirm your appointment"
+            - "Google Meet link will be automatically generated after payment"
+            - "You will receive meeting details via email and SMS"
+
+    UpdateAppointmentRequest:
+      type: object
+      properties:
+        appointmentDate:
+          type: string
+          format: date
+        appointmentTime:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+        duration:
+          type: integer
+          minimum: 15
+          maximum: 240
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+        notes:
+          type: string
+          maxLength: 1000
+        symptoms:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+        rescheduledBy:
+          type: string
+          minLength: 5
+          maxLength: 255
+          example: "doctor"
+        type:
+          $ref: '#/components/schemas/AppointmentType'
+        priority:
+          $ref: '#/components/schemas/AppointmentPriority'
+
+    CancelAppointmentRequest:
+      type: object
+      required:
+        - reason
+        - cancelledBy
+      properties:
+        reason:
+          type: string
+          minLength: 5
+          maxLength: 500
+          example: "Patient unable to attend due to emergency"
+        refundRequested:
+          type: boolean
+          default: false
+        cancelledBy:
+          type: string
+          example: "patient"
+
+    RescheduleAppointmentRequest:
+      type: object
+      required:
+        - newDate
+        - newTime
+        - rescheduledBy
+      properties:
+        newDate:
+          type: string
+          format: date
+          example: "2025-06-26"
+        newTime:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: "15:00"
+        duration:
+          type: integer
+          minimum: 15
+          maximum: 240
+        reason:
+          type: string
+          minLength: 5
+          maxLength: 255
+          example: "Patient requested different time"
+        rescheduledBy:
+          type: string
+          minLength: 5
+          maxLength: 255
+          example: "doctor"
+
+    CompleteAppointmentRequest:
+      type: object
+      required:
+        - completedBy
+      properties:
+        notes:
+          type: string
+          maxLength: 2000
+          example: "Consultation completed successfully. Patient advised to rest."
+        prescriptions:
+          type: array
+          items:
+            type: string
+            minLength: 2
+            maxLength: 200
+          maxItems: 50
+          example: ["Ibuprofen 400mg - Take twice daily for headaches", "Multivitamin - Once daily"]
+        followUpRequired:
+          type: boolean
+          default: false
+        followUpDate:
+          type: string
+          format: date
+        labOrdersRequired:
+          type: array
+          items:
+            type: string
+            minLength: 2
+            maxLength: 200
+          maxItems: 20
+          example: ["Blood test - Complete blood count", "X-ray - Chest"]
+        completedBy:
+          type: string
+          example: "doctor"
+
+    PaymentRequest:
+      type: object
+      required:
+        - paymentMethod
+        - paymentToken
+        - amount
+      properties:
+        paymentMethod:
+          type: string
+          enum: [card, bank_transfer, wallet, insurance]
+          example: "card"
+        paymentToken:
+          type: string
+          minLength: 10
+          maxLength: 500
+          example: "tok_1234567890abcdef"
+        amount:
+          type: number
+          multipleOf: 0.01
+          minimum: 0
+          example: 150.00
+        currency:
+          type: string
+          enum: [NGN, USD, EUR, GBP]
+          default: "NGN"
+        description:
+          type: string
+          maxLength: 255
+          example: "Medical consultation payment"
+
+    PaymentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        appointment:
+          $ref: '#/components/schemas/Appointment'
+        meetingGenerated:
+          type: boolean
+          example: true
+        meetingData:
+          $ref: '#/components/schemas/MeetingData'
+        message:
+          type: string
+          example: "Payment processed successfully and Google Meet link generated."
+        nextSteps:
+          type: array
+          items:
+            type: string
+          example:
+            - "Your appointment is confirmed"
+            - "Google Meet link has been generated"
+            - "Check your email for meeting details"
+            - "Join the meeting 5-10 minutes before your appointment"
+
+    GoogleMeetRequest:
+      type: object
+      required:
+        - doctorId
+      properties:
+        doctorId:
+          type: string
+          format: uuid
+        timezone:
+          type: string
+          default: "UTC"
+        requirePassword:
+          type: boolean
+          default: true
+        waitingRoom:
+          type: boolean
+          default: true
+
+    GoogleMeetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        meetingData:
+          $ref: '#/components/schemas/MeetingData'
+        joinInstructions:
+          $ref: '#/components/schemas/JoinInstructions'
+        message:
+          type: string
+          example: "Google Meet link generated successfully"
+
+    MeetingData:
+      type: object
+      properties:
+        meetingProvider:
+          type: string
+          example: "google"
+        meetingLink:
+          type: string
+          format: uri
+          example: "https://meet.google.com/abc-defg-hij"
+        googleMeetCode:
+          type: string
+          example: "abc-defg-hij"
+        calendarEventId:
+          type: string
+          example: "google_cal_event_123"
+        meetingId:
+          type: string
+          example: "abc-defg-hij"
+        meetingPassword:
+          type: string
+        zoomMeetingId:
+          type: string
+        hostKey:
+          type: string
+
+    NotificationPreferences:
+      type: object
+      properties:
+        email:
+          type: boolean
+          default: true
+        sms:
+          type: boolean
+          default: true
+        push:
+          type: boolean
+          default: true
+
+    StandardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        appointment:
+          $ref: '#/components/schemas/Appointment'
+
+    ValidationErrorDetail:
+      type: object
+      properties:
+        field:
+          type: string
+          example: "appointmentDate"
+        message:
+          type: string
+          example: "Appointment date cannot be in the past"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationErrorDetail'
+
+    AppointmentStatus:
+      type: string
+      enum:
+        - pending
+        - scheduled
+        - completed
+        - cancelled
+        - rescheduled
+      example: "scheduled"
+
+    PaymentStatus:
+      type: string
+      enum:
+        - pending
+        - completed
+        - failed
+        - refunded
+      example: "completed"
+
+    AppointmentType:
+      type: string
+      enum:
+        - consultation
+        - follow-up
+        - routine-checkup
+      example: "consultation"
+
+    AppointmentPriority:
+      type: string
+      enum:
+        - routine
+        - urgent
+        - high
+      example: "routine"
+
+    MeetingProvider:
+      type: string
+      enum:
+        - google
+        - zoom
+      example: "google"
+
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Validation Error"
+            details:
+              - field: "appointmentDate"
+                message: "Appointment date cannot be in the past"
+              - field: "appointmentTime"
+                message: "Appointment must be scheduled at least 1 hour in advance"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Appointment not found"
+
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Internal Server Error"
+
+    Unauthorized:
+      description: Unauthorized access
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Doctor must authenticate with Google first"
+              requiresAuth:
+                type: boolean
+                example: true
+              authUrl:
+                type: string
+                example: "https://accounts.google.com/oauth/authorize?..."
+
+    securitySchemes:
+     BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  examples:
+    RoutineConsultation:
+      summary: Routine consultation appointment
+      value:
+        patientId: "123e4567-e89b-12d3-a456-426614174000"
+        doctorId: "123e4567-e89b-12d3-a456-426614174001"
+        appointmentDate: "2025-06-25"
+        appointmentTime: "14:30"
+        duration: 30
+        reason: "Routine checkup and general health consultation"
+        symptoms: ["headache", "fatigue"]
+        consultationFee: 150.00
+        type: "consultation"
+        priority: "routine"
+        notificationPreferences:
+          email: true
+          sms: true
+          push: false
+
+    UrgentFollowUp:
+      summary: Urgent follow-up appointment
+      value:
+        patientId: "123e4567-e89b-12d3-a456-426614174002"
+        doctorId: "123e4567-e89b-12d3-a456-426614174001"
+        appointmentDate: "2025-06-24"
+        appointmentTime: "09:00"
+        duration: 45
+        reason: "Follow-up on test results and treatment adjustment"
+        symptoms: ["chest pain", "shortness of breath"]
+        consultationFee: 200.00
+        type: "follow-up"
+        priority: "urgent"
+        followUpRequired: false
+        insuranceCovered: true
+        copay: 50.00
+
+    CompletedAppointment:
+      summary: Completed appointment with prescriptions
+      value:
+        id: "123e4567-e89b-12d3-a456-426614174003"
+        patientId: "123e4567-e89b-12d3-a456-426614174000"
+        doctorId: "123e4567-e89b-12d3-a456-426614174001"
+        appointmentDate: "2025-06-20"
+        appointmentTime: "14:30"
+        duration: 30
+        endTime: "15:00"
+        status: "completed"
+        type: "consultation"
+        priority: "routine"
+        reason: "Routine checkup and general health consultation"
+        notes: "Patient appears healthy. Recommended continued exercise and healthy diet."
+        symptoms: ["headache", "fatigue"]
+        meetingProvider: "google"
+        meetingLink: "https://meet.google.com/abc-defg-hij"
+        googleMeetCode: "abc-defg-hij"
+        consultationFee: 150.00
+        paymentStatus: "completed"
+        paymentMethod: "card"
+        prescriptions: ["Ibuprofen 400mg - Take twice daily for headaches", "Multivitamin - Once daily"]
+        followUpRequired: true
+        followUpDate: "2025-07-20"
+        completedAt: "2025-06-20T15:00:00Z"
+        createdAt: "2025-06-18T10:30:00Z"
+        updatedAt: "2025-06-20T15:00:00Z"
+
+paths:
+  /api/appointmentsss:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Get all appointments with filters
+      description: Retrieve appointments with optional filtering and pagination
+      parameters:
+        - name: patientId
+          in: query
+          description: Filter by patient ID
+          schema:
+            type: string
+            format: uuid
+        - name: doctorId
+          in: query
+          description: Filter by doctor ID
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Filter by appointment status
+          schema:
+            $ref: '#/components/schemas/AppointmentStatus'
+        - name: appointmentDate
+          in: query
+          description: Filter by specific date
+          schema:
+            type: string
+            format: date
+            example: "2025-06-25"
+        - name: paymentStatus
+          in: query
+          description: Filter by payment status
+          schema:
+            $ref: '#/components/schemas/PaymentStatus'
+        - name: startDate
+          in: query
+          description: Start date for date range filter
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: End date for date range filter
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Create a new appointment
+      description: |
+        Create a new medical appointment. Google Meet is set as the default meeting provider.
+        Meeting link will be automatically generated after payment completion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppointmentRequest'
+            examples:
+              routine_consultation:
+                summary: Routine consultation
+                value:
+                  patientId: "123e4567-e89b-12d3-a456-426614174000"
+                  doctorId: "123e4567-e89b-12d3-a456-426614174001"
+                  appointmentDate: "2025-06-25"
+                  appointmentTime: "14:30"
+                  duration: 30
+                  reason: "Routine checkup and general consultation"
+                  symptoms: ["headache", "fatigue"]
+                  type: "consultation"
+                  priority: "routine"
+                  notificationPreferences:
+                    email: true
+                    sms: true
+                    push: false
+              urgent_followup:
+                summary: Urgent follow-up
+                value:
+                  patientId: "123e4567-e89b-12d3-a456-426614174002"
+                  doctorId: "123e4567-e89b-12d3-a456-426614174001"
+                  appointmentDate: "2025-06-24"
+                  appointmentTime: "09:00"
+                  duration: 45
+                  reason: "Follow-up on test results and treatment adjustment"
+                  type: "follow-up"
+                  priority: "urgent"
+                  followUpRequired: true
+      responses:
+        '201':
+          description: Appointment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAppointmentResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/{id}/doctor-approval:
+    patch:
+      tags:
+        - Appointments
+      summary: Update doctor approval status
+      description: Allow doctor to approve or reject an appointment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - isDoctorApproved
+                - doctorId
+              properties:
+                isDoctorApproved:
+                  type: boolean
+                  example: true
+                  description: Doctor approval status
+                doctorId:
+                  type: string
+                  format: uuid
+                  description: Doctor ID for validation
+            examples:
+              approve_appointment:
+                summary: Approve appointment
+                value:
+                  isDoctorApproved: true
+                  doctorId: "123e4567-e89b-12d3-a456-426614174001"
+              reject_appointment:
+                summary: Reject appointment
+                value:
+                  isDoctorApproved: false
+                  doctorId: "123e4567-e89b-12d3-a456-426614174001"
+      responses:
+        '200':
+          description: Doctor approval updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  appointment:
+                    $ref: '#/components/schemas/Appointment'
+                  message:
+                    type: string
+                    example: "Appointment approved by doctor"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+  /api/appointmentsss/{id}/payment-status:
+    patch:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Update payment status
+      description: Update the payment status of an appointment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - paymentStatus
+              properties:
+                paymentStatus:
+                  type: string
+                  enum: [pending, completed, failed, refunded]
+                  example: "completed"
+                paymentId:
+                  type: string
+                  example: "pay_1234567890"
+                paymentMethod:
+                  type: string
+                  enum: [card, bank_transfer, wallet, insurance]
+                  example: "card"
+            examples:
+              payment_completed:
+                summary: Mark payment as completed
+                value:
+                  paymentStatus: "completed"
+                  paymentId: "pay_1234567890"
+                  paymentMethod: "card"
+              payment_failed:
+                summary: Mark payment as failed
+                value:
+                  paymentStatus: "failed"
+                  paymentId: "pay_1234567890"
+              payment_refunded:
+                summary: Mark payment as refunded
+                value:
+                  paymentStatus: "refunded"
+                  paymentId: "pay_1234567890"
+      responses:
+        '200':
+          description: Payment status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  appointment:
+                    $ref: '#/components/schemas/Appointment'
+                  message:
+                    type: string
+                    example: "Payment status updated successfully"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/{id}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Get appointment by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Appointment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Update appointment (auto-updates meeting if date/time changes)
+      description: |
+        Update an appointment. If the appointment date, time, or duration changes,
+        the associated meeting link will be automatically updated.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAppointmentRequest'
+            examples:
+              reschedule:
+                summary: Reschedule appointment (auto-updates meeting)
+                value:
+                  appointmentDate: "2025-06-26"
+                  appointmentTime: "15:00"
+                  duration: 45
+                  reason: "Updated consultation time"
+              update_details:
+                summary: Update details only (no meeting change)
+                value:
+                  reason: "Updated reason for consultation"
+                  notes: "Patient requested additional focus on symptoms"
+      responses:
+        '200':
+          description: Appointment updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  appointment:
+                    $ref: '#/components/schemas/Appointment'
+                  meetingUpdated:
+                    type: boolean
+                    example: true
+                    description: Indicates if meeting link was automatically updated
+                  message:
+                    type: string
+                    example: "Appointment updated successfully. Meeting link has been updated."
+
+  /api/appointmentsss/{id}/cancel:
+    patch:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Cancel appointment
+      description: |
+        Cancel an appointment with automatic refund processing based on cancellation policy:
+        - 24+ hours before: Full refund
+        - Less than 24 hours: 50% refund
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelAppointmentRequest'
+      responses:
+        '200':
+          description: Appointment cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # /api/appointmentss/{id}/reschedule:
+  #   patch:
+  #     security:
+  #       - BearerAuth: []
+  #     tags:
+  #       - Appointments
+  #     summary: Reschedule appointment
+  #     description: Reschedule an appointment to a new date and time with automatic conflict checking
+  #     parameters:
+  #       - name: id
+  #         in: path
+  #         required: true
+  #         description: Appointment ID
+  #         schema:
+  #           type: string
+  #           format: uuid
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: '#/components/schemas/RescheduleAppointmentRequest'
+  #     responses:
+  #       '200':
+  #         description: Appointment rescheduled successfully
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/StandardResponse'
+  #       '400':
+  #         $ref: '#/components/responses/ValidationError'
+  #       '404':
+  #         $ref: '#/components/responses/NotFound'
+  #       '500':
+  #         $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/{id}/complete:
+    patch:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Complete appointment
+      description: Mark appointment as completed with optional prescriptions and follow-up
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteAppointmentRequest'
+      responses:
+        '200':
+          description: Appointment completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/{id}/meeting/google:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments Meeting Management
+      summary: Generate Google Meet link
+      description: |
+        Manually generate a Google Meet link for an appointment.
+        Requires doctor to be authenticated with Google.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleMeetRequest'
+      responses:
+        '200':
+          description: Google Meet link generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleMeetResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/{id}/meeting/jitsi:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments Meeting Management
+      summary: Generate Jitsi Meet link
+      description: |
+        Generate a Jitsi Meet link for an appointment.
+        No authentication required - completely free service.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - doctorId
+              properties:
+                doctorId:
+                  type: string
+                  format: uuid
+                  description: Doctor ID
+      responses:
+        '200':
+          description: Jitsi Meet link generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  meetingData:
+                    type: object
+                    properties:
+                      meetingProvider:
+                        type: string
+                        example: "jitsi"
+                      meetingLink:
+                        type: string
+                        format: uri
+                        example: "https://meet.jit.si/medical-consultation-abc123def456"
+                      roomName:
+                        type: string
+                        example: "medical-consultation-abc123def456"
+                      meetingId:
+                        type: string
+                        example: "medical-consultation-abc123def456"
+                      meetingPassword:
+                        type: string
+                        example: "A1B2C3D4"
+                      serverUrl:
+                        type: string
+                        example: "https://meet.jit.si"
+                      startTime:
+                        type: string
+                        format: date-time
+                      duration:
+                        type: integer
+                        example: 30
+                      topic:
+                        type: string
+                        example: "Medical Consultation - Routine checkup"
+                  patientInstructions:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        example: "How to Join Your Medical Consultation via Jitsi Meet"
+                      instructions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            step:
+                              type: integer
+                            title:
+                              type: string
+                            description:
+                              type: string
+                            timing:
+                              type: string
+                      technicalRequirements:
+                        type: array
+                        items:
+                          type: string
+                      troubleshooting:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            issue:
+                              type: string
+                            solution:
+                              type: string
+                      features:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                          - "✅ No app download required - works in web browser"
+                          - "✅ Free and secure video conferencing"
+                          - "✅ Screen sharing capability"
+                          - "✅ Chat messaging during consultation"
+                  doctorInstructions:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        example: "Doctor: How to Host Your Medical Consultation"
+                      hostControls:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            feature:
+                              type: string
+                            description:
+                              type: string
+                      professionalTips:
+                        type: array
+                        items:
+                          type: string
+                  message:
+                    type: string
+                    example: "Jitsi meeting created successfully"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/{id}/meeting/zoom:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments Meeting Management
+      summary: Generate Zoom meeting link (OAuth)
+      description: |
+        Generate a Zoom meeting link using Server-to-Server OAuth.
+        Requires valid Zoom OAuth credentials configured.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - doctorId
+              properties:
+                doctorId:
+                  type: string
+                  format: uuid
+                  description: Doctor ID
+                timezone:
+                  type: string
+                  default: "UTC"
+                  example: "America/New_York"
+            examples:
+              basic_meeting:
+                summary: Basic Zoom meeting
+                value:
+                  doctorId: "123e4567-e89b-12d3-a456-426614174001"
+              with_timezone:
+                summary: Meeting with specific timezone
+                value:
+                  doctorId: "123e4567-e89b-12d3-a456-426614174001"
+                  timezone: "America/New_York"
+      responses:
+        '200':
+          description: Zoom meeting created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  meetingData:
+                    type: object
+                    properties:
+                      meetingProvider:
+                        type: string
+                        example: "zoom"
+                      meetingLink:
+                        type: string
+                        format: uri
+                        example: "https://zoom.us/j/123456789?pwd=abcdef"
+                      zoomMeetingId:
+                        type: string
+                        example: "123456789"
+                      meetingId:
+                        type: string
+                        example: "123456789"
+                      meetingPassword:
+                        type: string
+                        example: "SecurePass123"
+                      hostKey:
+                        type: string
+                        example: "host_key_456"
+                      startUrl:
+                        type: string
+                        format: uri
+                        example: "https://zoom.us/s/123456789?tk=host_token"
+                      joinUrl:
+                        type: string
+                        format: uri
+                        example: "https://zoom.us/j/123456789?pwd=abcdef"
+                      topic:
+                        type: string
+                        example: "Medical Consultation - Routine checkup"
+                      status:
+                        type: string
+                        example: "waiting"
+                      startTime:
+                        type: string
+                        format: date-time
+                      duration:
+                        type: integer
+                        example: 30
+                      timezone:
+                        type: string
+                        example: "UTC"
+                      agenda:
+                        type: string
+                      created:
+                        type: string
+                        format: date-time
+                      uuid:
+                        type: string
+                  joinInstructions:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        example: "How to Join Your Medical Consultation via Zoom"
+                      appointmentId:
+                        type: string
+                        format: uuid
+                      appointmentDateTime:
+                        type: string
+                        example: "2025-06-25 at 14:30"
+                      meetingDetails:
+                        type: object
+                        properties:
+                          provider:
+                            type: string
+                            example: "Zoom"
+                          meetingLink:
+                            type: string
+                            format: uri
+                          meetingId:
+                            type: string
+                          password:
+                            type: string
+                      instructions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            step:
+                              type: integer
+                            title:
+                              type: string
+                            description:
+                              type: string
+                            timing:
+                              type: string
+                      technicalRequirements:
+                        type: array
+                        items:
+                          type: string
+                      troubleshooting:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            issue:
+                              type: string
+                            solution:
+                              type: string
+                      supportContact:
+                        type: string
+                  message:
+                    type: string
+                    example: "Zoom meeting created successfully"
+        '400':
+          description: Bad request or Zoom configuration error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Zoom configuration error: Invalid credentials"
+              examples:
+                config_error:
+                  summary: Configuration error
+                  value:
+                    success: false
+                    error: "Zoom configuration error: Invalid account ID"
+                payment_required:
+                  summary: Payment not completed
+                  value:
+                    success: false
+                    error: "Payment must be completed before creating meeting link"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/{id}/meeting/regenerate:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments Meeting Management
+      summary: Force regenerate Google Meet link
+      description: Force regeneration of Google Meet link (for troubleshooting)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Google Meet link regenerated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleMeetResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/{id}/meeting:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Get meeting details
+      description: Get detailed meeting information for an appointment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Meeting details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingDetailsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/{id}/reminder:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Send appointment reminder
+      description: Send reminder notification to patient
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reminder sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/patient/{patientId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Get patient appointments
+      description: Get all appointments for a specific patient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: Patient ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Patient appointments retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/patient/{patientId}/upcoming:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Get patient upcoming appointments
+      description: Get all upcoming appointments for a specific patient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: Patient ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Patient appointments retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/doctor/{doctorId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Get doctor appointments
+      description: Get all appointments for a specific doctor
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          description: Doctor ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Doctor appointments retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/doctor/{doctorId}/upcoming:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Get doctor upcoming appointments
+      description: Get all upcoming appointments for a specific doctor
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          description: Doctor ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Doctor appointments retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/check-access/{patientId}/{doctorId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Check patient access to doctor
+      description: |
+        Check if a patient can book an appointment with a specific doctor based on their subscription tier 
+        and the doctor's specializations. This is a utility route for frontend validation.
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: Patient ID
+          schema:
+            type: string
+        - name: doctorId
+          in: path
+          required: true
+          description: Doctor ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patient has access to book with this doctor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Patient can book appointment with this doctor"
+                  accessGranted:
+                    type: boolean
+                    example: true
+        '403':
+          description: Patient does not have access to book with this doctor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Patient subscription does not allow booking with specialized doctors"
+                  accessGranted:
+                    type: boolean
+                    example: false
+                  upgradeRequired:
+                    type: boolean
+                    example: true
+        '404':
+          description: Patient or doctor not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Patient or doctor not found"
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/appointmentsss/access-info/{patientId}/{doctorId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointments
+      summary: Get detailed access information for patient-doctor booking
+      description: |
+        Get comprehensive access information including patient tier, doctor specializations, 
+        upgrade requirements, and detailed features. This provides more information than the 
+        simple check-access endpoint for showing upgrade prompts and detailed access info.
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: Patient ID
+          schema:
+            type: string
+        - name: doctorId
+          in: path
+          required: true
+          description: Doctor ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detailed access information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      canBook:
+                        type: boolean
+                        example: true
+                        description: Whether the patient can book with this doctor
+                      accessType:
+                        type: string
+                        example: "premium"
+                        description: Type of access (basic, premium, etc.)
+                      doctorSpecializations:
+                        type: array
+                        items:
+                          type: string
+                        example: ["cardiology", "internal_medicine"]
+                        description: Doctor's specializations
+                      isGeneralEmergencyDoctor:
+                        type: boolean
+                        example: false
+                        description: Whether doctor is a general/emergency doctor
+                      patientTier:
+                        type: string
+                        example: "premium"
+                        description: Patient's subscription tier
+                      upgradeRequired:
+                        type: boolean
+                        example: false
+                        description: Whether patient needs to upgrade subscription
+                      patientFeatures:
+                        type: array
+                        items:
+                          type: string
+                        example: ["specialist_booking", "priority_scheduling"]
+                        description: Available features for patient's tier
+        '404':
+          description: Patient or doctor not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Patient or doctor not found"
+        '500':
+          description: Failed to get access information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Failed to get access information"
+                  error:
+                    type: string
+                    example: "Database connection error"
+
+  /api/appointmentsss/auth/google/doctors/{doctorId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointment Authentication
+      summary: Initiate Google OAuth for doctor
+      description: Redirect doctor to Google OAuth for calendar access
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          description: Doctor ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '302':
+          description: Redirect to Google OAuth
+          headers:
+            Location:
+              description: Google OAuth URL
+              schema:
+                type: string
+                example: "https://accounts.google.com/oauth/authorize?..."
+
+  /api/appointmentsss/auth/google/callback:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointment Authentication
+      summary: Google OAuth callback
+      description: Handle Google OAuth callback and store tokens
+      parameters:
+        - name: code
+          in: query
+          required: true
+          description: Authorization code from Google
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          description: State parameter (contains doctor ID)
+          schema:
+            type: string
+        - name: error
+          in: query
+          description: Error parameter if authorization failed
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to dashboard with status
+          headers:
+            Location:
+              description: Dashboard URL with auth status
+              schema:
+                type: string
+                example: "/dashboard?google_auth=success"
+
+x-readme:
+  explorer-enabled: true
+  proxy-enabled: true
+  samples-enabled: true
+
+x-tagGroups:
+  - name: Core Operations
+    tags:
+      - Appointments
+      - Payments
+  - name: Meeting Management
+    tags:
+      - Google Meet
+  - name: Scheduling
+    tags:
+      - Availability
+  - name: Authentication
+    tags:
+      - Authentication
+  - name: System
+    tags:
+      - System
+
+x-logo:
+  url: "https://yourplatform.com/logo.png"
+  altText: "Medical Appointment System"
+
+x-contact:
+  name: "API Support Team"
+  email: "api-support@yourplatform.com"
+  url: "https://yourplatform.com/support"
+
+x-rateLimit:
+  limit: 100
+  remaining: 99
+  reset: 1609459200
+
+webhooks:
+  appointmentCreated:
+    post:
+      summary: Appointment Created
+      description: Triggered when a new appointment is created
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  example: "appointment.created"
+                data:
+                  $ref: '#/components/schemas/Appointment'
+                timestamp:
+                  type: string
+                  format: date-time
+
+  paymentCompleted:
+    post:
+      summary: Payment Completed
+      description: Triggered when payment is successfully processed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  example: "payment.completed"
+                data:
+                  type: object
+                  properties:
+                    appointmentId:
+                      type: string
+                      format: uuid
+                    paymentId:
+                      type: string
+                    amount:
+                      type: number
+                    currency:
+                      type: string
+                timestamp:
+                  type: string
+                  format: date-time
+
+  meetingGenerated:
+    post:
+      summary: Meeting Link Generated
+      description: Triggered when Google Meet link is generated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  example: "meeting.generated"
+                data:
+                  type: object
+                  properties:
+                    appointmentId:
+                      type: string
+                      format: uuid
+                    meetingLink:
+                      type: string
+                      format: uri
+                    meetingProvider:
+                      type: string
+                timestamp:
+                  type: string
+                  format: date-time

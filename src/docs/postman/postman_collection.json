@@ -1,0 +1,2719 @@
+{
+  "info": {
+    "name": "CosmicForge - Shared/Other",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get pending facility registrations",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/admin/facilities/pending",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "admin",
+            "facilities",
+            "pending"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all facilities pending approval (platform admin only)"
+      }
+    },
+    {
+      "name": "Approve facility registration",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/admin/facilities/{id}/approve",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "admin",
+            "facilities",
+            ":id",
+            "approve"
+          ],
+          "variable": []
+        },
+        "description": "Approve a pending facility registration (platform admin only).\nThis will create a lab admin user account and send welcome email.\n"
+      }
+    },
+    {
+      "name": "Reject facility registration",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/admin/facilities/{id}/reject",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "admin",
+            "facilities",
+            ":id",
+            "reject"
+          ],
+          "variable": []
+        },
+        "description": "Reject a pending facility registration with reason (platform admin only)"
+      }
+    },
+    {
+      "name": "Get facility statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/admin/facilities/stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "admin",
+            "facilities",
+            "stats"
+          ],
+          "variable": []
+        },
+        "description": "Get comprehensive facility statistics (platform admin only)"
+      }
+    },
+    {
+      "name": "Get recent facility registrations",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lab/admin/facilities/recent",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "lab",
+            "admin",
+            "facilities",
+            "recent"
+          ],
+          "variable": []
+        },
+        "description": "Get recent facility registrations (platform admin only)"
+      }
+    },
+    {
+      "name": "Get user's chat rooms",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/rooms",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "rooms"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all chat rooms the authenticated user is a participant in, including unread counts and room statistics.\n\n**WebSocket Integration:**\n- **Event: initial_data**: Sent on WebSocket connection with user's rooms and data.\n  ```javascript\n  socket.on('initial_data', (data) => {\n    console.log('User rooms:', data.rooms);\n    console.log('User info:', data.user);\n  });\n  ```\n\n**Frontend Example (React Hook):**\n```typescript\nimport { useChat } from './hooks/useChat';\nconst { rooms } = useChat(token);\nuseEffect(() => {\n  // Display rooms in UI\n  console.log('Rooms:', rooms);\n}, [rooms]);\n```\n"
+      }
+    },
+    {
+      "name": "Create new chat room",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/rooms",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "rooms"
+          ],
+          "variable": []
+        },
+        "description": "Create a new group chat room with specified settings and automatically join the creator as admin.\n\n**WebSocket Integration:**\n- **Event: room_joined**: Confirmation of joining the newly created room.\n  ```javascript\n  socket.on('room_joined', (data) => {\n    console.log('Joined room:', data.room);\n    console.log('Recent messages:', data.messages);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function createRoom() {\n  const roomData = {\n    name: \"Medical Team Discussion\",\n    description: \"Chat for medical team coordination\",\n    type: \"group\",\n    isPrivate: false,\n    maxParticipants: 25,\n    settings: { allowFileSharing: true, messageDeletionAllowed: true },\n    metadata: { department: \"cardiology\" }\n  };\n  const response = await chatService.createRoom(roomData);\n  console.log('Created room:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Create direct chat",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/direct",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "direct"
+          ],
+          "variable": []
+        },
+        "description": "Create or retrieve an existing direct chat between two users.\n\n**WebSocket Integration:**\n- **Event: room_joined**: Confirmation of joining the direct chat room.\n  ```javascript\n  socket.on('room_joined', (data) => {\n    console.log('Joined direct chat:', data.room);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function startDirectChat() {\n  const response = await chatService.createDirectChat(\"user456\");\n  console.log('Direct chat:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Get room details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/rooms/{roomId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "rooms",
+            ":roomId"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve detailed information about a specific chat room, including participants and settings.\n\n**WebSocket Integration:**\n- **Event: room_updated**: Notifies when room information is updated.\n  ```javascript\n  socket.on('room_updated', (data) => {\n    console.log('Room updated:', data.roomId);\n    console.log('Last message:', data.lastMessage);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function getRoomDetails(roomId) {\n  const response = await chatService.request(`/api/chat/rooms/${roomId}`);\n  console.log('Room details:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Join chat room",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/rooms/{roomId}/join",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "rooms",
+            ":roomId",
+            "join"
+          ],
+          "variable": []
+        },
+        "description": "Join an existing chat room as a participant.\n\n**WebSocket Integration:**\n- **Event: join_room**: Client emits to join a chat room.\n  ```javascript\n  socket.emit('join_room', { roomId: 'room-uuid' });\n  ```\n- **Event: room_joined**: Confirmation of joining the room.\n  ```javascript\n  socket.on('room_joined', (data) => {\n    console.log('Joined room:', data.room);\n  });\n  ```\n- **Event: user_joined_room**: Notifies others when a user joins.\n  ```javascript\n  socket.on('user_joined_room', (data) => {\n    console.log(`${data.user.name} joined room ${data.roomId}`);\n  });\n  ```\n\n**Frontend Example (React Hook):**\n```typescript\nconst { joinRoom } = useChat(token);\nuseEffect(() => {\n  joinRoom(roomId);\n}, [roomId]);\n```\n"
+      }
+    },
+    {
+      "name": "Leave chat room",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/rooms/{roomId}/leave",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "rooms",
+            ":roomId",
+            "leave"
+          ],
+          "variable": []
+        },
+        "description": "Leave a chat room and become an inactive participant.\n\n**WebSocket Integration:**\n- **Event: leave_room**: Client emits to leave a chat room.\n  ```javascript\n  socket.emit('leave_room', { roomId: 'room-uuid' });\n  ```\n- **Event: room_left**: Confirmation of leaving the room.\n  ```javascript\n  socket.on('room_left', (data) => {\n    console.log('Left room:', data.roomId);\n  });\n  ```\n- **Event: user_left_room**: Notifies others when a user leaves.\n  ```javascript\n  socket.on('user_left_room', (data) => {\n    console.log(`User ${data.userId} left room ${data.roomId}`);\n  });\n ```\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function leaveRoom(roomId) {\n  await chatService.request(`/api/chat/rooms/${roomId}/leave`, { method: 'POST' });\n  console.log('Left room:', roomId);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Get room participants",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/rooms/{roomId}/participants",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "rooms",
+            ":roomId",
+            "participants"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve a list of active participants in a chat room.\n\n**WebSocket Integration:**\n- **Event: user_joined_room**: Notifies when a new participant joins.\n  ```javascript\n  socket.on('user_joined_room', (data) => {\n    console.log(`${data.user.name} joined room ${data.roomId}`);\n  });\n  ```\n- **Event: user_left_room**: Notifies when a participant leaves.\n  ```javascript\n  socket.on('user_left_room', (data) => {\n    console.log(`User ${data.userId} left room ${data.roomId}`);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function getParticipants(roomId) {\n  const response = await chatService.request(`/api/chat/rooms/${roomId}/participants`);\n  console.log('Participants:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Get messages",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/rooms/{roomId}/messages",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "rooms",
+            ":roomId",
+            "messages"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve messages from a chat room with pagination and filtering options.\n\n**WebSocket Integration:**\n- **Event: new_message**: Notifies when a new message is received.\n  ```javascript\n  socket.on('new_message', (message) => {\n    console.log('New message from:', message.sender.fullName);\n    console.log('Content:', message.content);\n    displayMessage(message);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function fetchMessages(roomId) {\n  const response = await chatService.getMessages(roomId, { limit: 50 });\n  console.log('Messages:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Send message",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/rooms/{roomId}/messages",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "rooms",
+            ":roomId",
+            "messages"
+          ],
+          "variable": []
+        },
+        "description": "Send a new message to a chat room.\n\n**WebSocket Integration:**\n- **Event: send_message**: Client emits to send a message.\n  ```javascript\n  socket.emit('send_message', {\n    roomId: 'room-uuid',\n    content: 'Hello world',\n    type: 'text',\n    metadata: {},\n    replyToId: 'message-uuid'\n  });\n  ```\n- **Event: new_message**: Notifies when the message is received.\n  ```javascript\n  socket.on('new_message', (message) => {\n    console.log('New message:', message.content);\n    displayMessage(message);\n  });\n  ```\n\n**Frontend Example (React Component):**\n```typescript\nconst { sendMessage } = useChat(token);\nconst handleSendMessage = (e) => {\n  e.preventDefault();\n  sendMessage(roomId, newMessage);\n  setNewMessage('');\n};\n```\n"
+      }
+    },
+    {
+      "name": "Edit message",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/messages/{messageId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "messages",
+            ":messageId"
+          ],
+          "variable": []
+        },
+        "description": "Edit an existing message (only by the original sender).\n\n**WebSocket Integration:**\n- **Event: edit_message**: Client emits to edit a message.\n  ```javascript\n  socket.emit('edit_message', {\n    messageId: 'message-uuid',\n    content: 'Updated content'\n  });\n  ```\n- **Event: message_edited**: Notifies when a message is edited.\n  ```javascript\n  socket.on('message_edited', (message) => {\n    console.log('Message edited:', message.id);\n    updateMessageInUI(message);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function editMessage(messageId, content) {\n  const response = await chatService.editMessage(messageId, content);\n  console.log('Edited message:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Delete message",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/messages/{messageId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "messages",
+            ":messageId"
+          ],
+          "variable": []
+        },
+        "description": "Delete a message (soft delete by default, hard delete for admins).\n\n**WebSocket Integration:**\n- **Event: delete_message**: Client emits to delete a message.\n  ```javascript\n  socket.emit('delete_message', {\n    messageId: 'message-uuid',\n    soft: true\n  });\n  ```\n- **Event: message_deleted**: Notifies when a message is deleted.\n  ```javascript\n  socket.on('message_deleted', (data) => {\n    console.log('Message deleted:', data.messageId);\n    if (data.soft) {\n      markMessageAsDeleted(data.messageId);\n    } else {\n      removeMessageFrom oiseaux(data.messageId);\n    }\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function deleteMessage(messageId, soft = true) {\n  await chatService.deleteMessage(messageId, soft);\n  console.log('Message deleted:', messageId);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Mark messages as read",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/rooms/{roomId}/read",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "rooms",
+            ":roomId",
+            "read"
+          ],
+          "variable": []
+        },
+        "description": "Mark messages as read up to a specific message or all messages in a room.\n\n**WebSocket Integration:**\n- **Event: mark_read**: Client emits to mark messages as read.\n  ```javascript\n  socket.emit('mark_read', {\n    roomId: 'room-uuid',\n    messageId: 'message-uuid'\n  });\n  ```\n- **Event: message_read**: Notifies when a message is read by someone.\n  ```javascript\n  socket.on('message_read', (data) => {\n    console.log(`Message ${data.messageId} read by ${data.readBy}`);\n    updateReadStatus(data.messageId, data.readBy);\n  });\n  ```\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function markMessagesRead(roomId, messageId) {\n  await chatService.markAsRead(roomId, messageId);\n  console.log('Messages marked as read');\n}\n```\n"
+      }
+    },
+    {
+      "name": "Search messages",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/chat/rooms/{roomId}/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "chat",
+            "rooms",
+            ":roomId",
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Search for messages within a chat room.\n\n**Frontend Example (API Service):**\n```typescript\nconst chatService = new ChatAPIService('https://api.example.com', token);\nasync function searchMessages(roomId, query) {\n  const response = await chatService.searchMessages(roomId, query, { limit: 20 });\n  console.log('Search results:', response.data);\n}\n```\n"
+      }
+    },
+    {
+      "name": "Get emergency numbers for current location",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sos/emergency-numbers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sos",
+            "emergency-numbers"
+          ],
+          "variable": []
+        },
+        "description": "Returns all emergency numbers based on automatically detected location with optional safety tips"
+      }
+    },
+    {
+      "name": "Get emergency numbers by country",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sos/emergency-numbers/by-country",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sos",
+            "emergency-numbers",
+            "by-country"
+          ],
+          "variable": []
+        },
+        "description": "Returns emergency numbers for a specific country using country code or name"
+      }
+    },
+    {
+      "name": "Get emergency information by specific type",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sos/emergency/{type}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sos",
+            "emergency",
+            ":type"
+          ],
+          "variable": []
+        },
+        "description": "Returns only the specific emergency number and safety tips for a particular emergency type (police, fire, medical, or general)"
+      }
+    },
+    {
+      "name": "Get specific emergency service information",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sos/service/{type}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sos",
+            "service",
+            ":type"
+          ],
+          "variable": []
+        },
+        "description": "Returns emergency information highlighting a specific service type with quick call information"
+      }
+    },
+    {
+      "name": "Get safety tips by emergency type",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sos/safety-tips/{type}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sos",
+            "safety-tips",
+            ":type"
+          ],
+          "variable": []
+        },
+        "description": "Returns safety tips for a specific type of emergency"
+      }
+    },
+    {
+      "name": "Get all safety tips",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sos/safety-tips",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sos",
+            "safety-tips"
+          ],
+          "variable": []
+        },
+        "description": "Returns safety tips for all emergency types"
+      }
+    },
+    {
+      "name": "Initialize secure card tokenization",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/initialize-tokenization",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            "initialize-tokenization"
+          ],
+          "variable": []
+        },
+        "description": "Start the secure tokenization process with payment provider (replaces deprecated validate-and-save)"
+      }
+    },
+    {
+      "name": "Handle tokenization callback",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/tokenization-callback",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            "tokenization-callback"
+          ],
+          "variable": []
+        },
+        "description": "Process the callback from payment provider after successful tokenization"
+      }
+    },
+    {
+      "name": "Get payment method auto-billing analytics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/analytics",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            "analytics"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve analytics and performance metrics for user's payment methods"
+      }
+    },
+    {
+      "name": "Validate and save payment method (DEPRECATED)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/validate-and-save",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            "validate-and-save"
+          ],
+          "variable": []
+        },
+        "description": "This endpoint is deprecated for security reasons. Use /initialize-tokenization instead."
+      }
+    },
+    {
+      "name": "Check tokenization status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/tokenization-status/{provider}/{reference}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            "tokenization-status",
+            ":provider",
+            ":reference"
+          ],
+          "variable": []
+        },
+        "description": "Check the current status of a tokenization process"
+      }
+    },
+    {
+      "name": "Refresh expired payment method tokens",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/{paymentMethodId}/refresh-tokens",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            ":paymentMethodId",
+            "refresh-tokens"
+          ],
+          "variable": []
+        },
+        "description": "Initiate token refresh for expired payment method tokens"
+      }
+    },
+    {
+      "name": "Get supported providers and currencies",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/supported-options",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            "supported-options"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve available payment providers, currencies, and security features"
+      }
+    },
+    {
+      "name": "Get user payment methods",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve saved payment methods with success rates and token status"
+      }
+    },
+    {
+      "name": "Save a new payment method (Internal)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods"
+          ],
+          "variable": []
+        },
+        "description": "Internal endpoint for saving payment methods (used by tokenization callback)"
+      }
+    },
+    {
+      "name": "Set payment method as default",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/{paymentMethodId}/default",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            ":paymentMethodId",
+            "default"
+          ],
+          "variable": []
+        },
+        "description": "Set a payment method as the user's default payment method"
+      }
+    },
+    {
+      "name": "Remove a payment method",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/{paymentMethodId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            ":paymentMethodId"
+          ],
+          "variable": []
+        },
+        "description": "Remove/deactivate a payment method from user's account"
+      }
+    },
+    {
+      "name": "Get payment methods available for auto-billing",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/auto-billing",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            "auto-billing"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve payment methods that can be used for auto-billing with their performance metrics"
+      }
+    },
+    {
+      "name": "Toggle auto-charging for payment method",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/methods/{paymentMethodId}/auto-charge",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "methods",
+            ":paymentMethodId",
+            "auto-charge"
+          ],
+          "variable": []
+        },
+        "description": "Enable or disable auto-charging capability for a specific payment method"
+      }
+    },
+    {
+      "name": "Get user's current subscription with dynamic pricing",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/current",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "current"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve current subscription with pricing converted to requested country's currency"
+      }
+    },
+    {
+      "name": "Create subscription payment with dynamic currency conversion",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/create-payment",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "create-payment"
+          ],
+          "variable": []
+        },
+        "description": "Create payment transaction for subscription upgrade with real-time currency conversion and auto-provider selection"
+      }
+    },
+    {
+      "name": "Get comprehensive usage summary",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/usage-summary",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "usage-summary"
+          ],
+          "variable": []
+        },
+        "description": "Get detailed usage breakdown with percentages, limits, and health status"
+      }
+    },
+    {
+      "name": "Get quick usage status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/usage-status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "usage-status"
+          ],
+          "variable": []
+        },
+        "description": "Get lightweight usage status with counts and health indicators"
+      }
+    },
+    {
+      "name": "Upgrade subscription using saved payment method with dynamic pricing",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/upgrade-with-saved-method",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "upgrade-with-saved-method"
+          ],
+          "variable": []
+        },
+        "description": "Instantly upgrade subscription by charging saved payment method with real-time currency conversion"
+      }
+    },
+    {
+      "name": "Process subscription upgrade after successful payment",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/process-upgrade-after-payment",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "process-upgrade-after-payment"
+          ],
+          "variable": []
+        },
+        "description": "Internal endpoint called by webhooks/callbacks to upgrade subscription after payment success"
+      }
+    },
+    {
+      "name": "Get available plans with dynamic currency pricing",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/plans",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "plans"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve available subscription plans with real-time currency conversion based on country"
+      }
+    },
+    {
+      "name": "Get pricing for specific plan with dynamic currency conversion",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/plans/{planType}/{tier}/pricing",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "plans",
+            ":planType",
+            ":tier",
+            "pricing"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve detailed pricing information for a specific plan with real-time currency conversion"
+      }
+    },
+    {
+      "name": "Cancel subscription",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/cancel",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "cancel"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Check if user has access to specific feature",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/features/{featureName}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "features",
+            ":featureName"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Get usage limits and current usage",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/usage",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "usage"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Get auto-billing settings",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/auto-billing",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "auto-billing"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Enable auto-billing",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/auto-billing/enable",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "auto-billing",
+            "enable"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Disable auto-billing",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/auto-billing/disable",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "auto-billing",
+            "disable"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Get subscription analytics (Admin only)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/analytics",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "analytics"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Test subscription upgrade (Internal testing)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscription/test-upgrade/{transactionId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subscription",
+            "test-upgrade",
+            ":transactionId"
+          ],
+          "variable": []
+        },
+        "description": "Manual testing endpoint to trigger subscription upgrade for completed transactions"
+      }
+    },
+    {
+      "name": "Get expected profile options",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/profile-options",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "profile-options"
+          ],
+          "variable": []
+        },
+        "description": "Returns the acceptable values for fields in patient and doctor profiles, such as gender, blood group, genotype, etc., fetched from the database."
+      }
+    },
+    {
+      "name": "Manage profile options",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/profile-options/manage",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "profile-options",
+            "manage"
+          ],
+          "variable": []
+        },
+        "description": "Allows admins to add, update, or delete profile options for patient and doctor profiles. Each operation is processed individually, with results returned for success or failure."
+      }
+    },
+    {
+      "name": "Create new patient consent",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/create",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            "create"
+          ],
+          "variable": []
+        },
+        "description": "Create a new consent record for a patient. This establishes what level\nof access is granted, for what purposes, and any restrictions.\n"
+      }
+    },
+    {
+      "name": "Get consent status for patient",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/{patientId}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            ":patientId",
+            "status"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve the current consent status for a patient, including scope,\nallowed purposes, and expiration information.\n"
+      }
+    },
+    {
+      "name": "Update patient consent",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/{patientId}/update",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            ":patientId",
+            "update"
+          ],
+          "variable": []
+        },
+        "description": "Update an existing consent record. Creates a new version while\nmaintaining audit trail of previous versions.\n"
+      }
+    },
+    {
+      "name": "Withdraw patient consent",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/{patientId}/withdraw",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            ":patientId",
+            "withdraw"
+          ],
+          "variable": []
+        },
+        "description": "Withdraw consent for a patient. This action is irreversible and\nimmediately restricts access to patient data.\n"
+      }
+    },
+    {
+      "name": "Check permission for specific access",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/check-permission",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            "check-permission"
+          ],
+          "variable": []
+        },
+        "description": "Verify whether a user has permission to access patient data for a\nspecific purpose. Supports emergency access with justification.\n"
+      }
+    },
+    {
+      "name": "Get consent history for patient",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/{patientId}/history",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            ":patientId",
+            "history"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve the complete consent history for a patient, including\nall versions, withdrawals, and modifications.\n"
+      }
+    },
+    {
+      "name": "Get consent access logs for patient",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/{patientId}/access-logs",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            ":patientId",
+            "access-logs"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve detailed access logs showing who accessed patient data,\nwhen, and for what purpose.\n"
+      }
+    },
+    {
+      "name": "Get emergency access events",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/emergency-access",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            "emergency-access"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all emergency access events with optional filtering\nby date range and patient.\n"
+      }
+    },
+    {
+      "name": "Bulk update consent for multiple patients",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/bulk-update",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            "bulk-update"
+          ],
+          "variable": []
+        },
+        "description": "Update consent settings for multiple patients at once.\nLimited to 100 patients per request.\n"
+      }
+    },
+    {
+      "name": "Get consent statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/statistics",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            "statistics"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve comprehensive consent statistics including overview metrics,\nscope distribution, and daily activity trends.\n"
+      }
+    },
+    {
+      "name": "Validate consent data",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/validate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            "validate"
+          ],
+          "variable": []
+        },
+        "description": "Validate consent data before creation or update to ensure\nall required fields are present and valid.\n"
+      }
+    },
+    {
+      "name": "Get consent templates",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/templates",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            "templates"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve predefined consent templates for different use cases.\nTemplates provide standard configurations for common scenarios.\n"
+      }
+    },
+    {
+      "name": "Convert currency based on user location",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/dynamicCurrency/convert",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "dynamicCurrency",
+            "convert"
+          ],
+          "variable": []
+        },
+        "description": "Convert an amount from one currency to another based on the user's location.\nThe target currency is automatically detected from the user's country using IP geolocation.\nIf the detected currency is not supported by payment gateways, it defaults to USD.\n\n**Use Case**: Doctor in UK sets price in USD, patient in Nigeria sees price in NGN.\n"
+      }
+    },
+    {
+      "name": "Get supported currencies",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/dynamicCurrency/supported",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "dynamicCurrency",
+            "supported"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all currencies supported by Paystack and Flutterwave payment gateways.\nReturns separate lists for each gateway plus a combined list.\n"
+      }
+    },
+    {
+      "name": "Check payment gateway support for specific currency",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/dynamicCurrency/support/{currency}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "dynamicCurrency",
+            "support",
+            ":currency"
+          ],
+          "variable": []
+        },
+        "description": "Check whether a specific currency is supported by Paystack, Flutterwave, or both.\nUseful for determining which payment gateway to use for a transaction.\n"
+      }
+    },
+    {
+      "name": "Get user's local currency",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/dynamicCurrency/local",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "dynamicCurrency",
+            "local"
+          ],
+          "variable": []
+        },
+        "description": "Get the user's local currency based on their IP geolocation.\nAlso returns payment gateway support information for the detected currency.\nUses the location middleware to determine the user's country.\n"
+      }
+    },
+    {
+      "name": "Get general FAQs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/general",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "general"
+          ],
+          "variable": []
+        },
+        "description": "Get FAQs for general users (accessible to everyone)"
+      }
+    },
+    {
+      "name": "Get FAQ categories",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/categories",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "categories"
+          ],
+          "variable": []
+        },
+        "description": "Get all FAQ categories"
+      }
+    },
+    {
+      "name": "Get popular FAQs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/popular",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "popular"
+          ],
+          "variable": []
+        },
+        "description": "Get popular FAQs based on votes and views"
+      }
+    },
+    {
+      "name": "Get most viewed FAQs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/most-viewed",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "most-viewed"
+          ],
+          "variable": []
+        },
+        "description": "Get FAQs with highest view counts"
+      }
+    },
+    {
+      "name": "Search FAQs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Search FAQs by keywords"
+      }
+    },
+    {
+      "name": "Get FAQ by slug",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/{slug}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            ":slug"
+          ],
+          "variable": []
+        },
+        "description": "Get a single FAQ by its slug"
+      }
+    },
+    {
+      "name": "Get all FAQs (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/admin/faqs",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "admin",
+            "faqs"
+          ],
+          "variable": []
+        },
+        "description": "Get all FAQs with admin details and filters"
+      }
+    },
+    {
+      "name": "Create FAQ (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/admin/faqs",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "admin",
+            "faqs"
+          ],
+          "variable": []
+        },
+        "description": "Create a new FAQ"
+      }
+    },
+    {
+      "name": "Update FAQ (Admin)",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/admin/faqs/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "admin",
+            "faqs",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Update an existing FAQ"
+      }
+    },
+    {
+      "name": "Delete FAQ (Admin)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/admin/faqs/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "admin",
+            "faqs",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Delete an FAQ (cannot delete static FAQs)"
+      }
+    },
+    {
+      "name": "Get FAQ analytics (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/admin/analytics",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "admin",
+            "analytics"
+          ],
+          "variable": []
+        },
+        "description": "Get comprehensive FAQ analytics and statistics"
+      }
+    },
+    {
+      "name": "Create category (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/admin/categories",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "admin",
+            "categories"
+          ],
+          "variable": []
+        },
+        "description": "Create a new FAQ category"
+      }
+    },
+    {
+      "name": "Update category (Admin)",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/admin/categories/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "admin",
+            "categories",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Update an existing FAQ category"
+      }
+    },
+    {
+      "name": "Initialize static FAQs (Super Admin)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/admin/initialize-static",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "admin",
+            "initialize-static"
+          ],
+          "variable": []
+        },
+        "description": "Initialize static FAQ data (one-time setup)"
+      }
+    },
+    {
+      "name": "Get files by FHIR resource type",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/fhir/resources/{resourceType}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "fhir",
+            "resources",
+            ":resourceType"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all files of a specific FHIR resource type.\nSupports filtering by patient and sensitivity level.\n"
+      }
+    },
+    {
+      "name": "Get FHIR dashboard data",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/fhir/dashboard",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "fhir",
+            "dashboard"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve comprehensive dashboard data including overview statistics,\nresource distribution, and compliance metrics.\n"
+      }
+    },
+    {
+      "name": "Get available FHIR resource types",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/fhir/resource-types",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "fhir",
+            "resource-types"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all FHIR resource types available for the user with counts\nand sensitivity level breakdown.\n"
+      }
+    },
+    {
+      "name": "Get FHIR statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/fhir/stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "fhir",
+            "stats"
+          ],
+          "variable": []
+        },
+        "description": "Get basic or detailed FHIR statistics for the authenticated user.\n"
+      }
+    },
+    {
+      "name": "Create a new folder",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders"
+          ],
+          "variable": []
+        },
+        "description": "Create a new document folder for organizing files"
+      }
+    },
+    {
+      "name": "Get user's folders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve user's folders with pagination and filtering"
+      }
+    },
+    {
+      "name": "Get recent folders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/recent",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            "recent"
+          ],
+          "variable": []
+        },
+        "description": "Get recently accessed or created folders"
+      }
+    },
+    {
+      "name": "Search folders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Search folders by name, description, or metadata"
+      }
+    },
+    {
+      "name": "Get folders by type",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/type/{folderType}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            "type",
+            ":folderType"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all folders of a specific type"
+      }
+    },
+    {
+      "name": "Get folder by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/{folderId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            ":folderId"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve a specific folder with its files"
+      }
+    },
+    {
+      "name": "Update folder",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/{folderId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            ":folderId"
+          ],
+          "variable": []
+        },
+        "description": "Update folder information"
+      }
+    },
+    {
+      "name": "Delete folder",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/{folderId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            ":folderId"
+          ],
+          "variable": []
+        },
+        "description": "Soft delete a folder and all its files"
+      }
+    },
+    {
+      "name": "Get folder statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/{folderId}/stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            ":folderId",
+            "stats"
+          ],
+          "variable": []
+        },
+        "description": "Get detailed statistics for a folder"
+      }
+    },
+    {
+      "name": "Share folder",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/{folderId}/share",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            ":folderId",
+            "share"
+          ],
+          "variable": []
+        },
+        "description": "Make folder public or generate share link"
+      }
+    },
+    {
+      "name": "Get folder activity logs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/{folderId}/activity",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            ":folderId",
+            "activity"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve activity logs for a folder"
+      }
+    },
+    {
+      "name": "Upload files to folder",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/{folderId}/upload",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            ":folderId",
+            "upload"
+          ],
+          "variable": []
+        },
+        "description": "Upload multiple files to a specific folder"
+      }
+    },
+    {
+      "name": "Upload files",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/upload",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "upload"
+          ],
+          "variable": []
+        },
+        "description": "Upload files and automatically create folder if needed"
+      }
+    },
+    {
+      "name": "Get analytics dashboard",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/analytics/dashboard",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "analytics",
+            "dashboard"
+          ],
+          "variable": []
+        },
+        "description": "Get comprehensive analytics dashboard for user"
+      }
+    },
+    {
+      "name": "Get analytics overview",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/analytics/overview",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "analytics",
+            "overview"
+          ],
+          "variable": []
+        },
+        "description": "Get quick overview of user statistics"
+      }
+    },
+    {
+      "name": "Get storage analytics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/analytics/storage",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "analytics",
+            "storage"
+          ],
+          "variable": []
+        },
+        "description": "Get detailed storage usage analytics"
+      }
+    },
+    {
+      "name": "Get security analytics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/analytics/security",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "analytics",
+            "security"
+          ],
+          "variable": []
+        },
+        "description": "Get security metrics and suspicious activity detection"
+      }
+    },
+    {
+      "name": "Generate analytics report",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/analytics/reports",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "analytics",
+            "reports"
+          ],
+          "variable": []
+        },
+        "description": "Generate custom analytics report"
+      }
+    },
+    {
+      "name": "Export analytics data",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/analytics/export",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "analytics",
+            "export"
+          ],
+          "variable": []
+        },
+        "description": "Export analytics data in various formats"
+      }
+    },
+    {
+      "name": "Retrieve all doctors",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors"
+          ],
+          "variable": []
+        },
+        "description": "Fetches a list of all users with the doctor role."
+      }
+    },
+    {
+      "name": "Retrieve all doctors completed profile",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors-completed",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors-completed"
+          ],
+          "variable": []
+        },
+        "description": "Fetches a list of all users with the doctor role."
+      }
+    },
+    {
+      "name": "Retrieve all verified doctors",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors-verified",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors-verified"
+          ],
+          "variable": []
+        },
+        "description": "Fetches a list of all users with the doctor role."
+      }
+    },
+    {
+      "name": "Get a doctor's information",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{userId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":userId"
+          ],
+          "variable": []
+        },
+        "description": "Retrieves the information of a specified doctor by their user ID."
+      }
+    },
+    {
+      "name": "Filter doctors by online status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/online",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            "online"
+          ],
+          "variable": []
+        },
+        "description": "Retrieves a list of doctors filtered by their online status (true for online, false for offline)."
+      }
+    },
+    {
+      "name": "Search doctors by email or username",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Searches for doctors by email or username (fullName) using a query string."
+      }
+    },
+    {
+      "name": "Update user authentication information",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/auth",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "auth"
+          ],
+          "variable": []
+        },
+        "description": "Updates the authenticated user's information, excluding email (e.g., fullName, profileImageUrl)."
+      }
+    },
+    {
+      "name": "Update a doctor's online status",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            "status"
+          ],
+          "variable": []
+        },
+        "description": "Updates the online status of a specified doctor (requires the requesting user to be the doctor or an admin/super_admin)."
+      }
+    },
+    {
+      "name": "Get a doctor's online status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{userId}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":userId",
+            "status"
+          ],
+          "variable": []
+        },
+        "description": "Retrieves the online status of a specified doctor by their user ID."
+      }
+    },
+    {
+      "name": "Set doctor pricing for consultation types",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/pricing",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "pricing"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Get doctor pricing for all consultation types",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/pricing",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "pricing"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Update doctor pricing",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/pricing/{pricingId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "pricing",
+            ":pricingId"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Delete doctor pricing",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/pricing/{pricingId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "pricing",
+            ":pricingId"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Set doctor weekly availability",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/availability",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "availability"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Replace doctor weekly availability",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/availability",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "availability"
+          ],
+          "variable": []
+        },
+        "description": "Replace existing availability schedule for specified days.\nThis will delete existing availability for the specified days and create new ones.\nPrevents duplicate days in the same request.\n"
+      }
+    },
+    {
+      "name": "Get doctor availability schedule",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/availability",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "availability"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Get available time slots for specific date",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/availability/slots",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "availability",
+            "slots"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Set doctor unavailability period",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/unavailability",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "unavailability"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Update doctor availability schedule",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/availability/{availabilityId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "availability",
+            ":availabilityId"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Delete doctor availability schedule",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/availability/{availabilityId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "availability",
+            ":availabilityId"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Update doctor unavailability period",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/unavailability/{unavailabilityId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "unavailability",
+            ":unavailabilityId"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Delete doctor unavailability period",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/doctors/{doctorId}/unavailability/{unavailabilityId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "doctors",
+            ":doctorId",
+            "unavailability",
+            ":unavailabilityId"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Add or update a rating for a user",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/rating",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "rating"
+          ],
+          "variable": []
+        },
+        "description": "Submit a new rating (1–5) for a specific user. The API will recalculate the average automatically."
+      }
+    },
+    {
+      "name": "Get a user's ratings summary",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/rating/{userId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "rating",
+            ":userId"
+          ],
+          "variable": []
+        },
+        "description": "Fetches the average rating, total ratings, and optionally the last messages for the user.\n"
+      }
+    }
+  ]
+}

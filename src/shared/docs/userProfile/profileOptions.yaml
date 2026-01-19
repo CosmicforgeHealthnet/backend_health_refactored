@@ -1,0 +1,122 @@
+paths:
+  /user/profile-options:
+    get:
+      summary: Get expected profile options
+      description: Returns the acceptable values for fields in patient and doctor profiles, such as gender, blood group, genotype, etc., fetched from the database.
+      tags:
+        - [Profile Management]
+      responses:
+        '200':
+          description: Successful response with profile options
+          content:
+            application/json:
+              schema:
+                $ref: './profileOptionsComponent.yaml#/components/schemas/ProfileOptions'
+        '500':
+          description: Server error
+  /user/profile-options/manage:
+    post:
+      summary: Manage profile options
+      description: Allows admins to add, update, or delete profile options for patient and doctor profiles. Each operation is processed individually, with results returned for success or failure.
+      tags:
+        - [Profile Management]
+      security:
+        - bearerAuth: []
+      requestBody: 
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      action:
+                        type: string
+                        enum: [add, update, delete]
+                      id:
+                        type: string
+                        format: uuid
+                        description: Required for update or delete actions
+                      profileType:
+                        type: string
+                        enum: [patient, doctor]
+                        description: Required for add action, case-insensitive
+                      field:
+                        type: string
+                        maxLength: 50
+                        description: Required for add action
+                      value:
+                        type: string
+                        maxLength: 50
+                        description: Required for add or update actions
+                    required:
+                      - action
+              required:
+                - operations
+            example:
+              operations:
+                - action: add
+                  profileType: patient
+                  field: bloodGroup
+                  value: unknown
+                - action: update
+                  id: 123e4567-e89b-12d3-a456-426614174000
+                  value: new_value
+                - action: delete
+                  id: 987fcdeb-12ab-34cd-56ef-789012345678
+      responses:
+        '200':
+          description: Successful response with operation results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        action:
+                          type: string
+                        status:
+                          type: string
+                          enum: [success, error]
+                        option:
+                          $ref: './profileOptionsComponent.yaml#/components/schemas/ProfileOption'
+                        id:
+                          type: string
+                          format: uuid
+                        error:
+                          type: string
+                        input:
+                          type: object
+              example:
+                results:
+                  - action: add
+                    status: success
+                    option:
+                      id: 123e4567-e89b-12d3-a456-426614174000
+                      profileType: patient
+                      field: bloodGroup
+                      value: unknown
+                  - action: update
+                    status: success
+                    option:
+                      id: 123e4567-e89b-12d3-a456-426614174000
+                      profileType: patient
+                      field: bloodGroup
+                      value: new_value
+                  - action: delete
+                    status: success
+                    id: 987fcdeb-12ab-34cd-56ef-789012345678
+        '400':
+          description: Invalid request body
+        '401':
+          description: Unauthorized or admin access required
+        '500':
+          description: Server error

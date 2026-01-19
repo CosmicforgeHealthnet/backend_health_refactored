@@ -1,0 +1,55 @@
+
+<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="margin: 0; font-size: 28px;">Thank You for Joining Our Waitlist!</h1>
+        <p style="margin: 10px 0 0 0; font-size: 18px;">CosmicForge Health Lab Registration</p>
+    </div>
+
+    <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+        <p>Dear <strong>{{fullName}}</strong>,</p>
+        
+        <p>Thank you for your interest in registering <strong>{{facilityName}}</strong> with CosmicForge Health! We're excited to have you on our lab registration waitlist.</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+            <h3 style="margin-top: 0; color: #667eea;">Your Waitlist Details:</h3>
+            <ul style="margin: 0; padding-left: 20px;">
+                <li><strong>Name:</strong> {{fullName}}</li>
+                <li><strong>Email:</strong> {{email}}</li>
+                <li><strong>Facility:</strong> {{facilityName}}</li>
+                {{#if facilityType}}<li><strong>Type:</strong> {{facilityType}}</li>{{/if}}
+                {{#if city}}<li><strong>Location:</strong> {{city}}{{#if state}}, {{state}}{{/if}}</li>{{/if}}
+                <li><strong>Joined:</strong> {{joinedAt}}</li>
+                <li><strong>Tracking ID:</strong> {{trackingId}}</li>
+            </ul>
+        </div>
+
+        <h3 style="color: #667eea;">What Happens Next?</h3>
+        <ol>
+            <li><strong>Stay Tuned:</strong> We'll notify you as soon as lab registration opens</li>
+            <li><strong>Priority Access:</strong> Waitlist members get early notification and priority support</li>
+            <li><strong>Prepare Documents:</strong> Gather your facility licenses and registration documents</li>
+            <li><strong>Get Ready:</strong> Review our registration requirements and guidelines</li>
+        </ol>
+
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>💡 Pro Tip:</strong> While you wait, visit our <a href="{{guidelinesUrl}}" style="color: #667eea;">registration guidelines</a> to ensure you have all required documents ready!</p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{websiteUrl}}" style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Visit Our Website</a>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        
+        <p style="font-size: 14px; color: #666;">
+            Need help? Contact our support team at <a href="{{supportUrl}}" style="color: #667eea;">{{supportUrl}}</a>
+        </p>
+        
+        <p style="font-size: 12px; color: #999; margin-top: 20px;">
+            This email was sent to {{email}} because you joined our lab registration waitlist. 
+            If you no longer wish to receive updates, you can <a href="{{unsubscribeUrl}}" style="color: #667eea;">unsubscribe here</a>.
+        </p>
+    </div>
+    
+</div>

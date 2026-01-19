@@ -1,0 +1,88 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Heading -->
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+        Verification Update Required
+    </h1>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>Dr. {{fullName}}</strong>,
+    </p>
+
+    <!-- Intro message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Thank you for your interest in joining <strong>CosmicForge Health</strong>. After reviewing your verification request, 
+        we need some additional information or updated documents to complete the verification process.
+    </p>
+
+    <!-- Feedback Section -->
+    <div style="background-color: #fffbeb; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #92400e; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Review Feedback
+        </h3>
+        <div style="background-color: white; padding: 15px; border-radius: 6px; border: 1px solid #fed7aa;">
+            <p style="margin: 0; color: #451a03; font-style: italic; font-size: 14px;">
+                "{{rejectionReason}}"
+            </p>
+        </div>
+    </div>
+
+    <!-- Verification Details -->
+    <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #374151; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Original Submission
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Verification ID:</strong> {{verificationId}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>License Number:</strong> {{licenseNumber}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Reviewed:</strong> {{rejectionDate}}
+        </p>
+    </div>
+
+    <!-- Next Steps -->
+    <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #1e40af; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            What You Can Do
+        </h3>
+        <ol style="color: #374151; margin: 10px 0; padding-left: 20px; font-size: 14px;">
+            <li style="margin-bottom: 8px;">Review the feedback provided above</li>
+            <li style="margin-bottom: 8px;">Gather any missing or updated documents</li>
+            <li style="margin-bottom: 8px;">Submit a new verification request with the corrected information</li>
+            <li style="margin-bottom: 8px;">Contact our support team if you need clarification</li>
+        </ol>
+    </div>
+
+    <!-- Additional next steps -->
+    {{#if nextSteps}}
+    <p style="font-size: 16px; margin-bottom: 20px;">
+        {{nextSteps}}
+    </p>
+    {{/if}}
+
+    <!-- Support message -->
+    <p style="font-size: 16px; margin-bottom: 30px;">
+        We're here to help you through this process. Our verification team is committed to ensuring all medical 
+        professionals meet our high standards while making the process as smooth as possible.
+    </p>
+
+    <!-- Buttons -->
+    <div style="text-align: center; margin: 30px 0;">
+        {{> button url=resubmitLink text="Resubmit Verification" }}
+    </div>
+
+    <!-- Fallback links -->
+    <p style="font-size: 14px; color: #555; word-break: break-all; margin: 20px 0;">
+        Need detailed feedback? <a href="{{feedbackLink}}" style="color: #272EA7;">Get detailed feedback here</a><br>
+        Need assistance? <a href="{{supportLink}}" style="color: #272EA7;">Contact our verification support team</a>
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px;">
+        The CosmicForge Health Team
+    </p>
+
+</div>

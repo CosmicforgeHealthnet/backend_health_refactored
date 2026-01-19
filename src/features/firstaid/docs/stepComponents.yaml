@@ -1,0 +1,208 @@
+components:
+  schemas:
+    EmergencyStep:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique UUID identifier for the emergency step
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        condition_id:
+          type: string
+          format: uuid
+          description: UUID of the associated condition
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        categoryType:
+          type: string
+          enum: [general, adults, children, infants]
+          description: Target audience category for the emergency steps
+          example: "general"
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              instruction:
+                type: string
+          description: Array of step objects with title and instruction
+          example:
+            - title: "Call Emergency Services"
+              instruction: "Call 911 or local emergency number immediately"
+            - title: "Check Responsiveness"
+              instruction: "Tap shoulders and shout 'Are you okay?'"
+        category_image_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: UUID of the category-specific image
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        sortOrder:
+          type: integer
+          description: Order for displaying the step
+          example: 0
+        metadata:
+          type: object
+          nullable: true
+          description: Additional metadata for this condition+category combination
+          example:
+            difficulty: "beginner"
+            estimatedTime: "2-5 minutes"
+            prerequisites: []
+        categoryImage:
+          type: object
+          nullable: true
+          description: Reference to the associated category image
+          properties:
+            id:
+              type: string
+              format: uuid
+            originalFileName:
+              type: string
+            url:
+              type: string
+        condition:
+          $ref: './conditionComponents.yaml#/components/schemas/Condition'
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the step was created
+          example: "2025-01-16T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the step was last updated
+          example: "2025-01-16T10:30:00.000Z"
+
+    StepImage:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the image
+          example: 1
+        filename:
+          type: string
+          description: Original filename of the image
+          example: "cpr_steps.jpg"
+        url:
+          type: string
+          description: URL to access the image
+          example: "https://api.example.com/uploads/steps/cpr_steps.jpg"
+        mimeType:
+          type: string
+          description: MIME type of the image
+          example: "image/jpeg"
+        size:
+          type: integer
+          description: File size in bytes
+          example: 245760
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the image was uploaded
+          example: "2025-01-16T10:30:00.000Z"
+
+    CreateStepRequest:
+      type: object
+      properties:
+        conditionId:
+          type: string
+          format: uuid
+          description: UUID of the condition this step belongs to
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        categoryType:
+          type: string
+          enum: [general, adults, children, infants]
+          description: Target audience category for the emergency steps (defaults to "general")
+          default: "general"
+          example: "general"
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              instruction:
+                type: string
+          minItems: 1
+          description: Array of step objects with title and instruction
+          example:
+            - title: "Call Emergency Services"
+              instruction: "Call 911 or local emergency number immediately"
+            - title: "Check Responsiveness"
+              instruction: "Tap shoulders and shout 'Are you okay?'"
+        sortOrder:
+          type: integer
+          minimum: 0
+          description: Order for displaying the step (defaults to 0)
+          default: 0
+          example: 0
+        metadata:
+          type: object
+          description: Additional metadata for the step
+          example: {"difficulty": "beginner", "duration": "2-5 minutes"}
+        images:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: Optional category images (use field name "images")
+      required:
+        - conditionId
+        - steps
+
+    UpdateStepRequest:
+      type: object
+      properties:
+        conditionId:
+          type: string
+          format: uuid
+          description: UUID of the condition this step belongs to
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        categoryType:
+          type: string
+          enum: [general, adults, children, infants]
+          description: Target audience category for the emergency steps
+          example: "general"
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              instruction:
+                type: string
+          minItems: 1
+          description: Array of step objects with title and instruction
+          example:
+            - title: "Call Emergency Services"
+              instruction: "Call 911 or local emergency number immediately"
+            - title: "Check Responsiveness"
+              instruction: "Tap shoulders and shout 'Are you okay?'"
+        sortOrder:
+          type: integer
+          minimum: 0
+          description: Order for displaying the step
+          example: 0
+        metadata:
+          type: object
+          description: Additional metadata for the step
+          example: {"difficulty": "beginner", "duration": "2-5 minutes"}
+        images:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: Optional category images (use field name "images")
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication

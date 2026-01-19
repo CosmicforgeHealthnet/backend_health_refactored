@@ -1,0 +1,404 @@
+# src/docs/lab/facilities/labFacilities.yaml
+paths:
+  /lab/facilities/register:
+    post:
+      tags:
+        - Lab Facilities
+      summary: Register a new lab facility
+      description: |
+        Register a new lab facility for approval. This endpoint does not require authentication.
+        The facility will be pending approval until reviewed by platform administrators.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabFacilityRegistration'
+            examples:
+              diagnostic_lab:
+                summary: Diagnostic Laboratory Registration
+                value:
+                  facilityName: "Central Diagnostic Laboratory"
+                  facilityType: "diagnostic_lab"
+                  registrationNumber: "REG123456789"
+                  licenseNumber: "LIC987654321"
+                  email: "info@centraldiagnostic.com"
+                  phone: "+1234567890"
+                  website: "https://centraldiagnostic.com"
+                  address: "123 Medical Center Drive"
+                  city: "New York"
+                  state: "NY"
+                  country: "United States"
+                  postalCode: "10001"
+                  adminFullName: "Dr. John Smith"
+                  adminEmail: "admin@centraldiagnostic.com"
+                  adminPhone: "+1234567891"
+                  operatingHours:
+                    monday: "08:00-17:00"
+                    tuesday: "08:00-17:00"
+                    wednesday: "08:00-17:00"
+                    thursday: "08:00-17:00"
+                    friday: "08:00-17:00"
+                    saturday: "09:00-13:00"
+                    sunday: "closed"
+                  servicesOffered: ["Blood Tests", "Urine Analysis", "Cholesterol Tests"]
+                  equipmentList: ["Centrifuge", "Microscope", "Chemistry Analyzer"]
+      responses:
+        '201':
+          $ref: '#/components/responses/FacilityRegistered'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                duplicate_email:
+                  summary: Duplicate facility email
+                  value:
+                    success: false
+                    error: "Facility email already registered"
+                validation_error:
+                  summary: Validation errors
+                  value:
+                    success: false
+                    error: "Validation failed"
+                    details:
+                      - field: "facilityName"
+                        message: "Facility name is required"
+                        value: ""
+                      - field: "adminEmail"
+                        message: "Valid lab admin email is required"
+                        value: "invalid-email"
+
+  /lab/facilities/register/step1:
+    post:
+      tags:
+        - Lab Facilities
+      summary: Register lab facility - Step 1 (Admin Information)
+      description: |
+        First step of facility registration. Collects administrator information.
+        Returns facilityId to use in subsequent steps.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabFacilityStep1'
+            example:
+              adminFullName: "Dr. John Smith"
+              adminEmail: "admin@centraldiagnostic.com"
+              adminPhone: "+1234567891"
+              website: "https://centraldiagnostic.com"
+
+      responses:
+        '201':
+          description: Step 1 completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationStepResponse'
+              example:
+                success: true
+                message: "Step 1 completed successfully"
+                data:
+                  facilityId: "550e8400-e29b-41d4-a716-446655440000"
+                  step: 1
+                  nextStep: "/api/lab/facilities/register/step2"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                duplicate_admin:
+                  summary: Duplicate admin email
+                  value:
+                    success: false
+                    error: "Admin email already registered with another facility"
+                validation_error:
+                  summary: Missing required fields
+                  value:
+                    success: false
+                    error: "adminFullName is required"
+
+  /lab/facilities/register/step2/{facilityId}:
+    put:
+      tags:
+        - Lab Facilities
+      summary: Register lab facility - Step 2 (Facility Information)
+      description: |
+        Second step of facility registration. Collects facility details, 
+        registration and license information.
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabFacilityStep2'
+            example:
+              facilityName: "Central Diagnostic Laboratory"
+              facilityType: "diagnostic_lab"
+              registrationNumber: "REG123456789"
+              licenseNumber: "LIC987654321"
+              servicesOffered: ["Blood Tests", "Urine Analysis", "Cholesterol Tests"]
+              equipmentList: ["Centrifuge", "Microscope", "Chemistry Analyzer"]
+      responses:
+        '200':
+          description: Step 2 completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationStepResponse'
+              example:
+                success: true
+                message: "Step 2 completed successfully"
+                data:
+                  facilityId: "550e8400-e29b-41d4-a716-446655440000"
+                  step: 2
+                  nextStep: "/api/lab/facilities/register/step3"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                facility_not_found:
+                  summary: Facility not found
+                  value:
+                    success: false
+                    error: "Facility not found"
+                invalid_step:
+                  summary: Invalid registration step
+                  value:
+                    success: false
+                    error: "Invalid step. Complete step 1 first."
+                duplicate_registration:
+                  summary: Duplicate registration number
+                  value:
+                    success: false
+                    error: "Registration number already in use"
+
+  /lab/facilities/register/step3/{facilityId}:
+    put:
+      tags:
+        - Lab Facilities
+      summary: Register lab facility - Step 3 (Address & Finalization)
+      description: |
+        Final step of facility registration. Collects address and operational details.
+        Completes registration and triggers approval workflow.
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabFacilityStep3'
+            example:
+              email: "info@centraldiagnostic.com"
+              phone: "+1234567890"
+              address: "123 Medical Center Drive"
+              city: "New York"
+              state: "NY"
+              country: "United States"
+              postalCode: "10001"
+              operatingHours:
+                monday: "08:00-17:00"
+                tuesday: "08:00-17:00"
+                wednesday: "08:00-17:00"
+                thursday: "08:00-17:00"
+                friday: "08:00-17:00"
+                saturday: "09:00-13:00"
+                sunday: "closed"
+              
+      responses:
+        '201':
+          $ref: '#/components/responses/FacilityRegistered'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                facility_not_found:
+                  summary: Facility not found
+                  value:
+                    success: false
+                    error: "Facility not found"
+                invalid_step:
+                  summary: Invalid registration step
+                  value:
+                    success: false
+                    error: "Invalid step. Complete steps 1 and 2 first."
+                duplicate_email:
+                  summary: Duplicate facility email
+                  value:
+                    success: false
+                    error: "Facility email already registered"
+
+  /lab/facilities/{facilityId}:
+    get:
+      tags:
+        - Lab Facilities
+      summary: Get facility details by ID
+      description: Retrieve detailed information about a specific lab facility
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      responses:
+        '200':
+          $ref: '#/components/responses/FacilityFound'
+        '404':
+          $ref: '#/components/responses/FacilityNotFound'
+
+    put:
+      tags:
+        - Lab Facilities
+      summary: Update facility information
+      description: Update facility information (lab admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityUpdate'
+            example:
+              facilityName: "Updated Central Laboratory"
+              phone: "+1234567899"
+              website: "https://updatedcentral.com"
+              operatingHours:
+                monday: "07:00-18:00"
+                tuesday: "07:00-18:00"
+                wednesday: "07:00-18:00"
+                thursday: "07:00-18:00"
+                friday: "07:00-18:00"
+                saturday: "08:00-14:00"
+                sunday: "closed"
+              servicesOffered: ["Blood Tests", "Urine Analysis", "Genetic Testing"]
+      responses:
+        '200':
+          description: Facility updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Facility updated successfully"
+                  data:
+                    $ref: '#/components/schemas/LabFacility'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                cannot_update:
+                  summary: Cannot update restricted fields
+                  value:
+                    success: false
+                    message: "Cannot update registration number, license number, or facility type after approval. Contact support for assistance."
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. Only lab administrators can update facilities."
+        '404':
+          $ref: '#/components/responses/FacilityNotFound'
+
+  /lab/facilities/search:
+    get:
+      tags:
+        - Lab Facilities
+      summary: Search lab facilities
+      description: Search for lab facilities by name, city, or email
+      parameters:
+        - $ref: '#/components/parameters/SearchQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/FacilitiesFound'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Search query parameter 'q' is required"
+
+  /lab/facilities/location:
+    get:
+      tags:
+        - Lab Facilities
+      summary: Get facilities by location
+      description: Find lab facilities in a specific city and state
+      parameters:
+        - $ref: '#/components/parameters/City'
+        - $ref: '#/components/parameters/State'
+      responses:
+        '200':
+          $ref: '#/components/responses/FacilitiesFound'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Both city and state parameters are required"
+
+  /lab/facilities/my/managed:
+    get:
+      tags:
+        - Lab Facilities
+      summary: Get facilities managed by current lab admin
+      description: Retrieve facilities managed by the authenticated lab admin
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Managed facilities retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Your managed facilities retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LabFacility'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. Only lab administrators can view managed facilities."

@@ -1,0 +1,427 @@
+paths:
+  /api/payments/methods/initialize-tokenization:
+    post:
+      tags:
+        - Payment Methods - Secure Tokenization
+      summary: Initialize secure card tokenization
+      description: Start the secure tokenization process with payment provider (replaces deprecated validate-and-save)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/paymentMethodComponents.yaml#/components/schemas/InitializeTokenizationRequest'
+      responses:
+        '200':
+          description: Tokenization initialized successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentMethodComponents.yaml#/components/schemas/InitializeTokenizationResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '429':
+          $ref: '../components/transactionComponents.yaml#/components/responses/TooManyRequests'
+
+  /api/payments/methods/tokenization-callback:
+    post:
+      tags:
+        - Payment Methods - Secure Tokenization
+      summary: Handle tokenization callback
+      description: Process the callback from payment provider after successful tokenization
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/paymentMethodComponents.yaml#/components/schemas/TokenizationCallbackRequest'
+      responses:
+        '201':
+          description: Tokenization callback processed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentMethodComponents.yaml#/components/schemas/TokenizationCallbackResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+        '429':
+          $ref: '../components/transactionComponents.yaml#/components/responses/TooManyRequests'
+
+  /api/payments/methods/analytics:
+    get:
+      tags:
+        - Payment Methods - Auto-billing
+      summary: Get payment method auto-billing analytics
+      description: Retrieve analytics and performance metrics for user's payment methods
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Payment method analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentMethodComponents.yaml#/components/schemas/PaymentMethodAnalyticsResponse'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+
+  /api/payments/methods/validate-and-save:
+    post:
+      tags:
+        - Payment Methods - Deprecated
+      summary: Validate and save payment method (DEPRECATED)
+      description: This endpoint is deprecated for security reasons. Use /initialize-tokenization instead.
+      deprecated: true
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/validateAndSaveComponents.yaml#/components/schemas/ValidateAndSavePaymentMethodRequest'
+      responses:
+        '410':
+          description: Endpoint deprecated - use secure tokenization instead
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/ErrorResponse'
+                  - type: object
+                    properties:
+                      migration:
+                        type: object
+                        properties:
+                          newEndpoint:
+                            type: string
+                            example: "/api/payment-methods/initialize-tokenization"
+                          newMethod:
+                            type: string
+                            example: "POST"
+                          requiredFields:
+                            type: array
+                            items:
+                              type: string
+                            example: ["provider", "currency"]
+                          documentation:
+                            type: string
+                            example: "https://docs.yourapp.com/payment-methods/secure-tokenization"
+
+
+  /api/payments/methods/tokenization-status/{provider}/{reference}:
+    get:
+      tags:
+        - Payment Methods - Secure Tokenization
+      summary: Check tokenization status
+      description: Check the current status of a tokenization process
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [flutterwave, paystack]
+          description: "Payment provider name"
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Tokenization reference ID"
+      responses:
+        '200':
+          description: Tokenization status retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentMethodComponents.yaml#/components/schemas/TokenizationStatusResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+
+  /api/payments/methods/{paymentMethodId}/refresh-tokens:
+    post:
+      tags:
+        - Payment Methods - Secure Tokenization
+      summary: Refresh expired payment method tokens
+      description: Initiate token refresh for expired payment method tokens
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: paymentMethodId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Payment method ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/paymentMethodComponents.yaml#/components/schemas/RefreshTokensRequest'
+      responses:
+        '200':
+          description: Token refresh initiated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentMethodComponents.yaml#/components/schemas/RefreshTokensResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+
+  /api/payments/methods/supported-options:
+    get:
+      tags:
+        - Payment Methods - Configuration
+      summary: Get supported providers and currencies
+      description: Retrieve available payment providers, currencies, and security features
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Supported options retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentMethodComponents.yaml#/components/schemas/SupportedOptionsResponse'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+
+  /api/payments/methods:
+    get:
+      tags:
+        - Payment Methods - Management
+      summary: Get user payment methods
+      description: Retrieve saved payment methods with success rates and token status
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Payment methods retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '../components/paymentMethodComponents.yaml#/components/schemas/PaymentMethod'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Payment Methods - Management
+      summary: Save a new payment method (Internal)
+      description: Internal endpoint for saving payment methods (used by tokenization callback)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/paymentMethodComponents.yaml#/components/schemas/SavePaymentMethodRequest'
+      responses:
+        '201':
+          description: Payment method saved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentMethodComponents.yaml#/components/schemas/SavePaymentMethodResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '429':
+          $ref: '../components/transactionComponents.yaml#/components/responses/TooManyRequests'
+
+  /api/payments/methods/{paymentMethodId}/default:
+    put:
+      tags:
+        - Payment Methods - Management
+      summary: Set payment method as default
+      description: Set a payment method as the user's default payment method
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: paymentMethodId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Payment method ID"
+      responses:
+        '200':
+          description: Payment method set as default successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+
+  /api/payments/methods/{paymentMethodId}:
+    delete:
+      tags:
+        - Payment Methods - Management
+      summary: Remove a payment method
+      description: Remove/deactivate a payment method from user's account
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: paymentMethodId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Payment method ID"
+      responses:
+        '200':
+          description: Payment method removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+
+  /api/payments/methods/auto-billing:
+    get:
+      tags:
+        - Payment Methods - Auto-billing
+      summary: Get payment methods available for auto-billing
+      description: Retrieve payment methods that can be used for auto-billing with their performance metrics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Auto-billing payment methods retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '../components/paymentMethodComponents.yaml#/components/schemas/AutoBillingPaymentMethod'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+
+  /api/payments/methods/{paymentMethodId}/auto-charge:
+    put:
+      tags:
+        - Payment Methods - Auto-billing
+      summary: Toggle auto-charging for payment method
+      description: Enable or disable auto-charging capability for a specific payment method
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: paymentMethodId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Payment method ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/paymentMethodComponents.yaml#/components/schemas/ToggleAutoChargingRequest'
+      responses:
+        '200':
+          description: Auto-charging setting updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/paymentMethodComponents.yaml#/components/schemas/ToggleAutoChargingResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'

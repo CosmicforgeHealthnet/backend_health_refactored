@@ -1,0 +1,34 @@
+<div style="padding: 20px; font-family: Arial, sans-serif;"></div>
+  <h2 style="color: #28a745; margin-bottom: 20px;">Welcome to the Team!</h2>
+  
+  <p>Dear {{personnelName}},</p>
+  
+  <p>Welcome to <strong>{{facilityName}}</strong>! We're excited to have you join our team as a <strong>{{roleName}}</strong>.</p>
+  
+  <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #155724;">Your Role & Facility Info:</h3>
+    <p><strong>Position:</strong> {{roleName}}</p>
+    <p><strong>Facility:</strong> {{facilityName}}</p>
+    <p><strong>Lab Admin:</strong> {{adminName}} ({{adminEmail}})</p>
+    <p><strong>Address:</strong> {{facilityAddress}}</p>
+    <p><strong>Phone:</strong> {{facilityPhone}}</p>
+  </div>
+  
+  <div style="background-color: #cce5ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #333;">Getting Started:</h3>
+    <p>Here are some helpful resources to get you started:</p>
+    <ul>
+      <li><a href="{{dashboardLink}}">Access your dashboard</a></li>
+      <li><a href="{{trainingLink}}">Complete role-specific training</a></li>
+      <li><a href="{{handbookLink}}">Download the lab handbook</a></li>
+    </ul>
+  </div>
+  
+  {{> button url=dashboardLink text="Go to Dashboard" color="#007bff"}}
+  
+  <p>If you have any questions, don't hesitate to reach out to {{adminName}} or visit our <a href="{{supportLink}}">support center</a>.</p>
+  
+  <p>Welcome aboard!</p>
+  
+  <p>Best regards,<br>The CosmicForge Health Team</p>
+</div>

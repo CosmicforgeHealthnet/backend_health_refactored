@@ -1,0 +1,550 @@
+# src/docs/wallet/paths.yaml
+paths:
+  /lab/wallet/my:
+    get:
+      tags:
+        - Wallet - User
+      summary: Get user's wallet
+      description: |
+        Retrieve the authenticated user's wallet information including balance,
+        status, and recent activity. Auto-creates wallet for patients if not exists.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/WalletFound'
+        '404':
+          $ref: '#/components/responses/WalletNotFound'
+
+  /lab/wallet/create:
+    post:
+      tags:
+        - Wallet - User
+      summary: Create wallet for user
+      description: |
+        Create a new wallet for the authenticated user. Users can only have one wallet.
+        Facility wallets require a valid facility ID.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletCreation'
+            examples:
+              patient_wallet:
+                summary: Create patient wallet
+                value:
+                  walletType: "patient"
+              facility_wallet:
+                summary: Create facility wallet
+                value:
+                  walletType: "facility"
+                  facilityId: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '201':
+          $ref: '#/components/responses/WalletCreated'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                insufficient_balance:
+                  summary: Insufficient balance
+                  value:
+                    success: false
+                    error: "Insufficient balance for transfer"
+                wallet_not_active:
+                  summary: Wallet not active
+                  value:
+                    success: false
+                    error: "Both wallets must be active"
+                invalid_amount:
+                  summary: Invalid transfer amount
+                  value:
+                    success: false
+                    error: "Amount must be positive"
+                missing_fields:
+                  summary: Missing required fields
+                  value:
+                    success: false
+                    error: "To wallet ID, amount, and description are required"
+        '403':
+          $ref: '#/components/responses/WalletAccessDenied'
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Destination wallet not found"
+
+  /lab/wallet/admin/transactions/search:
+    get:
+      tags:
+        - Wallet - Admin
+      summary: Search transactions (admin only)
+      description: |
+        Search across all wallet transactions using transaction number,
+        description, or external reference. Admin access required.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SearchQuery'
+      responses:
+        '200':
+          description: Transaction search completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Transaction search completed"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WalletTransaction'
+                  count:
+                    type: integer
+                    example: 12
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Search query 'q' is required"
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Admin access required"
+
+  /lab/wallet/admin/stats:
+    get:
+      tags:
+        - Wallet - Admin
+      summary: Get system wallet statistics (admin only)
+      description: |
+        Get comprehensive system-wide wallet statistics including total balance,
+        transaction volumes, and system health metrics. Admin access required.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/SystemStatistics'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Admin access required"
+
+  /lab/wallet/admin/credit:
+    post:
+      tags:
+        - Wallet - Admin
+      summary: Manually credit wallet (admin only)
+      description: |
+        Manually add money to any wallet for administrative purposes
+        such as refunds, adjustments, or customer service credits.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreditRequest'
+            examples:
+              customer_service_credit:
+                summary: Customer service credit
+                value:
+                  walletId: "550e8400-e29b-41d4-a716-446655440007"
+                  amount: 75.00
+                  description: "Customer service credit for billing error - ticket #12345"
+              refund_adjustment:
+                summary: Refund adjustment
+                value:
+                  walletId: "550e8400-e29b-41d4-a716-446655440007"
+                  amount: 150.00
+                  description: "Manual refund for cancelled lab order #ORD-2024-001234 - payment processor issue"
+              promotional_credit:
+                summary: Promotional credit
+                value:
+                  walletId: "550e8400-e29b-41d4-a716-446655440007"
+                  amount: 25.00
+                  description: "Welcome bonus credit for new patient registration"
+      responses:
+        '200':
+          description: Wallet credited successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Wallet credited successfully"
+                  data:
+                    $ref: '#/components/schemas/Wallet'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_fields:
+                  summary: Missing required fields
+                  value:
+                    success: false
+                    error: "Wallet ID, amount, and description are required"
+                wallet_not_found:
+                  summary: Wallet not found
+                  value:
+                    success: false
+                    error: "Wallet not found"
+                wallet_not_active:
+                  summary: Wallet not active
+                  value:
+                    success: false
+                    error: "Wallet is not active"
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Admin access required"
+
+  /lab/wallet/webhook/payment:
+    post:
+      tags:
+        - Wallet - Webhooks
+      summary: Process payment webhook
+      description: |
+        Internal endpoint for processing payment webhooks from payment providers.
+        Used to complete top-up transactions after successful payment processing.
+        
+        **Note:** In production, this endpoint should be secured with webhook
+        signature verification and IP allowlisting.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentWebhook'
+            examples:
+              successful_payment:
+                summary: Successful payment completion
+                value:
+                  topupId: "550e8400-e29b-41d4-a716-446655440009"
+                  status: "completed"
+                  paymentReference: "ref_payment_success_abc123"
+                  externalTransactionId: "stripe_txn_def456"
+              failed_payment:
+                summary: Failed payment
+                value:
+                  topupId: "550e8400-e29b-41d4-a716-446655440009"
+                  status: "failed"
+                  paymentReference: "ref_payment_failed_xyz789"
+              cancelled_payment:
+                summary: Cancelled payment
+                value:
+                  topupId: "550e8400-e29b-41d4-a716-446655440009"
+                  status: "cancelled"
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Webhook processed successfully"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_fields:
+                  summary: Missing required fields
+                  value:
+                    success: false
+                    error: "Top-up ID and status are required"
+                topup_not_found:
+                  summary: Top-up not found
+                  value:
+                    success: false
+                    error: "Top-up not found"
+                topup_not_pending:
+                  summary: Top-up not in pending status
+                  value:
+                    success: false
+                    error: "Top-up is not pending"
+                already_has_wallet:
+                  summary: User already has a wallet
+                  value:
+                    success: false
+                    error: "User already has a wallet"
+                facility_required:
+                  summary: Facility ID required for facility wallet
+                  value:
+                    success: false
+                    error: "Facility ID is required for facility wallets"
+                facility_not_found:
+                  summary: Facility not found
+                  value:
+                    success: false
+                    error: "Facility not found"
+
+  /lab/wallet/my/transactions:
+    get:
+      tags:
+        - Wallet - Transactions
+      summary: Get wallet transaction history
+      description: |
+        Retrieve paginated transaction history for the user's wallet.
+        Includes all transaction types: payments, top-ups, refunds, transfers.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TransactionLimit'
+        - $ref: '#/components/parameters/TransactionOffset'
+      responses:
+        '200':
+          $ref: '#/components/responses/TransactionHistory'
+        '404':
+          $ref: '#/components/responses/WalletNotFound'
+
+  /lab/wallet/my/stats:
+    get:
+      tags:
+        - Wallet - Analytics
+      summary: Get wallet statistics
+      description: |
+        Get comprehensive wallet statistics including balance breakdown,
+        transaction summaries, and recent activity analytics.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/WalletStatistics'
+        '404':
+          $ref: '#/components/responses/WalletNotFound'
+
+  /lab/wallet/topup:
+    post:
+      tags:
+        - Wallet - Top-up
+      summary: Create wallet top-up
+      description: |
+        Initiate a wallet top-up using various payment methods.
+        Amount must be between $0.01 and $10,000.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopUpRequest'
+            examples:
+              credit_card_topup:
+                summary: Credit card top-up
+                value:
+                  amount: 100.00
+                  paymentMethod: "credit_card"
+                  notes: "Monthly wallet top-up for lab expenses"
+              paypal_topup:
+                summary: PayPal top-up
+                value:
+                  amount: 50.00
+                  paymentMethod: "paypal"
+              emergency_topup:
+                summary: Emergency top-up
+                value:
+                  amount: 200.00
+                  paymentMethod: "debit_card"
+                  notes: "Emergency top-up for urgent medical tests"
+      responses:
+        '201':
+          $ref: '#/components/responses/TopUpCreated'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_amount:
+                  summary: Invalid amount
+                  value:
+                    success: false
+                    error: "Invalid top-up amount. Must be between $0.01 and $10,000"
+                wallet_not_active:
+                  summary: Wallet not active
+                  value:
+                    success: false
+                    error: "Wallet is not active"
+                missing_payment_method:
+                  summary: Payment method required
+                  value:
+                    success: false
+                    error: "Payment method is required"
+
+  /lab/wallet/my/pin:
+    put:
+      tags:
+        - Wallet - Security
+      summary: Set wallet PIN
+      description: |
+        Set a 4-6 digit PIN for wallet security. PIN is required for
+        sensitive operations like transfers and large payments.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinRequest'
+            example:
+              pin: "1234"
+      responses:
+        '200':
+          $ref: '#/components/responses/PinSet'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_pin:
+                  summary: Invalid PIN format
+                  value:
+                    success: false
+                    error: "PIN must be 4-6 digits"
+                pin_required:
+                  summary: PIN is required
+                  value:
+                    success: false
+                    error: "PIN is required"
+
+  /lab/wallet/my/verify-pin:
+    post:
+      tags:
+        - Wallet - Security
+      summary: Verify wallet PIN
+      description: |
+        Verify wallet PIN for authorization. Failed attempts are tracked
+        and wallet will be locked after 3 consecutive failures.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinRequest'
+            example:
+              pin: "1234"
+      responses:
+        '200':
+          $ref: '#/components/responses/PinVerified'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_pin:
+                  summary: Invalid PIN
+                  value:
+                    success: false
+                    error: "Invalid PIN. 2 attempts remaining."
+                wallet_locked:
+                  summary: Wallet locked
+                  value:
+                    success: false
+                    error: "Too many failed attempts. Wallet locked for 30 minutes."
+                pin_not_set:
+                  summary: PIN not set
+                  value:
+                    success: false
+                    error: "PIN not set"
+
+  /lab/wallet/transfer:
+    post:
+      tags:
+        - Wallet - Transfer
+      summary: Transfer money between wallets
+      description: |
+        Transfer money from user's wallet to another wallet.
+        Requires sufficient balance and optional PIN verification.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+            examples:
+              simple_transfer:
+                summary: Simple transfer
+                value:
+                  toWalletId: "550e8400-e29b-41d4-a716-446655440010"
+                  amount: 50.00
+                  description: "Payment for shared lab test"
+              secure_transfer:
+                summary: Transfer with PIN verification
+                value:
+                  toWalletId: "550e8400-e29b-41d4-a716-446655440010"
+                  amount: 150.00
+                  description: "Payment for family member's medical expenses"
+                  pin: "1234"
+      responses:
+        '200':
+          $ref: '#/components/responses/TransferCompleted'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:

@@ -1,0 +1,184 @@
+components:
+  schemas:
+    OfflineManifest:
+      type: object
+      properties:
+        version:
+          type: integer
+          description: Content version timestamp
+          example: 1642329000000
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              description:
+                type: string
+              contentType:
+                type: string
+                enum: [emergency, non_emergency]
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+              imageUrl:
+                type: string
+                nullable: true
+                description: URL to access condition image
+                example: "/api/documents/images/550e8400-e29b-41d4-a716-446655440001"
+              steps:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    categoryType:
+                      type: string
+                      enum: [general, adults, children, infants]
+                    steps:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          instruction:
+                            type: string
+                    imageUrl:
+                      type: string
+                      nullable: true
+                      description: URL to access category image
+                      example: "/api/documents/images/550e8400-e29b-41d4-a716-446655440003"
+          description: All active first aid conditions with their steps
+        totalSize:
+          type: integer
+          description: Total size of content in bytes
+          example: 0
+
+    WebManifest:
+      type: object
+      properties:
+        version:
+          type: integer
+          description: Content version timestamp
+          example: 1642329000000
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Timestamp when content was last updated
+          example: "2025-01-16T10:30:00.000Z"
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                example: "550e8400-e29b-41d4-a716-446655440000"
+              name:
+                type: string
+                example: "Cardiac Arrest"
+              description:
+                type: string
+                example: "A sudden loss of heart function, breathing, and consciousness"
+              contentType:
+                type: string
+                enum: [emergency, non_emergency]
+                example: "emergency"
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+                example: "critical"
+              sortOrder:
+                type: integer
+                example: 0
+              steps:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    categoryType:
+                      type: string
+                      enum: [general, adults, children, infants]
+                    steps:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          instruction:
+                            type: string
+                    sortOrder:
+                      type: integer
+          description: Simplified condition data for web (text only, no images)
+        totalItems:
+          type: integer
+          description: Total number of conditions
+          example: 25
+
+    UpdateCheckResponse:
+      type: object
+      properties:
+        hasUpdates:
+          type: boolean
+          description: Whether client needs to update
+          example: true
+        latestVersion:
+          type: integer
+          description: Latest available content version
+          example: 123456789
+        clientVersion:
+          type: integer
+          description: Client's current version
+          example: 123456700
+        action:
+          type: string
+          enum: [fetch_full_manifest, no_action]
+          description: Recommended action for client
+          example: "fetch_full_manifest"
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, error]
+          description: Overall health status
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+          example: "2025-01-16T10:30:00.000Z"
+        stats:
+          type: object
+          properties:
+            totalConditions:
+              type: integer
+              description: Total number of conditions in database
+              example: 25
+            activeConditions:
+              type: integer
+              description: Number of active conditions
+              example: 20
+            totalSteps:
+              type: integer
+              description: Total number of emergency steps
+              example: 40
+          description: Content statistics
+        error:
+          type: string
+          nullable: true
+          description: Error message if status is error
+          example: null

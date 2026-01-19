@@ -1,0 +1,873 @@
+# src/docs/lab/orders/components.yaml
+components:
+  schemas:
+    LabOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        orderNumber:
+          type: string
+          example: "ORD-2024-001234"
+        patientId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440004"
+        facilityId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        assignedPersonnelId:
+          type: string
+          format: uuid
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        reviewerId:
+          type: string
+          format: uuid
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440005"
+        orderType:
+          type: string
+          enum: [lab_test, radiology]
+          example: "lab_test"
+        serviceType:
+          type: string
+          enum: [lab_visit, home_collection]
+          example: "home_collection"
+        status:
+          type: string
+          enum: [
+            created, pending_payment, payment_confirmed, assigned, scheduled,
+            in_progress, sample_collected, processing, results_ready, under_review,
+            revision_required, results_approved, completed, cancelled
+          ]
+          example: "created"
+        testNames:
+          type: array
+          items:
+            type: string
+          example: ["Complete Blood Count", "Lipid Profile"]
+        testDetails:
+          type: object
+          nullable: true
+          example: {
+            "fasting_required": true,
+            "special_instructions": "Patient should fast for 12 hours"
+          }
+        urgentProcessing:
+          type: boolean
+          example: false
+        patientInstructions:
+          type: string
+          nullable: true
+          example: "Please fast for 12 hours before collection"
+        doctorReferral:
+          type: string
+          nullable: true
+          example: "Dr. Smith - Internal Medicine"
+        medicalHistory:
+          type: string
+          nullable: true
+          example: "Diabetes, Hypertension"
+        preferredDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2024-02-15"
+        preferredTime:
+          type: string
+          nullable: true
+          example: "09:00"
+        scheduledDateTime:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-02-15T09:00:00Z"
+        collectionAddress:
+          type: string
+          nullable: true
+          example: "123 Main St, Apt 4B, New York, NY 10001"
+        paymentStatus:
+          type: string
+          enum: [pending, paid, failed, refunded]
+          example: "pending"
+        totalAmount:
+          type: number
+          format: decimal
+          nullable: true
+          example: 150.00
+        baseAmount:
+          type: number
+          format: decimal
+          nullable: true
+          example: 120.00
+        homeVisitFee:
+          type: number
+          format: decimal
+          nullable: true
+          example: 25.00
+        urgentFee:
+          type: number
+          format: decimal
+          nullable: true
+          example: 5.00
+        currency:
+          type: string
+          example: "USD"
+        invoiceSentAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T14:30:00Z"
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T16:45:00Z"
+        resultsFileUrl:
+          type: string
+          nullable: true
+          example: "https://storage.com/results/order-123.pdf"
+        resultsData:
+          type: object
+          nullable: true
+          example: {
+            "hemoglobin": "14.2 g/dL",
+            "cholesterol": "180 mg/dL"
+          }
+        reviewerNotes:
+          type: string
+          nullable: true
+          example: "Results reviewed and approved. Normal ranges."
+        resultsDeliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-16T10:00:00Z"
+        assignedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T17:00:00Z"
+        collectionCompletedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-16T09:30:00Z"
+        processingStartedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-16T10:00:00Z"
+        processingCompletedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-16T14:00:00Z"
+        reviewStartedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-16T14:30:00Z"
+        reviewCompletedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-16T15:00:00Z"
+        notes:
+          type: string
+          nullable: true
+          example: "Patient requested early morning collection"
+        cancellationReason:
+          type: string
+          nullable: true
+          example: "Patient rescheduled"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-16T15:00:00Z"
+        patient:
+          $ref: '#/components/schemas/LabUser'
+        facility:
+          $ref: '#/components/schemas/LabFacility'
+        assignedPersonnel:
+          $ref: '#/components/schemas/LabPersonnel'
+        reviewer:
+          $ref: '#/components/schemas/LabPersonnel'
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabOrderItem'
+
+    LabOrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440006"
+        orderId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        testName:
+          type: string
+          example: "Complete Blood Count"
+        testCode:
+          type: string
+          nullable: true
+          example: "LAB-CBC-001"
+        testCategory:
+          type: string
+          nullable: true
+          example: "Hematology"
+        description:
+          type: string
+          nullable: true
+          example: "Comprehensive blood analysis including RBC, WBC, platelets"
+        unitPrice:
+          type: number
+          format: decimal
+          example: 75.00
+        quantity:
+          type: integer
+          example: 1
+        totalPrice:
+          type: number
+          format: decimal
+          example: 75.00
+        sampleType:
+          type: string
+          nullable: true
+          example: "Blood"
+        preparationInstructions:
+          type: string
+          nullable: true
+          example: "No special preparation required"
+        estimatedDuration:
+          type: string
+          nullable: true
+          example: "2-4 hours"
+        result:
+          type: string
+          nullable: true
+          example: "Hemoglobin: 14.2 g/dL, WBC: 7500/μL"
+        normalRange:
+          type: string
+          nullable: true
+          example: "Hemoglobin: 12-16 g/dL, WBC: 4000-11000/μL"
+        unit:
+          type: string
+          nullable: true
+          example: "g/dL"
+        isAbnormal:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-16T14:00:00Z"
+
+    OrderCreation:
+      type: object
+      required:
+        - facilityId
+        - tests
+      properties:
+        facilityId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        tests:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - name
+              - unitPrice
+            properties:
+              name:
+                type: string
+                example: "Complete Blood Count"
+              testCode:
+                type: string
+                example: "LAB-CBC-001"
+              category:
+                type: string
+                example: "Hematology"
+              unitPrice:
+                type: number
+                format: decimal
+                minimum: 0.01
+                example: 75.00
+              quantity:
+                type: integer
+                minimum: 1
+                example: 1
+              description:
+                type: string
+                example: "Comprehensive blood analysis"
+              sampleType:
+                type: string
+                example: "Blood"
+              preparationInstructions:
+                type: string
+                example: "No special preparation required"
+        serviceType:
+          type: string
+          enum: [lab_visit, home_collection]
+          default: lab_visit
+          example: "home_collection"
+        collectionAddress:
+          type: string
+          example: "123 Main St, Apt 4B, New York, NY 10001"
+        patientInstructions:
+          type: string
+          maxLength: 1000
+          example: "Please call before arriving for collection"
+        medicalHistory:
+          type: string
+          maxLength: 2000
+          example: "Diabetes Type 2, Hypertension"
+        preferredDate:
+          type: string
+          format: date
+          example: "2024-02-15"
+        preferredTime:
+          type: string
+          pattern: "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+          example: "09:00"
+        urgentProcessing:
+          type: boolean
+          default: false
+          example: false
+        doctorReferral:
+          type: string
+          maxLength: 500
+          example: "Dr. Smith - Internal Medicine - Ref: 12345"
+
+    OrderReview:
+      type: object
+      required:
+        - baseAmount
+      properties:
+        baseAmount:
+          type: number
+          format: decimal
+          minimum: 0
+          example: 120.00
+        homeVisitFee:
+          type: number
+          format: decimal
+          minimum: 0
+          example: 25.00
+        urgentFee:
+          type: number
+          format: decimal
+          minimum: 0
+          example: 15.00
+        currency:
+          type: string
+          length: 3
+          default: "USD"
+          example: "USD"
+        invoiceNotes:
+          type: string
+          maxLength: 500
+          example: "Payment due within 24 hours for home collection service"
+
+    PersonnelAssignment:
+      type: object
+      required:
+        - personnelId
+      properties:
+        personnelId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440002"
+
+    ScheduleAppointment:
+      type: object
+      required:
+        - scheduledDateTime
+      properties:
+        scheduledDateTime:
+          type: string
+          format: date-time
+          example: "2024-02-15T09:00:00Z"
+        notes:
+          type: string
+          maxLength: 500
+          example: "Patient prefers morning appointments"
+
+    CollectionCompletion:
+      type: object
+      properties:
+        collectionNotes:
+          type: string
+          maxLength: 1000
+          example: "Samples collected successfully. Patient was cooperative."
+        sampleImages:
+          type: array
+          items:
+            type: string
+            format: uri
+          example: ["https://storage.com/sample1.jpg", "https://storage.com/sample2.jpg"]
+        collectionLocation:
+          type: string
+          example: "Patient's home - 123 Main St"
+        additionalObservations:
+          type: string
+          maxLength: 500
+          example: "Patient showed signs of dehydration"
+
+    ResultsUpload:
+      type: object
+      properties:
+        resultsFileUrl:
+          type: string
+          format: uri
+          example: "https://storage.com/results/order-123.pdf"
+        resultsData:
+          type: object
+          example: {
+            "hemoglobin": "14.2 g/dL",
+            "hematocrit": "42%",
+            "white_blood_cells": "7500/μL"
+          }
+        processingNotes:
+          type: string
+          maxLength: 1000
+          example: "All tests completed successfully. Quality control passed."
+        itemResults:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+                format: uuid
+              result:
+                type: string
+              normalRange:
+                type: string
+              unit:
+                type: string
+              isAbnormal:
+                type: boolean
+          example: [
+            {
+              "itemId": "550e8400-e29b-41d4-a716-446655440006",
+              "result": "14.2 g/dL",
+              "normalRange": "12-16 g/dL",
+              "unit": "g/dL",
+              "isAbnormal": false
+            }
+          ]
+
+    ResultsReview:
+      type: object
+      required:
+        - approved
+      properties:
+        approved:
+          type: boolean
+          example: true
+        notes:
+          type: string
+          maxLength: 1000
+          example: "All results are within normal ranges. Quality approved for delivery."
+
+    PaymentConfirmation:
+      type: object
+      required:
+        - paymentId
+        - amount
+      properties:
+        paymentId:
+          type: string
+          example: "pay_1234567890"
+        amount:
+          type: number
+          format: decimal
+          example: 150.00
+        currency:
+          type: string
+          example: "USD"
+        paymentMethod:
+          type: string
+          example: "credit_card"
+        transactionId:
+          type: string
+          example: "txn_abcd1234"
+
+    OrderCancellation:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+          example: "Patient rescheduled appointment due to emergency"
+
+    OrderStats:
+      type: object
+      properties:
+        statusCounts:
+          type: object
+          additionalProperties:
+            type: integer
+          example: {
+            "created": 5,
+            "pending_payment": 3,
+            "payment_confirmed": 8,
+            "assigned": 4,
+            "completed": 25
+          }
+        totalOrders:
+          type: integer
+          example: 45
+        todayOrders:
+          type: integer
+          example: 3
+        averageProcessingTime:
+          type: string
+          example: "2.5 hours"
+        completionRate:
+          type: number
+          format: decimal
+          example: 0.96
+
+  parameters:
+    OrderId:
+      name: id
+      in: path
+      required: true
+      description: Lab order UUID
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440003"
+
+    FacilityId:
+      name: facilityId
+      in: path
+      required: true
+      description: Lab facility UUID for order operations
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+    OrderLimit:
+      name: limit
+      in: query
+      required: false
+      description: Number of orders to return
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+        example: 20
+
+    OrderOffset:
+      name: offset
+      in: query
+      required: false
+      description: Number of orders to skip
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        example: 0
+
+    OrderSearchQuery:
+      name: q
+      in: query
+      required: true
+      description: Search query for orders
+      schema:
+        type: string
+        minLength: 2
+        example: "blood test"
+
+    OrderStatus:
+      name: status
+      in: query
+      required: false
+      description: Filter orders by status
+      schema:
+        type: string
+        enum: [
+          created, pending_payment, payment_confirmed, assigned, scheduled,
+          in_progress, sample_collected, processing, results_ready, under_review,
+          revision_required, results_approved, completed, cancelled
+        ]
+        example: "pending_payment"
+
+  responses:
+    OrderCreated:
+      description: Lab order created successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Lab order created successfully. Awaiting facility review."
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    OrderFound:
+      description: Order retrieved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Order retrieved successfully"
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    OrdersList:
+      description: Orders list retrieved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Orders retrieved successfully"
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LabOrder'
+              count:
+                type: integer
+                example: 15
+
+    OrderUpdated:
+      description: Order updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Order updated successfully"
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    InvoiceSent:
+      description: Order reviewed and invoice sent
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Order reviewed and invoice sent to patient"
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    PaymentConfirmed:
+      description: Payment confirmed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Payment confirmed successfully"
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    PersonnelAssigned:
+      description: Personnel assigned successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Personnel assigned successfully"
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    AppointmentScheduled:
+      description: Appointment scheduled successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Appointment scheduled successfully"
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    CollectionCompleted:
+      description: Collection completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Collection completed successfully"
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    ProcessingStarted:
+      description: Processing started successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Processing started successfully"
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    ResultsUploaded:
+      description: Results uploaded successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Results uploaded successfully"
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    ResultsReviewed:
+      description: Results reviewed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Results approved and sent to patient"
+              data:
+                $ref: '#/components/schemas/LabOrder'
+
+    OrderStatistics:
+      description: Order statistics retrieved successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Order statistics retrieved successfully"
+              data:
+                $ref: '#/components/schemas/OrderStats'
+
+    OrderNotFound:
+      description: Order not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Order not found"
+
+    OrderAccessDenied:
+      description: Access denied to this order
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Access denied to this order"
+
+    InvalidOrderStatus:
+      description: Invalid order status for requested operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            cannot_review:
+              summary: Order cannot be reviewed
+              value:
+                success: false
+                message: "Order cannot be reviewed in current status"
+            must_be_paid:
+              summary: Order must be paid first
+              value:
+                success: false
+                message: "Order must be paid before personnel assignment"

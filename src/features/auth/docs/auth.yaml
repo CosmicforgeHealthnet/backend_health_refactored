@@ -1,0 +1,274 @@
+paths:
+  /api/auth/signup:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/UserSignUp'
+      responses:
+        '201': { description: User created; verification email sent }
+        '400': { description: Validation error }
+
+  /api/auth/login:
+    post:
+      summary: Login with email, password, optional MFA & device fingerprint
+      description: |
+        Authenticates the user and issues:
+        - an **accessToken** (JWT, 15 min)
+        - a **refreshToken** (rotating, bound to the device fingerprint)
+
+        **Two-Factor Authentication (2FA)**  
+        • If user has 2FA enabled, `mfaToken` is required  
+        • Without `mfaToken`, returns `206` status requesting 2FA code  
+        • With valid `mfaToken`, completes login normally  
+
+        **Fields**  
+        • `email`: your registered email  
+        • `password`: your account password  
+        • `mfaToken`: 6-digit code from authenticator app (required if 2FA enabled)  
+        • `deviceFingerprint`: a unique string identifying this device  
+
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/UserCredentials'
+      responses:
+        '200':
+          description: Returns full user payload + tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payload:
+                    type: object
+                    description: User details (excluding passwordHash)
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+        '206':
+          description: Password correct but 2FA code required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requiresMFA:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Please enter your two-factor authentication code"
+                  tempUserId:
+                    type: string
+                    format: uuid
+        '401':
+          description: Email not found, password incorrect, invalid 2FA code, or not verified
+          
+  /api/auth/verify-email:
+    get:
+      summary: Verify email token
+      tags: [Auth]
+      parameters:
+        - $ref: './components.yaml#/components/schemas/VerifyEmailToken'
+      responses:
+        '200': { description: Email successfully verified }
+        '400': { description: Invalid or expired token }
+
+  /api/auth/password-reset-request:
+    post:
+      summary: Request a password reset link
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/PasswordResetRequest'
+      responses:
+        '200': { description: If the email exists, a reset link has been sent }
+        '400': { description: Missing or invalid email }
+
+  /api/auth/reset-password:
+    post:
+      summary: Reset password using a token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/PasswordReset'
+      responses:
+        '200': { description: Password has been reset successfully }
+        '400': { description: Missing fields or invalid/expired token }
+
+  /api/auth/resend-verification:
+    post:
+      summary: Resend email verification link
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/EmailRequest'
+      responses:
+        '200': { description: If unverified, a new verification link has been sent }
+        '400': { description: Missing or invalid email }
+
+  /api/auth/resend-password-reset:
+    post:
+      summary: Resend password reset link
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/EmailRequest'
+      responses:
+        '200': { description: If eligible, a new reset link has been sent }
+        '400': { description: Missing or invalid email }
+  
+  /api/auth/magic-link:
+    post:
+      summary: Request a signup or login magic link
+      description: |
+        Sends a one-time magic link to the given email address.  
+        - **Sign-in** (existing user): `email` + `deviceFingerprint` required.  
+        - **Sign-up** (new user): `fullName` & `role` also required.  
+        - Link expires in 10m, must be opened from same IP/browser.  
+        - Always returns `200 OK` to prevent email enumeration.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/MagicLinkRequest'
+      responses:
+        '200':
+          description: Link sent if email is registered or created
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/MagicLinkResponse'
+        '400':
+          description: Missing required fields (e.g. deviceFingerprint or fullName)
+        '503':
+          description: Temporary email‐send failure, please try again later
+
+  
+  /api/auth/magic-login:
+    get:
+      summary: Consume magic link to sign up or sign in
+      tags: [Auth]
+      parameters:
+        - $ref: './components.yaml#/components/parameters/MagicLoginToken'
+        - $ref: './components.yaml#/components/parameters/MagicLoginFingerprint'
+      responses:
+        '200':
+          description: Returns user payload and both tokens
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/MagicLoginResponse'
+        '400':
+          description: Missing or invalid token or fingerprint
+        '401':
+          description: IP/UA mismatch or expired link
+
+  /api/auth/refresh:
+    post:
+      summary: Rotate refresh token & get new access token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: New access and refresh tokens
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/RefreshResponse'
+        '400':
+          description: Missing or invalid payload
+        '401':
+          description: Refresh token invalid or expired
+
+  
+  /api/auth/google:
+    get:
+      summary: Get Google OAuth2 consent URL
+      description: |
+        Returns a JSON payload containing the URL you must navigate to in your browser
+        to start Google OAuth2. You **must** supply:
+        - `role`: Desired user role for new sign-ups  
+        - `deviceFingerprint`: Client’s device fingerprint for session binding
+      tags: [Auth]
+      parameters:
+        - $ref: './components.yaml#/components/parameters/GoogleAuthRole'
+        - $ref: './components.yaml#/components/parameters/GoogleCallbackFingerprint'
+      responses:
+        '200':
+          description: JSON payload with the redirect URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    description: The Google OAuth2 consent page URL
+        '400':
+          description: Missing `role` or `deviceFingerprint`
+        '500':
+          description: Misconfiguration or missing Google client credentials
+
+        
+
+  /api/auth/google/callback:
+    get:
+      summary: Google OAuth2 callback endpoint
+      description: |
+        Handles Google’s redirect back with `?code=…`.  
+        Expects:
+        - **code** (query): the authorization code from Google  
+        - **deviceFingerprint** (query): your client’s fingerprint  
+        - **User-Agent** header: the client’s UA string
+      tags: [Auth]
+      parameters:
+        # - $ref: './components.yaml#/components/parameters/GoogleCallbackCode'
+      responses:
+        '200':
+          description: Returns user payload and both tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jwtPayload:
+                    type: object
+                    description: User details (excluding any secrets)
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+        '400':
+          description: Missing `code` or `deviceFingerprint`
+        '401':
+          description: Token exchange failed, email not verified, or UA/IP mismatch

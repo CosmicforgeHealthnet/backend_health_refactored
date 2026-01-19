@@ -1,0 +1,38 @@
+﻿<!-- Auto-Billing Disabled Template -->
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Heading -->
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+        Auto-Billing Disabled
+    </h1>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>{{name}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Auto-billing has been <strong>disabled</strong> for your <strong>{{planName}}</strong> subscription.
+    </p>
+
+    <!-- Instructions -->
+    <p style="font-size: 16px; margin-bottom: 30px;">
+        To avoid any interruption of service, you can always re-enable auto-billing or make a manual payment.
+    </p>
+
+    <!-- Button -->
+    {{
+#if
+ actionUrl}}
+    <div style="text-align: center; margin: 30px 0;">
+        {{> button url=actionUrl text="Manage Billing" }}
+    </div>
+    {{
+/if
+}}
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px;">
+        The CosmicForge Team
+    </p>
+</div>

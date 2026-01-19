@@ -1,0 +1,516 @@
+{
+  "info": {
+    "name": "CosmicForge - Documents Feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Upload images and get permanent URLs",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/images/upload",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "images",
+            "upload"
+          ],
+          "variable": []
+        },
+        "description": "Upload one or more images and receive permanent, publicly accessible URLs.\n\n**Key Features:**\n- Returns permanent URLs (no expiration)\n- Images are publicly accessible\n- Automatic folder creation/management\n- Multiple URL formats provided\n"
+      }
+    },
+    {
+      "name": "Serve image publicly (no authentication required)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/images/{imageId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "images",
+            ":imageId"
+          ],
+          "variable": []
+        },
+        "description": "Serve an image directly using its permanent URL"
+      }
+    },
+    {
+      "name": "Serve image thumbnail",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/images/{imageId}/thumbnail",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "images",
+            ":imageId",
+            "thumbnail"
+          ],
+          "variable": []
+        },
+        "description": "Serve a thumbnail version of the image"
+      }
+    },
+    {
+      "name": "Create a new patient profile",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/patient/patient-profiles",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "patient",
+            "patient-profiles"
+          ],
+          "variable": []
+        },
+        "description": "Creates a patient profile for the authenticated user.  \n- Requires a valid JWT access token.  \n- Optionally links to an existing user via `userId`.  \n- Related entities (e.g., `medicalConditions`, `surgeries`) can be included.\n"
+      }
+    },
+    {
+      "name": "Get a patient profile by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/patient/patient-profiles/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "patient",
+            "patient-profiles",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Retrieves a patient profile by its UUID, including all related entities.  \n- Requires a valid JWT access token.  \n- The authenticated user must own the profile.\n"
+      }
+    },
+    {
+      "name": "Update a patient profile",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/patient/patient-profiles/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "patient",
+            "patient-profiles",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Updates a patient profile by its UUID.  \n- Requires a valid JWT access token.  \n- The authenticated user must own the profile.  \n- Only provided fields are updated; related entities are replaced if included.\n"
+      }
+    },
+    {
+      "name": "Delete a patient profile",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/patient/patient-profiles/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "patient",
+            "patient-profiles",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Deletes a patient profile by its UUID.  \n- Requires a valid JWT access token.  \n- The authenticated user must own the profile.\n"
+      }
+    },
+    {
+      "name": "Get a patient profile by user ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/patient/patient-profiles/api/patient/{userId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "patient",
+            "patient-profiles",
+            "api",
+            "patient",
+            ":userId"
+          ],
+          "variable": []
+        },
+        "description": "Retrieves the patient profile associated with a user ID, including all related entities.  \n- Requires a valid JWT access token.  \n- The authenticated user must match the userId.\n"
+      }
+    },
+    {
+      "name": "Get related files for a patient",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/fhir/files/{fileId}/related",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "fhir",
+            "files",
+            ":fileId",
+            "related"
+          ],
+          "variable": []
+        },
+        "description": "Find files related to the specified file, typically files belonging\nto the same patient or related clinical episodes.\n"
+      }
+    },
+    {
+      "name": "Update FHIR metadata",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/fhir/files/{fileId}/metadata",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "fhir",
+            "files",
+            ":fileId",
+            "metadata"
+          ],
+          "variable": []
+        },
+        "description": "Update FHIR-specific metadata including sensitivity level,\nsecurity labels, consent directives, and purpose of use.\n"
+      }
+    },
+    {
+      "name": "Bulk update FHIR files",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/fhir/files/bulk",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "fhir",
+            "files",
+            "bulk"
+          ],
+          "variable": []
+        },
+        "description": "Update multiple FHIR files at once. Limited to 100 files per request.\nUseful for applying consistent metadata changes across multiple files.\n"
+      }
+    },
+    {
+      "name": "Get files in folder",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/folders/{folderId}/files",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "folders",
+            ":folderId",
+            "files"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve all files in a specific folder"
+      }
+    },
+    {
+      "name": "Search files",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/search",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            "search"
+          ],
+          "variable": []
+        },
+        "description": "Search files across all user folders"
+      }
+    },
+    {
+      "name": "Get recent files",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/recent",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            "recent"
+          ],
+          "variable": []
+        },
+        "description": "Get recently uploaded or accessed files"
+      }
+    },
+    {
+      "name": "Get file statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            "stats"
+          ],
+          "variable": []
+        },
+        "description": "Get user's file statistics and usage metrics"
+      }
+    },
+    {
+      "name": "Get files by document type",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/type/{documentType}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            "type",
+            ":documentType"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve files filtered by document type"
+      }
+    },
+    {
+      "name": "Bulk delete files",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/bulk",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            "bulk"
+          ],
+          "variable": []
+        },
+        "description": "Delete multiple files at once"
+      }
+    },
+    {
+      "name": "Get file metadata",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/{fileId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            ":fileId"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve file metadata and information"
+      }
+    },
+    {
+      "name": "Update file metadata",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/{fileId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            ":fileId"
+          ],
+          "variable": []
+        },
+        "description": "Update file metadata and properties"
+      }
+    },
+    {
+      "name": "Delete file",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/{fileId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            ":fileId"
+          ],
+          "variable": []
+        },
+        "description": "Soft delete a file"
+      }
+    },
+    {
+      "name": "Download file",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/{fileId}/download",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            ":fileId",
+            "download"
+          ],
+          "variable": []
+        },
+        "description": "Download file content with optional signed URL authentication"
+      }
+    },
+    {
+      "name": "Stream file",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/{fileId}/stream",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            ":fileId",
+            "stream"
+          ],
+          "variable": []
+        },
+        "description": "Stream file content for large files"
+      }
+    },
+    {
+      "name": "Serve file with signed URL",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/files/{fileId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "files",
+            ":fileId"
+          ],
+          "variable": []
+        },
+        "description": "Serve file content using signed URL authentication (no bearer token required)"
+      }
+    },
+    {
+      "name": "Get file preview",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/documents/files/{fileId}/preview",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "files",
+            ":fileId",
+            "preview"
+          ],
+          "variable": []
+        },
+        "description": "Get file preview or thumbnail"
+      }
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+paths:
+  /api/firstaid/content/sync/offline-manifest:
+    get:
+      summary: Get offline manifest for mobile apps
+      description: Retrieve complete first aid content manifest for mobile app offline functionality (public endpoint)
+      tags: [First Aid - Sync]
+      responses:
+        '200':
+          description: Successfully retrieved offline manifest
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: './syncComponents.yaml#/components/schemas/OfflineManifest'
+          headers:
+            Cache-Control:
+              description: Caching directives
+              schema:
+                type: string
+                example: "public, max-age=300"
+            ETag:
+              description: Entity tag for caching
+              schema:
+                type: string
+                example: '"123456789"'
+            Last-Modified:
+              description: Last modification date
+              schema:
+                type: string
+                example: "Wed, 16 Jan 2025 10:30:00 GMT"
+        '500':
+          description: Internal server error
+
+  /api/firstaid/content/sync/web-manifest:
+    get:
+      summary: Get web manifest for PWA
+      description: Retrieve lightweight first aid content manifest optimized for Progressive Web Apps (public endpoint)
+      tags: [First Aid - Sync]
+      responses:
+        '200':
+          description: Successfully retrieved web manifest
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: './syncComponents.yaml#/components/schemas/WebManifest'
+          headers:
+            Cache-Control:
+              description: Caching directives
+              schema:
+                type: string
+                example: "public, max-age=300"
+            ETag:
+              description: Entity tag for caching
+              schema:
+                type: string
+                example: '"123456789"'
+            Last-Modified:
+              description: Last modification date
+              schema:
+                type: string
+                example: "Wed, 16 Jan 2025 10:30:00 GMT"
+        '500':
+          description: Internal server error
+
+  /api/firstaid/content/sync/check-updates:
+    get:
+      summary: Check for content updates
+      description: Check if client needs to update content based on version comparison (public endpoint)
+      tags: [First Aid - Sync]
+      parameters:
+        - name: clientVersion
+          in: query
+          required: true
+          description: Current client version timestamp
+          schema:
+            type: integer
+            minimum: 0
+          example: 1642329000000
+      responses:
+        '200':
+          description: Successfully checked for updates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: './syncComponents.yaml#/components/schemas/UpdateCheckResponse'
+        '400':
+          description: Validation error - missing or invalid clientVersion
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    examples:
+                      - "clientVersion is required"
+                      - "clientVersion must be a non-negative integer"
+                  details:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        msg:
+                          type: string
+                        param:
+                          type: string
+                        location:
+                          type: string
+        '500':
+          description: Internal server error
+
+  /api/firstaid/content/sync/health:
+    get:
+      summary: Get sync system health status
+      description: Retrieve health status and metrics for the sync system (public endpoint)
+      tags: [First Aid - Sync]
+      responses:
+        '200':
+          description: Successfully retrieved health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: './syncComponents.yaml#/components/schemas/HealthStatus'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  data:
+                    allOf:
+                      - $ref: './syncComponents.yaml#/components/schemas/HealthStatus'
+                      - type: object
+                        properties:
+                          status:
+                            example: "unhealthy"

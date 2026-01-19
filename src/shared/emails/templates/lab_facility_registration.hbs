@@ -1,0 +1,27 @@
+<div style="padding: 20px; font-family: Arial, sans-serif;"></div>
+  <h2 style="color: #007bff; margin-bottom: 20px;">Lab Facility Registration Submitted</h2>
+  
+  <p>Dear {{ownerName}},</p>
+  
+  <p>Thank you for registering your lab facility with CosmicForge Health. We have received your registration and it's currently under review.</p>
+  
+  <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #333;">Registration Details:</h3>
+    <p><strong>Facility Name:</strong> {{facilityName}}</p>
+    <p><strong>Type:</strong> {{facilityType}}</p>
+    <p><strong>Registration Number:</strong> {{registrationNumber}}</p>
+    <p><strong>License Number:</strong> {{licenseNumber}}</p>
+    <p><strong>Submitted:</strong> {{submittedAt}}</p>
+  </div>
+  
+  <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+    <p style="margin: 0;"><strong>What's Next?</strong></p>
+    <p style="margin: 5px 0 0 0;">Our admin team will review your registration within {{processingTime}}. You'll receive an email notification once the review is complete.</p>
+  </div>
+  
+  {{> button url=dashboardLink text="View Registration Status" color="#007bff"}}
+  
+  <p>If you have any questions, please contact our <a href="{{supportLink}}">support team</a>.</p>
+  
+  <p>Best regards,<br>The CosmicForge Health Team</p>
+</div>

@@ -1,0 +1,1034 @@
+# ================================
+# UPDATED WALLET ENDPOINTS (SMART ROUTING & ACCOUNT RESOLUTION)
+# ================================
+
+# docs/api/payments/wallet.yaml
+paths:
+  /api/payments/wallet:
+    get:
+      tags:
+        - Wallet
+      summary: Get doctor wallet
+      description: |
+        Retrieve doctor's wallet with balance and currency conversion.
+        
+        **Note**: Wallets are automatically created when doctor verification is approved.
+        If you don't have a wallet, complete your doctor verification first.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Wallet retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/DoctorWallet'
+                          - type: object
+                            properties:
+                              autoCreated:
+                                type: boolean
+                                example: true
+                                description: "Indicates wallet was automatically created"
+                              createdOnApproval:
+                                type: boolean
+                                example: true
+                                description: "Wallet created during verification approval"
+                              setupInfo:
+                                type: object
+                                properties:
+                                  message:
+                                    type: string
+                                    example: "Wallet automatically created upon verification approval"
+                                  defaultCommissionRate:
+                                    type: number
+                                    example: 30.00
+                                  subscriptionTier:
+                                    type: string
+                                    example: "free"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Wallet not found - verification required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Wallet not found"
+                  message:
+                    type: string
+                    example: "Wallets are automatically created upon verification approval"
+                  suggestion:
+                    type: string
+                    example: "Complete your doctor verification to get your wallet"
+                  nextSteps:
+                    type: array
+                    items:
+                      type: string
+                    example: 
+                      - "Submit verification request if not done"
+                      - "Upload required documents"
+                      - "Wait for verification approval"
+                      - "Wallet will be created automatically"
+                  helpInfo:
+                    type: object
+                    properties:
+                      automaticCreation:
+                        type: boolean
+                        example: true
+                      verificationRequired:
+                        type: boolean
+                        example: true
+                      contactSupport:
+                        type: string
+                        example: "If you believe this is an error, contact support"
+
+  /api/payments/wallet/currency:
+    put:
+      tags:
+        - Wallet
+      summary: Update wallet display currency
+      description: Change the preferred display currency for wallet balance display
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currency
+              properties:
+                currency:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                  description: "ISO currency code"
+                  example: "NGN"
+                  enum: ["USD", "NGN", "GHS", "EUR", "GBP"]
+      responses:
+        '200':
+          description: Display currency updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          newCurrency:
+                            type: string
+                            example: "NGN"
+                          message:
+                            type: string
+                            example: "Display currency updated to NGN"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Wallet not found. Complete verification first."
+
+  /api/payments/wallet/supported-currencies:
+    get:
+      tags:
+        - Wallet
+      summary: Get supported currencies
+      description: |
+        Retrieve list of supported currencies from both Flutterwave and Paystack for wallet operations.
+        Use this to populate currency selection dropdown when updating display currency.
+        
+        **Features:**
+        - Real-time currency support from both processors
+        - Exchange rates from USD
+        - Fee information per processor
+        - Recommended currencies highlighted
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Currencies retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SupportedCurrency'
+        '500':
+          description: Failed to fetch currencies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Failed to fetch supported currencies"
+
+  /api/payments/wallet/supported-banks:
+    get:
+      tags:
+        - Wallet
+      summary: Get supported banks
+      description: |
+        Retrieve list of supported banks from both Flutterwave and Paystack.
+        Use this to populate bank selection dropdown for withdrawals.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Banks retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SupportedBank'
+        '500':
+          description: Failed to fetch banks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Failed to fetch supported banks"
+
+  /api/payments/wallet/resolve-account:
+    post:
+      tags:
+        - Wallet
+      summary: Resolve bank account details
+      description: |
+        Automatically resolve and validate bank account details using account number and bank code.
+        This uses smart routing to try both Flutterwave and Paystack for the best results.
+        
+        **Use Case**: Call this after user selects bank and enters account number to auto-fill account name.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountResolutionRequest'
+      responses:
+        '200':
+          description: Account details resolved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ResolvedAccountDetails'
+        '400':
+          description: Invalid account details or resolution failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    examples:
+                      invalid_account:
+                        value: "Unable to resolve account details. Please verify account number and bank."
+                      missing_fields:
+                        value: "Account number and bank code are required"
+        '500':
+          description: Account resolution service error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Failed to resolve account details"
+
+  /api/payments/wallet/withdraw/{withdrawalId}/verify-otp:
+    put:
+      tags:
+        - Wallet
+      summary: Complete withdrawal with custom OTP verification
+      description: |
+        Complete a withdrawal using custom OTP sent via email.
+        Replace the old Paystack OTP system with CosmicForge's own OTP.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: withdrawalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Withdrawal ID requiring OTP verification"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - otp
+              properties:
+                otp:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  description: "6-digit OTP code sent to email"
+                  example: "123456"
+                walletPassword:
+                  type: string
+                  description: "Optional wallet password for extra security"
+      responses:
+        '200':
+          description: Withdrawal completed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          withdrawalId:
+                            type: string
+                            format: uuid
+        '400':
+          description: Invalid OTP or expired
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    examples:
+                      invalid_otp:
+                        value: "Invalid OTP. 2 attempts remaining."
+                      expired_otp:
+                        value: "OTP has expired. Please request a new one."
+                      max_attempts:
+                        value: "Maximum OTP attempts exceeded. Withdrawal has been blocked."
+
+  /api/payments/wallet/withdraw/{withdrawalId}/resend-otp:
+    post:
+      tags:
+        - Wallet
+      summary: Resend OTP for withdrawal
+      description: Generate and send a new OTP code for withdrawal verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: withdrawalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: New OTP sent successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "New OTP sent to your email"
+        '400':
+          description: Cannot resend OTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Withdrawal is not pending OTP verification"
+
+  /api/payments/wallet/password:
+    post:
+      tags:
+        - Wallet
+      summary: Set wallet password
+      description: Set a password for wallet operations (first time setup)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  minLength: 6
+                  description: "Wallet password (minimum 6 characters)"
+                  example: "mySecurePassword123"
+      responses:
+        '200':
+          description: Wallet password set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+    put:
+      deprecated: true
+      tags:
+        - Wallet
+      summary: Update wallet password
+      description: Change existing wallet password (requires current password)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  description: "Current wallet password"
+                newPassword:
+                  type: string
+                  minLength: 6
+                  description: "New wallet password (minimum 6 characters)"
+      responses:
+        '200':
+          description: Wallet password updated successfully
+        '400':
+          description: Current password incorrect
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Current password is incorrect"
+
+  /api/payments/wallet/password/reset-request:
+    post:
+      tags:
+        - Wallet
+      summary: Request wallet password reset
+      description: Send password reset email to doctor
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Reset email sent successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Password reset instructions have been sent to your email"
+        '400':
+          description: Cannot reset password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    examples:
+                      no_password:
+                        value: "No wallet password is set for this account"
+                      too_many_attempts:
+                        value: "Too many reset attempts. Please try again later."
+
+  /api/payments/wallet/password/reset:
+    post:
+      tags:
+        - Wallet
+      summary: Reset wallet password with token
+      description: Reset password using token from email (public endpoint)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - newPassword
+              properties:
+                token:
+                  type: string
+                  description: "Reset token from email"
+                newPassword:
+                  type: string
+                  minLength: 6
+                  description: "New wallet password"
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Wallet password has been reset successfully"
+        '400':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    examples:
+                      invalid_token:
+                        value: "Invalid or expired reset token"
+                      too_many_attempts:
+                        value: "Too many reset attempts. Please request a new reset link."
+
+  /api/payments/wallet/password/reset/verify/{token}:
+    get:
+      tags:
+        - Wallet
+      summary: Verify password reset token
+      description: Check if reset token is valid (public endpoint for frontend)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token verification result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          valid:
+                            type: boolean
+                            example: true
+                          expired:
+                            type: boolean
+                            example: false
+                          doctorName:
+                            type: string
+                            example: "Dr. John Doe"
+
+  /api/payments/wallet/password/check:
+    get:
+      tags:
+        - Wallet
+      summary: Check if wallet password is set
+      description: Check whether doctor has set a wallet password
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Password status retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          hasWalletPassword:
+                            type: boolean
+                            example: true
+
+  /api/payments/wallet/password/verify:
+    post:
+      tags:
+        - Wallet
+      summary: Verify wallet password
+      description: Verify wallet password for sensitive operations
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  description: "Wallet password to verify"
+      responses:
+        '200':
+          description: Password verification result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          isValid:
+                            type: boolean
+                            example: true
+
+
+  /api/payments/wallet/withdraw:
+    post:
+      tags:
+        - Wallet
+      summary: Initiate withdrawal request (Smart Routing)
+      description: |
+        Request withdrawal from doctor wallet to bank account using smart routing.
+        
+        **Smart Routing Features:**
+        - Automatically checks real-time balances on both Flutterwave and Paystack
+        - Routes to processor with sufficient funds
+        - Splits withdrawal across both processors if needed
+        - Optimizes for best success rates and fees
+        
+        **Requirements:**
+        - Minimum withdrawal: $10 USD
+        - Available balance must cover withdrawal amount
+        - Wallet must not be frozen
+        - Rate limited: 3 withdrawals per day
+        
+        **Tip**: Use `/resolve-account` endpoint first to auto-fill account details.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmartWithdrawalRequest'
+      responses:
+        '201':
+          description: Withdrawal request initiated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SmartWithdrawalResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Wallet frozen or insufficient balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                  reason:
+                    type: string
+                  availableBalance:
+                    type: number
+                  minimumWithdrawal:
+                    type: number
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Wallet not found. Complete verification first."
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Insufficient funds across all processors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Insufficient funds across all payment processors"
+                  processorBalances:
+                    type: object
+                    properties:
+                      flutterwave:
+                        type: number
+                        example: 50.00
+                      paystack:
+                        type: number
+                        example: 30.00
+                      totalAvailable:
+                        type: number
+                        example: 80.00
+                      requested:
+                        type: number
+                        example: 100.00
+
+  /api/payments/wallet/withdrawals:
+    get:
+      tags:
+        - Wallet
+      summary: Get withdrawal history (Enhanced with Smart Routing info)
+      description: |
+        Retrieve paginated withdrawal history for doctor including smart routing information.
+        Shows which processor(s) were used for each withdrawal.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: "Page number"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: "Items per page"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed, cancelled]
+          description: "Filter by withdrawal status"
+        - name: processor
+          in: query
+          schema:
+            type: string
+            enum: [flutterwave, paystack, split]
+          description: "Filter by payment processor used"
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: "Filter from date"
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: "Filter to date"
+      responses:
+        '200':
+          description: Withdrawal history retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          withdrawals:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/EnhancedWalletWithdrawal'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationInfo'
+                          summary:
+                            type: object
+                            properties:
+                              totalWithdrawals:
+                                type: integer
+                              totalAmount:
+                                type: number
+                              pendingAmount:
+                                type: number
+                              completedAmount:
+                                type: number
+                              routingBreakdown:
+                                type: object
+                                properties:
+                                  flutterwaveOnly:
+                                    type: integer
+                                  paystackOnly:
+                                    type: integer
+                                  splitWithdrawals:
+                                    type: integer
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Wallet not found. Complete verification first."
+
+  # ================================
+  # ADMIN ENDPOINTS
+  # ================================
+
+  /api/payments/wallet/create:
+    post:
+      tags:
+        - Wallet Admin
+      summary: Create wallet for doctor (Admin only)
+      description: Manually create a wallet for a doctor (typically done automatically)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - doctorId
+              properties:
+                doctorId:
+                  type: string
+                  format: uuid
+                  description: "Doctor's user ID"
+      responses:
+        '201':
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DoctorWallet'
+        '400':
+          description: Wallet already exists or invalid doctor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    examples:
+                      already_exists:
+                        value: "Wallet already exists for this doctor"
+                      doctor_not_found:
+                        value: "Doctor not found"
+
+  /api/payments/wallet/freeze:
+    post:
+      tags:
+        - Wallet Admin
+      summary: Freeze wallet (Admin only)
+      description: Freeze a doctor's wallet to prevent withdrawals
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreezeWalletRequest'
+      responses:
+        '200':
+          description: Wallet frozen successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Doctor ID and reason are required"
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Wallet not found for this doctor"
+
+  /api/payments/wallet/unfreeze:
+    post:
+      tags:
+        - Wallet Admin
+      summary: Unfreeze wallet (Admin only)
+      description: Unfreeze a doctor's wallet to allow withdrawals
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnfreezeWalletRequest'
+      responses:
+        '200':
+          description: Wallet unfrozen successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Missing doctor ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Doctor ID is required"
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Wallet not found for this doctor"

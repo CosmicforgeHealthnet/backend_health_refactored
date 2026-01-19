@@ -1,0 +1,121 @@
+# docs/mfa/mfaComponents.yaml - MFA COMPONENTS
+# =============================================================================
+components:
+  schemas:
+    # Request Schemas
+    MFAEnableRequest:
+      type: object
+      required:
+        - token
+        - secret
+      properties:
+        token:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: 6-digit verification code from authenticator app
+          example: "123456"
+        secret:
+          type: string
+          description: Base32 encoded secret from setup response
+          example: "JBSWY3DPEHPK3PXP"
+
+    MFADisableRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: 6-digit verification code from authenticator app
+          example: "654321"
+
+    # Response Schemas
+    MFAStatusResponse:
+      type: object
+      properties:
+        mfaEnabled:
+          type: boolean
+          description: Whether MFA is enabled for the user
+          example: true
+        message:
+          type: string
+          description: Status message
+          example: "MFA is enabled"
+
+    MFASetupResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "MFA setup data generated"
+        qrCodeUrl:
+          type: string
+          description: QR code as data URL for scanning with authenticator apps
+          example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEA..."
+        manualEntryKey:
+          type: string
+          description: Secret key for manual entry into authenticator apps
+          example: "JBSWY3DPEHPK3PXP"
+        secret:
+          type: string
+          description: Base32 encoded secret (same as manualEntryKey)
+          example: "JBSWY3DPEHPK3PXP"
+        backupCodes:
+          type: array
+          items:
+            type: string
+          description: Array of backup codes for account recovery
+          example: ["ABC12345", "DEF67890", "GHI11223", "JKL44556", "MNO77889"]
+
+    MFASuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          description: Success message
+          example: "Two-factor authentication enabled successfully"
+
+    MFAErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid verification code"
+
+  responses:
+    MFAUnauthorized:
+      description: Authentication required - valid JWT token must be provided
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MFAErrorResponse'
+          examples:
+            no_token:
+              summary: No authorization token provided
+              value:
+                error: "Access token required"
+            invalid_token:
+              summary: Invalid or expired token
+              value:
+                error: "Invalid or expired token"
+
+    MFABadRequest:
+      description: Bad request - invalid parameters or missing required fields
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MFAErrorResponse'
+          examples:
+            invalid_code:
+              summary: Invalid MFA code format
+              value:
+                error: "Invalid verification code format"
+            missing_fields:
+              summary: Missing required fields
+              value:
+                error: "Required fields are missing"

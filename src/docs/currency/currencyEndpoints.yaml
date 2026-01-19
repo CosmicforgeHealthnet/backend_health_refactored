@@ -1,0 +1,198 @@
+# File 2: currency/currencyEndpoints.yaml
+paths:
+  /dynamicCurrency/convert:
+    post:
+      tags:
+        - Currency Conversion
+      summary: Convert currency based on user location
+      description: |
+        Convert an amount from one currency to another based on the user's location.
+        The target currency is automatically detected from the user's country using IP geolocation.
+        If the detected currency is not supported by payment gateways, it defaults to USD.
+        
+        **Use Case**: Doctor in UK sets price in USD, patient in Nigeria sees price in NGN.
+      operationId: convertCurrency
+      requestBody:
+        description: Currency conversion request
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyConversionRequest'
+            examples:
+              autoDetectCurrency:
+                summary: Auto-detect target currency from user location
+                value:
+                  amount: 100
+                  fromCurrency: "USD"
+              specificCurrency:
+                summary: Convert to specific currency
+                value:
+                  amount: 50.75
+                  fromCurrency: "GBP"
+                  toCurrency: "EUR"
+      responses:
+        '200':
+          description: Currency conversion successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyConversionResponse'
+              examples:
+                successfulConversion:
+                  summary: Successful currency conversion
+                  value:
+                    success: true
+                    originalAmount: 100
+                    originalCurrency: "USD"
+                    convertedAmount: 165000
+                    convertedCurrency: "NGN"
+                    exchangeRate: 1650
+                    userCountry: "Nigeria"
+                    isSupported: true
+                    supportedByPaystack: true
+                    supportedByFlutterwave: true
+                    timestamp: "2025-01-15T10:30:00.000Z"
+                fallbackToUSD:
+                  summary: Fallback to USD for unsupported currency
+                  value:
+                    success: true
+                    originalAmount: 100
+                    originalCurrency: "EUR"
+                    convertedAmount: 108.50
+                    convertedCurrency: "USD"
+                    exchangeRate: 1.085
+                    userCountry: "Unknown"
+                    isSupported: true
+                    supportedByPaystack: true
+                    supportedByFlutterwave: true
+                    timestamp: "2025-01-15T10:30:00.000Z"
+        '400':
+          $ref: '#/components/responses/CurrencyBadRequest'
+        '500':
+          $ref: '#/components/responses/CurrencyInternalError'
+
+  /dynamicCurrency/supported:
+    get:
+      tags:
+        - Currency Conversion
+      summary: Get supported currencies
+      description: |
+        Retrieve all currencies supported by Paystack and Flutterwave payment gateways.
+        Returns separate lists for each gateway plus a combined list.
+      operationId: getSupportedCurrencies
+      responses:
+        '200':
+          description: Supported currencies retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportedCurrenciesResponse'
+              example:
+                success: true
+                data:
+                  paystack: ["NGN", "USD", "GHS", "ZAR", "KES", "XOF", "EGP", "XAF"]
+                  flutterwave: ["NGN", "USD", "EUR", "GBP", "KES", "UGX", "TZS", "ZAR", "XOF", "XAF", "GHS", "SLL", "MWK", "ZMW", "RWF", "CAD", "AUD"]
+                  combined: ["NGN", "USD", "EUR", "GBP", "GHS", "ZAR", "KES", "UGX", "TZS", "XOF", "XAF", "SLL", "MWK", "ZMW", "RWF", "EGP", "CAD", "AUD"]
+                  total: 18
+        '500':
+          $ref: '#/components/responses/CurrencyInternalError'
+
+  /dynamicCurrency/support/{currency}:
+    get:
+      tags:
+        - Currency Conversion
+      summary: Check payment gateway support for specific currency
+      description: |
+        Check whether a specific currency is supported by Paystack, Flutterwave, or both.
+        Useful for determining which payment gateway to use for a transaction.
+      operationId: checkCurrencySupport
+      parameters:
+        - $ref: '#/components/parameters/CurrencyCodeParam'
+      responses:
+        '200':
+          description: Currency support information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencySupportResponse'
+              examples:
+                supportedByBoth:
+                  summary: Currency supported by both gateways
+                  value:
+                    success: true
+                    data:
+                      currency: "NGN"
+                      paystack: true
+                      flutterwave: true
+                      anyGateway: true
+                supportedByOne:
+                  summary: Currency supported by one gateway
+                  value:
+                    success: true
+                    data:
+                      currency: "EUR"
+                      paystack: false
+                      flutterwave: true
+                      anyGateway: true
+                notSupported:
+                  summary: Currency not supported
+                  value:
+                    success: true
+                    data:
+                      currency: "JPY"
+                      paystack: false
+                      flutterwave: false
+                      anyGateway: false
+        '400':
+          $ref: '#/components/responses/CurrencyBadRequest'
+        '500':
+          $ref: '#/components/responses/CurrencyInternalError'
+
+  /dynamicCurrency/local:
+    get:
+      tags:
+        - Currency Conversion
+      summary: Get user's local currency
+      description: |
+        Get the user's local currency based on their IP geolocation.
+        Also returns payment gateway support information for the detected currency.
+        Uses the location middleware to determine the user's country.
+      operationId: getUserLocalCurrency
+      responses:
+        '200':
+          description: User's local currency retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocalCurrencyResponse'
+              examples:
+                nigerianUser:
+                  summary: Nigerian user with supported currency
+                  value:
+                    success: true
+                    data:
+                      country: "Nigeria"
+                      currency: "NGN"
+                      isSupported: true
+                      paymentGateways:
+                        currency: "NGN"
+                        paystack: true
+                        flutterwave: true
+                        anyGateway: true
+                unknownLocation:
+                  summary: Unknown location defaults to USD
+                  value:
+                    success: true
+                    data:
+                      country: "Nigeria"
+                      currency: "USD"
+                      isSupported: true
+                      paymentGateways:
+                        currency: "USD"
+                        paystack: true
+                        flutterwave: true
+                        anyGateway: true
+        '500':
+          $ref: '#/components/responses/CurrencyInternalError'
+

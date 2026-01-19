@@ -1,0 +1,228 @@
+paths:
+  /user/api/doctor-profiles:
+    post:
+      summary: Create a new doctor profile
+      description: |
+        Creates a doctor profile for the authenticated user.  
+        - Requires a valid JWT access token in the Authorization header (Bearer <token>).  
+        -  `professionalLicense` are mandatory.  
+        - Optionally links to an existing user via `userId`.
+      tags: [Doctor Profiles]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './api/doctorComponent.yaml#/components/schemas/DoctorProfile'
+      responses:
+        '201':
+          description: Doctor profile created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Doctor profile created successfully
+                  profile:
+                    $ref: './api/doctorComponent.yaml#/components/schemas/DoctorProfileResponse'
+        '400':
+          description: Validation error or email already in use
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+
+  /user/api/doctor-profiles/{id}:
+    get:
+      summary: Get a doctor profile by ID
+      description: |
+        Retrieves a doctor profile by its UUID.  
+        - Requires a valid JWT access token.  
+        - The authenticated user must own the profile.
+      tags: [Doctor Profiles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: './api/doctorComponent.yaml#/components/parameters/DoctorProfileId'
+      responses:
+        '200':
+          description: Doctor profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Doctor profile retrieved successfully
+                  profile:
+                    $ref: './api/doctorComponent.yaml#/components/schemas/DoctorProfile'
+        '401':
+          description: Unauthorized - Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not own this profile
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Doctor profile not found
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update a doctor profile
+      description: |
+        Updates a doctor profile by its UUID.  
+        - Requires a valid JWT access token.  
+        - The authenticated user must own the profile.  
+        - Only provided fields are updated.
+      tags: [Doctor Profiles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: './api/doctorComponent.yaml#/components/parameters/DoctorProfileId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './api/doctorComponent.yaml#/components/schemas/DoctorProfile'
+      responses:
+        '200':
+          description: Doctor profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Doctor profile updated successfully
+                  profile:
+                    $ref: './api/doctorComponent.yaml#/components/schemas/DoctorProfileResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not own this profile
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Doctor profile not found
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a doctor profile
+      description: |
+        Deletes a doctor profile by its UUID.  
+        - Requires a valid JWT access token.  
+        - The authenticated user must own the profile.
+      tags: [Doctor Profiles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: './api/doctorComponent.yaml#/components/parameters/DoctorProfileId'
+      responses:
+        '200':
+          description: Doctor profile deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Doctor profile deleted successfully
+        '401':
+          description: Unauthorized - Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not own this profile
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Doctor profile not found
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+
+  /user/api/doctor-profiles/user/{userId}:
+    get:
+      summary: Get a doctor profile by user ID
+      description: |
+        Retrieves the doctor profile associated with a user ID.  
+        - Requires a valid JWT access token.  
+        - The authenticated user must match the userId.
+      tags: [Doctor Profiles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: './api/doctorComponent.yaml#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Doctor profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Doctor profile retrieved successfully
+                  profile:
+                    $ref: './api/doctorComponent.yaml#/components/schemas/DoctorProfile'
+        '401':
+          description: Unauthorized - Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not own this profile
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Doctor profile not found for this user
+          content:
+            application/json:
+              schema:
+                $ref: './api/doctorComponent.yaml#/components/schemas/ErrorResponse'

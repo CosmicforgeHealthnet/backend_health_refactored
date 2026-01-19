@@ -1,0 +1,79 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Status Banner -->
+    <div style="background: linear-gradient(135deg, #dc2626, #b91c1c); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Appointment Cancelled</h2>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>Dr. {{doctorName}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        The appointment with <strong>{{patientName}}</strong> has been cancelled.
+    </p>
+
+    <!-- Cancellation Details -->
+    <div style="background-color: #fee2e2; border-left: 4px solid #dc2626; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #b91c1c; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Cancellation Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #7f1d1d;">
+            <strong>Patient:</strong> {{patientName}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #7f1d1d;">
+            <strong>Original Date & Time:</strong> {{appointmentDate}} at {{appointmentTime}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #7f1d1d;">
+            <strong>Cancelled By:</strong> {{cancelledBy}}
+        </p>
+        {{#if cancellationReason}}
+        <p style="font-size: 14px; margin: 5px 0; color: #7f1d1d;">
+            <strong>Reason:</strong> {{cancellationReason}}
+        </p>
+        {{/if}}
+        <p style="font-size: 14px; margin: 5px 0; color: #7f1d1d;">
+            <strong>Appointment ID:</strong> #{{appointmentId}}
+        </p>
+    </div>
+
+    <!-- Refund Information for Doctors -->
+    {{#if refundAmount}}
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #15803d; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Payment Information
+        </h3>
+        <p style="color: #166534; margin: 0; font-size: 14px;">
+            A refund of <strong>${{refundAmount}}</strong> will be processed according to your payout schedule. 
+            This cancellation will not affect your rating if initiated by the patient.
+        </p>
+    </div>
+    {{/if}}
+
+    <!-- Dashboard Link -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{dashboardLink}}" style="color: #3964EA; text-decoration: none; font-weight: bold;">
+            📋 View Dashboard
+        </a>
+    </div>
+
+    <!-- Schedule Availability -->
+    <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #0c4a6e; margin: 0; font-weight: 600; text-align: center; font-size: 14px;">
+            <strong>Available Slot Created:</strong> This cancellation has freed up your schedule. 
+            You may receive new appointment requests for this time slot.
+        </p>
+    </div>
+
+    <!-- Support info -->
+    <p style="font-size: 14px; color: #555; margin: 20px 0; text-align: center;">
+        If you have any questions about this cancellation, please contact our <a href="{{supportLink}}" style="color: #3964EA; text-decoration: none;">support team</a>.
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px; text-align: center;">
+        <strong>The CosmicForge Health Team</strong>
+    </p>
+
+</div>

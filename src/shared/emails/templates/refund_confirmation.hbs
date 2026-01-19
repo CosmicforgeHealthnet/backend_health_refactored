@@ -1,0 +1,80 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;"></div>
+    <!-- Status Banner -->
+    <div style="background: linear-gradient(135deg, #059669, #047857); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Refund Processed</h2>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>{{patientName}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your refund for appointment <strong>#{{appointmentId}}</strong> has been successfully processed.
+    </p>
+
+    <!-- Refund Details -->
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #15803d; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Refund Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #166534;">
+            <strong>Appointment ID:</strong> #{{appointmentId}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #166534;">
+            <strong>Original Date & Time:</strong> {{appointmentDate}} at {{appointmentTime}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #166534;">
+            <strong>Refund Amount:</strong> ${{refundAmount}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #166534;">
+            <strong>Processed On:</strong> {{refundedAt}}
+        </p>
+        {{#if refundReason}}
+        <p style="font-size: 14px; margin: 5px 0; color: #166534;">
+            <strong>Reason:</strong> {{refundReason}}
+        </p>
+        {{/if}}
+    </div>
+
+    <!-- Processing Information -->
+    <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #0c4a6e; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            When Will I See My Refund?
+        </h3>
+        <p style="color: #0c4a6e; margin: 5px 0; font-size: 14px;">
+            <strong>Processing Time:</strong> {{processingTime}}
+        </p>
+        <p style="color: #0c4a6e; margin: 5px 0; font-size: 14px;">
+            The refund will appear on your original payment method (card statement or bank account).
+        </p>
+        <p style="color: #0c4a6e; margin: 5px 0; font-size: 14px;">
+            You'll receive a separate confirmation once the refund appears in your account.
+        </p>
+    </div>
+
+    <!-- Dashboard Link -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{dashboardLink}}" style="color: #3964EA; text-decoration: none; font-weight: bold;">
+            View My Appointments
+        </a>
+    </div>
+
+    <!-- Book New Appointment -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #92400e; margin: 0; font-weight: 600; text-align: center; font-size: 14px;">
+            <strong>Need to reschedule?</strong> You can book a new appointment with any of our verified doctors anytime.
+        </p>
+    </div>
+
+    <!-- Support info -->
+    <p style="font-size: 14px; color: #555; margin: 20px 0; text-align: center;">
+        If you have any questions about this refund or need assistance, please contact our <a href="{{supportLink}}" style="color: #3964EA; text-decoration: none;">support team</a>.
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px; text-align: center;">
+        <strong>The CosmicForge Health Team</strong>
+    </p>
+</div>

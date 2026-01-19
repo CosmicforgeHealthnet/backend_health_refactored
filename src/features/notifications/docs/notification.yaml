@@ -1,0 +1,1508 @@
+openapi: 3.0.3
+info:
+  title: Notification API
+  version: 1.0.0
+  description: API for managing notifications, alerts, and real-time notifications in a medical communication system.
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from authentication endpoint
+
+  parameters:
+    NotificationId:
+      name: id
+      in: path
+      required: true
+      description: Unique identifier of the notification
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+          description: ID of the user receiving the notification
+        type:
+          type: string
+          enum: [notification, alert]
+          description: Type of notification
+        message:
+          type: string
+          description: Notification message content
+        metadata:
+          type: object
+          description: Additional notification data
+        isRead:
+          type: boolean
+          description: Whether the notification has been read
+        isDeleted:
+          type: boolean
+          description: Whether the notification has been deleted
+        readAt:
+          type: string
+          format: date-time
+          description: When the notification was read
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NotificationCounts:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of notifications
+        unread:
+          type: integer
+          description: Number of unread notifications
+        notifications:
+          type: integer
+          description: Total notifications of type 'notification'
+        alerts:
+          type: integer
+          description: Total notifications of type 'alert'
+        unreadNotifications:
+          type: integer
+          description: Unread notifications of type 'notification'
+        unreadAlerts:
+          type: integer
+          description: Unread notifications of type 'alert'
+
+    CreateNotificationRequest:
+      type: object
+      required:
+        - userId
+        - type
+        - message
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: ID of the user to receive the notification
+        type:
+          type: string
+          enum: [notification, alert]
+          description: Type of notification
+        message:
+          type: string
+          maxLength: 1000
+          description: Notification message content
+        metadata:
+          type: object
+          description: Additional notification data
+
+    NotificationFilters:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [all, notification, alert]
+          default: all
+          description: Filter by notification type
+        isRead:
+          type: string
+          enum: [all, read, unread]
+          default: all
+          description: Filter by read status
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of notifications to retrieve
+        skip:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Number of notifications to skip for pagination
+
+    PaginationInfo:
+      type: object
+      properties:
+        limit:
+          type: integer
+        skip:
+          type: integer
+        total:
+          type: integer
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Error message
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or token invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Authentication required"
+
+    ForbiddenError:
+      description: Access denied - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Access denied"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Notification not found"
+
+    BadRequestError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Invalid request data"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Internal server error"
+
+paths:
+  /api/notifications:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Notification Management
+      summary: Get user notifications
+      description: |
+        Retrieve notifications for the authenticated user with filtering and pagination options.
+
+        **WebSocket Integration:**
+        - **Event: notification**: Sent when a new notification is created.
+          ```javascript
+          socket.on('notification', (notification) => {
+            console.log('New notification:', notification.message);
+            displayNotification(notification);
+          });
+          ```
+
+        **Frontend Example (React Hook):**
+        ```typescript
+        import { useNotifications } from './hooks/useNotifications';
+        const { notifications, counts } = useNotifications(token);
+        useEffect(() => {
+          console.log('Notifications:', notifications);
+          console.log('Unread count:', counts.unread);
+        }, [notifications, counts]);
+        ```
+      parameters:
+        - name: type
+          in: query
+          description: Filter by notification type
+          schema:
+            type: string
+            enum: [all, notification, alert]
+            default: all
+        - name: isRead
+          in: query
+          description: Filter by read status
+          schema:
+            type: string
+            enum: [all, read, unread]
+            default: all
+        - name: limit
+          in: query
+          description: Number of notifications to retrieve (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: skip
+          in: query
+          description: Number of notifications to skip for pagination
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Successfully retrieved notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      notifications:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Notification'
+                      counts:
+                        $ref: '#/components/schemas/NotificationCounts'
+                      pagination:
+                        $ref: '#/components/schemas/PaginationInfo'
+              example:
+                success: true
+                data:
+                  notifications:
+                    - id: "notif123"
+                      userId: "user456"
+                      type: "notification"
+                      message: "Your appointment has been scheduled"
+                      metadata:
+                        appointmentId: "apt789"
+                        doctorName: "Dr. Smith"
+                      isRead: false
+                      isDeleted: false
+                      readAt: null
+                      createdAt: "2025-06-14T10:30:00Z"
+                      updatedAt: "2025-06-14T10:30:00Z"
+                  counts:
+                    total: 15
+                    unread: 5
+                    notifications: 12
+                    alerts: 3
+                    unreadNotifications: 3
+                    unreadAlerts: 2
+                  pagination:
+                    limit: 20
+                    skip: 0
+                    total: 15
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Notification Management
+      summary: Create notification
+      description: |
+        Create a new notification for a specific user.
+
+        **WebSocket Integration:**
+        - **Event: notification**: Automatically sent to the target user.
+          ```javascript
+          socket.on('notification', (notification) => {
+            console.log('New notification:', notification.message);
+            updateNotificationUI(notification);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const notificationService = new NotificationAPIService('https://api.example.com', token);
+        async function createNotification() {
+          const notificationData = {
+            userId: "user456",
+            type: "alert",
+            message: "Critical lab results require immediate attention",
+            metadata: { labResultId: "lab123", priority: "high" }
+          };
+          const response = await notificationService.createNotification(notificationData);
+          console.log('Notification created:', response.data);
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotificationRequest'
+            example:
+              userId: "user456"
+              type: "alert"
+              message: "Critical lab results require immediate attention"
+              metadata:
+                labResultId: "lab123"
+                priority: "high"
+      responses:
+        '201':
+          description: Notification created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Notification'
+                  message:
+                    type: string
+              example:
+                success: true
+                message: "Notification created successfully"
+                data:
+                  id: "notif123"
+                  userId: "user456"
+                  type: "alert"
+                  message: "Critical lab results require immediate attention"
+                  metadata:
+                    labResultId: "lab123"
+                    priority: "high"
+                  isRead: false
+                  isDeleted: false
+                  readAt: null
+                  createdAt: "2025-06-14T10:30:00Z"
+                  updatedAt: "2025-06-14T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/notifications/counts:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Notification Management
+      summary: Get notification counts
+      description: |
+        Retrieve notification counts and statistics for the authenticated user.
+
+        **WebSocket Integration:**
+        - **Event: get_notification_counts**: Client can request counts via WebSocket.
+          ```javascript
+          socket.emit('get_notification_counts', userId);
+          socket.on('notification_counts', (counts) => {
+            console.log('Notification counts:', counts);
+            updateBadgeCount(counts.unread);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const notificationService = new NotificationAPIService('https://api.example.com', token);
+        async function getNotificationCounts() {
+          const response = await notificationService.getNotificationCounts();
+          console.log('Counts:', response.data);
+          updateNotificationBadge(response.data.unread);
+        }
+        ```
+      responses:
+        '200':
+          description: Successfully retrieved notification counts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/NotificationCounts'
+              example:
+                success: true
+                data:
+                  total: 15
+                  unread: 5
+                  notifications: 12
+                  alerts: 3
+                  unreadNotifications: 3
+                  unreadAlerts: 2
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/notifications/{id}/read:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Notification Management
+      summary: Mark notification as read
+      description: |
+        Mark a specific notification as read.
+
+        **WebSocket Integration:**
+        - **Event: mark_notification_read**: Client can mark as read via WebSocket.
+          ```javascript
+          socket.emit('mark_notification_read', {
+            notificationId: 'notif123',
+            userId: 'user456'
+          });
+          ```
+        - **Event: notification_read**: Confirmation that notification was marked as read.
+          ```javascript
+          socket.on('notification_read', (data) => {
+            console.log('Notification marked as read:', data.id);
+            updateNotificationStatus(data.id, 'read');
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const notificationService = new NotificationAPIService('https://api.example.com', token);
+        async function markAsRead(notificationId) {
+          const response = await notificationService.markAsRead(notificationId);
+          console.log('Marked as read:', response.data);
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+      responses:
+        '200':
+          description: Notification marked as read successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Notification'
+                  message:
+                    type: string
+              example:
+                success: true
+                message: "Notification marked as read"
+                data:
+                  id: "notif123"
+                  userId: "user456"
+                  type: "notification"
+                  message: "Your appointment has been scheduled"
+                  isRead: true
+                  readAt: "2025-06-14T11:00:00Z"
+                  createdAt: "2025-06-14T10:30:00Z"
+                  updatedAt: "2025-06-14T11:00:00Z"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/notifications/read-all:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Notification Management
+      summary: Mark all notifications as read
+      description: |
+        Mark all unread notifications as read for the authenticated user.
+
+        **WebSocket Integration:**
+        - **Event: all_notifications_read**: Notifies that all notifications were marked as read.
+          ```javascript
+          socket.on('all_notifications_read', (data) => {
+            console.log('All notifications marked as read for user:', data.userId);
+            markAllNotificationsAsRead();
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const notificationService = new NotificationAPIService('https://api.example.com', token);
+        async function markAllAsRead() {
+          await notificationService.markAllAsRead();
+          console.log('All notifications marked as read');
+          clearUnreadBadge();
+        }
+        ```
+      responses:
+        '200':
+          description: All notifications marked as read successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                success: true
+                message: "All notifications marked as read"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/notifications/{id}:
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - Notification Management
+      summary: Delete notification
+      description: |
+        Delete a specific notification (soft delete).
+
+        **WebSocket Integration:**
+        - **Event: notification_deleted**: Notifies that a notification was deleted.
+          ```javascript
+          socket.on('notification_deleted', (data) => {
+            console.log('Notification deleted:', data.id);
+            removeNotificationFromUI(data.id);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const notificationService = new NotificationAPIService('https://api.example.com', token);
+        async function deleteNotification(notificationId) {
+          await notificationService.deleteNotification(notificationId);
+          console.log('Notification deleted:', notificationId);
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+      responses:
+        '200':
+          description: Notification deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                success: true
+                message: "Notification deleted successfully"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+tags:
+  - name: Notification Management
+    description: Operations for managing notifications and alerts
+
+x-websocket-events:
+  description: |
+    The notification system uses WebSocket for real-time notification delivery. Connect to the WebSocket endpoint with authentication.
+    
+    ## Connection
+    ```javascript
+    const socket = io('/api/notifications', {
+      auth: { token: 'your-jwt-token' }
+    });
+    ```
+    
+    ## Client-to-Server Events
+    
+    ### User Management
+    - **join_notifications**: Join user notification room
+      ```javascript
+      socket.emit('join_notifications', userId);
+      ```
+    
+    - **leave_notifications**: Leave user notification room
+      ```javascript
+      socket.emit('leave_notifications', userId);
+      ```
+    
+    ### Notification Actions
+    - **mark_notification_read**: Mark notification as read
+      ```javascript
+      socket.emit('mark_notification_read', {
+        notificationId: 'notif-uuid',
+        userId: 'user-uuid'
+      });
+      ```
+    
+    - **get_notification_counts**: Request notification counts
+      ```javascript
+      socket.emit('get_notification_counts', userId);
+      ```
+    
+    ## Server-to-Client Events
+    
+    ### Notification Events
+    - **notification**: New notification received
+      ```javascript
+      socket.on('notification', (notification) => {
+        console.log('New notification:', notification.message);
+        console.log('Type:', notification.type);
+        displayNotification(notification);
+        updateUnreadCount();
+      });
+      ```
+    
+    - **notification_read**: Notification marked as read
+      ```javascript
+      socket.on('notification_read', (data) => {
+        console.log('Notification read:', data.id);
+        console.log('Read at:', data.readAt);
+        updateNotificationStatus(data.id, 'read');
+      });
+      ```
+    
+    - **all_notifications_read**: All notifications marked as read
+      ```javascript
+      socket.on('all_notifications_read', (data) => {
+        console.log('All notifications read for user:', data.userId);
+        markAllNotificationsAsRead();
+        resetUnreadCount();
+      });
+      ```
+    
+    - **notification_deleted**: Notification was deleted
+      ```javascript
+      socket.on('notification_deleted', (data) => {
+        console.log('Notification deleted:', data.id);
+        removeNotificationFromUI(data.id);
+      });
+      ```
+    
+    - **notification_counts**: Notification count update
+      ```javascript
+      socket.on('notification_counts', (counts) => {
+        console.log('Unread notifications:', counts.unread);
+        console.log('Unread alerts:', counts.unreadAlerts);
+        updateBadgeCount(counts.unread);
+      });
+      ```
+    
+    ### Error Events
+    - **notification_error**: Error occurred
+      ```javascript
+      socket.on('notification_error', (error) => {
+        console.error('Notification error:', error.message);
+        showErrorToUser(error.message);
+      });
+      ```
+
+x-frontend-examples:
+  description: |
+    ## Frontend Integration Examples
+    
+    ### React Hook for Notifications
+    ```typescript
+    import { useEffect, useState } from 'react';
+    import io, { Socket } from 'socket.io-client';
+    
+    interface Notification {
+      id: string;
+      type: 'notification' | 'alert';
+      message: string;
+      metadata: any;
+      isRead: boolean;
+      createdAt: string;
+    }
+    
+    interface NotificationCounts {
+      total: number;
+      unread: number;
+      notifications: number;
+      alerts: number;
+      unreadNotifications: number;
+      unreadAlerts: number;
+    }
+    
+    export const useNotifications = (token: string) => {
+      const [socket, setSocket] = useState<Socket | null>(null);
+      const [notifications, setNotifications] = useState<Notification[]>([]);
+      const [counts, setCounts] = useState<NotificationCounts>({
+        total: 0,
+        unread: 0,
+        notifications: 0,
+        alerts: 0,
+        unreadNotifications: 0,
+        unreadAlerts: 0
+      });
+      const [isConnected, setIsConnected] = useState(false);
+    
+      useEffect(() => {
+        const newSocket = io('/api/notifications', {
+          auth: { token }
+        });
+    
+        newSocket.on('connect', () => {
+          setIsConnected(true);
+          // Join user notification room
+          const userId = parseJWT(token).sub; // Extract user ID from token
+          newSocket.emit('join_notifications', userId);
+          newSocket.emit('get_notification_counts', userId);
+        });
+    
+        newSocket.on('disconnect', () => {
+          setIsConnected(false);
+        });
+    
+        newSocket.on('notification', (notification: Notification) => {
+          setNotifications(prev => [notification, ...prev]);
+          // Update counts
+          newSocket.emit('get_notification_counts', parseJWT(token).sub);
+        });
+    
+        newSocket.on('notification_read', (data) => {
+          setNotifications(prev => 
+            prev.map(notif => 
+              notif.id === data.id 
+                ? { ...notif, isRead: true, readAt: data.readAt }
+                : notif
+            )
+          );
+        });
+    
+        newSocket.on('all_notifications_read', () => {
+          setNotifications(prev => 
+            prev.map(notif => ({ ...notif, isRead: true }))
+          );
+          setCounts(prev => ({ ...prev, unread: 0, unreadNotifications: 0, unreadAlerts: 0 }));
+        });
+    
+        newSocket.on('notification_deleted', (data) => {
+          setNotifications(prev => prev.filter(notif => notif.id !== data.id));
+        });
+    
+        newSocket.on('notification_counts', (newCounts: NotificationCounts) => {
+          setCounts(newCounts);
+        });
+    
+        setSocket(newSocket);
+    
+        return () => newSocket.close();
+      }, [token]);
+    
+      const markAsRead = (notificationId: string) => {
+        if (socket) {
+          const userId = parseJWT(token).sub;
+          socket.emit('mark_notification_read', { notificationId, userId });
+        }
+      };
+    
+      return {
+        socket,
+        notifications,
+        counts,
+        isConnected,
+        markAsRead
+      };
+    };
+    
+    function parseJWT(token: string) {
+      return JSON.parse(atob(token.split('.')[1]));
+    }
+    ```
+    
+    ### Notification Component Example
+    ```typescript
+    import React, { useState } from 'react';
+    import { useNotifications } from './hooks/useNotifications';
+    
+    interface NotificationCenterProps {
+      token: string;
+    }
+    
+    export const NotificationCenter: React.FC<NotificationCenterProps> = ({ token }) => {
+      const { notifications, counts, markAsRead } = useNotifications(token);
+      const [filter, setFilter] = useState<'all' | 'unread' | 'alerts'>('all');
+    
+      const filteredNotifications = notifications.filter(notification => {
+        switch (filter) {
+          case 'unread':
+            return !notification.isRead;
+          case 'alerts':
+            return notification.type === 'alert';
+          default:
+            return true;
+        }
+      });
+    
+      const handleNotificationClick = (notification: any) => {
+        if (!notification.isRead) {
+          markAsRead(notification.id);
+        }
+        
+        // Handle notification action based on metadata
+        if (notification.metadata?.appointmentId) {
+          // Navigate to appointment
+          window.location.href = `/appointments/${notification.metadata.appointmentId}`;
+        }
+      };
+    
+      const getNotificationIcon = (type: string) => {
+        return type === 'alert' ? '🚨' : 'ℹ️';
+      };
+    
+      const formatTime = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        
+        if (diff < 60000) return 'Just now';
+        if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+        if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+        return date.toLocaleDateString();
+      };
+    
+      return (
+        <div className="notification-center">
+          <div className="notification-header">
+            <h3>
+              Notifications 
+              {counts.unread > 0 && (
+                <span className="unread-badge">{counts.unread}</span>
+              )}
+            </h3>
+            
+            <div className="filter-buttons">
+              <button 
+                className={filter === 'all' ? 'active' : ''}
+                onClick={() => setFilter('all')}
+              >
+                All ({counts.total})
+              </button>
+              <button 
+                className={filter === 'unread' ? 'active' : ''}
+                onClick={() => setFilter('unread')}
+              >
+                Unread ({counts.unread})
+              </button>
+              <button 
+                className={filter === 'alerts' ? 'active' : ''}
+                onClick={() => setFilter('alerts')}
+              >
+                Alerts ({counts.alerts})
+              </button>
+            </div>
+          </div>
+    
+          <div className="notification-list">
+            {filteredNotifications.length === 0 ? (
+              <div className="no-notifications">
+                No notifications to display
+              </div>
+            ) : (
+              filteredNotifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`notification-item ${!notification.isRead ? 'unread' : ''} ${notification.type}`}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <div className="notification-icon">
+                    {getNotificationIcon(notification.type)}
+                  </div>
+                  
+                  <div className="notification-content">
+                    <div className="notification-message">
+                      {notification.message}
+                    </div>
+                    <div className="notification-time">
+                      {formatTime(notification.createdAt)}
+                    </div>
+                  </div>
+                  
+                  {!notification.isRead && (
+                    <div className="unread-indicator"></div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      );
+    };
+    ```
+    
+    ### Toast Notification Component
+    ```typescript
+    import React, { useEffect, useState } from 'react';
+    import { useNotifications } from './hooks/useNotifications';
+    
+    interface ToastNotificationProps {
+      token: string;
+    }
+    
+    export const ToastNotifications: React.FC<ToastNotificationProps> = ({ token }) => {
+      const { socket } = useNotifications(token);
+      const [toasts, setToasts] = useState<any[]>([]);
+    
+      useEffect(() => {
+        if (socket) {
+          socket.on('notification', (notification) => {
+            // Only show toast for alerts or high priority notifications
+            if (notification.type === 'alert' || notification.metadata?.priority === 'high') {
+              const toast = {
+                id: notification.id,
+                message: notification.message,
+                type: notification.type,
+                timestamp: Date.now()
+              };
+              
+              setToasts(prev => [...prev, toast]);
+              
+              // Auto remove after 5 seconds
+              setTimeout(() => {
+                setToasts(prev => prev.filter(t => t.id !== toast.id));
+              }, 5000);
+            }
+          });
+        }
+      }, [socket]);
+    
+      const removeToast = (id: string) => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
+      };
+    
+      return (
+        <div className="toast-container">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`toast toast-${toast.type}`}
+              onClick={() => removeToast(toast.id)}
+            >
+              <div className="toast-content">
+                <span className="toast-icon">
+                  {toast.type === 'alert' ? '🚨' : 'ℹ️'}
+                </span>
+                <span className="toast-message">{toast.message}</span>
+              </div>
+              <button 
+                className="toast-close"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeToast(toast.id);
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      );
+    };
+    ```
+    
+    ### API Service Class
+    ```typescript
+    class NotificationAPIService {
+      private baseURL: string;
+      private token: string;
+    
+      constructor(baseURL: string, token: string) {
+        this.baseURL = baseURL;
+        this.token = token;
+      }
+    
+      private async request(endpoint: string, options: RequestInit = {}) {
+        const response = await fetch(`${this.baseURL}${endpoint}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.token}`,
+            ...options.headers,
+          },
+        });
+    
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.statusText}`);
+        }
+    
+        return response.json();
+      }
+    
+      // Get notification counts
+      async getNotificationCounts() {
+        return this.request('/api/notifications/counts');
+      }
+    
+      // Create notification
+      async createNotification(notificationData: {
+        userId: string;
+        type: 'notification' | 'alert';
+        message: string;
+        metadata?: any;
+      }) {
+        return this.request('/api/notifications', {
+          method: 'POST',
+          body: JSON.stringify(notificationData),
+        });
+      }
+    
+      // Mark notification as read
+      async markAsRead(notificationId: string) {
+        return this.request(`/api/notifications/${notificationId}/read`, {
+          method: 'PUT',
+        });
+      }
+    
+      // Mark all notifications as read
+      async markAllAsRead() {
+        return this.request('/api/notifications/read-all', {
+          method: 'PUT',
+        });
+      }
+    
+      // Delete notification
+      async deleteNotification(notificationId: string) {
+        return this.request(`/api/notifications/${notificationId}`, {
+          method: 'DELETE',
+        });
+      }
+    }
+    
+    export default NotificationAPIService;
+    ```
+
+x-push-notification-integration:
+  description: |
+    ## Push Notification Integration
+    
+    The notification system can be integrated with push notifications for mobile and web platforms.
+    
+    ### Web Push Setup
+    ```typescript
+    // Service worker registration for web push
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(async (registration) => {
+          console.log('Service Worker registered');
+          
+          // Request notification permission
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            // Subscribe to push notifications
+            const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: 'YOUR_VAPID_PUBLIC_KEY'
+            });
+            
+            // Send subscription to server
+            await fetch('/api/notifications/subscribe', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify(subscription)
+            });
+          }
+        });
+    }
+    
+    // Service Worker (sw.js)
+    self.addEventListener('push', event => {
+      const data = event.data.json();
+      
+      const options = {
+        body: data.message,
+        icon: '/icon-192x192.png',
+        badge: '/badge-72x72.png',
+        tag: data.type,
+        data: {
+          notificationId: data.id,
+          type: data.type,
+          metadata: data.metadata
+        },
+        actions: [
+          {
+            action: 'view',
+            title: 'View',
+            icon: '/view-icon.png'
+          },
+          {
+            action: 'dismiss',
+            title: 'Dismiss',
+            icon: '/dismiss-icon.png'
+          }
+        ]
+      };
+      
+      event.waitUntil(
+        self.registration.showNotification(data.title || 'Notification', options)
+      );
+    });
+    
+    self.addEventListener('notificationclick', event => {
+      event.notification.close();
+      
+      if (event.action === 'view') {
+        // Handle view action
+        const data = event.notification.data;
+        const url = generateNotificationUrl(data);
+        event.waitUntil(clients.openWindow(url));
+      } else if (event.action === 'dismiss') {
+        // Handle dismiss action
+        // Could send API call to mark as read
+      }
+    });
+    ```
+    
+    ### Mobile Push Integration
+    ```typescript
+    // React Native with Firebase
+    import messaging from '@react-native-firebase/messaging';
+    
+    // Request permission (iOS)
+    const requestUserPermission = async () => {
+      const authStatus = await messaging().requestPermission();
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+    
+      if (enabled) {
+        console.log('Authorization status:', authStatus);
+        getFCMToken();
+      }
+    };
+    
+    // Get FCM token
+    const getFCMToken = async () => {
+      try {
+        const token = await messaging().getToken();
+        console.log('FCM Token:', token);
+        
+        // Send token to your server
+        await fetch('/api/notifications/register-device', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            deviceToken: token,
+            platform: Platform.OS
+          })
+        });
+      } catch (error) {
+        console.error('Error getting FCM token:', error);
+      }
+    };
+    
+    // Handle foreground messages
+    messaging().onMessage(async remoteMessage => {
+      console.log('Foreground message:', remoteMessage);
+      
+      // Show in-app notification or update UI
+      showInAppNotification({
+        id: remoteMessage.data.notificationId,
+        title: remoteMessage.notification.title,
+        message: remoteMessage.notification.body,
+        type: remoteMessage.data.type,
+        metadata: JSON.parse(remoteMessage.data.metadata || '{}')
+      });
+    });
+    
+    // Handle background/quit state messages
+    messaging().onNotificationOpenedApp(remoteMessage => {
+      console.log('Notification opened app:', remoteMessage);
+      
+      // Navigate to appropriate screen
+      navigateToNotification(remoteMessage.data);
+    });
+    
+    // Check if app was opened from a notification
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage) {
+          console.log('App opened from notification:', remoteMessage);
+          navigateToNotification(remoteMessage.data);
+        }
+      });
+    ```
+
+x-backend-push-implementation:
+  description: |
+    ## Backend Push Notification Implementation
+    
+    ### Node.js with Firebase Admin SDK
+    ```javascript
+    const admin = require('firebase-admin');
+    const webpush = require('web-push');
+    
+    // Initialize Firebase Admin
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault()
+    });
+    
+    // Configure web push
+    webpush.setVapidDetails(
+      'mailto:your-email@example.com',
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+    
+    class PushNotificationService {
+      // Send mobile push notification
+      async sendMobilePush(deviceToken, notification) {
+        const message = {
+          notification: {
+            title: notification.type === 'alert' ? 'Alert' : 'Notification',
+            body: notification.message
+          },
+          data: {
+            notificationId: notification.id,
+            type: notification.type,
+            metadata: JSON.stringify(notification.metadata || {})
+          },
+          token: deviceToken
+        };
+    
+        try {
+          const response = await admin.messaging().send(message);
+          console.log('Mobile push sent successfully:', response);
+          return response;
+        } catch (error) {
+          console.error('Error sending mobile push:', error);
+          throw error;
+        }
+      }
+    
+      // Send web push notification
+      async sendWebPush(subscription, notification) {
+        const payload = JSON.stringify({
+          title: notification.type === 'alert' ? 'Alert' : 'Notification',
+          message: notification.message,
+          id: notification.id,
+          type: notification.type,
+          metadata: notification.metadata
+        });
+    
+        try {
+          const result = await webpush.sendNotification(subscription, payload);
+          console.log('Web push sent successfully');
+          return result;
+        } catch (error) {
+          console.error('Error sending web push:', error);
+          throw error;
+        }
+      }
+    
+      // Send notification to all user devices
+      async sendToAllDevices(userId, notification) {
+        try {
+          // Get user's registered devices
+          const devices = await this.getUserDevices(userId);
+          
+          const promises = devices.map(device => {
+            if (device.type === 'mobile') {
+              return this.sendMobilePush(device.token, notification);
+            } else if (device.type === 'web') {
+              return this.sendWebPush(device.subscription, notification);
+            }
+          });
+    
+          await Promise.allSettled(promises);
+        } catch (error) {
+          console.error('Error sending to all devices:', error);
+        }
+      }
+    
+      async getUserDevices(userId) {
+        // Implementation depends on your database structure
+        // Return array of user's registered devices
+        return [];
+      }
+    }
+    
+    module.exports = PushNotificationService;
+    ```
+    
+    ### Integration with Notification Service
+    ```javascript
+    // Enhanced NotificationService with push notifications
+    const PushNotificationService = require('./pushNotificationService');
+    
+    class NotificationService {
+      constructor() {
+        this.notificationRepository = new NotificationRepository();
+        this.pushService = new PushNotificationService();
+      }
+    
+      async createNotification(userId, type, message, metadata = null) {
+        // Save to database
+        const notification = await this.notificationRepository.createNotification(
+          userId,
+          type,
+          message,
+          metadata
+        );
+    
+        // Send via WebSocket
+        try {
+          const io = getIO();
+          io.to(`user_${userId}`).emit("notification", notification);
+        } catch (socketError) {
+          console.error("WebSocket notification failed:", socketError.message);
+        }
+    
+        // Send push notification
+        try {
+          await this.pushService.sendToAllDevices(userId, notification);
+        } catch (pushError) {
+          console.error("Push notification failed:", pushError.message);
+        }
+    
+        return notification;
+      }
+    }
+    ```
+
+x-error-codes:
+  description: |
+    ## Error Handling
+    
+    The API returns consistent error responses with the following structure:
+    
+    ```json
+    {
+      "success": false,
+      "message": "Human-readable error message",
+      "error": "ERROR_CODE"
+    }
+    ```
+    
+    ### Common Error Codes
+    
+    - **UNAUTHORIZED**: Authentication required or token invalid
+    - **FORBIDDEN**: Access denied - insufficient permissions
+    - **NOT_FOUND**: Notification not found
+    - **BAD_REQUEST**: Invalid request data
+    - **VALIDATION_ERROR**: Request validation failed
+    - **NOTIFICATION_NOT_FOUND**: Specific notification does not exist
+    - **USER_NOT_FOUND**: Target user does not exist
+    - **PERMISSION_DENIED**: User cannot access this notification
+    - **INVALID_NOTIFICATION_TYPE**: Invalid notification type provided
+    - **MESSAGE_TOO_LONG**: Notification message exceeds maximum length
+    - **RATE_LIMIT_EXCEEDED**: Too many notifications sent
+    - **INTERNAL_ERROR**: Internal server error
+    
+    ### WebSocket Error Handling
+    
+    ```javascript
+    socket.on('notification_error', (error) => {
+      switch (error.code) {
+        case 'AUTHENTICATION_FAILED':
+          // Redirect to login
+          handleAuthenticationError();
+          break;
+        case 'NOTIFICATION_ACCESS_DENIED':
+          // Show access denied message
+          showError('Access denied to this notification');
+          break;
+        case 'NOTIFICATION_NOT_FOUND':
+          // Remove notification from UI
+          removeNotificationFromUI(error.notificationId);
+          break;
+        default:
+          // Show generic error
+          console.error('Notification error:', error.message);
+          showError('An error occurred with notifications');
+      }
+    });
+    ```
+
+x-best-practices:
+  description: |
+    ## Best Practices for Notification System
+    
+    ### 1. Connection Management
+    - Always handle WebSocket connection/disconnection gracefully
+    - Implement automatic reconnection with exponential backoff
+    - Store notifications locally and sync when reconnected
+    - Join user notification room immediately on connection
+    
+    ### 2. Notification Handling
+    - Implement proper notification categorization (alerts vs notifications)
+    - Show different UI treatment for different notification types
+    - Handle notification actions based on metadata
+    - Implement proper notification persistence
+    
+    ### 3. Real-time Features
+    - Update notification counts in real-time
+    - Show toast notifications for high-priority alerts
+    - Implement proper notification sound/vibration policies
+    - Handle notification click actions appropriately
+    
+    ### 4. Performance
+    - Paginate notification history
+    - Implement virtual scrolling for large notification lists
+    - Debounce notification count updates
+    - Cache notification data locally
+    
+    ### 5. User Experience
+    - Show clear visual indicators for unread notifications
+    - Provide easy ways to mark notifications as read
+    - Implement notification filtering and search
+    - Allow users to control notification preferences
+    
+    ### 6. Push Notifications
+    - Request permission appropriately
+    - Handle permission denials gracefully
+    - Implement proper push notification targeting
+    - Provide fallback for unsupported devices
+    
+    ### 7. Security
+    - Validate all notification content
+    - Implement proper user authorization for notifications
+    - Sanitize notification metadata
+    - Rate limit notification creation
+    
+    ### 8. Error Handling
+    - Handle network failures gracefully
+    - Implement retry mechanisms for failed notifications
+    - Provide meaningful error messages to users
+    - Log errors for debugging and monitorings with filtering
+      async getNotifications(filters: {
+        type?: 'all' | 'notification' | 'alert';
+        isRead?: 'all' | 'read' | 'unread';
+        limit?: number;
+        skip?: number;
+      } = {}) {
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined) params.append(key, value.toString());
+        });
+        
+        return this.request(`/api/notifications?${params}`);
+      }
+    
+      // Get notification

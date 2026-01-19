@@ -1,0 +1,494 @@
+paths:
+  /fhir/patients:
+    get:
+      tags:
+        - FHIR Patients
+      summary: Get all patients for the current user
+      description: |
+        Retrieve a paginated list of all patients that have FHIR resources 
+        associated with the authenticated user.
+      operationId: getPatients
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of patients per page
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Patients retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  patients:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        patientIdentifier:
+                          type: string
+                          example: "12345"
+                        fileCount:
+                          type: integer
+                          example: 15
+                        lastActivity:
+                          type: string
+                          format: date-time
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/patients/{patientId}/summary:
+    get:
+      tags:
+        - FHIR Patients
+      summary: Get patient summary
+      description: |
+        Get a comprehensive summary of all FHIR resources for a specific patient,
+        including resource type breakdown and sensitivity levels.
+      operationId: getPatientSummary
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientIdParam'
+      responses:
+        '200':
+          description: Patient summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientSummaryResponse'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '404':
+          $ref: '#/components/responses/FHIRNotFound'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/patients/{patientId}/files:
+    get:
+      tags:
+        - FHIR Patients
+      summary: Get all files for a specific patient
+      description: |
+        Retrieve all FHIR files associated with a specific patient.
+        Supports filtering by resource type and sensitivity level.
+      operationId: getPatientFiles
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientIdParam'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: fhirResourceType
+          in: query
+          description: Filter by FHIR resource type
+          schema:
+            type: string
+            example: "Observation"
+        - name: fhirSensitivityLevel
+          in: query
+          description: Filter by sensitivity level
+          schema:
+            type: string
+            enum: ["normal", "high", "very_high"]
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            default: "createdAt"
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: ["ASC", "DESC"]
+            default: "DESC"
+      responses:
+        '200':
+          description: Patient files retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FHIRFileResponse'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '404':
+          $ref: '#/components/responses/FHIRNotFound'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/resources/{resourceType}:
+    get:
+      tags:
+        - FHIR Resources
+      summary: Get files by FHIR resource type
+      description: |
+        Retrieve all files of a specific FHIR resource type.
+        Supports filtering by patient and sensitivity level.
+      operationId: getFilesByResourceType
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceTypeParam'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: patientIdentifier
+          in: query
+          description: Filter by patient identifier
+          schema:
+            type: string
+        - name: fhirSensitivityLevel
+          in: query
+          schema:
+            type: string
+            enum: ["normal", "high", "very_high"]
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            default: "createdAt"
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: ["ASC", "DESC"]
+            default: "DESC"
+      responses:
+        '200':
+          description: Files retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FHIRFileResponse'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/search:
+    post:
+      tags:
+        - FHIR Search
+      summary: Advanced FHIR search
+      description: |
+        Perform advanced search across FHIR files with multiple filter criteria.
+        Supports complex queries combining patient, resource type, sensitivity,
+        security labels, date ranges, and text search.
+      operationId: searchFHIR
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: FHIR search criteria
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FHIRSearchRequest'
+            examples:
+              basicSearch:
+                summary: Basic patient search
+                value:
+                  patientIdentifier: "12345"
+                  fhirResourceType: ["Observation"]
+                  page: 1
+                  limit: 50
+              advancedSearch:
+                summary: Advanced search with filters
+                value:
+                  fhirResourceType: ["Observation", "DiagnosticReport"]
+                  fhirSensitivityLevel: "high"
+                  dateFrom: "2024-01-01"
+                  dateTo: "2024-12-31"
+                  searchTerm: "blood test"
+                  securityLabels: ["R"]
+                  page: 1
+                  limit: 25
+      responses:
+        '200':
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FHIRFileResponse'
+        '400':
+          $ref: '#/components/responses/FHIRBadRequest'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/dashboard:
+    get:
+      tags:
+        - FHIR Analytics
+      summary: Get FHIR dashboard data
+      description: |
+        Retrieve comprehensive dashboard data including overview statistics,
+        resource distribution, and compliance metrics.
+      operationId: getFHIRDashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FHIRDashboardResponse'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/files/{fileId}/related:
+    get:
+      tags:
+        - FHIR Files
+      summary: Get related files for a patient
+      description: |
+        Find files related to the specified file, typically files belonging
+        to the same patient or related clinical episodes.
+      operationId: getRelatedFiles
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FileIdParam'
+      responses:
+        '200':
+          description: Related files retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelatedFilesResponse'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '404':
+          $ref: '#/components/responses/FHIRNotFound'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/files/{fileId}/metadata:
+    put:
+      tags:
+        - FHIR Files
+      summary: Update FHIR metadata
+      description: |
+        Update FHIR-specific metadata including sensitivity level,
+        security labels, consent directives, and purpose of use.
+      operationId: updateFHIRMetadata
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FileIdParam'
+      requestBody:
+        description: FHIR metadata updates
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FHIRMetadataUpdateRequest'
+            examples:
+              sensitivityUpdate:
+                summary: Update sensitivity level
+                value:
+                  fhirSensitivityLevel: "very_high"
+                  fhirSecurityLabels:
+                    - code: "R"
+                      system: "http://terminology.hl7.org/CodeSystem/v3-Confidentiality"
+                      display: "Restricted"
+              consentUpdate:
+                summary: Update consent directives
+                value:
+                  consentDirectives:
+                    canShare: false
+                    restrictions: ["research", "marketing"]
+                  purposeOfUse: ["treatment"]
+      responses:
+        '200':
+          description: Metadata updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "FHIR metadata updated successfully"
+                  file:
+                    $ref: '#/components/schemas/FHIRFile'
+        '400':
+          $ref: '#/components/responses/FHIRBadRequest'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '404':
+          $ref: '#/components/responses/FHIRNotFound'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/files/bulk:
+    put:
+      tags:
+        - FHIR Files
+      summary: Bulk update FHIR files
+      description: |
+        Update multiple FHIR files at once. Limited to 100 files per request.
+        Useful for applying consistent metadata changes across multiple files.
+      operationId: bulkUpdateFHIR
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Bulk update request
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkFHIRUpdateRequest'
+            example:
+              fileIds: ["uuid1", "uuid2", "uuid3"]
+              updateData:
+                fhirSensitivityLevel: "high"
+                consentDirectives:
+                  canShare: true
+                  restrictions: ["research"]
+      responses:
+        '200':
+          description: Bulk update completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "3 files updated successfully"
+                  updatedFiles:
+                    type: integer
+                    example: 3
+                  failedFiles:
+                    type: integer
+                    example: 0
+        '400':
+          $ref: '#/components/responses/FHIRBadRequest'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/compliance:
+    get:
+      tags:
+        - FHIR Compliance
+      summary: Get FHIR compliance report
+      description: |
+        Generate a comprehensive compliance report covering encryption,
+        consent verification, security labeling, and recommendations.
+      operationId: getFHIRComplianceReport
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Compliance report generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FHIRComplianceReportResponse'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/resource-types:
+    get:
+      tags:
+        - FHIR Resources
+      summary: Get available FHIR resource types
+      description: |
+        Retrieve all FHIR resource types available for the user with counts
+        and sensitivity level breakdown.
+      operationId: getResourceTypes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Resource types retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceTypesResponse'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'
+
+  /fhir/stats:
+    get:
+      tags:
+        - FHIR Analytics
+      summary: Get FHIR statistics
+      description: |
+        Get basic or detailed FHIR statistics for the authenticated user.
+      operationId: getFHIRStats
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: detailed
+          in: query
+          description: Return detailed dashboard data
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/FHIRStatsResponse'
+                  - $ref: '#/components/schemas/FHIRDashboardResponse'
+        '401':
+          $ref: '#/components/responses/FHIRUnauthorized'
+        '500':
+          $ref: '#/components/responses/FHIRInternalError'

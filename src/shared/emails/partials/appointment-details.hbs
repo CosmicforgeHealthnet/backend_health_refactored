@@ -1,0 +1,69 @@
+<!-- src/emails/partials/appointment-details.hbs -->
+<div class="appointment-details" style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 25px; margin: 25px 0;">
+    <h3 style="margin: 0 0 15px 0; color: #333; text-align: center;">📅 Appointment Details</h3>
+    
+    <table style="width: 100%; border-collapse: collapse;">
+        {{
+#if
+ appointmentId}}
+        <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 600;">ID:</td>
+            <td style="padding: 8px 0; color: #333;">{{appointmentId}}</td>
+        </tr>
+        {{
+/if
+}}
+        
+        {{
+#if
+ date}}
+        <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 600;">Date:</td>
+            <td style="padding: 8px 0; color: #333;">{{date}}</td>
+        </tr>
+        {{
+/if
+}}
+        
+        {{
+#if
+ time}}
+        <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 600;">Time:</td>
+            <td style="padding: 8px 0; color: #333;">{{time}}</td>
+        </tr>
+        {{
+/if
+}}
+        
+        {{
+#if
+ duration}}
+        <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 600;">Duration:</td>
+            <td style="padding: 8px 0; color: #333;">{{duration}} minutes</td>
+        </tr>
+        {{
+/if
+}}
+        
+        {{
+#if
+ doctor}}
+        <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 600;">Doctor:</td>
+            <td style="padding: 8px 0; color: #333;">Dr. {{doctor}}</td>
+        </tr>
+        {{
+/if
+}}
+    </table>
+    
+    {{
+#if
+ meetingLink}}
+    {{> button url=meetingLink text="Join Meeting"}}
+    {{
+/if
+}}
+</div>

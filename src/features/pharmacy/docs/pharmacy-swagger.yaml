@@ -1,0 +1,1410 @@
+openapi: 3.0.3
+info:
+  title: CosmicForge Pharmacy API
+  version: 1.0.0
+  description: API for pharmacy management, registration, and verification
+servers:
+  - url: http://localhost:3000
+    description: Development server
+paths:
+  /pharmacy/auth/register:
+    post:
+      summary: Register a new pharmacy
+      description: >
+        Creates a new pharmacy user account and associated pharmacy profile.
+
+        - Sets user role to "pharmacy" and status to
+        "pending_email_verification".
+
+        - Creates a pharmacy profile with "pending" verification status.
+
+        - Sends a verification email (non-blocking); response indicates if email
+        was sent successfully.
+
+        - After email verification, pharmacies must upload documents for admin
+        approval.
+      tags:
+        - PharmacyAuth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PharmacySignUp"
+      responses:
+        "201":
+          description: Pharmacy registration successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PharmacyRegistrationResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /pharmacy/auth/login:
+    post:
+      summary: Login pharmacy user
+      tags:
+        - PharmacyAuth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PharmacyLogin"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+        "403":
+          description: Not a pharmacy account
+  /pharmacy/auth/profile:
+    get:
+      summary: Get pharmacy profile
+      tags:
+        - PharmacyAuth
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Pharmacy profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PharmacyProfileResponse"
+        "404":
+          description: Profile not found
+  /pharmacy/documents/upload:
+    post:
+      summary: Upload pharmacy documents
+      tags:
+        - PharmacyDocuments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/DocumentUpload"
+      responses:
+        "200":
+          description: Documents uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentUploadResponse"
+        "400":
+          description: No documents uploaded
+  /pharmacy/documents:
+    get:
+      summary: Get pharmacy documents
+      tags:
+        - PharmacyDocuments
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Documents list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentListResponse"
+  /pharmacy/admin/verifications/pending:
+    get:
+      summary: Get pending pharmacy verifications
+      tags:
+        - PharmacyAdmin
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Pending verifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingVerificationsResponse"
+  /pharmacy/admin/verifications/{verificationId}/assign:
+    post:
+      summary: Assign verification to admin
+      tags:
+        - PharmacyAdmin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: verificationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignVerificationRequest"
+      responses:
+        "200":
+          description: Verification assigned
+  /pharmacy/admin/pharmacy/{pharmacyId}/review:
+    get:
+      summary: Review pharmacy details
+      tags:
+        - PharmacyAdmin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pharmacyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Pharmacy review data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PharmacyReviewResponse"
+  /pharmacy/admin/documents/{documentId}/verify:
+    post:
+      summary: Verify pharmacy document
+      tags:
+        - PharmacyAdmin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentVerificationRequest"
+      responses:
+        "200":
+          description: Document verification updated
+  /pharmacy/admin/pharmacy/{pharmacyId}/approve:
+    post:
+      summary: Approve pharmacy
+      tags:
+        - PharmacyAdmin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pharmacyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalRequest"
+      responses:
+        "200":
+          description: Pharmacy approved
+  /pharmacy/admin/pharmacy/{pharmacyId}/reject:
+    post:
+      summary: Reject pharmacy
+      tags:
+        - PharmacyAdmin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pharmacyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectionRequest"
+      responses:
+        "200":
+          description: Pharmacy rejected
+  /prescriptions/doctor/prescriptions:
+    post:
+      summary: Create a new prescription
+      description: |
+        Allows a doctor to create a new prescription during a consultation.
+        - Requires patient ID, medications, and consultation details.
+        - Generates a unique reference and sets initial status to PENDING.
+        - Returns the created prescription with populated relations.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePrescriptionRequest"
+      responses:
+        "201":
+          description: Prescription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - Not a doctor
+    get:
+      summary: Get doctor's prescriptions
+      description: |
+        Retrieves a list of prescriptions created by the authenticated doctor.
+        - Supports pagination and filtering via query parameters.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of prescriptions per page
+      responses:
+        "200":
+          description: List of doctor's prescriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - Not a doctor
+  /prescriptions/patient/prescriptions/{prescriptionId}/upload:
+    post:
+      summary: Upload prescription by patient
+      description: >
+        Allows a patient to upload a prescription to the platform.
+
+        - Verifies the prescription belongs to the patient and is in PENDING
+        status.
+
+        - Updates status to PATIENT_UPLOADED.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription to upload
+      responses:
+        "200":
+          description: Prescription uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - Not the patient's prescription
+        "404":
+          description: Prescription not found
+  /prescriptions/patient/prescriptions/{prescriptionId}/assign-pharmacy:
+    post:
+      summary: Assign pharmacy to prescription
+      description: >
+        Allows a patient to assign a pharmacy to fulfill their prescription.
+
+        - Verifies the pharmacy is active and the prescription is in a valid
+        state (PENDING or PATIENT_UPLOADED).
+
+        - Updates the prescription with pharmacy and delivery details.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignPharmacyRequest"
+      responses:
+        "200":
+          description: Pharmacy assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - Not the patient's prescription
+        "404":
+          description: Prescription or pharmacy not found
+  /prescriptions/patient/prescriptions:
+    get:
+      summary: Get patient's prescriptions
+      description: |
+        Retrieves a list of prescriptions for the authenticated patient.
+        - Supports pagination and filtering via query parameters.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of prescriptions per page
+      responses:
+        "200":
+          description: List of patient's prescriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - Not a patient
+  /prescriptions/pharmacy/prescriptions/{prescriptionId}/start-processing:
+    post:
+      summary: Start processing prescription
+      description: >
+        Allows a pharmacy to start processing an assigned prescription.
+
+        - Verifies the prescription is assigned to the pharmacy and in
+        PHARMACY_ASSIGNED status.
+
+        - Assigns a pharmacist and updates status to PHARMACY_PROCESSING.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartProcessingRequest"
+      responses:
+        "200":
+          description: Prescription processing started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - Not assigned to this pharmacy
+        "404":
+          description: Prescription or pharmacist not found
+  /prescriptions/pharmacy/prescriptions/{prescriptionId}/provide-costs:
+    post:
+      summary: Provide medication costs
+      description: >
+        Allows a pharmacy to provide cost details and invoice for a
+        prescription.
+
+        - Calculates total cost including delivery fee and updates payment
+        information.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvideCostsRequest"
+      responses:
+        "200":
+          description: Costs provided successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - Not assigned to this pharmacy
+        "404":
+          description: Prescription not found
+  /prescriptions/pharmacy/prescriptions/{prescriptionId}/mark-ready:
+    post:
+      summary: Mark prescription as ready
+      description: >
+        Allows a pharmacy to mark a prescription as ready for delivery or
+        pickup.
+
+        - Updates status to READY_FOR_DELIVERY or READY_FOR_PICKUP.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkReadyRequest"
+      responses:
+        "200":
+          description: Prescription marked as ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - Not assigned to this pharmacy
+        "404":
+          description: Prescription not found
+  /prescriptions/pharmacy/prescriptions/{prescriptionId}/complete:
+    post:
+      summary: Complete prescription fulfillment
+      description: |
+        Allows a pharmacy to mark a prescription as completed.
+        - Updates status to COMPLETED and sets payment status to PAID.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      responses:
+        "200":
+          description: Prescription completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - Not assigned to this pharmacy
+        "404":
+          description: Prescription not found
+  /prescriptions/pharmacy/prescriptions:
+    get:
+      summary: Get pharmacy's prescriptions
+      description: >
+        Retrieves a list of prescriptions assigned to the authenticated
+        pharmacy.
+
+        - Supports pagination and filtering via query parameters.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of prescriptions per page
+      responses:
+        "200":
+          description: List of pharmacy's prescriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - Not a pharmacy
+  /prescriptions/{prescriptionId}/cancel:
+    post:
+      summary: Cancel a prescription
+      description: |
+        Allows a doctor, patient, or pharmacy to cancel a prescription.
+        - Requires a cancellation reason.
+        - Cannot cancel a completed prescription.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelPrescriptionRequest"
+      responses:
+        "200":
+          description: Prescription cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - User not authorized to cancel
+        "404":
+          description: Prescription not found
+  /prescriptions/{prescriptionId}/chat:
+    post:
+      summary: Add chat message
+      description: >
+        Allows a patient or pharmacy to add a chat message related to a
+        prescription.
+
+        - Verifies the sender's access to the prescription.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageRequest"
+      responses:
+        "200":
+          description: Chat message added successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - User not authorized to chat
+        "404":
+          description: Prescription not found
+  /prescriptions/{prescriptionId}:
+    get:
+      summary: Get prescription by ID
+      description: >
+        Retrieves a specific prescription by its ID with all related details.
+
+        - Accessible by doctors, patients, or pharmacies associated with the
+        prescription.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      responses:
+        "200":
+          description: Prescription details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - User not authorized
+        "404":
+          description: Prescription not found
+  /prescriptions/search:
+    get:
+      summary: Search prescriptions
+      description: |
+        Searches for prescriptions based on query parameters.
+        - Accessible by doctors, patients, or pharmacies.
+        - Supports filtering by various criteria (e.g., status, date).
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: query
+          schema:
+            type: string
+          description: Search query string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of prescriptions per page
+      responses:
+        "200":
+          description: List of matching prescriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrescriptionResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+        "403":
+          description: Forbidden - User not authorized
+  /auth/verify-email:
+    get:
+      summary: Verify email token (use main auth endpoint)
+      description: "Use the main application's email verification endpoint: GET
+        /auth/verify-email"
+      tags:
+        - PharmacyAuth
+      responses:
+        "200":
+          description: See main auth documentation
+  /auth/resend-verification:
+    post:
+      summary: Resend verification email (use main auth endpoint)
+      description: "Use the main application's resend verification endpoint: POST
+        /auth/resend-verification"
+      tags:
+        - PharmacyAuth
+      responses:
+        "200":
+          description: See main auth documentation
+components:
+  schemas:
+    PharmacySignUp:
+      type: object
+      required:
+        - fullName
+        - email
+        - password
+        - pharmacyName
+        - registrationNumber
+        - preferredUsername
+      properties:
+        fullName:
+          type: string
+          example: John Doe
+          description: Full name of the primary contact person
+        email:
+          type: string
+          format: email
+          example: contact@healthplus.com
+          description: Email address for the pharmacy account
+        password:
+          type: string
+          minLength: 12
+          example: SecurePassword123!
+          description: Password for the pharmacy account
+        pharmacyName:
+          type: string
+          example: HealthPlus Pharmacy
+          description: Official name of the pharmacy
+        registrationNumber:
+          type: string
+          example: NG-PH-123456
+          description: Pharmacy registration number issued by regulatory authority
+        address:
+          type: string
+          example: 123 Wellness Ave, Lagos, Nigeria
+          description: Physical address of the pharmacy
+        phone:
+          type: string
+          example: "+2341234567890"
+          description: Contact phone number
+        primaryContactPerson:
+          type: string
+          example: Jane Smith
+          description: Name of the primary contact person
+        preferredUsername:
+          type: string
+          example: healthplus
+          description: Unique username for the pharmacy profile
+    PharmacyLogin:
+      type: object
+      required:
+        - email
+        - password
+        - deviceFingerprint
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        deviceFingerprint:
+          type: string
+    PharmacyRegistrationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Pharmacy registration successful
+        pharmacy:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            pharmacyName:
+              type: string
+            username:
+              type: string
+            verificationStatus:
+              type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            fullName:
+              type: string
+            email:
+              type: string
+            status:
+              type: string
+    LoginResponse:
+      type: object
+      properties:
+        payload:
+          type: object
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+    PharmacyProfileResponse:
+      type: object
+      properties:
+        pharmacy:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            pharmacyName:
+              type: string
+            registrationNumber:
+              type: string
+            address:
+              type: string
+            phone:
+              type: string
+            primaryContactPerson:
+              type: string
+            email:
+              type: string
+            username:
+              type: string
+            verificationStatus:
+              type: string
+            isActive:
+              type: boolean
+    DocumentUpload:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+        documentType_0:
+          type: string
+          enum:
+            - pharmacy_license
+            - government_id
+            - business_registration
+            - tax_certificate
+            - other
+        documentName_0:
+          type: string
+    DocumentUploadResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        documents:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              documentType:
+                type: string
+              documentName:
+                type: string
+              submissionStatus:
+                type: string
+        pharmacy:
+          type: object
+          properties:
+            verificationStatus:
+              type: string
+    DocumentListResponse:
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            type: object
+    PendingVerificationsResponse:
+      type: object
+      properties:
+        verifications:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              pharmacyId:
+                type: string
+                format: uuid
+              pharmacyName:
+                type: string
+              registrationNumber:
+                type: string
+              requestType:
+                type: string
+              status:
+                type: string
+              priority:
+                type: string
+              submittedAt:
+                type: string
+                format: date-time
+              assignedTo:
+                type: string
+                format: uuid
+    AssignVerificationRequest:
+      type: object
+      properties:
+        adminId:
+          type: string
+          format: uuid
+    PharmacyReviewResponse:
+      type: object
+      properties:
+        pharmacy:
+          type: object
+        documents:
+          type: array
+          items:
+            type: object
+    DocumentVerificationRequest:
+      type: object
+      required:
+        - isVerified
+      properties:
+        isVerified:
+          type: boolean
+        notes:
+          type: string
+    ApprovalRequest:
+      type: object
+      properties:
+        reviewNotes:
+          type: string
+    RejectionRequest:
+      type: object
+      required:
+        - rejectionReason
+      properties:
+        rejectionReason:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: An error occurred
+        error:
+          type: string
+      required:
+        - success
+        - message
+    CreatePrescriptionRequest:
+      type: object
+      required:
+        - patientId
+        - medications
+      properties:
+        patientId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+          description: ID of the patient
+        medications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Medication"
+          description: List of medications in the prescription
+        consultationId:
+          type: string
+          format: uuid
+          example: 789e4567-e89b-12d3-a456-426614174000
+          description: ID of the associated consultation
+        doctorNotes:
+          type: string
+          example: Take medication with food
+          description: Additional notes from the doctor
+    Medication:
+      type: object
+      required:
+        - name
+        - dosage
+        - frequency
+        - duration
+        - quantity
+      properties:
+        name:
+          type: string
+          example: Amoxicillin
+          description: Name of the medication
+        dosage:
+          type: string
+          example: 500mg
+          description: Dosage of the medication
+        frequency:
+          type: string
+          example: Twice daily
+          description: Frequency of administration
+        duration:
+          type: string
+          example: 7 days
+          description: Duration of the medication course
+        quantity:
+          type: integer
+          example: 14
+          description: Total quantity of medication units
+    AssignPharmacyRequest:
+      type: object
+      required:
+        - pharmacyId
+      properties:
+        pharmacyId:
+          type: string
+          format: uuid
+          example: 456e4567-e89b-12d3-a456-426614174000
+          description: ID of the pharmacy to assign
+        deliveryDetails:
+          type: object
+          properties:
+            address:
+              type: string
+              example: 123 Wellness Ave, Lagos, Nigeria
+              description: Delivery address
+            instructions:
+              type: string
+              example: Leave at front desk
+              description: Delivery instructions
+    StartProcessingRequest:
+      type: object
+      required:
+        - pharmacistId
+      properties:
+        pharmacistId:
+          type: string
+          format: uuid
+          example: 789e4567-e89b-12d3-a456-426614174000
+          description: ID of the assigned pharmacist
+    ProvideCostsRequest:
+      type: object
+      required:
+        - items
+        - paymentMethod
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceItem"
+          description: List of medication items with costs
+        deliveryFee:
+          type: number
+          example: 10
+          description: Delivery fee for the prescription
+        paymentMethod:
+          type: string
+          example: credit_card
+          description: Payment method for the prescription
+    InvoiceItem:
+      type: object
+      required:
+        - name
+        - unitPrice
+        - quantity
+      properties:
+        name:
+          type: string
+          example: Amoxicillin
+          description: Name of the medication
+        unitPrice:
+          type: number
+          example: 5
+          description: Price per unit of the medication
+        quantity:
+          type: integer
+          example: 14
+          description: Quantity of the medication
+    ChatMessageRequest:
+      type: object
+      required:
+        - message
+        - senderType
+      properties:
+        message:
+          type: string
+          example: Can you confirm delivery time?
+          description: Content of the chat message
+        senderType:
+          type: string
+          enum:
+            - patient
+            - pharmacy
+          example: patient
+          description: Type of sender (patient or pharmacy)
+    MarkReadyRequest:
+      type: object
+      required:
+        - readyType
+      properties:
+        readyType:
+          type: string
+          enum:
+            - delivery
+            - pickup
+          example: delivery
+          description: Type of readiness (delivery or pickup)
+        expectedDate:
+          type: string
+          format: date-time
+          example: 2025-08-30T10:00:00Z
+          description: Expected delivery or pickup date (optional)
+    CancelPrescriptionRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          example: Patient no longer needs medication
+          description: Reason for cancelling the prescription
+    PrescriptionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+          description: ID of the prescription
+        reference:
+          type: string
+          example: RX-2025-0001
+          description: Unique reference number for the prescription
+        doctorId:
+          type: string
+          format: uuid
+          example: 456e4567-e89b-12d3-a456-426614174000
+          description: ID of the prescribing doctor
+        patientId:
+          type: string
+          format: uuid
+          example: 789e4567-e89b-12d3-a456-426614174000
+          description: ID of the patient
+        consultationId:
+          type: string
+          format: uuid
+          example: 012e4567-e89b-12d3-a456-426614174000
+          description: ID of the associated consultation
+        pharmacyId:
+          type: string
+          format: uuid
+          example: 345e4567-e89b-12d3-a456-426614174000
+          description: ID of the assigned pharmacy
+        assignedPharmacistId:
+          type: string
+          format: uuid
+          example: 678e4567-e89b-12d3-a456-426614174000
+          description: ID of the assigned pharmacist
+        medications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Medication"
+          description: List of medications in the prescription
+        doctorNotes:
+          type: string
+          example: Take medication with food
+          description: Additional notes from the doctor
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PATIENT_UPLOADED
+            - PHARMACY_ASSIGNED
+            - PHARMACY_PROCESSING
+            - READY_FOR_DELIVERY
+            - READY_FOR_PICKUP
+            - COMPLETED
+            - CANCELLED
+          example: PENDING
+          description: Current status of the prescription
+        paymentStatus:
+          type: string
+          enum:
+            - UNPAID
+            - PAID
+            - CANCELLED
+          example: UNPAID
+          description: Payment status of the prescription
+        deliveryAddress:
+          type: string
+          example: 123 Wellness Ave, Lagos, Nigeria
+          description: Delivery address for the prescription
+        deliveryInstructions:
+          type: string
+          example: Leave at front desk
+          description: Delivery instructions
+        expectedDeliveryDate:
+          type: string
+          format: date-time
+          example: 2025-08-30T10:00:00Z
+          description: Expected delivery date
+        actualDeliveryDate:
+          type: string
+          format: date-time
+          example: 2025-08-30T12:00:00Z
+          description: Actual delivery or pickup date
+        fulfillmentHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/FulfillmentHistory"
+          description: History of status changes
+        chatMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+          description: List of chat messages related to the prescription
+        invoiceItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceItem"
+          description: List of invoice items for the prescription
+        deliveryFee:
+          type: number
+          example: 10
+          description: Delivery fee for the prescription
+        totalDue:
+          type: number
+          example: 80
+          description: Total amount due for the prescription
+        paymentMethod:
+          type: string
+          example: credit_card
+          description: Payment method for the prescription
+        createdAt:
+          type: string
+          format: date-time
+          example: 2025-08-26T12:00:00Z
+          description: Creation date of the prescription
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2025-08-26T12:30:00Z
+          description: Last update date of the prescription
+    FulfillmentHistory:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PATIENT_UPLOADED
+            - PHARMACY_ASSIGNED
+            - PHARMACY_PROCESSING
+            - READY_FOR_DELIVERY
+            - READY_FOR_PICKUP
+            - COMPLETED
+            - CANCELLED
+          example: PENDING
+          description: Status at the time of the history entry
+        timestamp:
+          type: string
+          format: date-time
+          example: 2025-08-26T12:00:00Z
+          description: Timestamp of the status change
+        note:
+          type: string
+          example: Prescription created by doctor
+          description: Note describing the status change
+    ChatMessage:
+      type: object
+      properties:
+        senderId:
+          type: string
+          format: uuid
+          example: 789e4567-e89b-12d3-a456-426614174000
+          description: ID of the sender (patient or pharmacy)
+        senderType:
+          type: string
+          enum:
+            - patient
+            - pharmacy
+          example: patient
+          description: Type of sender
+        message:
+          type: string
+          example: Can you confirm delivery time?
+          description: Content of the message
+        timestamp:
+          type: string
+          format: date-time
+          example: 2025-08-26T12:00:00Z
+          description: Timestamp of the message
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation completed successfully
+        data:
+          type: object
+      required:
+        - success
+        - message
+  parameters: {}
+  responses: {}
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

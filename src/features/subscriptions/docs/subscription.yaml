@@ -1,0 +1,991 @@
+# docs/transactions/subscription.yaml
+paths:
+  /api/subscription/current:
+    get:
+      summary: Get user's current subscription with dynamic pricing
+      description: Retrieve current subscription with pricing converted to requested country's currency
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: countryCode
+          in: query
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}$'
+            example: "GB"
+          description: "ISO 3166-1 alpha-2 country code for currency conversion (defaults to US)"
+      responses:
+        '200':
+          description: Current subscription retrieved successfully with dynamic pricing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentSubscriptionResponse'
+              examples:
+                UK_User:
+                  summary: UK user getting subscription in GBP
+                  value:
+                    success: true
+                    message: "Current subscription retrieved successfully"
+                    data:
+                      id: "sub_123456"
+                      tier: "premium"
+                      planType: "patient"
+                      status: "active"
+                      price: 32.99
+                      originalPrice: 41.24
+                      currency: "GBP"
+                      countryCode: "GB"
+                      conversionRate: 0.73
+                      convertedAt: "2025-01-20T10:30:00Z"
+                      isPredefined: false
+                      isFallback: false
+                      storedPrice: 39.99
+                      storedCurrency: "USD"
+                      commissionRate: null
+                      features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
+                      monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
+                      currentUsage: { "aiChatbotResponses": 15, "aiDiagnosticRequests": 5 }
+                      familyMembers: 5
+                      startDate: "2025-01-01T00:00:00Z"
+                      endDate: "2025-02-01T00:00:00Z"
+                      autoRenew: true
+                      autoBillingEnabled: true
+                      isActive: true
+                      isExpired: false
+                      isPremium: true
+                      daysRemaining: 12
+                Nigerian_User:
+                  summary: Nigerian user getting predefined NGN pricing
+                  value:
+                    success: true
+                    message: "Current subscription retrieved successfully"
+                    data:
+                      id: "sub_789012"
+                      tier: "premium"
+                      planType: "patient"
+                      status: "active"
+                      price: 39900.00
+                      originalPrice: 49900.00
+                      currency: "NGN"
+                      countryCode: "NG"
+                      isPredefined: true
+                      isFallback: false
+                      storedPrice: 39.99
+                      storedCurrency: "USD"
+                      commissionRate: null
+                      features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
+                      monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
+                      currentUsage: { "aiChatbotResponses": 25, "aiDiagnosticRequests": 8 }
+                      familyMembers: 5
+                      startDate: "2025-01-01T00:00:00Z"
+                      endDate: "2025-02-01T00:00:00Z"
+                      autoRenew: false
+                      autoBillingEnabled: false
+                      isActive: true
+                      isExpired: false
+                      isPremium: true
+                      daysRemaining: 12
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/create-payment:
+    post:
+      summary: Create subscription payment with dynamic currency conversion
+      description: Create payment transaction for subscription upgrade with real-time currency conversion and auto-provider selection
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionPaymentRequest'
+            examples:
+              UK_Payment:
+                summary: UK user upgrading to premium
+                value:
+                  planType: "patient"
+                  tier: "premium"
+                  serviceType: "subscription_upgrade"
+                  countryCode: "GB"
+                  paymentProvider: "auto"
+                  enableAutoBilling: true
+              Nigerian_Payment:
+                summary: Nigerian user upgrading with predefined NGN pricing
+                value:
+                  planType: "patient"
+                  tier: "premium"
+                  serviceType: "subscription_upgrade"
+                  countryCode: "NG"
+                  paymentProvider: "paystack"
+                  enableAutoBilling: false
+              Doctor_Professional:
+                summary: Doctor upgrading to professional plan
+                value:
+                  planType: "doctor"
+                  tier: "professional"
+                  serviceType: "subscription_upgrade"
+                  countryCode: "US"
+                  paymentProvider: "auto"
+                  enableAutoBilling: true
+      responses:
+        '200':
+          description: Subscription payment created successfully with currency conversion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSubscriptionPaymentResponse'
+              examples:
+                UK_Payment_Response:
+                  summary: UK payment in GBP via Flutterwave
+                  value:
+                    success: true
+                    message: "Subscription payment created successfully"
+                    data:
+                      transactionId: "550e8400-e29b-41d4-a716-446655440000"
+                      redirectUrl: "https://checkout.flutterwave.com/v3/hosted/pay/abc123"
+                      planType: "patient"
+                      tier: "premium"
+                      planName: "Premium Plan"
+                      amount: 32.99
+                      originalAmount: 41.24
+                      discountAmount: 8.25
+                      discountPercentage: 20
+                      currency: "GBP"
+                      countryCode: "GB"
+                      paymentProvider: "flutterwave"
+                      enableAutoBilling: true
+                      currencyInfo:
+                        requested: "GBP"
+                        final: "GBP"
+                        rate: 0.73
+                        fallback: false
+                Nigerian_Payment_Response:
+                  summary: Nigerian payment in NGN via Paystack
+                  value:
+                    success: true
+                    message: "Subscription payment created successfully"
+                    data:
+                      transactionId: "550e8400-e29b-41d4-a716-446655440001"
+                      redirectUrl: "https://checkout.paystack.com/abc456"
+                      planType: "patient"
+                      tier: "premium"
+                      planName: "Premium Plan"
+                      amount: 39900.00
+                      originalAmount: 49900.00
+                      discountAmount: 10000.00
+                      discountPercentage: 20
+                      currency: "NGN"
+                      countryCode: "NG"
+                      paymentProvider: "paystack"
+                      enableAutoBilling: false
+                      currencyInfo:
+                        requested: "NGN"
+                        final: "NGN"
+                        fallback: false
+        '400':
+          description: Bad request - invalid parameters or currency conversion failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionErrorResponse'
+              examples:
+                Invalid_Country:
+                  summary: Invalid country code
+                  value:
+                    success: false
+                    error: "Invalid country code provided"
+                Currency_Conversion_Failed:
+                  summary: Currency conversion failed
+                  value:
+                    success: false
+                    error: "Currency conversion failed, using fallback USD pricing"
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/usage-summary:
+    get:
+      summary: Get comprehensive usage summary
+      description: Get detailed usage breakdown with percentages, limits, and health status
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usage summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageSummaryResponse'
+              examples:
+                premium_patient:
+                  summary: Premium patient with usage
+                  value:
+                    success: true
+                    message: "Usage summary retrieved successfully"
+                    data:
+                      subscription:
+                        tier: "premium"
+                        planType: "patient"
+                        planName: "Premium Plan"
+                        status: "active"
+                        isActive: true
+                        isPremium: true
+                        daysRemaining: 15
+                      usage:
+                        aiChatbotResponses:
+                          used: 85
+                          limit: "Unlimited"
+                          remaining: "Unlimited"
+                          percentage: 0
+                          isUnlimited: true
+                          isOverLimit: false
+                          isNearLimit: false
+                          displayName: "AI Chat Messages"
+                          description: "Monthly AI chatbot interactions"
+                          icon: "💬"
+                          color: "green"
+                        aiDiagnosticRequests:
+                          used: 12
+                          limit: "Unlimited"
+                          remaining: "Unlimited"
+                          percentage: 0
+                          isUnlimited: true
+                          isOverLimit: false
+                          isNearLimit: false
+                          displayName: "AI Diagnostic Requests"
+                          description: "AI-powered diagnostic requests per month"
+                          icon: "🔬"
+                          color: "green"
+                      stats:
+                        totalLimits: 2
+                        limitsWithUsage: 2
+                        overLimitCount: 0
+                        nearLimitCount: 0
+                        unlimitedFeatures: 2
+                      status:
+                        healthy: true
+                        warnings: []
+                        errors: []
+                      lastUpdated: "2025-01-20T10:30:00Z"
+                      resetDate: "2025-02-01T00:00:00Z"
+                basic_patient_near_limit:
+                  summary: Basic patient approaching limits
+                  value:
+                    success: true
+                    message: "Usage summary retrieved successfully"
+                    data:
+                      subscription:
+                        tier: "basic"
+                        planType: "patient"
+                        planName: "Basic Plan"
+                        status: "active"
+                        isActive: true
+                        isPremium: true
+                        daysRemaining: 8
+                      usage:
+                        aiChatbotResponses:
+                          used: 27
+                          limit: 30
+                          remaining: 3
+                          percentage: 90
+                          isUnlimited: false
+                          isOverLimit: false
+                          isNearLimit: true
+                          isWarning: true
+                          displayName: "AI Chat Messages"
+                          description: "Monthly AI chatbot interactions"
+                          icon: "💬"
+                          color: "orange"
+                        aiDiagnosticRequests:
+                          used: 15
+                          limit: 20
+                          remaining: 5
+                          percentage: 75
+                          isUnlimited: false
+                          isOverLimit: false
+                          isNearLimit: false
+                          displayName: "AI Diagnostic Requests"
+                          description: "AI-powered diagnostic requests per month"
+                          icon: "🔬"
+                          color: "yellow"
+                      stats:
+                        totalLimits: 2
+                        limitsWithUsage: 2
+                        overLimitCount: 0
+                        nearLimitCount: 1
+                        unlimitedFeatures: 0
+                      status:
+                        healthy: true
+                        warnings: ["AI Chat Messages: 90% used"]
+                        errors: []
+                      lastUpdated: "2025-01-20T10:30:00Z"
+                      resetDate: "2025-02-01T00:00:00Z"
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/usage-status:
+    get:
+      summary: Get quick usage status
+      description: Get lightweight usage status with counts and health indicators
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usage status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageStatusResponse'
+              examples:
+                healthy_status:
+                  summary: Healthy usage status
+                  value:
+                    success: true
+                    message: "Usage status retrieved successfully"
+                    data:
+                      tier: "premium"
+                      planType: "patient"
+                      status: "active"
+                      overLimit: 0
+                      nearLimit: 0
+                      totalLimits: 2
+                      healthy: true
+                      needsAttention: false
+                needs_attention:
+                  summary: Status needing attention
+                  value:
+                    success: true
+                    message: "Usage status retrieved successfully"
+                    data:
+                      tier: "basic"
+                      planType: "patient"
+                      status: "active"
+                      overLimit: 1
+                      nearLimit: 1
+                      totalLimits: 2
+                      healthy: false
+                      needsAttention: true
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/upgrade-with-saved-method:
+    post:
+      summary: Upgrade subscription using saved payment method with dynamic pricing
+      description: Instantly upgrade subscription by charging saved payment method with real-time currency conversion
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - planType
+                - tier
+                - paymentMethodId
+              properties:
+                planType:
+                  type: string
+                  enum: [doctor, patient]
+                  description: "Type of subscription plan"
+                  example: "patient"
+                tier:
+                  type: string
+                  enum: [basic, standard, medium, premium, professional, gold_elite]
+                  description: "Plan tier to upgrade to"
+                  example: "premium"
+                paymentMethodId:
+                  type: string
+                  format: uuid
+                  description: "ID of saved payment method"
+                  example: "pm_123456789"
+                countryCode:
+                  type: string
+                  description: "ISO country code for currency conversion"
+                  example: "GB"
+                  default: "US"
+      responses:
+        '200':
+          description: Subscription upgraded successfully with saved payment method
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SubscriptionSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          transactionId:
+                            type: string
+                            format: uuid
+                            description: "Payment transaction ID"
+                            example: "550e8400-e29b-41d4-a716-446655440000"
+                          planType:
+                            type: string
+                            example: "patient"
+                          tier:
+                            type: string
+                            example: "premium"
+                          upgradedAt:
+                            type: string
+                            format: date-time
+                            description: "When upgrade was completed"
+                            example: "2025-07-10T12:00:00Z"
+        '400':
+          description: Payment failed or invalid payment method
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SubscriptionErrorResponse'
+                  - type: object
+                    properties:
+                      details:
+                        type: object
+                        description: "Payment failure details"
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/process-upgrade-after-payment:
+    post:
+      summary: Process subscription upgrade after successful payment
+      description: Internal endpoint called by webhooks/callbacks to upgrade subscription after payment success
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transactionId
+              properties:
+                transactionId:
+                  type: string
+                  format: uuid
+                  description: "ID of completed payment transaction"
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Subscription upgraded successfully after payment
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SubscriptionSuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          subscription:
+                            $ref: '#/components/schemas/Subscription'
+                          transactionId:
+                            type: string
+                            format: uuid
+                            example: "550e8400-e29b-41d4-a716-446655440000"
+        '400':
+          description: Transaction not completed or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionErrorResponse'
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/plans:
+    get:
+      summary: Get available plans with dynamic currency pricing
+      description: Retrieve available subscription plans with real-time currency conversion based on country
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: countryCode
+          in: query
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}$'
+            example: "GB"
+          description: "ISO 3166-1 alpha-2 country code for currency conversion (defaults to US)"
+      responses:
+        '200':
+          description: Available plans retrieved successfully with dynamic pricing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailablePlansResponse'
+              examples:
+                UK_Plans:
+                  summary: Plans for UK user in GBP
+                  value:
+                    success: true
+                    message: "Available plans retrieved successfully"
+                    data:
+                      userType: "patient"
+                      countryCode: "GB"
+                      currency: "GBP"
+                      timestamp: "2025-01-20T10:30:00Z"
+                      plans:
+                        basic:
+                          tier: "basic"
+                          planType: "patient"
+                          name: "Basic Plan"
+                          price: 5.84
+                          originalPrice: 7.30
+                          currency: "GBP"
+                          conversionRate: 0.73
+                          isPredefined: false
+                          isFallback: false
+                          discountPercentage: 20
+                          features: ["Voice Consultation", "All Specialists", "Standard Support"]
+                          monthlyLimits: { "aiChatbotResponses": 30, "aiDiagnosticRequests": 20 }
+                          familyMembers: 1
+                        premium:
+                          tier: "premium"
+                          planType: "patient"
+                          name: "Premium Plan"
+                          price: 32.99
+                          originalPrice: 41.24
+                          currency: "GBP"
+                          conversionRate: 0.73
+                          isPredefined: false
+                          isFallback: false
+                          discountPercentage: 20
+                          features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
+                          monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
+                          familyMembers: 5
+                      supportedCurrencies:
+                        paystack: ["NGN", "USD", "GHS", "ZAR", "KES"]
+                        flutterwave: ["NGN", "USD", "EUR", "GBP", "KES", "UGX", "TZS", "ZAR"]
+                        recommended: "flutterwave"
+                Nigerian_Plans:
+                  summary: Plans for Nigerian user in NGN (predefined)
+                  value:
+                    success: true
+                    message: "Available plans retrieved successfully"
+                    data:
+                      userType: "patient"
+                      countryCode: "NG"
+                      currency: "NGN"
+                      timestamp: "2025-01-20T10:30:00Z"
+                      plans:
+                        basic:
+                          tier: "basic"
+                          planType: "patient"
+                          name: "Basic Plan"
+                          price: 7900.00
+                          originalPrice: 9900.00
+                          currency: "NGN"
+                          isPredefined: true
+                          isFallback: false
+                          discountPercentage: 20
+                          features: ["Voice Consultation", "All Specialists", "Standard Support"]
+                          monthlyLimits: { "aiChatbotResponses": 30, "aiDiagnosticRequests": 20 }
+                          familyMembers: 1
+                        premium:
+                          tier: "premium"
+                          planType: "patient"
+                          name: "Premium Plan"
+                          price: 39900.00
+                          originalPrice: 49900.00
+                          currency: "NGN"
+                          isPredefined: true
+                          isFallback: false
+                          discountPercentage: 20
+                          features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
+                          monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
+                          familyMembers: 5
+                      supportedCurrencies:
+                        paystack: ["NGN", "USD", "GHS", "ZAR", "KES"]
+                        flutterwave: ["NGN", "USD", "EUR", "GBP", "KES", "UGX", "TZS", "ZAR"]
+                        recommended: "paystack"
+                Doctor_Plans_US:
+                  summary: Doctor plans for US user in USD
+                  value:
+                    success: true
+                    message: "Available plans retrieved successfully"
+                    data:
+                      userType: "doctor"
+                      countryCode: "US"
+                      currency: "USD"
+                      timestamp: "2025-01-20T10:30:00Z"
+                      plans:
+                        basic:
+                          tier: "basic"
+                          planType: "doctor"
+                          name: "Basic Plan"
+                          price: 19.99
+                          originalPrice: 24.99
+                          currency: "USD"
+                          isPredefined: true
+                          isFallback: false
+                          discountPercentage: 20
+                          commissionRate: 20
+                          features: ["Video Consultation", "Regular Profile Listing", "Standard Support"]
+                          monthlyLimits: { "maxPatients": 40, "aiResponses": 200 }
+                        professional:
+                          tier: "professional"
+                          planType: "doctor"
+                          name: "Professional Plan"
+                          price: 34.99
+                          originalPrice: 44.99
+                          currency: "USD"
+                          isPredefined: true
+                          isFallback: false
+                          discountPercentage: 22
+                          commissionRate: 15
+                          features: ["Video Consultation", "Top Profile Listing", "Priority Support"]
+                          monthlyLimits: { "maxPatients": 100, "aiResponses": 400 }
+                      supportedCurrencies:
+                        paystack: ["NGN", "USD", "GHS", "ZAR", "KES"]
+                        flutterwave: ["NGN", "USD", "EUR", "GBP", "KES", "UGX", "TZS", "ZAR"]
+                        recommended: "flutterwave"
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/plans/{planType}/{tier}/pricing:
+    get:
+      summary: Get pricing for specific plan with dynamic currency conversion
+      description: Retrieve detailed pricing information for a specific plan with real-time currency conversion
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: planType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [doctor, patient]
+          description: "Type of subscription plan"
+          example: "patient"
+        - name: tier
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [free, basic, standard, medium, premium, professional, gold_elite]
+          description: "Plan tier"
+          example: "premium"
+        - name: countryCode
+          in: query
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}$'
+            example: "GB"
+          description: "ISO 3166-1 alpha-2 country code for currency conversion (defaults to US)"
+      responses:
+        '200':
+          description: Plan pricing with dynamic currency conversion retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanPricingResponse'
+              examples:
+                UK_Premium_Pricing:
+                  summary: Premium plan pricing for UK user in GBP
+                  value:
+                    success: true
+                    message: "Plan pricing retrieved successfully"
+                    data:
+                      planType: "patient"
+                      tier: "premium"
+                      name: "Premium Plan"
+                      price: 32.99
+                      originalPrice: 41.24
+                      currency: "GBP"
+                      countryCode: "GB"
+                      conversionRate: 0.73
+                      convertedAt: "2025-01-20T10:30:00Z"
+                      isPredefined: false
+                      isFallback: false
+                      discountAmount: 8.25
+                      discountPercentage: 20
+                      features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
+                      monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
+                      familyMembers: 5
+                Nigerian_Premium_Pricing:
+                  summary: Premium plan pricing for Nigerian user in NGN (predefined)
+                  value:
+                    success: true
+                    message: "Plan pricing retrieved successfully"
+                    data:
+                      planType: "patient"
+                      tier: "premium"
+                      name: "Premium Plan"
+                      price: 39900.00
+                      originalPrice: 49900.00
+                      currency: "NGN"
+                      countryCode: "NG"
+                      isPredefined: true
+                      isFallback: false
+                      discountAmount: 10000.00
+                      discountPercentage: 20
+                      features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
+                      monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
+                      familyMembers: 5
+                Doctor_Professional_US:
+                  summary: Doctor professional plan pricing for US user
+                  value:
+                    success: true
+                    message: "Plan pricing retrieved successfully"
+                    data:
+                      planType: "doctor"
+                      tier: "professional"
+                      name: "Professional Plan"
+                      price: 34.99
+                      originalPrice: 44.99
+                      currency: "USD"
+                      countryCode: "US"
+                      isPredefined: true
+                      isFallback: false
+                      discountAmount: 10.00
+                      discountPercentage: 22
+                      commissionRate: 15.0
+                      features: ["Video Consultation", "Top Profile Listing", "Priority Support"]
+                      monthlyLimits: { "maxPatients": 100, "aiResponses": 400 }
+        '404':
+          $ref: '#/components/responses/SubscriptionNotFound'
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/cancel:
+    post:
+      summary: Cancel subscription
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelSubscriptionResponse'
+        '400':
+          $ref: '#/components/responses/SubscriptionBadRequest'
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/features/{featureName}:
+    get:
+      summary: Check if user has access to specific feature
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: featureName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Name of the feature to check"
+          example: "videoConsultation"
+      responses:
+        '200':
+          description: Feature access checked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureAccessResponse'
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/usage:
+    get:
+      summary: Get usage limits and current usage
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usage information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageInfoResponse'
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+
+  /api/subscription/auto-billing:
+    get:
+      summary: Get auto-billing settings
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Auto-billing settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoBillingSettingsResponse'
+        '401':
+          $ref: '#/components/responses/AutoBillingUnauthorized'
+
+  /api/subscription/auto-billing/enable:
+    post:
+      summary: Enable auto-billing
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnableAutoBillingRequest'
+      responses:
+        '200':
+          description: Auto-billing enabled successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EnableAutoBillingResponse'
+        '400':
+          $ref: '#/components/responses/AutoBillingBadRequest'
+        '401':
+          $ref: '#/components/responses/AutoBillingUnauthorized'
+
+  /api/subscription/auto-billing/disable:
+    post:
+      summary: Disable auto-billing
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Auto-billing disabled successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DisableAutoBillingResponse'
+        '400':
+          $ref: '#/components/responses/AutoBillingBadRequest'
+        '401':
+          $ref: '#/components/responses/AutoBillingUnauthorized'
+
+  /api/subscription/analytics:
+    get:
+      summary: Get subscription analytics (Admin only)
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Subscription analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionAnalyticsResponse'
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'
+        '403':
+          $ref: '#/components/responses/SubscriptionForbidden'
+
+  /api/subscription/test-upgrade/{transactionId}:
+    post:
+      summary: Test subscription upgrade (Internal testing)
+      description: Manual testing endpoint to trigger subscription upgrade for completed transactions
+      tags:
+        - Subscription Management
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Transaction ID to process upgrade for"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                planType:
+                  type: string
+                  enum: [doctor, patient]
+                  default: "patient"
+                  description: "Plan type for upgrade"
+                tier:
+                  type: string
+                  enum: [basic, standard, medium, premium, professional, gold_elite]
+                  default: "premium"
+                  description: "Plan tier for upgrade"
+      responses:
+        '200':
+          description: Subscription upgrade test completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  transactionId:
+                    type: string
+                    format: uuid
+                  fromTier:
+                    type: string
+                  toTier:
+                    type: string
+                  result:
+                    type: object
+        '400':
+          description: Test upgrade failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionErrorResponse'
+        '401':
+          $ref: '#/components/responses/SubscriptionUnauthorized'

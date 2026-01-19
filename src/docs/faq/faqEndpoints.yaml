@@ -1,0 +1,636 @@
+# =====================================================
+# 2. FAQ ENDPOINTS FILE
+# =====================================================
+
+# faq/faqEndpoints.yaml
+paths:
+  # Public FAQ Endpoints
+  /faq/general:
+    get:
+      tags:
+        - FAQ - Public
+      summary: Get general FAQs
+      description: Get FAQs for general users (accessible to everyone)
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category slug
+      responses:
+        '200':
+          description: General FAQs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQListResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+
+  /faq/categories:
+    get:
+      tags:
+        - FAQ - Public
+      summary: Get FAQ categories
+      description: Get all FAQ categories
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [patient, doctor, general, all]
+          description: Filter categories by role
+      responses:
+        '200':
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryListResponse'
+
+  /faq/popular:
+    get:
+      tags:
+        - FAQ - Public
+      summary: Get popular FAQs
+      description: Get popular FAQs based on votes and views
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [patient, doctor, general, all]
+          description: Filter by target role
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: Number of FAQs to return
+      responses:
+        '200':
+          description: Popular FAQs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQListResponse'
+
+  /faq/most-viewed:
+    get:
+      tags:
+        - FAQ - Public
+      summary: Get most viewed FAQs
+      description: Get FAQs with highest view counts
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [patient, doctor, general, all]
+          description: Filter by target role
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: Number of FAQs to return
+      responses:
+        '200':
+          description: Most viewed FAQs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQListResponse'
+
+  /faq/search:
+    get:
+      tags:
+        - FAQ - Public
+      summary: Search FAQs
+      description: Search FAQs by keywords
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: Search query
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [patient, doctor, general, all]
+          description: Filter by target role
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of results to return
+      responses:
+        '200':
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQSearchResponse'
+        '400':
+          description: Invalid search query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+
+  /faq/{slug}:
+    get:
+      tags:
+        - FAQ - Public
+      summary: Get FAQ by slug
+      description: Get a single FAQ by its slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: FAQ slug
+      responses:
+        '200':
+          description: FAQ retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQResponse'
+        '404':
+          description: FAQ not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+
+  # Authenticated Endpoints
+  /faq/{id}/vote:
+    post:
+      tags:
+        - FAQ - Authenticated
+      summary: Vote on FAQ
+      description: Vote whether an FAQ is helpful or not
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: FAQ ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoteFAQRequest'
+      responses:
+        '200':
+          description: Vote recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoteResponse'
+        '400':
+          description: Invalid vote type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '409':
+          description: Already voted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+
+  # Role-specific Endpoints
+  /faq/patient:
+    get:
+      tags:
+        - FAQ - Patient
+      summary: Get patient FAQs
+      description: Get FAQs specifically for patients
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category slug
+      responses:
+        '200':
+          description: Patient FAQs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQListResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Patient role required
+
+  /faq/doctor:
+    get:
+      tags:
+        - FAQ - Doctor
+      summary: Get doctor FAQs
+      description: Get FAQs specifically for doctors
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category slug
+      responses:
+        '200':
+          description: Doctor FAQs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQListResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Doctor role required
+
+  # Admin Endpoints
+  /faq/admin/faqs:
+    get:
+      tags:
+        - FAQ - Admin
+      summary: Get all FAQs (Admin)
+      description: Get all FAQs with admin details and filters
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, published, archived]
+          description: Filter by status
+        - name: targetRole
+          in: query
+          schema:
+            type: string
+            enum: [patient, doctor, general, all]
+          description: Filter by target role
+        - name: isStatic
+          in: query
+          schema:
+            type: boolean
+          description: Filter by static/dynamic
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Items per page
+      responses:
+        '200':
+          description: All FAQs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminFAQListResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin role required
+
+    post:
+      tags:
+        - FAQ - Admin
+      summary: Create FAQ (Admin)
+      description: Create a new FAQ
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFAQRequest'
+      responses:
+        '201':
+          description: FAQ created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin role required
+        '409':
+          description: FAQ with title already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+
+  /faq/admin/faqs/{id}:
+    put:
+      tags:
+        - FAQ - Admin
+      summary: Update FAQ (Admin)
+      description: Update an existing FAQ
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: FAQ ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFAQRequest'
+      responses:
+        '200':
+          description: FAQ updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin role required
+        '404':
+          description: FAQ not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '409':
+          description: FAQ with title already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+
+    delete:
+      tags:
+        - FAQ - Admin
+      summary: Delete FAQ (Admin)
+      description: Delete an FAQ (cannot delete static FAQs)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: FAQ ID
+      responses:
+        '200':
+          description: FAQ deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin role required or cannot delete static FAQ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '404':
+          description: FAQ not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+
+  /faq/admin/analytics:
+    get:
+      tags:
+        - FAQ - Admin
+      summary: Get FAQ analytics (Admin)
+      description: Get comprehensive FAQ analytics and statistics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date for analytics
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date for analytics
+      responses:
+        '200':
+          description: FAQ analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQAnalyticsResponse'
+        '400':
+          description: Invalid date range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin role required
+
+  /faq/admin/categories:
+    post:
+      tags:
+        - FAQ - Admin
+      summary: Create category (Admin)
+      description: Create a new FAQ category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/FAQCategory'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin role required
+        '409':
+          description: Category with name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+
+  /faq/admin/categories/{id}:
+    put:
+      tags:
+        - FAQ - Admin
+      summary: Update category (Admin)
+      description: Update an existing FAQ category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Category ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '200':
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/FAQCategory'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin role required
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '409':
+          description: Category with name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+
+  /faq/admin/initialize-static:
+    post:
+      tags:
+        - FAQ - Admin
+      summary: Initialize static FAQs (Super Admin)
+      description: Initialize static FAQ data (one-time setup)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Static FAQs initialized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaticFAQInitResponse'
+        '400':
+          description: Initialization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQErrorResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Super Admin role required

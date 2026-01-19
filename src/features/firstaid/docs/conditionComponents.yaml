@@ -1,0 +1,570 @@
+components:
+  schemas:
+    Condition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique UUID identifier for the condition
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Name of the medical condition
+          example: "Cardiac Arrest"
+          minLength: 2
+        description:
+          type: string
+          description: Detailed description of the condition
+          example: "A sudden loss of heart function, breathing, and consciousness"
+          minLength: 10
+        contentType:
+          type: string
+          enum: [emergency, non_emergency]
+          description: Type of medical content
+          example: "emergency"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Severity level of the condition
+          example: "high"
+          default: "medium"
+        image_file_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: UUID of the associated image file
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        sortOrder:
+          type: integer
+          description: Order for displaying the condition
+          example: 0
+          default: 0
+        metadata:
+          type: object
+          nullable: true
+          description: Additional metadata for the condition
+          example:
+            tags: ["heart", "critical"]
+            estimatedReadTime: "3 minutes"
+            relatedConditions: []
+        isActive:
+          type: boolean
+          description: Whether the condition is active/published
+          example: true
+          default: true
+        imageFile:
+          type: object
+          nullable: true
+          description: Reference to the associated image file
+          properties:
+            id:
+              type: string
+              format: uuid
+            originalFileName:
+              type: string
+            url:
+              type: string
+            mimeType:
+              type: string
+        emergencySteps:
+          type: array
+          items:
+            $ref: './stepComponents.yaml#/components/schemas/EmergencyStep'
+          description: Array of emergency steps for this condition
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the condition was created
+          example: "2025-01-16T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the condition was last updated
+          example: "2025-01-16T10:30:00.000Z"
+
+    ConditionImage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the image
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        originalFileName:
+          type: string
+          description: Original filename of the image
+          example: "cardiac_arrest.jpg"
+        storedFileName:
+          type: string
+          description: Stored filename on the server
+          example: "550e8400-e29b-41d4-a716-446655440001.jpg"
+        url:
+          type: string
+          description: URL to access the image
+          example: "/api/documents/images/550e8400-e29b-41d4-a716-446655440001"
+        mimeType:
+          type: string
+          description: MIME type of the image
+          example: "image/jpeg"
+        fileSize:
+          type: integer
+          description: File size in bytes
+          example: 245760
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the image was uploaded
+          example: "2025-01-16T10:30:00.000Z"
+
+    CreateConditionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the medical condition
+          example: "Cardiac Arrest"
+          minLength: 2
+        description:
+          type: string
+          description: Detailed description of the condition
+          example: "A sudden loss of heart function, breathing, and consciousness"
+          minLength: 10
+        contentType:
+          type: string
+          enum: [emergency, non_emergency]
+          description: Type of medical content
+          example: "emergency"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Severity level of the condition
+          example: "high"
+          default: "medium"
+        image_file_id:
+          type: string
+          format: uuid
+          description: UUID of the associated image file (optional)
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        sortOrder:
+          type: integer
+          description: Order for displaying the condition
+          example: 0
+          default: 0
+        metadata:
+          type: object
+          description: Additional metadata for the condition
+          example: {"tags": ["heart", "critical"], "estimatedReadTime": "3 minutes"}
+        isActive:
+          type: boolean
+          description: Whether the condition is active/published
+          example: true
+          default: true
+        images:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: Optional condition images (use field name "images")
+      required:
+        - name
+        - description
+        - contentType
+
+    UpdateConditionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the medical condition
+          example: "Cardiac Arrest"
+          minLength: 2
+        description:
+          type: string
+          description: Detailed description of the condition
+          example: "A sudden loss of heart function, breathing, and consciousness"
+          minLength: 10
+        contentType:
+          type: string
+          enum: [emergency, non_emergency]
+          description: Type of medical content
+          example: "emergency"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Severity level of the condition
+          example: "high"
+        image_file_id:
+          type: string
+          format: uuid
+          description: UUID of the associated image file
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        sortOrder:
+          type: integer
+          description: Order for displaying the condition
+          example: 0
+        metadata:
+          type: object
+          description: Additional metadata for the condition
+          example: {"tags": ["heart", "critical"], "estimatedReadTime": "3 minutes"}
+        isActive:
+          type: boolean
+          description: Whether the condition is active/published
+          example: true
+        images:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: Optional condition images (use field name "images")
+
+    ConditionFilter:
+      type: object
+      properties:
+        contentType:
+          type: string
+          enum: [emergency, non_emergency]
+          description: Filter by content type
+          example: "emergency"
+        isActive:
+          type: boolean
+          description: Filter by active status
+          example: true
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Filter by severity level
+          example: "high"
+        page:
+          type: integer
+          minimum: 1
+          description: Page number for pagination
+          example: 1
+          default: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of items per page
+          example: 10
+          default: 10
+
+    ConditionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Condition'
+        message:
+          type: string
+          example: "Condition retrieved successfully"
+        location:
+          type: object
+          properties:
+            country:
+              type: string
+              example: "Nigeria"
+            city:
+              type: string
+              example: "Lagos"
+            region:
+              type: string
+              example: "Lagos"
+            timezone:
+              type: string
+              example: "Africa/Lagos"
+            ip:
+              type: string
+              example: "::1"
+
+    ConditionListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Condition'
+        count:
+          type: integer
+          description: Total number of conditions returned
+          example: 25
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 10
+            totalPages:
+              type: integer
+              example: 3
+            totalItems:
+              type: integer
+              example: 25
+
+    ConditionWithSteps:
+      allOf:
+        - $ref: '#/components/schemas/Condition'
+        - type: object
+          properties:
+            emergencySteps:
+              type: array
+              items:
+                $ref: './stepComponents.yaml#/components/schemas/EmergencyStep'
+              description: All emergency steps for this condition
+
+    OfflineManifest:
+      type: object
+      properties:
+        version:
+          type: integer
+          description: Timestamp-based version number
+          example: 1642345678901
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-01-16T10:30:00.000Z"
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              description:
+                type: string
+              contentType:
+                type: string
+                enum: [emergency, non_emergency]
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+              sortOrder:
+                type: integer
+              imageUrl:
+                type: string
+                nullable: true
+              steps:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    categoryType:
+                      type: string
+                      enum: [general, adults, children, infants]
+                    steps:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          instruction:
+                            type: string
+                    imageUrl:
+                      type: string
+                      nullable: true
+                    sortOrder:
+                      type: integer
+        totalItems:
+          type: integer
+          description: Total number of conditions
+          example: 25
+
+    SyncHealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, error]
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-16T10:30:00.000Z"
+        stats:
+          type: object
+          properties:
+            totalConditions:
+              type: integer
+              example: 25
+            activeConditions:
+              type: integer
+              example: 20
+            totalSteps:
+              type: integer
+              example: 85
+        error:
+          type: string
+          description: Error message if status is error
+          example: "Database connection failed"
+
+    ToggleStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "550e8400-e29b-41d4-a716-446655440000"
+            isActive:
+              type: boolean
+              example: false
+            message:
+              type: string
+              example: "Condition deactivated successfully"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+
+  responses:
+    BadRequest:
+      description: Bad request - validation error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Name must be a string with at least 2 characters"
+
+    Unauthorized:
+      description: Unauthorized - invalid or missing token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Unauthorized access"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Admin access required"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Condition with ID 550e8400-e29b-41d4-a716-446655440000 not found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Failed to create condition"
+
+  parameters:
+    ConditionId:
+      name: id
+      in: path
+      required: true
+      description: Condition UUID
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+    ContentTypeFilter:
+      name: contentType
+      in: query
+      description: Filter by content type
+      schema:
+        type: string
+        enum: [emergency, non_emergency]
+        example: "emergency"
+
+    IsActiveFilter:
+      name: isActive
+      in: query
+      description: Filter by active status
+      schema:
+        type: boolean
+        example: true
+
+    SeverityFilter:
+      name: severity
+      in: query
+      description: Filter by severity level
+      schema:
+        type: string
+        enum: [low, medium, high, critical]
+        example: "high"
+
+    PageParam:
+      name: page
+      in: query
+      description: Page number for pagination
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        example: 1
+
+    LimitParam:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+        example: 10

@@ -1,0 +1,37 @@
+# 3. src/docs/pharmacy/documents/pharmacyDocuments.yaml
+paths:
+  /pharmacy/documents/upload:
+    post:
+      summary: Upload pharmacy documents
+      tags: [PharmacyDocuments]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentUpload'
+      responses:
+        '200':
+          description: Documents uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentUploadResponse'
+        '400':
+          description: No documents uploaded
+
+  /pharmacy/documents:
+    get:
+      summary: Get pharmacy documents
+      tags: [PharmacyDocuments]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Documents list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListResponse'

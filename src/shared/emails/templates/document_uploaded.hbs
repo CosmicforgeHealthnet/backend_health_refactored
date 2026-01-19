@@ -1,0 +1,70 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Success Banner -->
+    <div style="background: linear-gradient(135deg, #10b981, #059669); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Document Uploaded Successfully</h2>
+        <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Your document is being processed</p>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>Dr. {{fullName}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your document has been successfully uploaded and is now being processed as part of your verification request.
+    </p>
+
+    <!-- Document Details -->
+    <div style="background-color: #F5F8FF; border-left: 4px solid #3964EA; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #3964EA; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Document Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Document Type:</strong> {{documentType}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>File Name:</strong> {{originalFileName}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Uploaded:</strong> {{uploadedAt}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Verification ID:</strong> {{verificationId}}
+        </p>
+    </div>
+
+    <!-- Processing Information -->
+    <div style="background-color: #eff6ff; border-left: 4px solid #1e40af; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #1e40af; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Document Processing
+        </h3>
+        <p style="color: #374151; margin: 10px 0; font-size: 14px;">
+            {{processingTime}}
+        </p>
+        <p style="color: #374151; margin: 10px 0; font-size: 14px;">
+            We'll automatically update your verification status once processing is complete.
+        </p>
+    </div>
+
+    <!-- Instructions -->
+    <p style="font-size: 16px; margin-bottom: 30px;">
+        You can track the progress of your verification request using the link below.
+    </p>
+
+    <!-- Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        {{> button url=dashboardLink text="View Verification Progress" }}
+    </div>
+
+    <!-- Support info -->
+    <p style="font-size: 14px; color: #555; margin: 20px 0; text-align: center;">
+        Having issues with document upload? <a href="{{supportLink}}" style="color: #3964EA; text-decoration: none;">Contact support</a>
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px; text-align: center;">
+        <strong>The CosmicForge Health Team</strong>
+    </p>
+
+</div>

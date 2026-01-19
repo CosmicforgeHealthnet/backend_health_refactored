@@ -1,0 +1,393 @@
+# docs/marketing/marketingComponents.yaml
+components:
+  schemas:
+    # ================================
+    # MARKETING ANALYTICS SCHEMAS
+    # ================================
+    MarketingAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: "Analytics data varies by endpoint"
+        message:
+          type: string
+          nullable: true
+          description: "Optional message"
+
+    # Sign-up Analytics
+    SignupAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignupAnalyticsPeriod'
+        period:
+          type: string
+          enum: [day, week, month]
+          description: "Time period for analytics"
+          example: "day"
+        filters:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date
+              nullable: true
+              description: "Start date filter"
+            endDate:
+              type: string
+              format: date
+              nullable: true
+              description: "End date filter"
+
+    SignupAnalyticsPeriod:
+      type: object
+      properties:
+        period:
+          type: string
+          description: "Time period identifier (e.g., '2025-07-16', '2025-W29', '2025-07')"
+          example: "2025-07-16"
+        totalSignups:
+          type: integer
+          minimum: 0
+          description: "Total signups in this period"
+          example: 25
+        doctorSignups:
+          type: integer
+          minimum: 0
+          description: "Doctor signups in this period"
+          example: 5
+        patientSignups:
+          type: integer
+          minimum: 0
+          description: "Patient signups in this period"
+          example: 20
+
+    # Total Signups
+    TotalSignupsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/TotalSignupStats'
+
+    TotalSignupStats:
+      type: object
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          description: "Total number of users"
+          example: 1250
+        doctors:
+          type: integer
+          minimum: 0
+          description: "Total number of doctors"
+          example: 150
+        patients:
+          type: integer
+          minimum: 0
+          description: "Total number of patients"
+          example: 1100
+
+    # User Emails
+    UserEmailsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserEmailInfo'
+        count:
+          type: integer
+          minimum: 0
+          description: "Total number of users returned"
+          example: 150
+        role:
+          type: string
+          enum: [doctor, patient, all]
+          description: "Role filter applied"
+          example: "doctor"
+
+    UserEmailInfo:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: "doctor@example.com"
+        fullName:
+          type: string
+          example: "Dr. John Smith"
+        role:
+          type: string
+          enum: [doctor, patient, admin, super_admin, pharmacy, lab]
+          example: "doctor"
+        phoneNumber:
+          type: string
+          nullable: true
+          example: "+234-123-456-7890"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-16T10:30:00Z"
+
+    # Signup Trends
+    SignupTrendsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/SignupTrends'
+
+    SignupTrends:
+      type: object
+      properties:
+        trend:
+          type: string
+          enum: [up, down, neutral]
+          description: "Overall trend direction"
+          example: "up"
+        percentageChange:
+          type: number
+          format: float
+          description: "Percentage change from previous period"
+          example: 15.5
+        currentPeriod:
+          $ref: '#/components/schemas/SignupAnalyticsPeriod'
+          description: "Current period data"
+        previousPeriod:
+          $ref: '#/components/schemas/SignupAnalyticsPeriod'
+          description: "Previous period data"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignupAnalyticsPeriod'
+          description: "Historical trend data"
+
+    # Growth Rate
+    GrowthRateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/GrowthRateStats'
+
+    GrowthRateStats:
+      type: object
+      properties:
+        currentPeriod:
+          type: integer
+          minimum: 0
+          description: "Number of signups in current period"
+          example: 85
+        previousPeriod:
+          type: integer
+          minimum: 0
+          description: "Number of signups in previous period"
+          example: 72
+        growthRate:
+          type: number
+          format: float
+          description: "Growth rate percentage"
+          example: 18.06
+        period:
+          type: string
+          description: "Period duration"
+          example: "30 days"
+
+    # Dashboard
+    MarketingDashboardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/MarketingDashboard'
+        period:
+          type: string
+          enum: [day, week, month]
+          description: "Period used for analytics"
+          example: "day"
+
+    MarketingDashboard:
+      type: object
+      properties:
+        totals:
+          $ref: '#/components/schemas/TotalSignupStats'
+          description: "Overall signup totals"
+        analytics:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignupAnalyticsPeriod'
+          description: "Recent signup analytics (last 30 periods)"
+        trends:
+          $ref: '#/components/schemas/SignupTrends'
+          description: "Signup trends analysis"
+        growthRate:
+          $ref: '#/components/schemas/GrowthRateStats'
+          description: "Growth rate statistics"
+
+    # Error Responses
+    MarketingErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: "Error message"
+        details:
+          type: object
+          nullable: true
+          description: "Additional error details"
+
+  # Common Response definitions
+  responses:
+    MarketingBadRequest:
+      description: Bad request - Invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MarketingErrorResponse'
+          examples:
+            invalidPeriod:
+              summary: Invalid period parameter
+              value:
+                success: false
+                error: "Invalid period. Use day, week, or month"
+            invalidRole:
+              summary: Invalid role parameter
+              value:
+                success: false
+                error: "Invalid role specified"
+            invalidDate:
+              summary: Invalid date format
+              value:
+                success: false
+                error: "Invalid date format. Use YYYY-MM-DD"
+
+    MarketingUnauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MarketingErrorResponse'
+          example:
+            success: false
+            error: "Authentication required"
+
+    MarketingForbidden:
+      description: Access forbidden - Admin/Super Admin required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MarketingErrorResponse'
+          example:
+            success: false
+            error: "Admin or Super Admin access required"
+
+    MarketingInternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MarketingErrorResponse'
+          example:
+            success: false
+            error: "Internal server error"
+
+  # Security schemes
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authentication"
+
+# Query parameter definitions
+  parameters:
+    PeriodParam:
+      name: period
+      in: query
+      description: "Time period for analytics"
+      required: false
+      schema:
+        type: string
+        enum: [day, week, month]
+        default: day
+      example: day
+
+    StartDateParam:
+      name: startDate
+      in: query
+      description: "Start date for filtering (YYYY-MM-DD format)"
+      required: false
+      schema:
+        type: string
+        format: date
+      example: "2025-01-01"
+
+    EndDateParam:
+      name: endDate
+      in: query
+      description: "End date for filtering (YYYY-MM-DD format)"
+      required: false
+      schema:
+        type: string
+        format: date
+      example: "2025-01-31"
+
+    RoleParam:
+      name: role
+      in: query
+      description: "User role filter"
+      required: false
+      schema:
+        type: string
+        enum: [doctor, patient, all]
+        default: all
+      example: doctor
+
+    LimitParam:
+      name: limit
+      in: query
+      description: "Limit number of results"
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 365
+        default: 30
+      example: 30
+
+    DaysParam:
+      name: days
+      in: query
+      description: "Number of days for growth rate calculation"
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 365
+        default: 30
+      example: 30

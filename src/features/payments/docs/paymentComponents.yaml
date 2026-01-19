@@ -1,0 +1,572 @@
+components:
+  schemas:
+    # ================================
+    # PAYMENT OPTIONS
+    # ================================
+    PaymentOptionsResponse:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: float
+          description: "Original amount requested"
+          example: 5000.00
+        currency:
+          type: string
+          enum: [NGN, GHS, USD, EUR, GBP]
+          description: "Payment currency"
+          example: "NGN"
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderOption'
+          description: "Available payment providers with fees"
+        recommendedProvider:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Recommended provider based on fees"
+          example: "flutterwave"
+        canUseStoredMethod:
+          type: boolean
+          description: "Whether user can use stored payment method"
+          example: true
+        storedMethodInfo:
+          $ref: '#/components/schemas/StoredMethodInfo'
+        exchangeRate:
+          type: number
+          format: float
+          description: "Exchange rate if currency conversion needed"
+          example: 1.0
+
+    ProviderOption:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Provider name"
+          example: "flutterwave"
+        displayName:
+          type: string
+          description: "Provider display name"
+          example: "Flutterwave"
+        fee:
+          type: number
+          format: float
+          description: "Provider fee for this amount"
+          example: 75.00
+        totalAmount:
+          type: number
+          format: float
+          description: "Total amount including fees"
+          example: 5075.00
+        feePercentage:
+          type: number
+          format: float
+          description: "Fee as percentage of amount"
+          example: 1.5
+        isRecommended:
+          type: boolean
+          description: "Whether this is the recommended provider"
+          example: true
+        supportedFeatures:
+          type: array
+          items:
+            type: string
+          description: "Features supported by this provider"
+          example: ["card_tokenization", "auto_billing", "refunds"]
+
+    StoredMethodInfo:
+      type: object
+      properties:
+        paymentMethodId:
+          type: string
+          format: uuid
+          description: "ID of the stored payment method"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        cardLast4:
+          type: string
+          pattern: '^[0-9]{4}$'
+          description: "Last 4 digits of the card"
+          example: "4246"
+        cardBrand:
+          type: string
+          enum: [visa, mastercard, amex, discover, unknown]
+          description: "Card brand"
+          example: "visa"
+        canAutoCharge:
+          type: boolean
+          description: "Whether auto-charging is enabled"
+          example: true
+        successRate:
+          type: number
+          format: float
+          description: "Success rate for this payment method"
+          example: 95.5
+
+    # ================================
+    # PAYMENT INITIATION
+    # ================================
+    InitiatePaymentRequest:
+      type: object
+      required:
+        - serviceType
+        - serviceId
+        - doctorId
+        - originalAmount
+        - originalCurrency
+        - description
+      properties:
+        serviceType:
+          type: string
+          enum: [appointment, subscription, consultation, medication, lab_test]
+          description: "Type of service being paid for"
+          example: "appointment"
+        serviceId:
+          type: string
+          format: uuid
+          description: "ID of the service being paid for"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        doctorId:
+          type: string
+          format: uuid
+          description: "ID of the doctor (required for appointment payments)"
+          example: "789e4567-e89b-12d3-a456-426614174000"
+        originalAmount:
+          type: number
+          format: float
+          minimum: 0.01
+          description: "Original payment amount"
+          example: 5000.00
+        originalCurrency:
+          type: string
+          enum: [NGN, GHS, USD, EUR, GBP]
+          description: "Original payment currency"
+          example: "NGN"
+        appointmentDate:
+          type: string
+          format: date-time
+          description: "Appointment date and time (required for appointment payments)"
+          example: "2024-02-15T10:30:00Z"
+        description:
+          type: string
+          maxLength: 500
+          description: "Payment description"
+          example: "Consultation with Dr. Smith"
+        metadata:
+          type: object
+          description: "Additional metadata"
+          additionalProperties: true
+
+    InitiatePaymentResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: "Created transaction ID"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          description: "Initial transaction status"
+          example: "pending"
+        amount:
+          type: number
+          format: float
+          description: "Payment amount"
+          example: 5000.00
+        currency:
+          type: string
+          enum: [NGN, GHS, USD, EUR, GBP]
+          description: "Payment currency"
+          example: "NGN"
+        serviceType:
+          type: string
+          enum: [appointment, subscription, consultation, medication, lab_test]
+          description: "Service type"
+          example: "appointment"
+        appointmentDate:
+          type: string
+          format: date-time
+          description: "Appointment date and time"
+          example: "2024-02-15T10:30:00Z"
+        fundsStatus:
+          type: string
+          enum: [pending_appointment, pending_dispute, released, refunded]
+          description: "Current funds status"
+          example: "pending_appointment"
+        disputeWindowStartsAt:
+          type: string
+          format: date-time
+          description: "When dispute window starts"
+          example: "2024-02-15T10:30:00Z"
+        disputeWindowEndsAt:
+          type: string
+          format: date-time
+          description: "When dispute window ends"
+          example: "2024-02-22T10:30:00Z"
+        description:
+          type: string
+          description: "Payment description"
+          example: "Consultation with Dr. Smith"
+
+    # ================================
+    # PAYMENT PROCESSING
+    # ================================
+    ProcessPaymentRequest:
+      type: object
+      required:
+        - transactionId
+        - paymentProvider
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: "Transaction ID to process"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        paymentProvider:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Payment provider to use"
+          example: "flutterwave"
+        useStoredMethod:
+          type: boolean
+          description: "Whether to use stored payment method"
+          example: true
+        paymentMethodId:
+          type: string
+          format: uuid
+          description: "ID of stored payment method (if useStoredMethod is true)"
+          example: "789e4567-e89b-12d3-a456-426614174000"
+        paymentData:
+          $ref: '#/components/schemas/PaymentData'
+          description: "Payment data for new card payments"
+
+    PaymentData:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: "Customer email"
+          example: "customer@example.com"
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+          description: "Customer phone number"
+          example: "+2348123456789"
+        name:
+          type: string
+          maxLength: 100
+          description: "Customer name"
+          example: "John Doe"
+        redirectUrl:
+          type: string
+          format: uri
+          description: "Redirect URL after payment"
+          example: "https://yourapp.com/payment-success"
+
+    ProcessPaymentResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: "Transaction ID"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          description: "Updated transaction status"
+          example: "completed"
+        providerTransactionId:
+          type: string
+          description: "Provider transaction ID"
+          example: "FLW-MOCK-123456"
+        completedAt:
+          type: string
+          format: date-time
+          description: "Completion timestamp"
+          example: "2024-02-01T12:00:00Z"
+        serviceType:
+          type: string
+          enum: [appointment, subscription, consultation, medication, lab_test]
+          description: "Service type"
+          example: "appointment"
+        fundsStatus:
+          type: string
+          enum: [pending_appointment, pending_dispute, released, refunded]
+          description: "Updated funds status"
+          example: "pending_appointment"
+        paymentUrl:
+          type: string
+          format: uri
+          description: "Payment URL for card payments"
+          example: "https://checkout.flutterwave.com/pay/123456"
+        authorizationUrl:
+          type: string
+          format: uri
+          description: "Authorization URL for 3D Secure"
+          example: "https://secure.flutterwave.com/3d-secure/123456"
+
+    # ================================
+    # ENHANCED TRANSACTION
+    # ================================
+    EnhancedTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Transaction ID"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, disputed, refunded, cancelled]
+          description: "Transaction status"
+          example: "completed"
+        serviceType:
+          type: string
+          enum: [appointment, subscription, consultation, medication, lab_test]
+          description: "Service type"
+          example: "appointment"
+        serviceId:
+          type: string
+          format: uuid
+          description: "Service ID"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        amount:
+          type: number
+          format: float
+          description: "Original amount"
+          example: 5000.00
+        currency:
+          type: string
+          enum: [NGN, GHS, USD, EUR, GBP]
+          description: "Currency"
+          example: "NGN"
+        usdAmount:
+          type: number
+          format: float
+          description: "USD equivalent amount"
+          example: 3.25
+        appointmentDate:
+          type: string
+          format: date-time
+          description: "Appointment date (for appointment payments)"
+          example: "2024-02-15T10:30:00Z"
+        fundsStatus:
+          type: string
+          enum: [pending_appointment, pending_dispute, released, refunded]
+          description: "Current funds status"
+          example: "pending_appointment"
+        fundsStatusDisplay:
+          type: string
+          description: "Human-readable funds status"
+          example: "Waiting for appointment (5 days remaining)"
+        daysRemaining:
+          type: integer
+          description: "Days remaining until dispute window"
+          example: 5
+        canWithdraw:
+          type: boolean
+          description: "Whether doctor can withdraw funds"
+          example: false
+        isAppointmentPayment:
+          type: boolean
+          description: "Whether this is an appointment payment"
+          example: true
+        disputeWindowStartsAt:
+          type: string
+          format: date-time
+          description: "Dispute window start time"
+          example: "2024-02-15T10:30:00Z"
+        disputeWindowEndsAt:
+          type: string
+          format: date-time
+          description: "Dispute window end time"
+          example: "2024-02-22T10:30:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Creation timestamp"
+          example: "2024-02-01T12:00:00Z"
+        completedAt:
+          type: string
+          format: date-time
+          description: "Completion timestamp"
+          example: "2024-02-01T12:30:00Z"
+        description:
+          type: string
+          description: "Transaction description"
+          example: "Consultation with Dr. Smith"
+        isCancelled:
+          type: boolean
+          description: "Whether appointment was cancelled"
+          example: false
+        cancelledAt:
+          type: string
+          format: date-time
+          description: "Cancellation timestamp"
+          example: "2024-02-01T13:00:00Z"
+        rescheduleCount:
+          type: integer
+          description: "Number of times rescheduled"
+          example: 0
+        lastRescheduledAt:
+          type: string
+          format: date-time
+          description: "Last reschedule timestamp"
+          example: "2024-02-01T14:00:00Z"
+
+    # ================================
+    # TRANSACTION HISTORY
+    # ================================
+    TransactionHistoryResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionHistoryItem'
+          description: "List of transactions"
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+          description: "Pagination information"
+        summary:
+          $ref: '#/components/schemas/TransactionSummary'
+          description: "Transaction summary"
+
+    TransactionHistoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Transaction ID"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, disputed, refunded, cancelled]
+          description: "Transaction status"
+          example: "completed"
+        serviceType:
+          type: string
+          enum: [appointment, subscription, consultation, medication, lab_test]
+          description: "Service type"
+          example: "appointment"
+        amount:
+          type: number
+          format: float
+          description: "Transaction amount"
+          example: 5000.00
+        currency:
+          type: string
+          enum: [NGN, GHS, USD, EUR, GBP]
+          description: "Currency"
+          example: "NGN"
+        appointmentDate:
+          type: string
+          format: date-time
+          description: "Appointment date"
+          example: "2024-02-15T10:30:00Z"
+        fundsStatus:
+          type: string
+          enum: [pending_appointment, pending_dispute, released, refunded]
+          description: "Funds status"
+          example: "pending_appointment"
+        fundsStatusDisplay:
+          type: string
+          description: "Human-readable funds status"
+          example: "Waiting for appointment (5 days remaining)"
+        daysRemaining:
+          type: integer
+          description: "Days remaining until dispute window"
+          example: 5
+        canWithdraw:
+          type: boolean
+          description: "Whether doctor can withdraw funds"
+          example: false
+        isAppointmentPayment:
+          type: boolean
+          description: "Whether this is an appointment payment"
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          description: "Creation timestamp"
+          example: "2024-02-01T12:00:00Z"
+        completedAt:
+          type: string
+          format: date-time
+          description: "Completion timestamp"
+          example: "2024-02-01T12:30:00Z"
+        description:
+          type: string
+          description: "Transaction description"
+          example: "Consultation with Dr. Smith"
+        isCancelled:
+          type: boolean
+          description: "Whether appointment was cancelled"
+          example: false
+
+    PaginationInfo:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+          minimum: 1
+          description: "Current page number"
+          example: 1
+        totalPages:
+          type: integer
+          minimum: 1
+          description: "Total number of pages"
+          example: 5
+        totalItems:
+          type: integer
+          minimum: 0
+          description: "Total number of items"
+          example: 100
+        itemsPerPage:
+          type: integer
+          minimum: 1
+          description: "Items per page"
+          example: 20
+
+    TransactionSummary:
+      type: object
+      properties:
+        totalTransactions:
+          type: integer
+          minimum: 0
+          description: "Total number of transactions"
+          example: 100
+        completedTransactions:
+          type: integer
+          minimum: 0
+          description: "Number of completed transactions"
+          example: 85
+        pendingTransactions:
+          type: integer
+          minimum: 0
+          description: "Number of pending transactions"
+          example: 10
+        failedTransactions:
+          type: integer
+          minimum: 0
+          description: "Number of failed transactions"
+          example: 3
+        appointmentPayments:
+          type: integer
+          minimum: 0
+          description: "Number of appointment payments"
+          example: 60
+        cancelledAppointments:
+          type: integer
+          minimum: 0
+          description: "Number of cancelled appointments"
+          example: 2

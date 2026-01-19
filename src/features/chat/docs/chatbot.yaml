@@ -1,0 +1,225 @@
+# Chatbot API Endpoints
+# src/docs/api/chatbot.yaml
+
+paths:
+  /api/chatbot/chat:
+    post:
+      tags:
+        - AI Chatbot
+      summary: General AI Chat
+      description: |
+        AI-Doctor endpoint for patient consultations and general health queries.
+        Provides medical information, symptom analysis, and health advice.
+        Integrates with Flask backend AI service for intelligent responses.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Optional file uploads (PDF, DOCX, images, audio)
+                message:
+                  type: string
+                  description: Optional text message from user
+                sessionId:
+                  type: string
+                  format: uuid
+                  description: Optional session UUID to continue an existing conversation. If omitted a new session will be created.
+                history:
+                  type: string
+                  description: Stringified JSON array of previous chat messages
+                assistant_type:
+                  type: string
+                  enum: [patient, clinician]
+                  description: Route to patient assistant or clinician assistant
+            examples:
+              multimodal_text_only:
+                summary: Start new text conversation
+                value:
+                  message: "I have been experiencing headaches for the past week. What could be causing this?"
+              multimodal_with_files:
+                summary: Upload files and message
+                value:
+                  message: "Please analyze these lab reports"
+                  assistant_type: "patient"
+      responses:
+        '200':
+          $ref: '#/components/responses/ChatbotSuccess'
+        '400':
+          $ref: '#/components/responses/ChatbotBadRequest'
+        '401':
+          $ref: '#/components/responses/ChatbotUnauthorized'
+        '429':
+          $ref: '#/components/responses/ChatbotRateLimit'
+        '500':
+          $ref: '#/components/responses/ChatbotServerError'
+
+  /api/chatbot/doctorchat:
+    post:
+      tags:
+        - AI Chatbot
+      summary: Medical Assistant for Healthcare Professionals
+      description: |
+        Specialized AI chat endpoint for doctors and healthcare professionals.
+        Provides detailed medical information, drug interactions, treatment protocols,
+        clinical decision support, and professional medical guidance.
+        Requires doctor role authentication.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                message:
+                  type: string
+                sessionId:
+                  type: string
+                  format: uuid
+                  description: Optional session UUID to continue an existing conversation. If omitted a new session will be created.
+                history:
+                  type: string
+                assistant_type:
+                  type: string
+                  enum: [patient, clinician]
+            examples:
+              clinical_consultation:
+                summary: Clinical consultation with files
+                value:
+                  message: "Patient presents with chronic fatigue, joint pain, and morning stiffness for 6 months. See attached image and labs."
+                  assistant_type: "clinician"
+              drug_interaction:
+                summary: Drug interaction check
+                value:
+                  message: "What are the contraindications for prescribing metformin with warfarin in a 65-year-old patient?"
+              treatment_protocol:
+                summary: Treatment protocol inquiry
+                value:
+                  message: "Latest evidence-based treatment protocol for Type 2 diabetes in patients with cardiovascular comorbidities?"
+      responses:
+        '200':
+          $ref: '#/components/responses/ChatbotSuccess'
+        '400':
+          $ref: '#/components/responses/ChatbotBadRequest'
+        '401':
+          $ref: '#/components/responses/ChatbotUnauthorized'
+        '403':
+          $ref: '#/components/responses/ChatbotForbidden'
+        '429':
+          $ref: '#/components/responses/ChatbotRateLimit'
+        '500':
+          $ref: '#/components/responses/ChatbotServerError'
+
+  /api/chatbot/sessions:
+    get:
+      tags:
+        - AI Chatbot
+      summary: Get User's Chat Sessions
+      description: |
+        Retrieve all chat sessions for the authenticated user.
+        Sessions are ordered by last activity (most recent first).
+        Supports filtering by session type.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionType
+          in: query
+          description: Filter sessions by type
+          required: false
+          schema:
+            type: string
+            enum: [general, doctor]
+            example: "general"
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          description: Number of sessions per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+      responses:
+        '200':
+          $ref: '#/components/responses/ChatbotSessionsSuccess'
+        '400':
+          $ref: '#/components/responses/ChatbotBadRequest'
+        '401':
+          $ref: '#/components/responses/ChatbotUnauthorized'
+        '500':
+          $ref: '#/components/responses/ChatbotServerError'
+
+  /api/chatbot/sessions/{sessionId}:
+    get:
+      tags:
+        - AI Chatbot
+      summary: Get Session Details
+      description: |
+        Retrieve a specific chat session with all messages.
+        Messages are ordered chronologically (oldest first).
+        Only the session owner can access the session.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: UUID of the chat session
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          $ref: '#/components/responses/ChatbotSessionSuccess'
+        '400':
+          $ref: '#/components/responses/ChatbotBadRequest'
+        '401':
+          $ref: '#/components/responses/ChatbotUnauthorized'
+        '404':
+          $ref: '#/components/responses/ChatbotNotFound'
+        '500':
+          $ref: '#/components/responses/ChatbotServerError'
+
+  /api/chatbot/health:
+    get:
+      tags:
+        - AI Chatbot
+      summary: Check Chatbot Service Health
+      description: |
+        Check the health status of the chatbot service and Flask backend connectivity.
+        Useful for monitoring and debugging the AI service integration.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/ChatbotHealthSuccess'
+        '401':
+          $ref: '#/components/responses/ChatbotUnauthorized'
+        '500':
+          $ref: '#/components/responses/ChatbotServerError'

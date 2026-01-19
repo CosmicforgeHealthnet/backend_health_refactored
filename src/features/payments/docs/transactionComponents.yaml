@@ -1,0 +1,1010 @@
+# docs/transactions/transactionComponents.yaml
+components:
+  schemas:
+    # Enhanced Core Transaction Schemas
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+        serviceType:
+          type: string
+          enum: [appointment, subscription, lab_test, pharmacy, document_access, verification_fee, chat_premium, other]
+        serviceId:
+          type: string
+          format: uuid
+        planType:
+          type: string
+          enum: [free, basic, medium, premium, one_time]
+        billingCycle:
+          type: string
+          enum: [one_time, monthly, quarterly, yearly]
+        originalAmount:
+          type: number
+          format: decimal
+        originalCurrency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        usdAmount:
+          type: number
+          format: decimal
+        exchangeRateUsed:
+          type: number
+          format: decimal
+        paymentProvider:
+          type: string
+          enum: [flutterwave, paystack]
+        providerTransactionId:
+          type: string
+        providerReference:
+          type: string
+        providerFee:
+          type: number
+          format: decimal
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, disputed, refunded, cancelled]
+        # NEW: Enhanced appointment fields
+        appointmentDate:
+          type: string
+          format: date-time
+          description: "Date and time of the appointment (for appointment payments)"
+        fundsStatus:
+          type: string
+          enum: [pending_appointment, pending_dispute, released]
+          description: "Current status of funds for appointment payments"
+        disputeWindowStartsAt:
+          type: string
+          format: date-time
+          description: "When the dispute window begins"
+        disputeWindowEndsAt:
+          type: string
+          format: date-time
+          description: "When the dispute window ends"
+        # NEW: Cancellation fields
+        isCancelled:
+          type: boolean
+          description: "Whether appointment was cancelled"
+        cancelledAt:
+          type: string
+          format: date-time
+          description: "When appointment was cancelled"
+        refundStatus:
+          type: string
+          enum: [none, pending, partial, full, failed]
+          description: "Refund processing status"
+        refundAmount:
+          type: number
+          format: decimal
+          description: "Amount refunded to patient"
+        refundProcessedAt:
+          type: string
+          format: date-time
+          description: "When refund was processed"
+        # NEW: Rescheduling fields
+        originalAppointmentDate:
+          type: string
+          format: date-time
+          description: "Original appointment date before rescheduling"
+        rescheduleCount:
+          type: integer
+          description: "Number of times appointment was rescheduled"
+        lastRescheduledAt:
+          type: string
+          format: date-time
+          description: "When appointment was last rescheduled"
+        disputeRaisedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    # NEW: Enhanced Transaction with Status Information
+    EnhancedTransaction:
+      allOf:
+        - $ref: '#/components/schemas/Transaction'
+        - type: object
+          properties:
+            fundsStatusDisplay:
+              type: string
+              description: "Human-readable status description"
+              example: "Waiting for appointment (5 days)"
+            daysRemaining:
+              type: integer
+              description: "Days remaining until funds are available"
+              example: 5
+            canWithdraw:
+              type: boolean
+              description: "Whether funds can be withdrawn"
+              example: false
+            isAppointmentPayment:
+              type: boolean
+              description: "Whether this is an appointment payment"
+              example: true
+
+    # Payment Options (unchanged)
+    PaymentOptionsRequest:
+      type: object
+      required:
+        - amount
+        - currency
+        - userId
+      properties:
+        amount:
+          type: number
+          minimum: 0.01
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        userId:
+          type: string
+          format: uuid
+        paymentMethodId:
+          type: string
+          format: uuid
+
+    PaymentOptionsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            flutterwave:
+              $ref: '#/components/schemas/ProviderOption'
+            paystack:
+              $ref: '#/components/schemas/ProviderOption'
+
+    ProviderOption:
+      type: object
+      properties:
+        fee:
+          type: number
+        total:
+          type: number
+        successRate:
+          type: number
+        recommended:
+          type: boolean
+        reason:
+          type: string
+
+    # Enhanced Payment Initiation
+    InitiatePaymentRequest:
+      type: object
+      required:
+        - patientId
+        - serviceType
+        - originalAmount
+        - originalCurrency
+        - paymentProvider
+        - appointmentFee
+        - serviceFee
+        - vat
+      properties:
+        patientId:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+        serviceType:
+          type: string
+          enum: [appointment, subscription, lab_test, pharmacy, document_access, verification_fee, chat_premium, other]
+        serviceId:
+          type: string
+          format: uuid
+        # NEW: Appointment date for appointment payments
+        appointmentDate:
+          type: string
+          format: date-time
+          description: "Required for appointment payments - determines when dispute window starts"
+        planType:
+          type: string
+          enum: [free, basic, medium, premium, one_time]
+        billingCycle:
+          type: string
+          enum: [one_time, monthly, quarterly, yearly]
+          default: one_time
+        originalAmount:
+          type: number
+          minimum: 0.01
+        originalCurrency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        paymentProvider:
+          type: string
+          enum: [flutterwave, paystack]
+        paymentMethodId:
+          type: string
+          format: uuid
+        appointmentFee:
+          type: number
+          minimum: 0
+          default: 0
+        serviceFee:
+          type: number
+          minimum: 0
+          default: 0
+        vat:
+          type: number
+          minimum: 0
+          default: 0
+        description:
+          type: string
+          maxLength: 500
+
+    # Enhanced Payment Initiation Response
+    InitiatePaymentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            transactionId:
+              type: string
+              format: uuid
+            status:
+              type: string
+            amount:
+              type: number
+            currency:
+              type: string
+            serviceType:
+              type: string
+            # NEW: Enhanced appointment fields
+            appointmentDate:
+              type: string
+              format: date-time
+              description: "Appointment date (for appointment payments)"
+            fundsStatus:
+              type: string
+              enum: [pending_appointment, pending_dispute, released]
+              description: "Current status of funds"
+            disputeWindowStartsAt:
+              type: string
+              format: date-time
+              description: "When dispute window begins"
+            disputeWindowEndsAt:
+              type: string
+              format: date-time
+              description: "When dispute window ends"
+
+    # Payment Processing (unchanged)
+    ProcessPaymentRequest:
+      type: object
+      required:
+        - transactionId
+        - paymentProvider
+        - paymentData
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        paymentProvider:
+          type: string
+          enum: [flutterwave, paystack]
+        paymentData:
+          type: object
+          required:
+            - email
+            - name
+          properties:
+            email:
+              type: string
+              format: email
+            phone:
+              type: string
+            name:
+              type: string
+            card:
+              type: object
+              properties:
+                number:
+                  type: string
+                cvv:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                expiryMonth:
+                  type: string
+                  minLength: 2
+                  maxLength: 2
+                expiryYear:
+                  type: string
+                  minLength: 4
+                  maxLength: 4
+                pin:
+                  type: string
+                  minLength: 4
+                  maxLength: 4
+
+    # NEW: Appointment Payment Overview
+    AppointmentPaymentOverview:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: "Total appointment payments"
+            waitingForAppointment:
+              type: integer
+              description: "Payments waiting for appointment date"
+            pendingDispute:
+              type: integer
+              description: "Payments in dispute window"
+            released:
+              type: integer
+              description: "Payments with funds released"
+        payments:
+          type: object
+          properties:
+            waitingForAppointment:
+              type: array
+              items:
+                $ref: '#/components/schemas/AppointmentPaymentSummary'
+            pendingDispute:
+              type: array
+              items:
+                $ref: '#/components/schemas/AppointmentPaymentSummary'
+            released:
+              type: array
+              items:
+                $ref: '#/components/schemas/AppointmentPaymentSummary'
+
+    # NEW: Appointment Payment Summary
+    AppointmentPaymentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        appointmentDate:
+          type: string
+          format: date-time
+        amount:
+          type: number
+          format: decimal
+        currency:
+          type: string
+        usdAmount:
+          type: number
+          format: decimal
+        patientId:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+        fundsStatus:
+          type: string
+          enum: [pending_appointment, pending_dispute, released]
+        statusInfo:
+          type: object
+          properties:
+            status:
+              type: string
+            description:
+              type: string
+              example: "Appointment in 5 days"
+        createdAt:
+          type: string
+          format: date-time
+
+    # NEW: Cancellation and Rescheduling Schemas
+    CancelAppointmentRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 200
+          description: "Optional reason for cancellation"
+        refundToOriginalMethod:
+          type: boolean
+          default: true
+          description: "Whether to refund to original payment method"
+
+    CancelAppointmentResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        refundAmount:
+          type: number
+          format: decimal
+          description: "Amount refunded to patient (appointment fee only)"
+        refundStatus:
+          type: string
+          enum: [pending, full, failed]
+        keptAmount:
+          type: number
+          format: decimal
+          description: "Amount kept by company (service fee + VAT)"
+        cancelledAt:
+          type: string
+          format: date-time
+
+    RescheduleAppointmentRequest:
+      type: object
+      required:
+        - newAppointmentDate
+      properties:
+        newAppointmentDate:
+          type: string
+          format: date-time
+          description: "New appointment date and time"
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 200
+          description: "Optional reason for rescheduling"
+
+    RescheduleAppointmentResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        originalAppointmentDate:
+          type: string
+          format: date-time
+        newAppointmentDate:
+          type: string
+          format: date-time
+        fundsStatus:
+          type: string
+          enum: [pending_appointment, pending_dispute, released]
+        disputeWindowStartsAt:
+          type: string
+          format: date-time
+        disputeWindowEndsAt:
+          type: string
+          format: date-time
+        rescheduleCount:
+          type: integer
+
+    CancelledAppointmentsSummary:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            totalCancelled:
+              type: integer
+              description: "Total number of cancelled appointments"
+            totalRefundedAmount:
+              type: number
+              format: decimal
+              description: "Total USD amount refunded to patients"
+            totalKeptAmount:
+              type: number
+              format: decimal
+              description: "Total USD amount kept by company"
+            refundStatusBreakdown:
+              type: object
+              properties:
+                pending:
+                  type: integer
+                full:
+                  type: integer
+                failed:
+                  type: integer
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CancelledAppointmentSummary'
+
+    CancelledAppointmentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        appointmentDate:
+          type: string
+          format: date-time
+        originalAppointmentDate:
+          type: string
+          format: date-time
+        amount:
+          type: number
+          format: decimal
+        currency:
+          type: string
+        refundAmount:
+          type: number
+          format: decimal
+        refundStatus:
+          type: string
+          enum: [none, pending, partial, full, failed]
+        cancelledAt:
+          type: string
+          format: date-time
+        refundProcessedAt:
+          type: string
+          format: date-time
+        rescheduleCount:
+          type: integer
+        patientId:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+
+    AppointmentHistoryResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        currentAppointmentDate:
+          type: string
+          format: date-time
+        originalAppointmentDate:
+          type: string
+          format: date-time
+        rescheduleCount:
+          type: integer
+        lastRescheduledAt:
+          type: string
+          format: date-time
+        currentFundsStatus:
+          type: string
+          enum: [pending_appointment, pending_dispute, released]
+        fundsStatusDisplay:
+          type: string
+          description: "Human-readable status description"
+        daysRemaining:
+          type: integer
+          description: "Days remaining until funds are available"
+        canWithdraw:
+          type: boolean
+          description: "Whether funds can be withdrawn"
+        disputeWindowStartsAt:
+          type: string
+          format: date-time
+        disputeWindowEndsAt:
+          type: string
+          format: date-time
+        isCancelled:
+          type: boolean
+        cancelledAt:
+          type: string
+          format: date-time
+
+    # Payment Methods (unchanged)
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        cardLast4:
+          type: string
+          minLength: 4
+          maxLength: 4
+        cardType:
+          type: string
+        cardBrand:
+          type: string
+        bankName:
+          type: string
+        flutterwaveSuccessRate:
+          type: number
+        paystackSuccessRate:
+          type: number
+        lastSuccessfulProvider:
+          type: string
+          enum: [flutterwave, paystack]
+        isDefault:
+          type: boolean
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+
+    SavePaymentMethodRequest:
+      type: object
+      required:
+        - cardLast4
+        - cardType
+      properties:
+        cardLast4:
+          type: string
+          pattern: '^[0-9]{4}$'
+        cardType:
+          type: string
+          enum: [Visa, Mastercard, Verve, American Express]
+        cardBrand:
+          type: string
+        bankName:
+          type: string
+
+    # Wallet Schemas (unchanged)
+    DoctorWallet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+        displayBalance:
+          type: object
+          properties:
+            total:
+              type: string
+            pending:
+              type: string
+            available:
+              type: string
+            currency:
+              type: string
+        usdBalance:
+          type: object
+          properties:
+            total:
+              type: number
+            pending:
+              type: number
+            available:
+              type: number
+            currency:
+              type: string
+        preferredDisplayCurrency:
+          type: string
+        isActive:
+          type: boolean
+        isFrozen:
+          type: boolean
+        frozenReason:
+          type: string
+
+    WalletWithdrawalRequest:
+      type: object
+      required:
+        - amountUsd
+        - requestedCurrency
+        - bankDetails
+      properties:
+        amountUsd:
+          type: number
+          minimum: 10
+        requestedCurrency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        bankDetails:
+          type: object
+          required:
+            - bankCode
+            - accountNumber
+            - accountName
+            - bankName
+          properties:
+            bankCode:
+              type: string
+            accountNumber:
+              type: string
+            accountName:
+              type: string
+            bankName:
+              type: string
+
+    WalletWithdrawal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        walletId:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+        amountUsd:
+          type: number
+        requestedCurrency:
+          type: string
+        requestedAmount:
+          type: number
+        exchangeRateUsed:
+          type: number
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, cancelled]
+        providerReference:
+          type: string
+        failureReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        processedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    # Dispute Schemas (unchanged)
+    Dispute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        transactionId:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [refund_request, chargeback, quality_complaint]
+        status:
+          type: string
+          enum: [pending, approved, rejected, escalated, resolved]
+        reason:
+          type: string
+        patientDescription:
+          type: string
+        doctorResponse:
+          type: string
+        adminNotes:
+          type: string
+        refundAmount:
+          type: number
+        refundCurrency:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        respondedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+
+    CreateDisputeRequest:
+      type: object
+      required:
+        - transactionId
+        - reason
+        - description
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum: [service_not_provided, poor_quality, billing_error, unauthorized_charge, other]
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+
+    DisputeResponseRequest:
+      type: object
+      required:
+        - disputeId
+        - action
+        - response
+      properties:
+        disputeId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [approve, escalate]
+        response:
+          type: string
+          minLength: 10
+          maxLength: 1000
+
+    # Enhanced Response Schemas
+    EnhancedPaymentStatistics:
+      allOf:
+        - $ref: '#/components/schemas/PaymentStatistics'
+        - type: object
+          properties:
+            appointmentPayments:
+              $ref: '#/components/schemas/AppointmentPaymentStatistics'
+
+    # NEW: Appointment Payment Statistics
+    AppointmentPaymentStatistics:
+      type: object
+      properties:
+        waitingForAppointment:
+          type: integer
+          description: "Number of payments waiting for appointment"
+        pendingDispute:
+          type: integer
+          description: "Number of payments in dispute window"
+        released:
+          type: integer
+          description: "Number of payments with funds released"
+        amountWaitingForAppointment:
+          type: number
+          format: decimal
+          description: "USD amount waiting for appointment"
+        amountPendingDispute:
+          type: number
+          format: decimal
+          description: "USD amount in dispute window"
+
+    PaymentStatistics:
+      type: object
+      properties:
+        totalTransactions:
+          type: integer
+        totalRevenueUsd:
+          type: number
+        completedTransactions:
+          type: integer
+        failedTransactions:
+          type: integer
+        disputedTransactions:
+          type: integer
+        averageTransactionValueUsd:
+          type: number
+        successRate:
+          type: string
+
+    # Enhanced Transaction History Response
+    EnhancedTransactionHistoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            transactions:
+              type: array
+              items:
+                $ref: '#/components/schemas/EnhancedTransaction'
+            pagination:
+              $ref: '#/components/schemas/PaginationInfo'
+
+    TransactionHistoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            transactions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+            pagination:
+              $ref: '#/components/schemas/PaginationInfo'
+
+    PaginationInfo:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+        totalPages:
+          type: integer
+        totalItems:
+          type: integer
+        itemsPerPage:
+          type: integer
+
+    # Common Response Schemas
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+              value:
+                type: string
+
+  # Response definitions
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    Forbidden:
+      description: Access forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    TooManyRequests:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

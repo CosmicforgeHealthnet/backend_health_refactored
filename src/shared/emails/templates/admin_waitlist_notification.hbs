@@ -1,0 +1,84 @@
+
+<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    
+    <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="margin: 0; font-size: 28px;">New Waitlist Registration</h1>
+        <p style="margin: 10px 0 0 0; font-size: 18px;">CosmicForge Health Admin Alert</p>
+    </div>
+
+    <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+        <p>Dear Administrator,</p>
+        
+        <p>A new lab facility has joined the registration waitlist. Here are the details:</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff6b6b;">
+            <h3 style="margin-top: 0; color: #ff6b6b;">New Waitlist Entry Details:</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px 0; font-weight: bold; width: 30%;">Full Name:</td>
+                    <td style="padding: 8px 0;">{{fullName}}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px 0; font-weight: bold;">Email:</td>
+                    <td style="padding: 8px 0;">{{email}}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px 0; font-weight: bold;">Facility Name:</td>
+                    <td style="padding: 8px 0;">{{facilityName}}</td>
+                </tr>
+                {{#if facilityType}}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px 0; font-weight: bold;">Facility Type:</td>
+                    <td style="padding: 8px 0;">{{facilityType}}</td>
+                </tr>
+                {{/if}}
+                {{#if phone}}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px 0; font-weight: bold;">Phone:</td>
+                    <td style="padding: 8px 0;">{{phone}}</td>
+                </tr>
+                {{/if}}
+                {{#if city}}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px 0; font-weight: bold;">Location:</td>
+                    <td style="padding: 8px 0;">{{city}}{{#if state}}, {{state}}{{/if}}</td>
+                </tr>
+                {{/if}}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px 0; font-weight: bold;">Joined At:</td>
+                    <td style="padding: 8px 0;">{{joinedAt}}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: bold;">Tracking ID:</td>
+                    <td style="padding: 8px 0; font-family: monospace; background: #f5f5f5; padding: 4px 8px; border-radius: 4px;">{{trackingId}}</td>
+                </tr>
+            </table>
+        </div>
+
+        <h3 style="color: #ff6b6b;">Quick Actions:</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+            <a href="{{entryDetailsUrl}}" style="background: #ff6b6b; color: white; padding: 15px; text-decoration: none; border-radius: 5px; text-align: center; font-weight: bold;">View Entry Details</a>
+            <a href="{{waitlistDashboardUrl}}" style="background: #2196F3; color: white; padding: 15px; text-decoration: none; border-radius: 5px; text-align: center; font-weight: bold;">View All Waitlist</a>
+        </div>
+
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>Next Steps:</strong></p>
+            <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                <li>Review the waitlist entry for completeness</li>
+                <li>Monitor waitlist growth and engagement</li>
+                <li>Prepare launch communications when ready</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{waitlistStatsUrl}}" style="background: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">View Waitlist Statistics</a>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        
+        <p style="font-size: 12px; color: #999; margin-top: 20px;">
+            This is an automated admin notification from the CosmicForge Health waitlist system.
+        </p>
+    </div>
+    
+</div>

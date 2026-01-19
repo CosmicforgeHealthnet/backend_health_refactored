@@ -1,0 +1,844 @@
+paths:
+  /lab/orders:
+    post:
+      tags:
+        - Lab Orders - Patient
+      summary: Create a new lab order
+      description: |
+        Create a new lab order as a patient. The order will be pending approval
+        and payment processing by the lab facility.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreation'
+            examples:
+              blood_test_home:
+                summary: Blood Test with Home Collection
+                value:
+                  facilityId: "550e8400-e29b-41d4-a716-446655440000"
+                  tests:
+                    - name: "Complete Blood Count"
+                      testCode: "LAB-CBC-001"
+                      category: "Hematology"
+                      unitPrice: 75.00
+                      quantity: 1
+                      description: "Comprehensive blood analysis"
+                      sampleType: "Blood"
+                    - name: "Lipid Profile"
+                      testCode: "LAB-LIP-001"
+                      category: "Chemistry"
+                      unitPrice: 45.00
+                      quantity: 1
+                      description: "Cholesterol and triglyceride analysis"
+                      sampleType: "Blood"
+                      preparationInstructions: "Fasting required for 12 hours"
+                  serviceType: "home_collection"
+                  collectionAddress: "123 Main St, Apt 4B, New York, NY 10001"
+                  patientInstructions: "Please call 30 minutes before arrival"
+                  medicalHistory: "Type 2 Diabetes, Hypertension"
+                  preferredDate: "2024-02-15"
+                  preferredTime: "09:00"
+                  urgentProcessing: false
+                  doctorReferral: "Dr. Smith - Internal Medicine - Ref: 12345"
+              radiology_lab_visit:
+                summary: X-Ray with Lab Visit
+                value:
+                  facilityId: "550e8400-e29b-41d4-a716-446655440000"
+                  tests:
+                    - name: "Chest X-Ray"
+                      testCode: "RAD-CXR-001"
+                      category: "Radiology"
+                      unitPrice: 120.00
+                      quantity: 1
+                      description: "Two-view chest X-ray"
+                      preparationInstructions: "Remove all jewelry and metal objects"
+                  serviceType: "lab_visit"
+                  patientInstructions: "Arrive 15 minutes early for check-in"
+                  preferredDate: "2024-02-16"
+                  preferredTime: "14:00"
+                  doctorReferral: "Dr. Johnson - Pulmonology - Ref: 67890"
+      responses:
+        '201':
+          $ref: '#/components/responses/OrderCreated'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                missing_tests:
+                  summary: No tests specified
+                  value:
+                    success: false
+                    error: "Validation failed"
+                    details:
+                      - field: "tests"
+                        message: "At least one test must be specified"
+                        value: []
+                invalid_facility:
+                  summary: Invalid facility
+                  value:
+                    success: false
+                    error: "Lab facility not found"
+                facility_inactive:
+                  summary: Facility not accepting orders
+                  value:
+                    success: false
+                    error: "Lab facility is not currently accepting orders"
+                missing_collection_address:
+                  summary: Missing collection address for home service
+                  value:
+                    success: false
+                    error: "Collection address is required for home collection"
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Only patients can create lab orders"
+
+  /lab/orders/{id}:
+    get:
+      tags:
+        - Lab Orders - General
+      summary: Get order details
+      description: |
+        Retrieve detailed information about a specific order.
+        Access is restricted based on user role and relationship to the order.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          $ref: '#/components/responses/OrderFound'
+        '403':
+          $ref: '#/components/responses/OrderAccessDenied'
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+
+    delete:
+      tags:
+        - Lab Orders - General
+      summary: Cancel order
+      description: |
+        Cancel a lab order. Only patients and lab administrators can cancel orders.
+        Some statuses may prevent cancellation.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCancellation'
+            example:
+              reason: "Patient rescheduled appointment due to emergency and needs to choose a different date"
+      responses:
+        '200':
+          description: Order cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Order cancelled successfully"
+                  data:
+                    $ref: '#/components/schemas/LabOrder'
+        '400':
+          description: Cannot cancel order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                cannot_cancel:
+                  summary: Order cannot be cancelled in current status
+                  value:
+                    success: false
+                    error: "Cannot cancel order in current status"
+                missing_reason:
+                  summary: Cancellation reason required
+                  value:
+                    success: false
+                    error: "Cancellation reason is required"
+        '403':
+          $ref: '#/components/responses/OrderAccessDenied'
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+
+  /lab/orders/my/patient:
+    get:
+      tags:
+        - Lab Orders - Patient
+      summary: Get patient's orders
+      description: Get all orders for the authenticated patient
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderLimit'
+        - $ref: '#/components/parameters/OrderOffset'
+      responses:
+        '200':
+          description: Patient orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Patient orders retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LabOrder'
+                  count:
+                    type: integer
+                    example: 8
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Only patients can view their orders"
+
+  /lab/facilities/{facilityId}/orders:
+    get:
+      tags:
+        - Lab Orders - Lab Admin
+      summary: Get facility orders
+      description: Get all orders for a specific facility (lab admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/OrderLimit'
+        - $ref: '#/components/parameters/OrderOffset'
+        - $ref: '#/components/parameters/OrderStatus'
+      responses:
+        '200':
+          description: Facility orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Facility orders retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LabOrder'
+                  count:
+                    type: integer
+                    example: 25
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied. Only facility admin can view facility orders."
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Facility not found"
+
+  /lab/orders/{id}/review:
+    put:
+      tags:
+        - Lab Orders - Lab Admin
+      summary: Review order and send invoice
+      description: |
+        Review a patient's order and send payment invoice (lab admin only).
+        This transitions the order from 'created' to 'pending_payment' status.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderReview'
+            examples:
+              standard_review:
+                summary: Standard order review
+                value:
+                  baseAmount: 120.00
+                  homeVisitFee: 25.00
+                  urgentFee: 0
+                  currency: "USD"
+                  invoiceNotes: "Payment due within 24 hours. Home collection scheduled."
+              urgent_processing:
+                summary: Order with urgent processing
+                value:
+                  baseAmount: 150.00
+                  homeVisitFee: 0
+                  urgentFee: 30.00
+                  currency: "USD"
+                  invoiceNotes: "Urgent processing requested. Results available same day."
+      responses:
+        '200':
+          $ref: '#/components/responses/InvoiceSent'
+        '400':
+          $ref: '#/components/responses/InvalidOrderStatus'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Only lab administrators can review orders"
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+
+  /lab/orders/{id}/payment/confirm:
+    put:
+      tags:
+        - Lab Orders - Payment
+      summary: Confirm payment
+      description: |
+        Confirm payment for an order (internal/webhook endpoint).
+        This is typically called by payment processors or internal systems.
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentConfirmation'
+            example:
+              paymentId: "pay_1234567890"
+              amount: 150.00
+              currency: "USD"
+              paymentMethod: "credit_card"
+              transactionId: "txn_abcd1234"
+      responses:
+        '200':
+          $ref: '#/components/responses/PaymentConfirmed'
+        '400':
+          description: Invalid payment data or order not awaiting payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_awaiting_payment:
+                  summary: Order not awaiting payment
+                  value:
+                    success: false
+                    error: "Order is not awaiting payment"
+                invalid_amount:
+                  summary: Payment amount mismatch
+                  value:
+                    success: false
+                    error: "Payment amount does not match order total"
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+
+  /lab/orders/{id}/assign:
+    put:
+      tags:
+        - Lab Orders - Lab Admin
+      summary: Assign personnel to order
+      description: |
+        Assign laboratory personnel to handle an order (lab admin only).
+        Order must be in 'payment_confirmed' status.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonnelAssignment'
+            example:
+              personnelId: "550e8400-e29b-41d4-a716-446655440002"
+      responses:
+        '200':
+          $ref: '#/components/responses/PersonnelAssigned'
+        '400':
+          description: Invalid assignment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                must_be_paid:
+                  summary: Order must be paid first
+                  value:
+                    success: false
+                    error: "Order must be paid before personnel assignment"
+                role_mismatch:
+                  summary: Personnel cannot handle this order type
+                  value:
+                    success: false
+                    error: "Personnel role sample_collector cannot handle radiology orders"
+                personnel_not_found:
+                  summary: Personnel not found or not associated with facility
+                  value:
+                    success: false
+                    error: "Personnel not found or not associated with this facility"
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Only lab administrators can assign personnel"
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+
+  /lab/orders/{id}/schedule:
+    put:
+      tags:
+        - Lab Orders - Personnel
+      summary: Schedule appointment
+      description: |
+        Schedule appointment for sample collection or radiology service.
+        Only assigned personnel can schedule appointments.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleAppointment'
+            example:
+              scheduledDateTime: "2024-02-15T09:00:00Z"
+              notes: "Patient prefers morning appointments. Confirmed availability."
+      responses:
+        '200':
+          $ref: '#/components/responses/AppointmentScheduled'
+        '400':
+          description: Invalid scheduling request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_datetime:
+                  summary: Invalid date/time
+                  value:
+                    success: false
+                    error: "Scheduled date and time must be in the future"
+                order_not_assigned:
+                  summary: Order must be assigned first
+                  value:
+                    success: false
+                    error: "Order must be assigned before scheduling"
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Only assigned personnel can schedule appointments"
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+
+  /lab/orders/{id}/complete-collection:
+    put:
+      tags:
+        - Lab Orders - Personnel
+      summary: Complete sample collection or radiology
+      description: |
+        Mark sample collection or radiology service as completed.
+        Only assigned personnel can complete collection.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionCompletion'
+            example:
+              collectionNotes: "Samples collected successfully at patient's home. Patient was cooperative and followed all instructions."
+              sampleImages: ["https://storage.com/sample1.jpg", "https://storage.com/sample2.jpg"]
+              collectionLocation: "Patient's home - 123 Main St, Apt 4B"
+              additionalObservations: "Patient mentioned recent medication changes"
+      responses:
+        '200':
+          $ref: '#/components/responses/CollectionCompleted'
+        '400':
+          description: Invalid completion request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Order cannot be completed in current status"
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Only assigned personnel can complete collection"
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+
+  /lab/orders/{id}/start-processing:
+    put:
+      tags:
+        - Lab Orders - Lab Technician
+      summary: Start processing tests
+      description: |
+        Start processing laboratory tests (lab technician only).
+        Samples must be collected before processing can begin.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          $ref: '#/components/responses/ProcessingStarted'
+        '400':
+          description: Cannot start processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Samples must be collected before processing"
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Only lab technicians can start processing"
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+
+  /lab/orders/{id}/upload-results:
+    put:
+      tags:
+        - Lab Orders - Lab Technician
+      summary: Upload test results
+      description: |
+        Upload completed test results (lab technician only).
+        Order must be in 'processing' status.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResultsUpload'
+            example:
+              resultsFileUrl: "https://storage.com/results/order-123.pdf"
+              resultsData:
+                hemoglobin: "14.2 g/dL"
+                hematocrit: "42%"
+                white_blood_cells: "7500/μL"
+                cholesterol_total: "180 mg/dL"
+              processingNotes: "All tests completed successfully. Quality control passed. No technical issues encountered."
+              itemResults:
+                - itemId: "550e8400-e29b-41d4-a716-446655440006"
+                  result: "14.2 g/dL"
+                  normalRange: "12-16 g/dL"
+                  unit: "g/dL"
+                  isAbnormal: false
+                - itemId: "550e8400-e29b-41d4-a716-446655440007"
+                  result: "180 mg/dL"
+                  normalRange: "< 200 mg/dL"
+                  unit: "mg/dL"
+                  isAbnormal: false
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultsUploaded'
+        '400':
+          description: Invalid results upload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Order must be in processing status"
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Only lab technicians can upload results"
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+
+  /lab/orders/{id}/review-results:
+    put:
+      tags:
+        - Lab Orders - Result Reviewer
+      summary: Review and approve results
+      description: |
+        Review test results for quality assurance and approve for delivery (result reviewer only).
+        Results must be uploaded before they can be reviewed.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResultsReview'
+            examples:
+              approve_results:
+                summary: Approve results
+                value:
+                  approved: true
+                  notes: "All results are within normal ranges. Quality control completed. Results approved for patient delivery."
+              request_revision:
+                summary: Request revision
+                value:
+                  approved: false
+                  notes: "Please recheck hemoglobin levels. Value seems inconsistent with other parameters. Recommend re-running this test."
+      responses:
+        '200':
+          description: Results reviewed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Results approved and sent to patient"
+                  data:
+                    $ref: '#/components/schemas/LabOrder'
+        '400':
+          description: Cannot review results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Results must be ready for review"
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Only result reviewers can review results"
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+
+  /lab/orders/my/assignments:
+    get:
+      tags:
+        - Lab Orders - Personnel
+      summary: Get personnel assignments
+      description: |
+        Get orders assigned to the authenticated personnel member.
+        Shows tasks for sample collectors, technicians, radiologists, and reviewers.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Assigned orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Assigned orders retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LabOrder'
+                  count:
+                    type: integer
+                    example: 12
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Only lab personnel can view assignments"
+
+  /lab/orders/search:
+    get:
+      tags:
+        - Lab Orders - General
+      summary: Search orders
+      description: |
+        Search orders by order number, patient name, or other criteria.
+        Results are filtered based on user access rights.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderSearchQuery'
+        - name: facilityId
+          in: query
+          required: false
+          description: Filter by facility (lab admin only)
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Search results retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LabOrder'
+                  count:
+                    type: integer
+                    example: 5
+        '400':
+          description: Invalid search query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Search query 'q' is required"
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied to search orders for this facility"
+
+  /lab/orders/statistics:
+    get:
+      tags:
+        - Lab Orders - Analytics
+      summary: Get order statistics
+      description: |
+        Retrieve comprehensive order statistics and metrics.
+        Results are filtered based on user access rights.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: facilityId
+          in: query
+          required: false
+          description: Filter statistics by facility (lab admin/personnel only)
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: dateFrom
+          in: query
+          required: false
+          description: Start date for statistics
+          schema:
+            type: string
+            format: date
+            example: "2024-01-01"
+        - name: dateTo
+          in: query
+          required: false
+          description: End date for statistics
+          schema:
+            type: string
+            format: date
+            example: "2024-01-31"
+      responses:
+        '200':
+          $ref: '#/components/responses/OrderStatistics'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Access denied to view order statistics"

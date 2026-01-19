@@ -1,0 +1,228 @@
+paths:
+  /api/patient/patient-profiles:
+    post:
+      summary: Create a new patient profile
+      description: |
+        Creates a patient profile for the authenticated user.  
+        - Requires a valid JWT access token.  
+        - Optionally links to an existing user via `userId`.  
+        - Related entities (e.g., `medicalConditions`, `surgeries`) can be included.
+      tags: [Patient Profiles]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./patientComponent.yaml#/components/schemas/PatientProfile"
+      responses:
+        "201":
+          description: Patient profile created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Patient profile created successfully
+                  profile:
+                    $ref: "./patientComponent.yaml#/components/schemas/PatientProfileResponse"
+        "400":
+          description: Validation error or email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+
+  /api/patient/patient-profiles/{id}:
+    get:
+      summary: Get a patient profile by ID
+      description: |
+        Retrieves a patient profile by its UUID, including all related entities.  
+        - Requires a valid JWT access token.  
+        - The authenticated user must own the profile.
+      tags: [Patient Profiles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "./patientComponent.yaml#/components/parameters/PatientProfileId"
+      responses:
+        "200":
+          description: Patient profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Patient profile retrieved successfully
+                  profile:
+                    $ref: "./patientComponent.yaml#/components/schemas/PatientProfile"
+        "401":
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden - User does not own this profile
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Patient profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+
+    put:
+      summary: Update a patient profile
+      description: |
+        Updates a patient profile by its UUID.  
+        - Requires a valid JWT access token.  
+        - The authenticated user must own the profile.  
+        - Only provided fields are updated; related entities are replaced if included.
+      tags: [Patient Profiles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "./patientComponent.yaml#/components/parameters/PatientProfileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./patientComponent.yaml#/components/schemas/PatientProfile"
+      responses:
+        "200":
+          description: Patient profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Patient profile updated successfully
+                  profile:
+                    $ref: "./patientComponent.yaml#/components/schemas/PatientProfileResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden - User does not own this profile
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Patient profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+
+    delete:
+      summary: Delete a patient profile
+      description: |
+        Deletes a patient profile by its UUID.  
+        - Requires a valid JWT access token.  
+        - The authenticated user must own the profile.
+      tags: [Patient Profiles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "./patientComponent.yaml#/components/parameters/PatientProfileId"
+      responses:
+        "200":
+          description: Patient profile deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Patient profile deleted successfully
+        "401":
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden - User does not own this profile
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Patient profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+
+  /api/patient/patient-profiles/api/patient/{userId}:
+    get:
+      summary: Get a patient profile by user ID
+      description: |
+        Retrieves the patient profile associated with a user ID, including all related entities.  
+        - Requires a valid JWT access token.  
+        - The authenticated user must match the userId.
+      tags: [Patient Profiles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "./patientComponent.yaml#/components/parameters/UserId"
+      responses:
+        "200":
+          description: Patient profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Patient profile retrieved successfully
+                  profile:
+                    $ref: "./patientComponent.yaml#/components/schemas/PatientProfile"
+        "401":
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden - User does not own this profile
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Patient profile not found for this user
+          content:
+            application/json:
+              schema:
+                $ref: "./patientComponent.yaml#/components/schemas/ErrorResponse"

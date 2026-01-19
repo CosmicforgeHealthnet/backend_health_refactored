@@ -1,0 +1,596 @@
+paths:
+  /consent/create:
+    post:
+      tags:
+        - Consent Management
+      summary: Create new patient consent
+      description: |
+        Create a new consent record for a patient. This establishes what level
+        of access is granted, for what purposes, and any restrictions.
+      operationId: createConsent
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Consent creation data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentCreateRequest'
+            examples:
+              basicConsent:
+                summary: Basic treatment consent
+                value:
+                  patientIdentifier: "12345"
+                  consentScope: "limited_access"
+                  allowedPurposes: ["treatment", "healthcare_operations"]
+                  effectiveDate: "2024-01-01T00:00:00Z"
+                  expirationDate: "2025-12-31T23:59:59Z"
+                  allowEmergencyAccess: true
+                  consentMethod: "electronic"
+              fullConsent:
+                summary: Full access consent with restrictions
+                value:
+                  patientIdentifier: "67890"
+                  consentScope: "full_access"
+                  allowedPurposes: ["treatment", "payment", "healthcare_operations"]
+                  restrictedResourceTypes: ["DiagnosticReport"]
+                  allowedUsers: ["doctor-uuid-1", "nurse-uuid-2"]
+                  effectiveDate: "2024-01-01T00:00:00Z"
+                  allowEmergencyAccess: true
+                  consentMethod: "written"
+                  witness: "witness-uuid"
+      responses:
+        '201':
+          description: Consent created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentResponse'
+        '400':
+          $ref: '#/components/responses/ConsentBadRequest'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/{patientId}/status:
+    get:
+      tags:
+        - Consent Management
+      summary: Get consent status for patient
+      description: |
+        Retrieve the current consent status for a patient, including scope,
+        allowed purposes, and expiration information.
+      operationId: getConsentStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientIdParam'
+      responses:
+        '200':
+          description: Consent status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentStatusResponse'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '404':
+          $ref: '#/components/responses/ConsentNotFound'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/{patientId}/update:
+    put:
+      tags:
+        - Consent Management
+      summary: Update patient consent
+      description: |
+        Update an existing consent record. Creates a new version while
+        maintaining audit trail of previous versions.
+      operationId: updateConsent
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientIdParam'
+      requestBody:
+        description: Consent update data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentUpdateRequest'
+            example:
+              consentScope: "full_access"
+              allowedPurposes: ["treatment", "payment", "healthcare_operations"]
+              allowedUsers: ["user-uuid-1", "user-uuid-2", "user-uuid-3"]
+              expirationDate: "2026-12-31T23:59:59Z"
+              allowEmergencyAccess: true
+      responses:
+        '200':
+          description: Consent updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentResponse'
+        '400':
+          $ref: '#/components/responses/ConsentBadRequest'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '404':
+          $ref: '#/components/responses/ConsentNotFound'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/{patientId}/withdraw:
+    put:
+      tags:
+        - Consent Management
+      summary: Withdraw patient consent
+      description: |
+        Withdraw consent for a patient. This action is irreversible and
+        immediately restricts access to patient data.
+      operationId: withdrawConsent
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientIdParam'
+      requestBody:
+        description: Withdrawal information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentWithdrawalRequest'
+            example:
+              reason: "Patient requested data deletion"
+      responses:
+        '200':
+          description: Consent withdrawn successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Consent withdrawn successfully"
+                  withdrawnConsent:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      patientIdentifier:
+                        type: string
+                        example: "12345"
+                      withdrawnAt:
+                        type: string
+                        format: date-time
+        '400':
+          $ref: '#/components/responses/ConsentBadRequest'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '404':
+          $ref: '#/components/responses/ConsentNotFound'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/check-permission:
+    post:
+      tags:
+        - Permission Checking
+      summary: Check permission for specific access
+      description: |
+        Verify whether a user has permission to access patient data for a
+        specific purpose. Supports emergency access with justification.
+      operationId: checkPermission
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Permission check request
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionCheckRequest'
+            examples:
+              normalAccess:
+                summary: Normal treatment access
+                value:
+                  patientIdentifier: "12345"
+                  purposeOfUse: "treatment"
+                  resourceType: "Patient"
+                  isEmergency: false
+              emergencyAccess:
+                summary: Emergency access request
+                value:
+                  patientIdentifier: "67890"
+                  purposeOfUse: "emergency"
+                  resourceType: "DiagnosticReport"
+                  isEmergency: true
+                  emergencyJustification: "Patient in critical condition requiring immediate access"
+      responses:
+        '200':
+          description: Permission check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionResponse'
+        '400':
+          $ref: '#/components/responses/ConsentBadRequest'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/{patientId}/history:
+    get:
+      tags:
+        - Consent Audit
+      summary: Get consent history for patient
+      description: |
+        Retrieve the complete consent history for a patient, including
+        all versions, withdrawals, and modifications.
+      operationId: getConsentHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientIdParam'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Consent history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentHistoryResponse'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '404':
+          $ref: '#/components/responses/ConsentNotFound'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/{patientId}/access-logs:
+    get:
+      tags:
+        - Consent Audit
+      summary: Get consent access logs for patient
+      description: |
+        Retrieve detailed access logs showing who accessed patient data,
+        when, and for what purpose.
+      operationId: getConsentAccessLogs
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientIdParam'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: accessType
+          in: query
+          description: Filter by access type
+          schema:
+            type: string
+            enum: ["view", "download", "modify", "export", "emergency"]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Access logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentAccessLogResponse'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '404':
+          $ref: '#/components/responses/ConsentNotFound'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/emergency-access:
+    get:
+      tags:
+        - Emergency Access
+      summary: Get emergency access events
+      description: |
+        Retrieve all emergency access events with optional filtering
+        by date range and patient.
+      operationId: getEmergencyAccessEvents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: "2024-01-01"
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: "2024-12-31"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: patientIdentifier
+          in: query
+          description: Filter by specific patient
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Emergency access events retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmergencyAccessEventsResponse'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/bulk-update:
+    put:
+      tags:
+        - Bulk Operations
+      summary: Bulk update consent for multiple patients
+      description: |
+        Update consent settings for multiple patients at once.
+        Limited to 100 patients per request.
+      operationId: bulkUpdateConsents
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Bulk update request
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkConsentUpdateRequest'
+            example:
+              patientIdentifiers: ["12345", "67890", "11111"]
+              updateData:
+                allowEmergencyAccess: true
+                expirationDate: "2025-12-31T23:59:59Z"
+      responses:
+        '200':
+          description: Bulk update completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "3 consents updated successfully"
+                  updatedCount:
+                    type: integer
+                    example: 3
+                  requestedCount:
+                    type: integer
+                    example: 3
+        '400':
+          $ref: '#/components/responses/ConsentBadRequest'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/requiring-renewal:
+    get:
+      tags:
+        - Compliance
+      summary: Get patients requiring consent renewal
+      description: |
+        Retrieve patients whose consent is expiring within the specified
+        number of days ahead.
+      operationId: getPatientsRequiringRenewal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: daysAhead
+          in: query
+          description: Number of days to look ahead for expiring consents
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 365
+      responses:
+        '200':
+          description: Patients requiring renewal retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientsRequiringRenewalResponse'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/compliance-report:
+    get:
+      tags:
+        - Compliance
+      summary: Get consent compliance report
+      description: |
+        Generate a comprehensive consent compliance report including
+        overview statistics, renewal requirements, and emergency access metrics.
+      operationId: getConsentComplianceReport
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Compliance report generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentComplianceReportResponse'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/statistics:
+    get:
+      tags:
+        - Analytics
+      summary: Get consent statistics
+      description: |
+        Retrieve comprehensive consent statistics including overview metrics,
+        scope distribution, and daily activity trends.
+      operationId: getConsentStatistics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: timeRange
+          in: query
+          description: Number of days to include in statistics
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 365
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentStatisticsResponse'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/validate:
+    post:
+      tags:
+        - Validation
+      summary: Validate consent data
+      description: |
+        Validate consent data before creation or update to ensure
+        all required fields are present and valid.
+      operationId: validateConsentData
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Consent data to validate
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentCreateRequest'
+            example:
+              patientIdentifier: "12345"
+              consentScope: "limited_access"
+              allowedPurposes: ["treatment"]
+              expirationDate: "2025-12-31T23:59:59Z"
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentValidationResponse'
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'
+
+  /consent/templates:
+    get:
+      tags:
+        - Templates
+      summary: Get consent templates
+      description: |
+        Retrieve predefined consent templates for different use cases.
+        Templates provide standard configurations for common scenarios.
+      operationId: getConsentTemplates
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: Type of consent template
+          schema:
+            type: string
+            enum: ["general", "research", "full_access", "minimal"]
+            default: "general"
+      responses:
+        '200':
+          description: Template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentTemplateResponse'
+              examples:
+                generalTemplate:
+                  summary: General healthcare consent template
+                  value:
+                    success: true
+                    template:
+                      name: "General Healthcare Consent"
+                      consentScope: "limited_access"
+                      allowedPurposes: ["treatment", "healthcare_operations"]
+                      allowEmergencyAccess: true
+                      description: "Standard consent for general healthcare activities"
+                    availableTypes: ["general", "research", "full_access", "minimal"]
+                researchTemplate:
+                  summary: Research participation consent template
+                  value:
+                    success: true
+                    template:
+                      name: "Research Participation Consent"
+                      consentScope: "limited_access"
+                      allowedPurposes: ["research"]
+                      allowEmergencyAccess: false
+                      description: "Consent specifically for research participation"
+                    availableTypes: ["general", "research", "full_access", "minimal"]
+        '401':
+          $ref: '#/components/responses/ConsentUnauthorized'
+        '500':
+          $ref: '#/components/responses/ConsentInternalError'

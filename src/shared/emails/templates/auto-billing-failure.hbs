@@ -1,0 +1,67 @@
+﻿<!-- Auto-Billing Failure Template -->
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Heading -->
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+        Subscription Auto-Billing Failed
+    </h1>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>{{name}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        We could not process your <strong>{{planName}}</strong> subscription payment{{
+#if
+ failureCount}} (attempt {{failureCount}}/3){{
+/if
+}}.
+    </p>
+
+    <!-- Failure details -->
+    {{
+#if
+ isLastAttempt}}
+    <div style="background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #dc2626; margin: 0; font-size: 14px;">
+            <strong>Final Attempt Failed:</strong> Auto-billing failed 3 times. Please update your payment method to avoid service interruption.
+        </p>
+    </div>
+    {{else}}
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #92400e; margin: 0; font-size: 14px;">
+            <strong>Payment Issue:</strong> We'll retry soon. If your payment details have changed, please update your payment method.
+        </p>
+    </div>
+    {{
+/if
+}}
+
+    <!-- Error message -->
+    {{
+#if
+ errorMessage}}
+    <p style="font-size: 14px; color: #dc2626; margin: 20px 0;">
+        Error: {{errorMessage}}
+    </p>
+    {{
+/if
+}}
+
+    <!-- Button -->
+    {{
+#if
+ actionUrl}}
+    <div style="text-align: center; margin: 30px 0;">
+        {{> button url=actionUrl text="Update Payment Method" }}
+    </div>
+    {{
+/if
+}}
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px;">
+        The CosmicForge Team
+    </p>
+</div>

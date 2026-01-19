@@ -1,0 +1,105 @@
+components:
+  schemas:
+    ProfileOption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        profileType:
+          type: string
+        field:
+          type: string
+        value:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ProfileOptions:
+      type: object
+      properties:
+        patientProfileOptions:
+          type: object
+          properties:
+            gender:
+              type: array
+              items:
+                type: string
+              example: [male, female, other]
+            bloodGroup:
+              type: array
+              items:
+                type: string
+              example: [A+, A-, B+, B-, AB+, AB-, O+, O-]
+            genotype:
+              type: array
+              items:
+                type: string
+              example: [AA, AS, SS, AC, SC]
+            profileType:
+              type: array
+              items:
+                type: string
+              example: [individual, group]
+            physicalActivityLevel:
+              type: array
+              items:
+                type: string
+              example: [sedentary, light, moderate, active, very active]
+            dietType:
+              type: array
+              items:
+                type: string
+              example: [omnivore, vegetarian, vegan, pescatarian, keto]
+            preferredCommunication:
+              type: array
+              items:
+                type: string
+              example: [email, phone, sms]
+            languagePreference:
+              type: array
+              items:
+                type: string
+              example: [english, yoruba, hausa, igbo]
+            note:
+              type: string
+              example: All string fields are case-insensitive (e.g., "Male", "MALE", "male" are accepted for gender).
+        doctorProfileOptions:
+          type: object
+          properties:
+            gender:
+              type: array
+              items:
+                type: string
+              example: [male, female, other]
+            daysAvailableFrom:
+              type: array
+              items:
+                type: string
+              example: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+            daysAvailableTo:
+              type: array
+              items:
+                type: string
+              example: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+            paymentMethod:
+              type: array
+              items:
+                type: string
+              example: [bank_transfer, mobile_money]
+            frequencyPayout:
+              type: array
+              items:
+                type: string
+              example: [daily, weekly, monthly]
+            note:
+              type: string
+              example: All string fields are case-insensitive (e.g., "Monday", "MONDAY", "monday" are accepted for daysAvailableFrom).
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

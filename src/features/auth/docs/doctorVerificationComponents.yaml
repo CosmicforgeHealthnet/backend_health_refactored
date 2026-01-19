@@ -1,0 +1,605 @@
+# ADD THESE NEW SCHEMAS TO YOUR DOCTOR VERIFICATION COMPONENTS
+
+components:
+  schemas:
+    # NEW: Enhanced approval response with wallet/subscription info
+    EnhancedApproveVerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Doctor approved successfully with wallet and subscription setup"
+        data:
+          type: object
+          properties:
+            verificationRequest:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                status:
+                  type: string
+                  example: "approved"
+                approvedAt:
+                  type: string
+                  format: date-time
+                confidenceScore:
+                  type: number
+                  format: float
+                  example: 92.5
+            walletSetup:
+              type: object
+              properties:
+                created:
+                  type: boolean
+                  example: true
+                walletId:
+                  type: string
+                  format: uuid
+                message:
+                  type: string
+                  example: "Created new wallet for doctor"
+                error:
+                  type: string
+                  nullable: true
+            subscriptionSetup:
+              type: object
+              properties:
+                created:
+                  type: boolean
+                  example: true
+                subscriptionId:
+                  type: string
+                  format: uuid
+                tier:
+                  type: string
+                  example: "free"
+                commissionRate:
+                  type: number
+                  example: 30.00
+                message:
+                  type: string
+                  example: "Created default free subscription"
+                error:
+                  type: string
+                  nullable: true
+
+    EditableVerificationInfoResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            canEdit:
+              type: boolean
+              example: true
+              description: "Whether the verification can be edited in current status"
+            currentStatus:
+              type: string
+              example: "pending"
+              enum: [pending, in_progress, manual_review, rejected, approved, expired]
+            verificationInfo:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                licenseNumber:
+                  type: string
+                  example: "NG-MD-123456"
+                countryCode:
+                  type: string
+                  example: "NG"
+                issuingAuthority:
+                  type: string
+                  example: "MDCN"
+                licenseType:
+                  type: string
+                  example: "Full Registration"
+                issueDate:
+                  type: string
+                  format: date
+                  example: "2020-01-15"
+                expiryDate:
+                  type: string
+                  format: date
+                  example: "2025-01-14"
+                submittedAt:
+                  type: string
+                  format: date-time
+                lastUpdatedAt:
+                  type: string
+                  format: date-time
+            editableFields:
+              type: array
+              items:
+                type: string
+              example: ["licenseNumber", "countryCode", "issuingAuthority", "licenseType", "issueDate", "expiryDate"]
+              description: "Fields that can be edited in current status"
+
+    UpdateVerificationInfoRequest:
+      type: object
+      properties:
+        licenseNumber:
+          type: string
+          example: "NG-MD-123456"
+          description: "Medical license number"
+        countryCode:
+          type: string
+          example: "NG"
+          description: "ISO 2-letter country code"
+        issuingAuthority:
+          type: string
+          example: "MDCN"
+          description: "License issuing authority"
+        licenseType:
+          type: string
+          example: "Full Registration"
+          description: "Type of medical license"
+        issueDate:
+          type: string
+          format: date
+          example: "2020-01-15"
+          description: "License issue date"
+        expiryDate:
+          type: string
+          format: date
+          example: "2025-01-14"
+          description: "License expiry date"
+
+    UpdateVerificationInfoResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Verification information updated successfully"
+        data:
+          type: object
+          properties:
+            verificationRequest:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                licenseNumber:
+                  type: string
+                  example: "NG-MD-123456"
+                countryCode:
+                  type: string
+                  example: "NG"
+                issuingAuthority:
+                  type: string
+                  example: "MDCN"
+                licenseType:
+                  type: string
+                  example: "Full Registration"
+                issueDate:
+                  type: string
+                  format: date
+                  example: "2020-01-15"
+                expiryDate:
+                  type: string
+                  format: date
+                  example: "2025-01-14"
+                status:
+                  type: string
+                  example: "pending"
+                updatedAt:
+                  type: string
+                  format: date-time
+
+    EnhancedUploadDocumentsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "3 document(s) uploaded successfully"
+        data:
+          type: object
+          properties:
+            documents:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  documentType:
+                    type: string
+                    example: "medical_license"
+                    enum: [medical_license, medical_degree, government_id, proof_of_practice, board_certification, good_standing_certificate, postgraduate_certificate, passport, national_id, medical_registration, specialty_certificate, fellowship_certificate, cv_resume, recommendation_letter, work_permit, other]
+                  originalFileName:
+                    type: string
+                    example: "license.pdf"
+                  customDocumentName:
+                    type: string
+                    example: "MDCN Medical License"
+                    description: "User-provided custom name"
+                  displayName:
+                    type: string
+                    example: "MDCN Medical License"
+                    description: "Name to display in UI"
+                  documentCategory:
+                    type: string
+                    example: "Medical License"
+                    description: "Human-readable category"
+                  folderName:
+                    type: string
+                    example: "Verification Documents"
+                    description: "Folder organization"
+                  status:
+                    type: string
+                    example: "ready"
+                  uploadedAt:
+                    type: string
+                    format: date-time
+                  fileSize:
+                    type: integer
+                    example: 2048576
+                  mimeType:
+                    type: string
+                    example: "application/pdf"
+                  fhirResourceType:
+                    type: string
+                    nullable: true
+                    description: "FHIR resource type if detected"
+                  isFHIRCompliant:
+                    type: boolean
+                    example: false
+                    description: "Whether document contains FHIR data"
+            errors:
+              type: array
+              items:
+                type: string
+              description: "Any errors that occurred during upload"
+
+    EnhancedResubmitVerificationRequest:
+      type: object
+      properties:
+        licenseNumber:
+          type: string
+          description: "New license number (optional, uses previous if not provided)"
+        countryCode:
+          type: string
+          description: "New country code (optional, uses previous if not provided)"
+        issuingAuthority:
+          type: string
+          description: "New issuing authority (optional, uses previous if not provided)"
+        licenseType:
+          type: string
+          description: "New license type (optional, uses previous if not provided)"
+        issueDate:
+          type: string
+          format: date
+          description: "New issue date (optional, uses previous if not provided)"
+        expiryDate:
+          type: string
+          format: date
+          description: "New expiry date (optional, uses previous if not provided)"
+        replaceDocuments:
+          type: boolean
+          default: false
+          description: "If true, don't copy documents from previous request"
+
+    EnhancedResubmitVerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Verification resubmitted successfully"
+        data:
+          type: object
+          properties:
+            verificationRequest:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                status:
+                  type: string
+                  example: "pending"
+                method:
+                  type: string
+                  example: "hybrid"
+                tier:
+                  type: string
+                  example: "tier_2"
+                submittedAt:
+                  type: string
+                  format: date-time
+                previousRequestId:
+                  type: string
+                  format: uuid
+                  description: "ID of the previous rejected/expired request"
+                documentsCarriedOver:
+                  type: boolean
+                  example: true
+                  description: "Whether documents were copied from previous request"
+            nextSteps:
+              type: object
+              properties:
+                canUploadDocuments:
+                  type: boolean
+                  example: true
+                canEditInfo:
+                  type: boolean
+                  example: true
+                estimatedProcessingTime:
+                  type: string
+                  example: "1-3 days"
+
+    EnhancedSubmitVerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Verification request submitted successfully"
+        data:
+          type: object
+          properties:
+            verificationRequest:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                status:
+                  type: string
+                  example: "pending"
+                method:
+                  type: string
+                  example: "hybrid"
+                tier:
+                  type: string
+                  example: "tier_2"
+                submittedAt:
+                  type: string
+                  format: date-time
+                expiresAt:
+                  type: string
+                  format: date-time
+            autoSetupInfo:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "Upon approval, your wallet and subscription will be automatically created"
+                walletAutoCreation:
+                  type: boolean
+                  example: true
+                defaultSubscription:
+                  type: string
+                  example: "free"
+                defaultCommissionRate:
+                  type: number
+                  example: 30.00
+
+    # NEW: Doctor onboarding status
+    DoctorOnboardingStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Doctor onboarding status retrieved successfully"
+        data:
+          type: object
+          properties:
+            status:
+              type: object
+              properties:
+                doctorId:
+                  type: string
+                  format: uuid
+                userStatus:
+                  type: string
+                  enum: [pending_doctor_verification, doctor_active, locked]
+                  example: "doctor_active"
+                verificationStatus:
+                  type: string
+                  enum: [not_started, pending, in_progress, approved, rejected, expired]
+                  example: "approved"
+                hasWallet:
+                  type: boolean
+                  example: true
+                hasActiveSubscription:
+                  type: boolean
+                  example: true
+                subscriptionTier:
+                  type: string
+                  example: "free"
+                commissionRate:
+                  type: number
+                  example: 30.00
+                isFullySetup:
+                  type: boolean
+                  example: true
+                  description: "True if doctor has active status, wallet, and subscription"
+                verificationRequestId:
+                  type: string
+                  format: uuid
+                walletId:
+                  type: string
+                  format: uuid
+                subscriptionId:
+                  type: string
+                  format: uuid
+
+    # NEW: Fix doctor setup response
+    FixDoctorSetupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Doctor setup completed"
+        data:
+          type: object
+          properties:
+            result:
+              type: object
+              properties:
+                wallet:
+                  type: object
+                  properties:
+                    created:
+                      type: boolean
+                    walletId:
+                      type: string
+                      format: uuid
+                    message:
+                      type: string
+                    error:
+                      type: string
+                      nullable: true
+                subscription:
+                  type: object
+                  properties:
+                    created:
+                      type: boolean
+                    subscriptionId:
+                      type: string
+                      format: uuid
+                    tier:
+                      type: string
+                    message:
+                      type: string
+                    error:
+                      type: string
+                      nullable: true
+
+    # NEW: Fix all setups response
+    FixAllSetupsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Incomplete setups fixed"
+        data:
+          type: object
+          properties:
+            result:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  example: 5
+                  description: "Total doctors checked"
+                successful:
+                  type: integer
+                  example: 4
+                  description: "Successfully fixed setups"
+                failed:
+                  type: integer
+                  example: 1
+                  description: "Failed setup fixes"
+                results:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      doctorId:
+                        type: string
+                        format: uuid
+                      success:
+                        type: boolean
+                      wallet:
+                        type: object
+                        properties:
+                          created:
+                            type: boolean
+                          walletId:
+                            type: string
+                            format: uuid
+                      subscription:
+                        type: object
+                        properties:
+                          created:
+                            type: boolean
+                          subscriptionId:
+                            type: string
+                            format: uuid
+                          tier:
+                            type: string
+                      error:
+                        type: string
+                        nullable: true
+
+    # UPDATED: Enhanced submit verification response to mention automatic setup
+    SubmitVerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Verification request submitted successfully"
+        data:
+          type: object
+          properties:
+            verificationRequest:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                status:
+                  type: string
+                  example: "pending"
+                method:
+                  type: string
+                  example: "hybrid"
+                tier:
+                  type: string
+                  example: "tier_2"
+                submittedAt:
+                  type: string
+                  format: date-time
+                expiresAt:
+                  type: string
+                  format: date-time
+            autoSetupInfo:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "Upon approval, your wallet and subscription will be automatically created"
+                walletAutoCreation:
+                  type: boolean
+                  example: true
+                defaultSubscription:
+                  type: string
+                  example: "free"
+                defaultCommissionRate:
+                  type: number
+                  example: 30.00

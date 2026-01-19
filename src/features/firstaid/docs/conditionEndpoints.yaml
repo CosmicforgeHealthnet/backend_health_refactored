@@ -1,0 +1,396 @@
+paths:
+  /api/firstaid/content/conditions/emergency:
+    get:
+      summary: Get all emergency conditions
+      description: Retrieve all emergency first aid conditions for mobile app (public endpoint)
+      tags: [First Aid - Conditions]
+      responses:
+        '200':
+          description: Successfully retrieved emergency conditions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: './conditionComponents.yaml#/components/schemas/Condition'
+                  count:
+                    type: integer
+                    description: Number of conditions returned
+                    example: 15
+        '500':
+          description: Internal server error
+
+  /api/firstaid/content/conditions/non-emergency:
+    get:
+      summary: Get all non-emergency conditions
+      description: Retrieve all non-emergency first aid conditions for mobile app (public endpoint)
+      tags: [First Aid - Conditions]
+      responses:
+        '200':
+          description: Successfully retrieved non-emergency conditions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: './conditionComponents.yaml#/components/schemas/Condition'
+                  count:
+                    type: integer
+                    description: Number of conditions returned
+                    example: 15
+        '500':
+          description: Internal server error
+
+  /api/firstaid/content/conditions/{id}:
+    get:
+      summary: Get condition by ID
+      description: Retrieve a specific first aid condition by its ID (public endpoint)
+      tags: [First Aid - Conditions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Condition UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully retrieved condition
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: './conditionComponents.yaml#/components/schemas/Condition'
+        '400':
+          description: Invalid condition ID
+        '404':
+          description: Condition not found
+        '500':
+          description: Internal server error
+
+    put:
+      summary: Update condition (Admin)
+      description: Update an existing first aid condition with optional file upload - admin access required
+      tags: [First Aid - Conditions (Admin)]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Condition UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: './conditionComponents.yaml#/components/schemas/UpdateConditionRequest'
+      responses:
+        '200':
+          description: Condition updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Condition updated successfully"
+                  data:
+                    $ref: './conditionComponents.yaml#/components/schemas/Condition'
+        '400':
+          description: Validation error, file upload error, or invalid condition ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    examples:
+                      - "File too large. Maximum size is 10MB"
+                      - "Too many files. Maximum is 10"
+                      - "Unexpected file field. Expected field name: 'files'"
+                      - "Invalid file type. Allowed types: image/jpeg, image/png, image/gif, application/pdf, image/tiff"
+                      - "Invalid condition ID"
+        '401':
+          description: Unauthorized - authentication required
+        '403':
+          description: Forbidden - admin access required
+        '404':
+          description: Condition not found
+        '500':
+          description: Internal server error
+
+    delete:
+      summary: Delete condition (Admin)
+      description: Delete a first aid condition - admin access required
+      tags: [First Aid - Conditions (Admin)]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Condition UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Condition deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Condition deleted successfully"
+        '400':
+          description: Invalid condition ID
+        '401':
+          description: Unauthorized - authentication required
+        '403':
+          description: Forbidden - admin access required
+        '404':
+          description: Condition not found
+        '500':
+          description: Internal server error
+
+  /api/firstaid/content/conditions:
+    get:
+      summary: Get all conditions (Admin)
+      description: Retrieve all conditions with optional filters - admin access required
+      tags: [First Aid - Conditions (Admin)]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: contentType
+          in: query
+          description: Filter by content type
+          schema:
+            type: string
+            enum: [emergency, non_emergency]
+        - name: isActive
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: severity
+          in: query
+          description: Filter by severity level
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved conditions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: './conditionComponents.yaml#/components/schemas/Condition'
+                  count:
+                    type: integer
+                    description: Number of conditions returned
+                    example: 15
+        '400':
+          description: Validation error - invalid query parameters
+        '401':
+          description: Unauthorized - authentication required
+        '403':
+          description: Forbidden - admin access required
+        '500':
+          description: Internal server error
+
+    post:
+      summary: Create new condition (Admin)
+      description: Create a new first aid condition with optional file upload - admin access required
+      tags: [First Aid - Conditions (Admin)]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: './conditionComponents.yaml#/components/schemas/CreateConditionRequest'
+      responses:
+        '201':
+          description: Condition created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Condition created successfully"
+                  data:
+                    $ref: './conditionComponents.yaml#/components/schemas/Condition'
+        '400':
+          description: Validation error or file upload error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    examples:
+                      - "File too large. Maximum size is 10MB"
+                      - "Too many files. Maximum is 10"
+                      - "Unexpected file field. Expected field name: 'files'"
+                      - "Invalid file type. Allowed types: image/jpeg, image/png, image/gif, application/pdf, image/tiff"
+        '401':
+          description: Unauthorized - authentication required
+        '403':
+          description: Forbidden - admin access required
+        '500':
+          description: Internal server error
+
+  /api/firstaid/content/conditions/{id}/toggle:
+    patch:
+      summary: Toggle condition active status (Admin)
+      description: Toggle the active status of a first aid condition - admin access required
+      tags: [First Aid - Conditions (Admin)]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Condition UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Condition status toggled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: './conditionComponents.yaml#/components/schemas/Condition'
+        '400':
+          description: Invalid condition ID
+        '401':
+          description: Unauthorized - authentication required
+        '403':
+          description: Forbidden - admin access required
+        '404':
+          description: Condition not found
+        '500':
+          description: Internal server error
+
+  /api/firstaid/content/conditions/{id}/image:
+    post:
+      summary: Upload images for condition (Admin)
+      description: Upload images for an existing first aid condition - admin access required
+      tags: [First Aid - Conditions (Admin)]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Condition UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: images to upload for the condition (use field name "images")
+              required:
+                - images
+      responses:
+        '200':
+          description: images uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Condition image uploaded successfully"
+                  data:
+                    $ref: './conditionComponents.yaml#/components/schemas/Condition'
+        '400':
+          description: Invalid condition ID or images upload error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    examples:
+                      - "File too large. Maximum size is 10MB"
+                      - "Too many images. Maximum is 10"
+                      - "Unexpected file field. Expected field name: 'files'"
+                      - "Invalid file type. Allowed types: image/jpeg, image/png, image/gif, application/pdf, image/tiff"
+                      - "Invalid condition ID"
+        '401':
+          description: Unauthorized - authentication required
+        '403':
+          description: Forbidden - admin access required
+        '404':
+          description: Condition not found
+        '500':
+          description: Internal server error

@@ -1,0 +1,866 @@
+
+paths:
+  /referrals/draws:
+    post:
+      tags:
+        - Referral Draws (Admin)
+      summary: Create new referral draw
+      description: Create a new time-limited referral competition campaign
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDrawRequest'
+            example:
+              title: "Summer Referral Challenge 2025"
+              description: "Refer friends and win amazing prizes this summer!"
+              startDate: "2025-07-25T00:00:00Z"
+              endDate: "2025-08-01T23:59:59Z"
+              maxWinners: 10
+      responses:
+        '201':
+          description: Draw created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDrawResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    get:
+      tags:
+        - Referral Draws (Admin)
+      summary: Get all referral draws
+      description: Retrieve a paginated list of all referral draws
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: List of draws retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrawListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /referrals/draws/{drawId}/start:
+    post:
+      tags:
+        - Referral Draws (Admin)
+      summary: Start a referral draw
+      description: Manually start a pending referral draw
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DrawId'
+      responses:
+        '200':
+          description: Draw started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrawActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /referrals/draws/{drawId}/end:
+    post:
+      tags:
+        - Referral Draws (Admin)
+      summary: End a referral draw
+      description: Manually end an active referral draw and calculate winners
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DrawId'
+      responses:
+        '200':
+          description: Draw ended successfully with winners calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndDrawResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /referrals/draws/{drawId}/stats:
+    get:
+      tags:
+        - Referral Draws (Admin)
+      summary: Get draw statistics
+      description: Get detailed statistics for a specific referral draw including participants and winners
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DrawId'
+      responses:
+        '200':
+          description: Draw statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrawStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /referrals/my-stats:
+    get:
+      tags:
+        - Referral Draws (User)
+      summary: Get user's referral statistics
+      description: Get the current user's referral stats including total referrals, referral link, and current draw performance
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User referral statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserReferralStatsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /referrals/my-referrals:
+    get:
+      tags:
+        - Referral Draws (User)
+      summary: Get user's referral list
+      description: Get a paginated list of users referred by the current user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: User referrals retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserReferralsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /referrals/draws-user:
+    get:
+      tags:
+        - Referral Draws (User)
+      summary: Get all referral draws
+      description: Get a paginated list of all referral draws (past, current, and upcoming) that users can view
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          description: Filter draws by status
+          required: false
+          schema:
+            type: string
+            enum: [pending, active, ended, cancelled]
+          example: active
+      responses:
+        '200':
+          description: List of draws retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDrawListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /referrals/draws/{drawId}/leaderboard:
+    get:
+      tags:
+        - Referral Draws (User)
+      summary: Get specific draw leaderboard
+      description: Get the leaderboard for a specific referral draw with user context
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DrawId'
+        - name: limit
+          in: query
+          description: Number of top participants to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          example: 20
+      responses:
+        '200':
+          description: Draw leaderboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecificDrawLeaderboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /referrals/draws/{drawId}/my-stats:
+    get:
+      tags:
+        - Referral Draws (User)
+      summary: Get user's performance in specific draw
+      description: Get detailed statistics of the current user's performance in a specific referral draw
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DrawId'
+      responses:
+        '200':
+          description: User draw statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDrawStatsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /referrals/leaderboard:
+    get:
+      tags:
+        - Referral Draws (User)
+      summary: Get current draw leaderboard
+      description: Get the leaderboard for the currently active referral draw
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of top participants to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          example: 20
+      responses:
+        '200':
+          description: Leaderboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    DrawId:
+      name: drawId
+      in: path
+      description: Unique identifier for the referral draw
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: "123e4567-e89b-12d3-a456-426614174000"
+
+    Page:
+      name: page
+      in: query
+      description: Page number for pagination
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 2
+
+    Limit:
+      name: limit
+      in: query
+      description: Number of items per page
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      example: 10
+
+  schemas:
+    CreateDrawRequest:
+      type: object
+      required:
+        - title
+        - startDate
+        - endDate
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 255
+          description: Title of the referral draw
+          example: "Summer Referral Challenge 2025"
+        description:
+          type: string
+          maxLength: 1000
+          description: Optional description of the draw
+          example: "Refer friends and win amazing prizes this summer!"
+        startDate:
+          type: string
+          format: date-time
+          description: When the draw should start (ISO 8601 format)
+          example: "2025-07-25T00:00:00Z"
+        endDate:
+          type: string
+          format: date-time
+          description: When the draw should end (ISO 8601 format)
+          example: "2025-08-01T23:59:59Z"
+        maxWinners:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Maximum number of winners for this draw
+          example: 10
+
+    CreateDrawResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Draw created successfully"
+        data:
+          $ref: '#/components/schemas/Draw'
+
+    Draw:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the draw
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        title:
+          type: string
+          description: Title of the draw
+          example: "Summer Referral Challenge 2025"
+        description:
+          type: string
+          nullable: true
+          description: Description of the draw
+          example: "Refer friends and win amazing prizes this summer!"
+        startDate:
+          type: string
+          format: date-time
+          description: Start date of the draw
+          example: "2025-07-25T00:00:00Z"
+        endDate:
+          type: string
+          format: date-time
+          description: End date of the draw
+          example: "2025-08-01T23:59:59Z"
+        status:
+          type: string
+          enum: [pending, active, ended, cancelled]
+          description: Current status of the draw
+          example: "pending"
+        maxWinners:
+          type: integer
+          description: Maximum number of winners
+          example: 10
+        isActive:
+          type: boolean
+          description: Whether the draw is active
+          example: true
+        createdBy:
+          type: string
+          format: uuid
+          description: ID of the user who created the draw
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        createdAt:
+          type: string
+          format: date-time
+          description: When the draw was created
+          example: "2025-07-20T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the draw was last updated
+          example: "2025-07-20T10:30:00Z"
+
+    DrawListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            draws:
+              type: array
+              items:
+                $ref: '#/components/schemas/DrawSummary'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    DrawSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        title:
+          type: string
+          example: "Summer Referral Challenge 2025"
+        description:
+          type: string
+          nullable: true
+          example: "Refer friends and win amazing prizes this summer!"
+        startDate:
+          type: string
+          format: date-time
+          example: "2025-07-25T00:00:00Z"
+        endDate:
+          type: string
+          format: date-time
+          example: "2025-08-01T23:59:59Z"
+        status:
+          type: string
+          enum: [pending, active, ended, cancelled]
+          example: "active"
+        maxWinners:
+          type: integer
+          example: 10
+        createdBy:
+          type: string
+          description: Username or email of creator
+          example: "marketing@cosmicforge.health"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-20T10:30:00Z"
+
+    DrawActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Draw started successfully"
+        data:
+          $ref: '#/components/schemas/Draw'
+
+    EndDrawResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Draw ended successfully"
+        data:
+          type: object
+          properties:
+            draw:
+              $ref: '#/components/schemas/Draw'
+            totalParticipants:
+              type: integer
+              description: Total number of participants in the draw
+              example: 150
+            winners:
+              type: array
+              description: List of winners with their stats
+              items:
+                $ref: '#/components/schemas/DrawParticipant'
+
+    DrawStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            draw:
+              $ref: '#/components/schemas/Draw'
+            totalParticipants:
+              type: integer
+              description: Total number of participants
+              example: 150
+            topReferrers:
+              type: array
+              description: Top 10 referrers in the draw
+              items:
+                $ref: '#/components/schemas/LeaderboardEntry'
+            winners:
+              type: array
+              description: Final winners (only available after draw ends)
+              items:
+                $ref: '#/components/schemas/Winner'
+
+    UserReferralStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            totalReferrals:
+              type: integer
+              description: Total number of verified referrals by this user
+              example: 15
+            referralCode:
+              type: string
+              description: User's unique referral code
+              example: "A5B9C2D8E1F4"
+            referralLink:
+              type: string
+              format: uri
+              description: User's complete referral link
+              example: "https://cosmicforge.health/signup?ref=A5B9C2D8E1F4"
+            currentDraw:
+              oneOf:
+                - $ref: '#/components/schemas/ActiveDrawInfo'
+                - type: "null"
+              description: Information about current active draw (null if no active draw)
+            currentDrawReferrals:
+              type: integer
+              description: Number of referrals made during current draw period
+              example: 5
+            leaderboardPosition:
+              type: integer
+              nullable: true
+              description: Current position in active draw leaderboard (null if not ranked)
+              example: 3
+
+    UserReferralsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            referrals:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserReferralEntry'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    UserReferralEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique referral record ID
+          example: "987e6543-e89b-12d3-a456-426614174003"
+        referredUser:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "456e7890-e89b-12d3-a456-426614174001"
+            username:
+              type: string
+              description: Username or email of referred user
+              example: "john.doe@example.com"
+            role:
+              type: string
+              enum: [patient, doctor, admin]
+              example: "patient"
+        status:
+          type: string
+          enum: [pending, verified, invalid]
+          description: Current verification status of the referral
+          example: "verified"
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the referral was verified (null if still pending)
+          example: "2025-07-22T14:30:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          description: When the referral was created
+          example: "2025-07-22T10:15:00Z"
+
+    LeaderboardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            leaderboard:
+              type: array
+              items:
+                $ref: '#/components/schemas/LeaderboardEntry'
+            activeDraw:
+              oneOf:
+                - $ref: '#/components/schemas/ActiveDrawInfo'
+                - type: "null"
+            message:
+              type: string
+              description: Message when no active draw
+              example: "No active draw currently"
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        position:
+          type: integer
+          description: Current position in leaderboard
+          example: 1
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "789e0123-e89b-12d3-a456-426614174002"
+            username:
+              type: string
+              example: "Dr. Sarah Ahmed"
+            role:
+              type: string
+              enum: [patient, doctor, admin]
+              example: "doctor"
+        referralCount:
+          type: integer
+          description: Number of successful referrals in this draw
+          example: 15
+
+    Winner:
+      type: object
+      properties:
+        position:
+          type: integer
+          description: Final position in the draw
+          example: 1
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "789e0123-e89b-12d3-a456-426614174002"
+            username:
+              type: string
+              example: "Dr. Sarah Ahmed"
+            role:
+              type: string
+              enum: [patient, doctor, admin]
+              example: "doctor"
+            email:
+              type: string
+              format: email
+              description: Contact email for prize distribution
+              example: "sarah.ahmed@example.com"
+        referralCount:
+          type: integer
+          description: Final referral count
+          example: 15
+
+    DrawParticipant:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "789e0123-e89b-12d3-a456-426614174002"
+        username:
+          type: string
+          example: "Dr. Sarah Ahmed"
+        userType:
+          type: string
+          enum: [patient, doctor, admin]
+          example: "doctor"
+        referralCount:
+          type: integer
+          example: 15
+        isWinner:
+          type: boolean
+          example: true
+
+    ActiveDrawInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        title:
+          type: string
+          example: "Summer Referral Challenge 2025"
+        description:
+          type: string
+          nullable: true
+          example: "Refer friends and win amazing prizes this summer!"
+        startDate:
+          type: string
+          format: date-time
+          example: "2025-07-25T00:00:00Z"
+        endDate:
+          type: string
+          format: date-time
+          example: "2025-08-01T23:59:59Z"
+        maxWinners:
+          type: integer
+          example: 10
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 20
+        total:
+          type: integer
+          description: Total number of items
+          example: 150
+        pages:
+          type: integer
+          description: Total number of pages
+          example: 8
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: "Draw not found"
+        errors:
+          type: array
+          description: Detailed validation errors (optional)
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "startDate"
+              message:
+                type: string
+                example: "Start date must be before end date"
+
+  responses:
+    BadRequest:
+      description: Bad request - validation errors or invalid data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Validation failed"
+            errors:
+              - field: "startDate"
+                message: "Start date must be before end date"
+
+    Unauthorized:
+      description: Unauthorized - missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Authentication token required"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Insufficient permissions. Admin or Marketing role required"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Draw not found"
+
+tags:
+  - name: Referral Draws (Admin)
+    description: Admin and Marketing team endpoints for managing referral draws
+  - name: Referral Draws (User)
+    description: User-facing endpoints for viewing active draws and leaderboards

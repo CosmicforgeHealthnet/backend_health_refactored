@@ -1,0 +1,706 @@
+components:
+  parameters:
+    FolderIdParam:
+      name: folderId
+      in: path
+      required: true
+      description: "Folder ID"
+      schema:
+        type: string
+        format: uuid
+    
+    FileIdParam:
+      name: fileId
+      in: path
+      required: true
+      description: "File ID"
+      schema:
+        type: string
+        format: uuid
+    
+    PageParam:
+      name: page
+      in: query
+      description: "Page number for pagination"
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    
+    LimitParam:
+      name: limit
+      in: query
+      description: "Number of items per page"
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    # FOLDER SCHEMAS
+    FolderType:
+      type: string
+      enum:
+        - verification
+        - medical_records
+        - prescription
+        - lab_results
+        - profile
+        - other
+      description: "Type of folder for organizing documents"
+      example: "medical_records"
+    
+    FolderStatus:
+      type: string
+      enum:
+        - active
+        - archived
+        - deleted
+      description: "Status of the folder"
+      example: "active"
+    
+    CreateFolderRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: "Folder name"
+          example: "Medical Records 2024"
+        description:
+          type: string
+          maxLength: 1000
+          description: "Folder description"
+          example: "Patient medical records for 2024"
+        folderType:
+          $ref: "#/components/schemas/FolderType"
+        metadata:
+          type: object
+          description: "Additional metadata for the folder"
+          example:
+            patientId: "12345"
+            visitDate: "2024-01-15"
+        tags:
+          type: array
+          items:
+            type: string
+          description: "Tags for folder organization"
+          example: ["urgent", "cardiology"]
+    
+    UpdateFolderRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: "Folder name"
+          example: "Updated Medical Records"
+        description:
+          type: string
+          maxLength: 1000
+          description: "Folder description"
+          example: "Updated patient medical records"
+        folderType:
+          $ref: "#/components/schemas/FolderType"
+        metadata:
+          type: object
+          description: "Additional metadata for the folder"
+        tags:
+          type: array
+          items:
+            type: string
+          description: "Tags for folder organization"
+    
+    Folder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Folder ID"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          description: "Folder name"
+          example: "Medical Records 2024"
+        description:
+          type: string
+          description: "Folder description"
+          example: "Patient medical records for 2024"
+        folderType:
+          $ref: "#/components/schemas/FolderType"
+        status:
+          $ref: "#/components/schemas/FolderStatus"
+        metadata:
+          type: object
+          description: "Additional metadata"
+          example:
+            patientId: "12345"
+            visitDate: "2024-01-15"
+        tags:
+          type: array
+          items:
+            type: string
+          description: "Folder tags"
+          example: ["urgent", "cardiology"]
+        isPublic:
+          type: boolean
+          description: "Whether folder is publicly accessible"
+          example: false
+        fileCount:
+          type: integer
+          description: "Number of files in folder"
+          example: 5
+        totalSize:
+          type: integer
+          description: "Total size of files in bytes"
+          example: 10485760
+        createdAt:
+          type: string
+          format: date-time
+          description: "Creation timestamp"
+          example: "2024-01-15T10:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: "Last update timestamp"
+          example: "2024-06-13T09:30:00Z"
+    
+    FolderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        folder:
+          $ref: "#/components/schemas/Folder"
+    
+    FolderDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        folder:
+          allOf:
+            - $ref: "#/components/schemas/Folder"
+            - type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "987fcdeb-51a2-43d1-9c4e-123456789abc"
+                      originalFileName:
+                        type: string
+                        example: "prescription_june.pdf"
+                      documentType:
+                        type: string
+                        example: "prescription"
+                      fileSize:
+                        type: integer
+                        example: 2048576
+                      mimeType:
+                        type: string
+                        example: "application/pdf"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-06-10T14:30:00Z"
+                  description: "Files in the folder"
+    
+    FoldersListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        folders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Folder"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+    
+    ShareFolderRequest:
+      type: object
+      properties:
+        isPublic:
+          type: boolean
+          description: "Make folder public"
+          default: true
+          example: true
+        expiresAt:
+          type: string
+          format: date-time
+          description: "Expiration date for public access"
+          example: "2024-12-31T23:59:59Z"
+    
+    ShareFolderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        folder:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            name:
+              type: string
+              example: "Medical Records 2024"
+            isPublic:
+              type: boolean
+              example: true
+            expiresAt:
+              type: string
+              format: date-time
+              example: "2024-12-31T23:59:59Z"
+            shareUrl:
+              type: string
+              description: "Public share URL"
+              example: "https://api.example.com/shared/folders/123e4567-e89b-12d3-a456-426614174000"
+    
+    FolderStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        stats:
+          type: object
+          properties:
+            folderId:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            folderName:
+              type: string
+              example: "Medical Records 2024"
+            totalFiles:
+              type: integer
+              description: "Total number of files"
+              example: 12
+            totalSize:
+              type: integer
+              description: "Total size in bytes"
+              example: 25165824
+            readyFiles:
+              type: integer
+              description: "Number of ready files"
+              example: 11
+            encryptedFiles:
+              type: integer
+              description: "Number of encrypted files"
+              example: 8
+            createdAt:
+              type: string
+              format: date-time
+              example: "2024-01-15T10:00:00Z"
+            updatedAt:
+              type: string
+              format: date-time
+              example: "2024-06-13T09:30:00Z"
+
+    # FILE SCHEMAS
+    FileStatus:
+      type: string
+      enum:
+        - uploaded
+        - processing
+        - ready
+        - corrupted
+        - deleted
+      description: "Status of the file"
+      example: "ready"
+    
+    SecurityLevel:
+      type: string
+      enum:
+        - public
+        - private
+        - confidential
+        - restricted
+      description: "Security level of the file"
+      example: "confidential"
+    
+    File:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "File ID"
+          example: "987fcdeb-51a2-43d1-9c4e-123456789abc"
+        originalFileName:
+          type: string
+          description: "Original filename"
+          example: "prescription_june.pdf"
+        documentType:
+          type: string
+          description: "Document type (dynamic from frontend)"
+          example: "prescription"
+        fileSize:
+          type: integer
+          description: "File size in bytes"
+          example: 2048576
+        mimeType:
+          type: string
+          description: "MIME type"
+          example: "application/pdf"
+        status:
+          $ref: "#/components/schemas/FileStatus"
+        securityLevel:
+          $ref: "#/components/schemas/SecurityLevel"
+        isEncrypted:
+          type: boolean
+          description: "Whether file is encrypted"
+          example: true
+        downloadCount:
+          type: integer
+          description: "Number of times downloaded"
+          example: 3
+        lastAccessedAt:
+          type: string
+          format: date-time
+          description: "Last access timestamp"
+          example: "2024-06-13T10:30:00Z"
+        url:
+          type: string
+          description: "Signed URL for file access"
+          example: "https://api.example.com/files/987fcdeb-51a2-43d1-9c4e-123456789abc/download?token=abc123"
+        thumbnailUrl:
+          type: string
+          description: "Thumbnail URL if available"
+          example: "https://api.example.com/files/987fcdeb-51a2-43d1-9c4e-123456789abc/preview"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Upload timestamp"
+          example: "2024-06-10T14:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: "Last update timestamp"
+          example: "2024-06-13T09:15:00Z"
+        folder:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            name:
+              type: string
+              example: "Medical Records 2024"
+            folderType:
+              $ref: "#/components/schemas/FolderType"
+    
+    FileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        file:
+          $ref: "#/components/schemas/File"
+    
+    FileDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        file:
+          $ref: "#/components/schemas/File"
+    
+    FilesListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/File"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+    
+    UpdateFileRequest:
+      type: object
+      properties:
+        documentType:
+          type: string
+          description: "Document type"
+          example: "lab_result"
+        metadata:
+          type: object
+          description: "Additional file metadata"
+          example:
+            department: "cardiology"
+            urgency: "high"
+        securityLevel:
+          $ref: "#/components/schemas/SecurityLevel"
+    
+    BulkDeleteRequest:
+      type: object
+      required:
+        - fileIds
+      properties:
+        fileIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: "Array of file IDs to delete"
+          example: ["987fcdeb-51a2-43d1-9c4e-123456789abc", "456789ab-cdef-1234-5678-90abcdef1234"]
+    
+    FileStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        stats:
+          type: object
+          properties:
+            totalFiles:
+              type: integer
+              description: "Total number of files"
+              example: 48
+            totalSize:
+              type: integer
+              description: "Total size in bytes"
+              example: 104857600
+            totalSizeFormatted:
+              type: string
+              description: "Human readable size"
+              example: "100 MB"
+            readyFiles:
+              type: integer
+              description: "Number of ready files"
+              example: 46
+            encryptedFiles:
+              type: integer
+              description: "Number of encrypted files"
+              example: 32
+            documentTypes:
+              type: integer
+              description: "Number of unique document types"
+              example: 8
+
+    # UPLOAD SCHEMAS
+    FileUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "3 files uploaded successfully"
+        folder:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            name:
+              type: string
+              example: "Medical Records 2024"
+            type:
+              $ref: "#/components/schemas/FolderType"
+            fileCount:
+              type: integer
+              example: 3
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                example: "987fcdeb-51a2-43d1-9c4e-123456789abc"
+              originalFileName:
+                type: string
+                example: "prescription_2024.pdf"
+              documentType:
+                type: string
+                example: "prescription"
+              fileSize:
+                type: integer
+                example: 2048576
+              mimeType:
+                type: string
+                example: "application/pdf"
+              status:
+                $ref: "#/components/schemas/FileStatus"
+              url:
+                type: string
+                example: "https://api.example.com/files/987fcdeb-51a2-43d1-9c4e-123456789abc/download?token=abc123"
+              createdAt:
+                type: string
+                format: date-time
+                example: "2024-06-13T10:30:00Z"
+
+    # ANALYTICS SCHEMAS  
+    GenerateReportRequest:
+      type: object
+      properties:
+        reportType:
+          type: string
+          enum: [comprehensive, storage, security, activity]
+          default: comprehensive
+          example: "comprehensive"
+        days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          default: 30
+          example: 30
+        format:
+          type: string
+          enum: [json]
+          default: json
+          example: "json"
+    
+    AnalyticsReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        report:
+          type: object
+          properties:
+            type:
+              type: string
+              example: "comprehensive"
+            period:
+              type: string
+              example: "30 days"
+            generatedAt:
+              type: string
+              format: date-time
+              example: "2024-06-13T11:00:00Z"
+            userId:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            data:
+              type: object
+              description: "Report data varies by type"
+              example:
+                dashboard:
+                  period: "30 days"
+                  totalFolders: 12
+                  totalFiles: 48
+                  totalSize: 104857600
+                  encryptedFiles: 32
+
+    # COMMON SCHEMAS
+    PaginationInfo:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: "Total number of items"
+          example: 150
+        page:
+          type: integer
+          description: "Current page number"
+          example: 1
+        limit:
+          type: integer
+          description: "Items per page"
+          example: 20
+        totalPages:
+          type: integer
+          description: "Total number of pages"
+          example: 8
+    
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+    
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: "Error message"
+          example: "Invalid request parameters"
+
+  responses:
+    BadRequest:
+      description: "Bad request - Invalid input parameters"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error: "Invalid request parameters"
+    
+    Unauthorized:
+      description: "Authentication required"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error: "Authentication required"
+    
+    NotFound:
+      description: "Resource not found"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error: "Resource not found"
+    
+    InternalServerError:
+      description: "Internal server error"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error: "Internal server error"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authentication"

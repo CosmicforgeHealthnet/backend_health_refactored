@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Notification Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .error { background: #fff3cd; color: #856404; }
+        
+        input, button, textarea, select {
+            margin: 5px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 8px;
+            border-left: 3px solid #007bff;
+            background: white;
+            border-radius: 4px;
+        }
+        .system-message {
+            border-left-color: #28a745;
+            font-style: italic;
+            background: #f0fff0;
+        }
+        .notification-message {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        .alert-message {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        .error-message {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+            color: #721c24;
+        }
+        
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .counts-display {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .count-item {
+            text-align: center;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        .count-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .count-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Notification System Test Client</h1>
+        
+        <!-- Connection Status -->
+        <div id="status" class="status disconnected">
+            Status: Disconnected
+        </div>
+        
+        <!-- Connection Form -->
+        <div class="form-group">
+            <label for="serverUrl">Server URL:</label>
+            <input type="text" id="serverUrl" value="http://localhost:3000" placeholder="http://localhost:3000">
+        </div>
+        
+        <div class="form-group">
+            <label for="jwtToken">JWT Token:</label>
+            <input type="text" id="jwtToken" placeholder="Paste your JWT token here" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MTFhZjE5My1mMWI2LTQ3NTEtYTA2Yy1jZjU4ZDUzOTZlZTYiLCJlbWFpbCI6ImNoaWRlcmFzdGFubGV5MjcyQGdtYWlsLmNvbSIsImZ1bGxOYW1lIjoiY2hpZGVyYSIsInJvbGUiOiJwYXRpZW50Iiwic3RhdHVzIjoiYWN0aXZlIiwicHJvdmlkZXIiOiJsb2NhbCIsInByb3ZpZGVySWQiOm51bGwsInByb2ZpbGVJbWFnZVVybCI6bnVsbCwibWZhRW5hYmxlZCI6ZmFsc2UsImNyZWF0ZWRBdCI6IjIwMjUtMDgtMDdUMTM6MTc6NDcuMjc4WiIsInVwZGF0ZWRBdCI6IjIwMjUtMDgtMDlUMTM6NDM6NTkuMDA1WiIsImlhdCI6MTc1NDg1MjI4MywiZXhwIjoxNzU3NDQ0MjgzfQ.Ac3uoWZ1XqgnE5nCDUS8cABCSuqGch1s6E9t6hzl8dc">
+        </div>
+
+        <div class="form-group">
+            <label for="userId">User ID:</label>
+            <input type="text" id="userId" value="611af193-f1b6-4751-a06c-cf58d5396ee6" placeholder="User ID">
+        </div>
+        
+        <button id="connectBtn" onclick="connect()">🔗 Connect</button>
+        <button id="disconnectBtn" onclick="disconnect()" disabled>🔌 Disconnect</button>
+        <button onclick="joinNotificationRoom()" disabled id="joinRoomBtn">🏠 Join Notification Room</button>
+        <button onclick="testPing()" disabled id="pingBtn">🏓 Test Ping</button>
+        
+        <!-- Notification Counts -->
+        <div class="counts-display" id="countsDisplay" style="display: none;">
+            <div class="count-item">
+                <div class="count-number" id="totalCount">0</div>
+                <div class="count-label">Total</div>
+            </div>
+            <div class="count-item">
+                <div class="count-number" id="unreadCount">0</div>
+                <div class="count-label">Unread</div>
+            </div>
+            <div class="count-item">
+                <div class="count-number" id="notificationCount">0</div>
+                <div class="count-label">Notifications</div>
+            </div>
+            <div class="count-item">
+                <div class="count-number" id="alertCount">0</div>
+                <div class="count-label">Alerts</div>
+            </div>
+            <div class="count-item">
+                <div class="count-number" id="unreadNotificationCount">0</div>
+                <div class="count-label">Unread Notifications</div>
+            </div>
+            <div class="count-item">
+                <div class="count-number" id="unreadAlertCount">0</div>
+                <div class="count-label">Unread Alerts</div>
+            </div>
+        </div>
+
+        <!-- API Actions -->
+        <div class="form-group">
+            <h3>📡 API Actions</h3>
+            <button onclick="testAPIEndpoint()" disabled id="testAPIBtn">🧪 Test API Endpoint</button>
+            <button onclick="getNotifications()" disabled id="getNotificationsBtn">📋 Get Notifications</button>
+            <button onclick="getCounts()" disabled id="getCountsBtn">📊 Get Counts</button>
+            <button onclick="markAllRead()" disabled id="markAllReadBtn">✅ Mark All Read</button>
+        </div>
+        
+        <!-- Create Notification -->
+        <div class="form-group">
+            <h3>📝 Create Test Notification</h3>
+            <select id="notificationType">
+                <option value="notification">📢 Notification</option>
+                <option value="alert">⚠️ Alert</option>
+            </select>
+            <textarea id="notificationMessage" placeholder="Enter notification message..." rows="2">Test notification from web client</textarea>
+            <button onclick="createNotification()" disabled id="createNotificationBtn">🚀 Send Notification</button>
+        </div>
+        
+        <!-- Messages Area -->
+        <div class="messages" id="messages"></div>
+        
+        <!-- Debug Info -->
+        <details>
+            <summary>🔍 Debug Info</summary>
+            <div id="debugInfo" style="background: #f8f9fa; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px; white-space: pre-wrap;"></div>
+        </details>
+    </div>
+
+    <script>
+        let socket = null;
+        let isConnected = false;
+        let currentUserId = null;
+        let isInNotificationRoom = false;
+
+        function addMessage(content, type = 'message') {
+            const messages = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            let className = 'message';
+            
+            switch(type) {
+                case 'system': className = 'message system-message'; break;
+                case 'notification': className = 'message notification-message'; break;
+                case 'alert': className = 'message alert-message'; break;
+                case 'error': className = 'message error-message'; break;
+                default: className = 'message';
+            }
+            
+            messageDiv.className = className;
+            messageDiv.innerHTML = `
+                <small>[${new Date().toLocaleTimeString()}]</small> 
+                ${content}
+            `;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function updateStatus(status, type = 'disconnected') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = `Status: ${status}`;
+            statusEl.className = `status ${type}`;
+        }
+
+        function updateDebugInfo(info) {
+            const debugEl = document.getElementById('debugInfo');
+            debugEl.textContent = JSON.stringify(info, null, 2);
+        }
+
+        function updateCounts(counts) {
+            document.getElementById('totalCount').textContent = counts.total || 0;
+            document.getElementById('unreadCount').textContent = counts.unread || 0;
+            document.getElementById('notificationCount').textContent = counts.notifications || 0;
+            document.getElementById('alertCount').textContent = counts.alerts || 0;
+            document.getElementById('unreadNotificationCount').textContent = counts.unreadNotifications || 0;
+            document.getElementById('unreadAlertCount').textContent = counts.unreadAlerts || 0;
+            
+            document.getElementById('countsDisplay').style.display = 'grid';
+        }
+
+        function connect() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const userId = document.getElementById('userId').value;
+
+            if (!jwtToken) {
+                alert('Please enter a JWT token');
+                return;
+            }
+
+            if (!userId) {
+                alert('Please enter a User ID');
+                return;
+            }
+
+            currentUserId = userId;
+            updateStatus('Connecting...', 'error');
+            addMessage('🔄 Attempting to connect to notification service...', 'system');
+
+            socket = io(serverUrl, {
+                auth: {
+                    token: jwtToken
+                },
+                query: {
+                    token: jwtToken
+                },
+                transports: ['websocket', 'polling'],
+                forceNew: true,
+                reconnection: true,
+                timeout: 20000
+            });
+
+            // Connection events
+            socket.on('connect', () => {
+                isConnected = true;
+                updateStatus('Connected', 'connected');
+                addMessage(`✅ Connected to notification service with ID: ${socket.id}`, 'system');
+                
+                // Enable buttons
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+                document.getElementById('joinRoomBtn').disabled = false;
+                document.getElementById('pingBtn').disabled = false;
+                document.getElementById('getNotificationsBtn').disabled = false;
+                document.getElementById('getCountsBtn').disabled = false;
+                document.getElementById('markAllReadBtn').disabled = false;
+                document.getElementById('createNotificationBtn').disabled = false;
+                document.getElementById('testAPIBtn').disabled = false;
+                
+                updateDebugInfo({
+                    socketId: socket.id,
+                    connected: socket.connected,
+                    transport: socket.io.engine.transport.name,
+                    userId: currentUserId
+                });
+
+                // Auto-get counts on connect
+                getCounts();
+            });
+
+            socket.on('disconnect', (reason) => {
+                isConnected = false;
+                updateStatus('Disconnected', 'disconnected');
+                addMessage(`❌ Disconnected from notification service: ${reason}`, 'system');
+                isInNotificationRoom = false;
+                
+                // Disable buttons
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+                document.getElementById('joinRoomBtn').disabled = true;
+                document.getElementById('pingBtn').disabled = true;
+                document.getElementById('getNotificationsBtn').disabled = true;
+                document.getElementById('getCountsBtn').disabled = true;
+                document.getElementById('markAllReadBtn').disabled = true;
+                document.getElementById('createNotificationBtn').disabled = true;
+                document.getElementById('testAPIBtn').disabled = true;
+            });
+
+            socket.on('connect_error', (error) => {
+                updateStatus('Connection Failed', 'error');
+                addMessage(`🚫 Connection Error: ${error.message}`, 'error');
+                console.error('Connection error:', error);
+            });
+
+            // Notification-specific events
+            socket.on('connection-confirmed', (data) => {
+                addMessage(`🎉 Connection confirmed: ${data.message}`, 'system');
+                addMessage(`👤 Welcome ${data.userName || 'User'} (${data.userId})`, 'system');
+                updateDebugInfo(data);
+            });
+
+            socket.on('room-joined', (data) => {
+                addMessage(`🏠 Successfully joined notification room: ${data.room}`, 'system');
+                addMessage(`✅ ${data.message}`, 'system');
+                isInNotificationRoom = true;
+            });
+
+            socket.on('new-notification', (notification) => {
+                const type = notification.type === 'alert' ? 'alert' : 'notification';
+                addMessage(`🔔 <strong>${notification.type.toUpperCase()}</strong>: ${notification.message}`, type);
+                
+                if (notification.metadata) {
+                    addMessage(`📎 Metadata: ${JSON.stringify(notification.metadata)}`, 'system');
+                }
+                
+                // Auto-refresh counts
+                getCounts();
+            });
+
+            socket.on('notification_read', (data) => {
+                addMessage(`✅ Notification marked as read: ID ${data.id}`, 'system');
+                getCounts(); // Refresh counts
+            });
+
+            socket.on('all_notifications_read', (data) => {
+                addMessage(`✅ All notifications marked as read for user ${data.userId}`, 'system');
+                getCounts(); // Refresh counts
+            });
+
+            socket.on('notification_deleted', (data) => {
+                addMessage(`🗑️ Notification deleted: ID ${data.id}`, 'system');
+                getCounts(); // Refresh counts
+            });
+
+            socket.on('pong', (data) => {
+                addMessage(`🏓 Pong received: ${JSON.stringify(data)}`, 'system');
+            });
+
+            socket.on('error', (error) => {
+                addMessage(`❌ Socket Error: ${error.message || error}`, 'error');
+                console.error('Socket error:', error);
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                isConnected = false;
+                isInNotificationRoom = false;
+            }
+        }
+
+        async function testAPIEndpoint() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            addMessage('🧪 Testing basic API endpoint...', 'system');
+            
+            try {
+                // Test basic server response first
+                const response = await fetch(`${serverUrl}/notifications`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${document.getElementById('jwtToken').value}`
+                    }
+                });
+                
+                addMessage(`📡 Raw Response Status: ${response.status}`, 'system');
+                addMessage(`📡 Raw Response Headers: ${JSON.stringify([...response.headers.entries()])}`, 'system');
+                
+                const text = await response.text();
+                addMessage(`📄 Raw Response Body (first 500 chars): ${text.substring(0, 500)}`, 'system');
+                
+                if (text.startsWith('{') || text.startsWith('[')) {
+                    addMessage('✅ Response looks like JSON', 'system');
+                    try {
+                        const json = JSON.parse(text);
+                        addMessage(`✅ Parsed JSON successfully: ${JSON.stringify(json).substring(0, 200)}...`, 'system');
+                    } catch (e) {
+                        addMessage(`❌ Failed to parse as JSON: ${e.message}`, 'error');
+                    }
+                } else {
+                    addMessage('❌ Response does not look like JSON (probably HTML error page)', 'error');
+                }
+                
+            } catch (error) {
+                addMessage(`❌ Test API Error: ${error.message}`, 'error');
+            }
+        }
+
+        function joinNotificationRoom() {
+            if (socket && isConnected && currentUserId) {
+                socket.emit('join-user-room', currentUserId);
+                addMessage(`🔄 Joining notification room for user: ${currentUserId}`, 'system');
+            } else {
+                addMessage('❌ Cannot join room: not connected or no user ID', 'error');
+            }
+        }
+
+        function testPing() {
+            if (socket && isConnected) {
+                socket.emit('ping');
+                addMessage('🏓 Sending ping to server...', 'system');
+            } else {
+                addMessage('❌ Cannot send ping: not connected', 'error');
+            }
+        }
+
+        async function makeAPICall(endpoint, options = {}) {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${jwtToken}`
+                }
+            };
+            
+            try {
+                addMessage(`🔄 Making API call to: ${serverUrl}/notifications${endpoint}`, 'system');
+                
+                const response = await fetch(`${serverUrl}/notifications${endpoint}`, {
+                    ...defaultOptions,
+                    ...options
+                });
+                
+                addMessage(`📡 API Response Status: ${response.status} ${response.statusText}`, 'system');
+                
+                // Check if response is ok
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    addMessage(`❌ API Error Response: ${errorText}`, 'error');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                // Check content type
+                const contentType = response.headers.get('content-type');
+                addMessage(`📄 Content-Type: ${contentType}`, 'system');
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    const textResponse = await response.text();
+                    addMessage(`❌ Expected JSON but got: ${textResponse.substring(0, 200)}...`, 'error');
+                    throw new Error('Response is not JSON');
+                }
+                
+                const jsonResponse = await response.json();
+                addMessage(`✅ API Response: ${JSON.stringify(jsonResponse).substring(0, 100)}...`, 'system');
+                return jsonResponse;
+                
+            } catch (error) {
+                addMessage(`❌ API Error: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function getNotifications() {
+            try {
+                addMessage('🔄 Fetching notifications via API...', 'system');
+                const result = await makeAPICall('?limit=10');
+                
+                if (result.success) {
+                    addMessage(`📋 Fetched ${result.data.notifications.length} notifications`, 'system');
+                    
+                    // Display recent notifications
+                    result.data.notifications.forEach(notification => {
+                        const type = notification.type === 'alert' ? 'alert' : 'notification';
+                        const readStatus = notification.isRead ? '✅' : '❌';
+                        addMessage(`${readStatus} <strong>${notification.type.toUpperCase()}</strong>: ${notification.message}`, type);
+                    });
+                    
+                    updateCounts(result.data.counts);
+                } else {
+                    addMessage(`❌ Failed to fetch notifications: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addMessage(`❌ API Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getCounts() {
+            try {
+                const result = await makeAPICall('/counts');
+                
+                if (result.success) {
+                    addMessage(`📊 Notification counts updated`, 'system');
+                    updateCounts(result.data);
+                } else {
+                    addMessage(`❌ Failed to get counts: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addMessage(`❌ API Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function markAllRead() {
+            try {
+                addMessage('🔄 Marking all notifications as read...', 'system');
+                const result = await makeAPICall('/read-all', { method: 'PUT' });
+                
+                if (result.success) {
+                    addMessage(`✅ ${result.message}`, 'system');
+                    getCounts(); // Refresh counts
+                } else {
+                    addMessage(`❌ Failed to mark all as read: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addMessage(`❌ API Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function createNotification() {
+            const type = document.getElementById('notificationType').value;
+            const message = document.getElementById('notificationMessage').value.trim();
+            
+            if (!message) {
+                alert('Please enter a notification message');
+                return;
+            }
+            
+            try {
+                addMessage(`🔄 Creating ${type}...`, 'system');
+                const result = await makeAPICall('', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        type: type,
+                        message: message,
+                        metadata: {
+                            source: 'test_client',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+                
+                if (result.success) {
+                    addMessage(`🚀 ${type.charAt(0).toUpperCase() + type.slice(1)} created successfully!`, 'system');
+                    addMessage(`📝 ID: ${result.data.id}`, 'system');
+                    document.getElementById('notificationMessage').value = '';
+                } else {
+                    addMessage(`❌ Failed to create notification: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addMessage(`❌ API Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-focus on page load
+        window.onload = function() {
+            if (!document.getElementById('jwtToken').value) {
+                document.getElementById('jwtToken').focus();
+            }
+            addMessage('🎯 Notification test client loaded. Ready to test!', 'system');
+        };
+    </script>
+</body>
+</html>

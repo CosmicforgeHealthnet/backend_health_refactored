@@ -1,0 +1,108 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Status Banner -->
+    <div style="background: linear-gradient(135deg, #16a34a, #15803d); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Payment Successful</h2>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hi <strong>{{fullName}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your appointment booking payment has been processed successfully! Your consultation with <strong>Dr. {{doctorName}}</strong> is now confirmed.
+    </p>
+
+    <!-- Appointment Details -->
+    <div style="background-color: #F5F8FF; border-left: 4px solid #3964EA; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #3964EA; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Appointment Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Doctor:</strong> Dr. {{doctorName}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Date:</strong> {{appointmentDate}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Time:</strong> {{appointmentTime}}
+        </p>
+    </div>
+
+    <!-- Payment Breakdown -->
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #15803d; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Payment Breakdown
+        </h3>
+        <div style="margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0;">
+                <span style="font-size: 14px; color: #4b5563;">Consultation Fee:</span>
+                <span style="font-size: 14px; color: #4b5563;">{{currency}} {{appointmentFee}}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0;">
+                <span style="font-size: 14px; color: #4b5563;">Service Fee:</span>
+                <span style="font-size: 14px; color: #4b5563;">{{currency}} {{serviceFee}}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0;">
+                <span style="font-size: 14px; color: #4b5563;">VAT (7.5%):</span>
+                <span style="font-size: 14px; color: #4b5563;">{{currency}} {{vatAmount}}</span>
+            </div>
+        </div>
+        <div style="border-top: 2px solid #16a34a; padding-top: 12px; margin-top: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 16px; font-weight: bold; color: #14532d;">Total Paid:</span>
+                <span style="font-size: 16px; font-weight: bold; color: #14532d;">{{currency}} {{totalAmount}}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Details -->
+    <div style="background-color: #f0f7ff; border-left: 4px solid #2563eb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #1e40af; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Transaction Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Transaction ID:</strong> <span style="font-family: monospace;">{{transactionId}}</span>
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563; text-transform: capitalize;">
+            <strong>Payment Method:</strong> {{paymentMethod}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Payment Date:</strong> {{paidAt}}
+        </p>
+    </div>
+
+    <!-- Dashboard Link -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{dashboardLink}}" style="color: #3964EA; text-decoration: none; font-weight: bold;">
+            📋 View My Appointments
+        </a>
+    </div>
+
+    <!-- Confirmation Message -->
+    <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #0c4a6e; margin: 0; font-weight: 600; text-align: center; font-size: 14px;">
+            <strong>Confirmation:</strong> You'll receive appointment reminders via email and SMS before your consultation time.
+        </p>
+    </div>
+
+    <!-- Thank You Note -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #92400e; margin: 0; text-align: center; font-size: 14px;">
+            Thank you for choosing CosmicForge Health. We look forward to serving you and providing excellent healthcare!
+        </p>
+    </div>
+
+    <!-- Support info -->
+    <p style="font-size: 14px; color: #555; margin: 20px 0; text-align: center;">
+        If you have any questions about your payment or appointment, please contact our 
+        <a href="{{supportLink}}" style="color: #3964EA; text-decoration: none;">support team</a>.
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px; text-align: center;">
+        <strong>The CosmicForge Health Team</strong>
+    </p>
+
+</div>

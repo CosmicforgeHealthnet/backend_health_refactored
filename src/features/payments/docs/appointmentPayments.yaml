@@ -1,0 +1,471 @@
+paths:
+  /api/payments/appointment/create:
+    post:
+      tags:
+        - Appointment Payments
+      summary: Create appointment payment with provider redirect
+      description: Create appointment payment and get direct redirect URL to payment provider (Flutterwave/Paystack)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - doctorId
+                - appointmentDate
+                - amount
+                - currency
+              properties:
+                doctorId:
+                  type: string
+                  format: uuid
+                  description: "Doctor ID"
+                  example: "789e4567-e89b-12d3-a456-426614174000"
+                appointmentDate:
+                  type: string
+                  format: date-time
+                  description: "Appointment date and time"
+                  example: "2024-02-15T10:30:00Z"
+                amount:
+                  type: number
+                  format: float
+                  minimum: 0.01
+                  description: "Payment amount"
+                  example: 5000.00
+                currency:
+                  type: string
+                  enum: [NGN, GHS, USD, EUR, GBP]
+                  description: "Payment currency"
+                  example: "NGN"
+                paymentProvider:
+                  type: string
+                  enum: [flutterwave, paystack]
+                  description: "Payment provider"
+                  example: "flutterwave"
+                  default: "flutterwave"
+                serviceId:
+                  type: string
+                  format: uuid
+                  description: "Service/Appointment ID"
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+                description:
+                  type: string
+                  maxLength: 500
+                  description: "Payment description"
+                  example: "Medical appointment payment"
+                returnUrl:
+                  type: string
+                  format: uri
+                  description: "Return URL after payment"
+                  example: "https://yourapp.com/appointments/confirmation"
+      responses:
+        '201':
+          description: Appointment payment created successfully with provider redirect URL
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          transactionId:
+                            type: string
+                            format: uuid
+                            description: "Created transaction ID"
+                            example: "550e8400-e29b-41d4-a716-446655440000"
+                          redirectUrl:
+                            type: string
+                            format: uri
+                            description: "Provider checkout URL (Flutterwave/Paystack)"
+                            example: "https://checkout.flutterwave.com/pay/123456"
+                          appointmentDate:
+                            type: string
+                            format: date-time
+                            description: "Appointment date"
+                            example: "2024-02-15T10:30:00Z"
+                          amount:
+                            type: number
+                            format: float
+                            description: "Payment amount"
+                            example: 5000.00
+                          currency:
+                            type: string
+                            enum: [NGN, GHS, USD, EUR, GBP]
+                            description: "Payment currency"
+                            example: "NGN"
+                          paymentProvider:
+                            type: string
+                            enum: [flutterwave, paystack]
+                            description: "Payment provider"
+                            example: "flutterwave"
+                          status:
+                            type: string
+                            enum: [pending, processing]
+                            description: "Initial status"
+                            example: "processing"
+                          providerReference:
+                            type: string
+                            description: "Provider reference"
+                            example: "FLW-APP-123456"
+                          expiresAt:
+                            type: string
+                            format: date-time
+                            description: "Payment link expiration"
+                            example: "2024-02-01T13:00:00Z"
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '429':
+          $ref: '../components/transactionComponents.yaml#/components/responses/TooManyRequests'
+
+
+  /api/payments/appointment/{transactionId}/retry:
+    post:
+      tags:
+        - Appointment Payments
+      summary: Retry failed appointment payment
+      description: Retry a failed appointment payment with same or different provider
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Transaction ID to retry"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - paymentProvider
+              properties:
+                paymentProvider:
+                  type: string
+                  enum: [flutterwave, paystack]
+                  description: "Payment provider to use for retry"
+                  example: "flutterwave"
+                returnUrl:
+                  type: string
+                  format: uri
+                  description: "Return URL after payment"
+                  example: "https://yourapp.com/appointments/confirmation"
+      responses:
+        '200':
+          description: Payment retry initiated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          transactionId:
+                            type: string
+                            format: uuid
+                            example: "550e8400-e29b-41d4-a716-446655440000"
+                          redirectUrl:
+                            type: string
+                            format: uri
+                            description: "Provider payment URL"
+                            example: "https://checkout.flutterwave.com/pay/123456"
+                          paymentProvider:
+                            type: string
+                            enum: [flutterwave, paystack]
+                            example: "flutterwave"
+                          providerReference:
+                            type: string
+                            example: "FLW-RETRY-123456"
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+
+  /api/payments/cancelled-transactions:
+    get:
+      tags:
+        - Appointment Payments
+      summary: Get cancelled appointment transactions summary
+      description: Retrieve summary of cancelled appointment transactions (users see own, admins see all)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cancelled appointment transactions summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/appointmentComponents.yaml#/components/schemas/CancelledAppointmentsSummary'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+
+
+  /api/payments/appointment/date-change:
+    post:
+      tags:
+        - Appointment Payments
+      summary: Handle appointment date change
+      description: Update appointment date and recalculate funds timing and dispute windows
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/appointmentComponents.yaml#/components/schemas/AppointmentDateChangeRequest'
+      responses:
+        '200':
+          description: Appointment date updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/appointmentComponents.yaml#/components/schemas/AppointmentDateChangeResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+
+  /api/payments/appointment/{transactionId}/status:
+    get:
+      tags:
+        - Appointment Payments
+      summary: Get appointment payment status
+      description: Retrieve current status of an appointment payment including funds status and timing
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Transaction ID of the appointment payment"
+      responses:
+        '200':
+          description: Appointment payment status retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/appointmentComponents.yaml#/components/schemas/AppointmentPaymentStatus'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+
+  /api/payments/appointment/{transactionId}/cancel:
+    post:
+      tags:
+        - Appointment Payments
+      summary: Cancel appointment payment
+      description: Cancel an appointment payment and process refund (keeps service fees/VAT, refunds appointment fee)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Transaction ID of the appointment payment to cancel"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '../components/appointmentComponents.yaml#/components/schemas/CancelAppointmentRequest'
+      responses:
+        '200':
+          description: Appointment payment cancelled successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/appointmentComponents.yaml#/components/schemas/CancelAppointmentResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+        '429':
+          $ref: '../components/transactionComponents.yaml#/components/responses/TooManyRequests'
+
+  /api/payments/appointment/{transactionId}/reschedule:
+    post:
+      tags:
+        - Appointment Payments
+      summary: Reschedule appointment payment
+      description: Update appointment date and recalculate funds timing and dispute windows
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Transaction ID of the appointment payment to reschedule"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/appointmentComponents.yaml#/components/schemas/RescheduleAppointmentRequest'
+      responses:
+        '200':
+          description: Appointment payment rescheduled successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/appointmentComponents.yaml#/components/schemas/RescheduleAppointmentResponse'
+        '400':
+          $ref: '../components/transactionComponents.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+        '429':
+          $ref: '../components/transactionComponents.yaml#/components/responses/TooManyRequests'
+
+  /api/payments/appointment/{transactionId}/history:
+    get:
+      tags:
+        - Appointment Payments
+      summary: Get appointment reschedule history
+      description: Retrieve reschedule history and current status for a specific appointment payment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Transaction ID of the appointment payment"
+      responses:
+        '200':
+          description: Appointment reschedule history retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/appointmentComponents.yaml#/components/schemas/AppointmentHistoryResponse'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../components/transactionComponents.yaml#/components/responses/NotFound'
+
+  /api/payments/appointments/cancelled:
+    get:
+      tags:
+        - Appointment Payments
+      summary: Get cancelled appointments summary
+      description: Retrieve summary of cancelled appointment payments (users see own, admins see all)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cancelled appointments summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/appointmentComponents.yaml#/components/schemas/CancelledAppointmentsSummary'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'
+
+  /api/payments/appointments/overview:
+    get:
+      tags:
+        - Appointment Payments
+      summary: Get appointment payment overview
+      description: Retrieve appointment payments grouped by status (waiting for appointment, pending dispute, released)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Appointment payment overview retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../components/transactionComponents.yaml#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '../components/appointmentComponents.yaml#/components/schemas/AppointmentPaymentOverview'
+        '401':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../components/transactionComponents.yaml#/components/responses/Forbidden'

@@ -1,0 +1,132 @@
+components:
+  parameters:
+    FolderIdParam:
+      name: folderId
+      in: path
+      required: true
+      description: "Folder ID"
+      schema:
+        type: string
+        format: uuid
+    
+    FileIdParam:
+      name: fileId
+      in: path
+      required: true
+      description: "File ID"
+      schema:
+        type: string
+        format: uuid
+    
+    PageParam:
+      name: page
+      in: query
+      description: "Page number for pagination"
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    
+    LimitParam:
+      name: limit
+      in: query
+      description: "Number of items per page"
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    # =============================================================================
+    # COMMON SCHEMAS
+    # =============================================================================
+    
+    PaginationInfo:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: "Total number of items"
+          example: 150
+        page:
+          type: integer
+          description: "Current page number"
+          example: 1
+        limit:
+          type: integer
+          description: "Items per page"
+          example: 20
+        totalPages:
+          type: integer
+          description: "Total number of pages"
+          example: 8
+    
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+    
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: "Error message"
+          example: "Invalid request parameters"
+
+  responses:
+    BadRequest:
+      description: "Bad request - Invalid input parameters"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error: "Invalid request parameters"
+    
+    Unauthorized:
+      description: "Authentication required"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error: "Authentication required"
+    
+    NotFound:
+      description: "Resource not found"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error: "Resource not found"
+    
+    InternalServerError:
+      description: "Internal server error"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error: "Internal server error"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authentication"

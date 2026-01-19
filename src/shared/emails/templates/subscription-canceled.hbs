@@ -1,0 +1,45 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Heading -->
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+        Subscription Canceled
+    </h1>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>{{fullName}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your subscription has been canceled. We're sorry to see you go and hope you'll consider 
+        rejoining us in the future.
+    </p>
+
+    <!-- What happens next -->
+    <p style="font-size: 16px; margin-bottom: 30px;">
+        If you change your mind or have any questions about your cancellation, 
+        you can manage your subscription or contact our support team.
+    </p>
+
+    <!-- Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        {{> button url=link text="Manage Subscription" }}
+    </div>
+
+    <!-- Fallback link -->
+    <p style="font-size: 14px; color: #555; word-break: break-all; margin: 20px 0;">
+        If the button doesn't work, copy and paste this link into your browser:<br />
+        <a href="{{link}}" style="color: #272EA7;">{{link}}</a>
+    </p>
+
+    <!-- Feedback request -->
+    <p style="font-size: 14px; color: #555; margin: 20px 0;">
+        We'd love to hear your feedback about your experience. Your input helps us improve our service.
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px;">
+        The CosmicForge Team
+    </p>
+
+</div>

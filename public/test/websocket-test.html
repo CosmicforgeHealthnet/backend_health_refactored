@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .error { background: #fff3cd; color: #856404; }
+        
+        input, button, textarea {
+            margin: 5px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007bff;
+            background: white;
+        }
+        .system-message {
+            border-left-color: #28a745;
+            font-style: italic;
+        }
+        
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 WebSocket Chat Test Client</h1>
+        
+        <!-- Connection Status -->
+        <div id="status" class="status disconnected">
+            Status: Disconnected
+        </div>
+        
+        <!-- Connection Form -->
+        <div class="form-group">
+            <label for="serverUrl">Server URL:</label>
+            <input type="text" id="serverUrl" value="http://localhost:3000" placeholder="http://localhost:3000">
+        </div>
+        
+        <div class="form-group">
+            <label for="jwtToken">JWT Token:</label>
+            <input type="text" id="jwtToken" placeholder="Paste your JWT token here">
+        </div>
+        
+        <button id="connectBtn" onclick="connect()">Connect</button>
+        <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+        
+        <!-- Room Management -->
+        <div class="form-group">
+            <label for="roomId">Room ID:</label>
+            <input type="text" id="roomId" placeholder="Enter room ID">
+            <button onclick="joinRoom()" disabled id="joinRoomBtn">Join Room</button>
+            <button onclick="leaveRoom()" disabled id="leaveRoomBtn">Leave Room</button>
+        </div>
+        
+        <!-- Message Area -->
+        <div class="messages" id="messages"></div>
+        
+        <!-- Send Message -->
+        <div class="form-group">
+            <textarea id="messageContent" placeholder="Type your message here..." rows="3"></textarea>
+            <button onclick="sendMessage()" disabled id="sendMessageBtn">Send Message</button>
+        </div>
+        
+        <!-- Debug Info -->
+        <details>
+            <summary>Debug Info</summary>
+            <div id="debugInfo" style="background: #f8f9fa; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px;"></div>
+        </details>
+    </div>
+
+    <script>
+        let socket = null;
+        let currentRoomId = null;
+
+        function addMessage(content, type = 'message') {
+            const messages = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'system' ? 'message system-message' : 'message';
+            messageDiv.innerHTML = `
+                <small>[${new Date().toLocaleTimeString()}]</small> 
+                ${content}
+            `;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function updateStatus(status, type = 'disconnected') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = `Status: ${status}`;
+            statusEl.className = `status ${type}`;
+        }
+
+        function updateDebugInfo(info) {
+            const debugEl = document.getElementById('debugInfo');
+            debugEl.textContent = JSON.stringify(info, null, 2);
+        }
+
+        function connect() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+
+            if (!jwtToken) {
+                alert('Please enter a JWT token');
+                return;
+            }
+
+            updateStatus('Connecting...', 'error');
+            addMessage('🔄 Attempting to connect...', 'system');
+
+            socket = io(serverUrl, {
+                auth: {
+                    token: jwtToken
+                },
+                transports: ['websocket', 'polling'],
+                forceNew: true,
+                reconnection: true,
+                timeout: 20000
+            });
+
+            // Connection events
+            socket.on('connect', () => {
+                updateStatus('Connected', 'connected');
+                addMessage(`✅ Connected with ID: ${socket.id}`, 'system');
+                
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+                document.getElementById('joinRoomBtn').disabled = false;
+                
+                updateDebugInfo({
+                    socketId: socket.id,
+                    connected: socket.connected,
+                    transport: socket.io.engine.transport.name
+                });
+            });
+
+            socket.on('disconnect', (reason) => {
+                updateStatus('Disconnected', 'disconnected');
+                addMessage(`❌ Disconnected: ${reason}`, 'system');
+                
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+                document.getElementById('joinRoomBtn').disabled = true;
+                document.getElementById('leaveRoomBtn').disabled = true;
+                document.getElementById('sendMessageBtn').disabled = true;
+            });
+
+            socket.on('connect_error', (error) => {
+                updateStatus('Connection Failed', 'error');
+                addMessage(`🚫 Connection Error: ${error.message}`, 'system');
+                console.error('Connection error:', error);
+            });
+
+            // Chat events
+            socket.on('initial_data', (data) => {
+                addMessage(`📊 Initial data received: ${data.rooms?.length || 0} rooms`, 'system');
+                updateDebugInfo(data);
+            });
+
+            socket.on('new_message', (message) => {
+                addMessage(`💬 <strong>${message.sender?.name || 'Unknown'}</strong>: ${message.content}`);
+            });
+
+            socket.on('room_joined', (data) => {
+                addMessage(`🏠 Joined room: ${data.room?.name || currentRoomId}`, 'system');
+                document.getElementById('leaveRoomBtn').disabled = false;
+                document.getElementById('sendMessageBtn').disabled = false;
+                
+                // Display recent messages
+                if (data.messages && data.messages.length > 0) {
+                    addMessage(`📜 Loading ${data.messages.length} recent messages:`, 'system');
+                    data.messages.forEach(msg => {
+                        addMessage(`💬 <strong>${msg.sender?.name || 'Unknown'}</strong>: ${msg.content}`);
+                    });
+                }
+            });
+
+            socket.on('room_left', (data) => {
+                addMessage(`🚪 Left room: ${data.roomId}`, 'system');
+                document.getElementById('leaveRoomBtn').disabled = true;
+                document.getElementById('sendMessageBtn').disabled = true;
+                currentRoomId = null;
+            });
+
+            socket.on('user_joined_room', (data) => {
+                addMessage(`👋 ${data.user?.name || 'Someone'} joined the room`, 'system');
+            });
+
+            socket.on('user_left_room', (data) => {
+                addMessage(`👋 User left the room`, 'system');
+            });
+
+            socket.on('user_typing', (data) => {
+                if (data.isTyping) {
+                    addMessage(`⌨️ ${data.user?.name || 'Someone'} is typing...`, 'system');
+                }
+            });
+
+            socket.on('error', (error) => {
+                addMessage(`❌ Error: ${error.message}`, 'system');
+                console.error('Socket error:', error);
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+        }
+
+        function joinRoom() {
+            const roomId = document.getElementById('roomId').value;
+            if (!roomId) {
+                alert('Please enter a room ID');
+                return;
+            }
+
+            if (socket && socket.connected) {
+                currentRoomId = roomId;
+                socket.emit('join_room', { roomId });
+                addMessage(`🔄 Joining room: ${roomId}`, 'system');
+            }
+        }
+
+        function leaveRoom() {
+            if (currentRoomId && socket && socket.connected) {
+                socket.emit('leave_room', { roomId: currentRoomId });
+                addMessage(`🔄 Leaving room: ${currentRoomId}`, 'system');
+            }
+        }
+
+        function sendMessage() {
+            const content = document.getElementById('messageContent').value.trim();
+            if (!content || !currentRoomId) {
+                alert('Please enter a message and join a room first');
+                return;
+            }
+
+            if (socket && socket.connected) {
+                socket.emit('send_message', {
+                    roomId: currentRoomId,
+                    content: content,
+                    type: 'text'
+                });
+                
+                addMessage(`📤 You: ${content}`);
+                document.getElementById('messageContent').value = '';
+            }
+        }
+
+        // Enter key to send message
+        document.getElementById('messageContent').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Auto-focus on page load
+        window.onload = function() {
+            document.getElementById('jwtToken').focus();
+        };
+    </script>
+</body>
+</html>

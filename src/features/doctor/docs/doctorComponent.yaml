@@ -1,0 +1,285 @@
+components:
+  schemas:
+    DoctorProfile:
+      type: object
+      required:
+        # - fullName
+        # - email
+        - professionalLicense
+      properties:
+        profilePhoto:
+          type: string
+          format: uri
+          example: https://example.com/photos/doctor.jpg
+          description: URL to the doctor's profile photo
+        # fullName:
+        #   type: string
+        #   example: Dr. Jane Smith
+        gender:
+          type: string
+          enum: [male, female, other]
+          example: female
+        dateOfBirth:
+          type: string
+          format: date
+          example: 1980-05-15
+        nationality:
+          type: string
+          example: Nigerian
+        contactNumber:
+          type: string
+          example: +234-123-456-7890
+        # email:
+        #   type: string
+        #   format: email
+        #   example: jane.smith@hospital.com
+        residentialAddress:
+          type: string
+          example: 123 Health St, Lagos, Nigeria
+        professionalLicense:
+          $ref: '#/components/schemas/ProfessionalLicense'
+        professionalCertificate:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfessionalCertificate'
+        clinicalPractice:
+          $ref: '#/components/schemas/ClinicalPractice'
+        digitalHealthTools:
+          $ref: '#/components/schemas/DigitalHealthTools'
+        wallet:
+          $ref: '#/components/schemas/Wallet'
+
+    ProfessionalLicense:
+      type: object
+      required:
+        - medicalLicenseNumber
+        - countryOfLicense
+        - licenseAuthority
+        - licenseExpiryDate
+      properties:
+        medicalLicenseNumber:
+          type: string
+          example: NG-MD-123456
+        countryOfLicense:
+          type: string
+          example: Nigeria
+        licenseAuthority:
+          type: string
+          example: Medical and Dental Council of Nigeria (MDCN)
+        licenseExpiryDate:
+          type: string
+          format: date
+          example: 2027-12-31
+        licenseDocument:
+          type: string
+          format: uri
+          example: https://example.com/docs/license.pdf
+          description: URL to the license document
+        yearsOfExperience:
+          type: integer
+          example: 10
+        areasOfSpecialization:
+          type: array
+          items:
+            type: string
+            example: Cardiology
+        subspecialty:
+          type: string
+          example: Interventional Cardiology
+        medicalInstitution:
+          type: string
+          example: Lagos University Teaching Hospital
+
+    ProfessionalCertificate:
+      type: object
+      required:
+        - institution
+        - degree
+        - fieldOfStudy
+        - startYear
+        - endYear
+        - certificateName
+        - issuingBody
+        - issueDate
+      properties:
+        institution:
+          type: string
+          example: University of Lagos
+        degree:
+          type: string
+          example: MBBS
+        fieldOfStudy:
+          type: string
+          example: Medicine
+        startYear:
+          type: integer
+          example: 2000
+        endYear:
+          type: integer
+          example: 2006
+        certificateName:
+          type: string
+          example: Bachelor of Medicine, Bachelor of Surgery
+        issuingBody:
+          type: string
+          example: University of Lagos
+        issueDate:
+          type: string
+          format: date
+          example: 2006-07-15
+        expiryDate:
+          type: string
+          format: date
+          example: 2030-07-15
+          nullable: true
+        certificateDocument:
+          type: string
+          format: uri
+          example: https://example.com/docs/certificate.pdf
+        verificationLink:
+          type: string
+          format: uri
+          example: https://verify.unilag.edu.ng/cert/123456
+          nullable: true
+
+    ClinicalPractice:
+      type: object
+      required:
+        - clinicName
+        - location
+        - daysAvailableFrom
+        - daysAvailableTo
+        - timeAvailableFrom
+        - timeAvailableTo
+        - consultationFee
+      properties:
+        clinicName:
+          type: string
+          example: HealthPlus Clinic
+        location:
+          type: string
+          example: 456 Wellness Ave, Abuja, Nigeria
+        daysAvailableFrom:
+          type: string
+          enum: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+          example: Monday
+        daysAvailableTo:
+          type: string
+          enum: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+          example: Friday
+        timeAvailableFrom:
+          type: string
+          format: time
+          example: 09:00:00
+        timeAvailableTo:
+          type: string
+          format: time
+          example: 17:00:00
+        consultationFee:
+          type: number
+          format: float
+          example: 5000.00
+          description: Consultation fee in NGN
+
+    DigitalHealthTools:
+      type: object
+      required:
+        - consentToUseAITools
+      properties:
+        consentToUseAITools:
+          type: boolean
+          example: true
+        usageDescription:
+          type: string
+          example: Use AI for patient diagnostics and treatment planning
+          nullable: true
+        useARVR:
+          type: boolean
+          example: false
+          description: Willingness to use AR/VR tools
+
+    Wallet:
+      type: object
+      required:
+        - paymentMethod
+        - bankName
+        - accountNumber
+        - accountName
+      properties:
+        paymentMethod:
+          type: string
+          enum: [bank_transfer, mobile_money]
+          example: bank_transfer
+        bankName:
+          type: string
+          example: First Bank of Nigeria
+        accountNumber:
+          type: string
+          example: 1234567890
+        accountName:
+          type: string
+          example: Jane Smith
+        swiftCode:
+          type: string
+          example: FBNINGLA
+          nullable: true
+        sortCode:
+          type: string
+          example: 123-456
+          nullable: true
+        frequencyPayout:
+          type: string
+          enum: [daily, weekly, monthly]
+          example: monthly
+
+    DoctorProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174002
+        profilePhoto:
+          type: string
+          format: uri
+          example: https://example.com/photos/doctor.jpg
+        fullName:
+          type: string
+          example: Dr. Jane Smith
+        email:
+          type: string
+          format: email
+          example: jane.smith@hospital.com
+        createdAt:
+          type: string
+          format: date-time
+          example: 2025-06-01T15:47:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2025-06-01T15:47:00Z
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Doctor profile not found
+
+  parameters:
+    DoctorProfileId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The UUID of the doctor profile
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The UUID of the associated user

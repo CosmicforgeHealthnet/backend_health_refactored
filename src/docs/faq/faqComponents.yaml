@@ -1,0 +1,473 @@
+# =====================================================
+# 1. FAQ COMPONENTS FILE
+# =====================================================
+
+# faq/faqComponents.yaml
+components:
+  schemas:
+    # FAQ Schemas
+    FAQ:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique FAQ identifier
+        title:
+          type: string
+          maxLength: 500
+          description: FAQ title
+        content:
+          type: string
+          description: FAQ content
+        slug:
+          type: string
+          maxLength: 600
+          description: URL-friendly slug
+        targetRole:
+          type: string
+          enum: [patient, doctor, general, all]
+          description: Target user role
+        status:
+          type: string
+          enum: [draft, published, archived]
+          description: FAQ status
+        isStatic:
+          type: boolean
+          description: Whether FAQ is static or dynamic
+        priority:
+          type: integer
+          minimum: 0
+          description: Display priority
+        viewCount:
+          type: integer
+          minimum: 0
+          description: Number of views
+        helpfulVotes:
+          type: integer
+          minimum: 0
+          description: Number of helpful votes
+        notHelpfulVotes:
+          type: integer
+          minimum: 0
+          description: Number of not helpful votes
+        searchKeywords:
+          type: string
+          description: Keywords for search
+        relatedLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedLink'
+        metadata:
+          type: object
+          description: Additional metadata
+        category:
+          $ref: '#/components/schemas/FAQCategory'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdBy:
+          type: string
+          format: uuid
+          nullable: true
+        updatedBy:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+        - title
+        - content
+        - slug
+        - targetRole
+        - status
+
+    # FAQ Category Schema
+    FAQCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 200
+        slug:
+          type: string
+          maxLength: 250
+        description:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          maxLength: 100
+          nullable: true
+        color:
+          type: string
+          maxLength: 50
+          nullable: true
+        targetRole:
+          type: string
+          enum: [patient, doctor, general, all]
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - name
+        - slug
+        - targetRole
+
+    # FAQ Vote Schema
+    FAQVote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        voteType:
+          type: string
+          enum: [helpful, not_helpful]
+        userRole:
+          type: string
+          maxLength: 50
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - voteType
+
+    # Related Link Schema
+    RelatedLink:
+      type: object
+      properties:
+        text:
+          type: string
+          description: Link text
+        url:
+          type: string
+          description: Link URL
+      required:
+        - text
+        - url
+
+    # Request/Response Schemas
+    CreateFAQRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        targetRole:
+          type: string
+          enum: [patient, doctor, general, all]
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published, archived]
+          default: draft
+        priority:
+          type: integer
+          minimum: 0
+          default: 0
+        searchKeywords:
+          type: string
+          nullable: true
+        relatedLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedLink'
+        metadata:
+          type: object
+      required:
+        - title
+        - content
+        - targetRole
+
+    UpdateFAQRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        targetRole:
+          type: string
+          enum: [patient, doctor, general, all]
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published, archived]
+        priority:
+          type: integer
+          minimum: 0
+        searchKeywords:
+          type: string
+          nullable: true
+        relatedLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedLink'
+        metadata:
+          type: object
+
+    CreateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          maxLength: 100
+          nullable: true
+        color:
+          type: string
+          maxLength: 50
+          nullable: true
+        targetRole:
+          type: string
+          enum: [patient, doctor, general, all]
+          default: general
+        sortOrder:
+          type: integer
+          default: 0
+        metadata:
+          type: object
+      required:
+        - name
+
+    VoteFAQRequest:
+      type: object
+      properties:
+        voteType:
+          type: string
+          enum: [helpful, not_helpful]
+        feedback:
+          type: string
+          nullable: true
+      required:
+        - voteType
+
+    # Response Schemas
+    FAQResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/FAQ'
+
+    FAQListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            faqs:
+              type: object
+              description: FAQs grouped by category
+            total:
+              type: integer
+            role:
+              type: string
+            category:
+              type: string
+
+    AdminFAQListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            faqs:
+              type: array
+              items:
+                $ref: '#/components/schemas/FAQ'
+            total:
+              type: integer
+            page:
+              type: integer
+            limit:
+              type: integer
+            totalPages:
+              type: integer
+
+    FAQSearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            faqs:
+              type: array
+              items:
+                $ref: '#/components/schemas/FAQ'
+            query:
+              type: string
+            total:
+              type: integer
+            role:
+              type: string
+
+    CategoryListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/FAQCategory'
+            total:
+              type: integer
+            role:
+              type: string
+
+    VoteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            success:
+              type: boolean
+            message:
+              type: string
+
+    FAQAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            overview:
+              type: object
+              properties:
+                faqStats:
+                  type: array
+                  items:
+                    type: object
+                timeRange:
+                  type: object
+                  properties:
+                    startDate:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    endDate:
+                      type: string
+                      format: date-time
+                      nullable: true
+            searchAnalytics:
+              type: object
+              properties:
+                topSearches:
+                  type: array
+                  items:
+                    type: object
+                total:
+                  type: integer
+            viewAnalytics:
+              type: object
+              properties:
+                mostViewed:
+                  type: array
+                  items:
+                    type: object
+                total:
+                  type: integer
+            userRoleStats:
+              type: array
+              items:
+                type: object
+
+    StaticFAQInitResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            total:
+              type: integer
+            created:
+              type: integer
+            existing:
+              type: integer
+            message:
+              type: string
+
+    # Error Response
+    FAQErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+        errorCode:
+          type: string
+

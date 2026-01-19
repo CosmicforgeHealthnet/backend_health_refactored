@@ -1,0 +1,127 @@
+# 5. src/docs/pharmacy/admin/pharmacyAdmin.yaml
+paths:
+  /pharmacy/admin/verifications/pending:
+    get:
+      summary: Get pending pharmacy verifications
+      tags: [PharmacyAdmin]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pending verifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingVerificationsResponse'
+
+  /pharmacy/admin/verifications/{verificationId}/assign:
+    post:
+      summary: Assign verification to admin
+      tags: [PharmacyAdmin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: verificationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignVerificationRequest'
+      responses:
+        '200':
+          description: Verification assigned
+
+  /pharmacy/admin/pharmacy/{pharmacyId}/review:
+    get:
+      summary: Review pharmacy details
+      tags: [PharmacyAdmin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pharmacyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pharmacy review data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PharmacyReviewResponse'
+
+  /pharmacy/admin/documents/{documentId}/verify:
+    post:
+      summary: Verify pharmacy document
+      tags: [PharmacyAdmin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentVerificationRequest'
+      responses:
+        '200':
+          description: Document verification updated
+
+  /pharmacy/admin/pharmacy/{pharmacyId}/approve:
+    post:
+      summary: Approve pharmacy
+      tags: [PharmacyAdmin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pharmacyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRequest'
+      responses:
+        '200':
+          description: Pharmacy approved
+
+  /pharmacy/admin/pharmacy/{pharmacyId}/reject:
+    post:
+      summary: Reject pharmacy
+      tags: [PharmacyAdmin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pharmacyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectionRequest'
+      responses:
+        '200':
+          description: Pharmacy rejected

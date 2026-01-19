@@ -1,0 +1,65 @@
+{
+  "info": {
+    "name": "CosmicForge - Compliance Feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get patients requiring consent renewal",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/requiring-renewal",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            "requiring-renewal"
+          ],
+          "variable": []
+        },
+        "description": "Retrieve patients whose consent is expiring within the specified\nnumber of days ahead.\n"
+      }
+    },
+    {
+      "name": "Get consent compliance report",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/consent/compliance-report",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "consent",
+            "compliance-report"
+          ],
+          "variable": []
+        },
+        "description": "Generate a comprehensive consent compliance report including\noverview statistics, renewal requirements, and emergency access metrics.\n"
+      }
+    },
+    {
+      "name": "Get FHIR compliance report",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/fhir/compliance",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "fhir",
+            "compliance"
+          ],
+          "variable": []
+        },
+        "description": "Generate a comprehensive compliance report covering encryption,\nconsent verification, security labeling, and recommendations.\n"
+      }
+    }
+  ]
+}

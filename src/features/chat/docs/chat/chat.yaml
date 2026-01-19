@@ -1,0 +1,1857 @@
+openapi: 3.0.3
+info:
+  title: Chat API
+  version: 1.0.0
+  description: API for managing chat rooms, messages, and appointment chats in a medical communication system.
+
+components:
+  $ref: './api/chatComponent.yaml'
+
+paths:
+  /api/chat/rooms:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Room Management
+      summary: Get user's chat rooms
+      description: |
+        Retrieve all chat rooms the authenticated user is a participant in, including unread counts and room statistics.
+
+        **WebSocket Integration:**
+        - **Event: initial_data**: Sent on WebSocket connection with user's rooms and data.
+          ```javascript
+          socket.on('initial_data', (data) => {
+            console.log('User rooms:', data.rooms);
+            console.log('User info:', data.user);
+          });
+          ```
+
+        **Frontend Example (React Hook):**
+        ```typescript
+        import { useChat } from './hooks/useChat';
+        const { rooms } = useChat(token);
+        useEffect(() => {
+          // Display rooms in UI
+          console.log('Rooms:', rooms);
+        }, [rooms]);
+        ```
+      responses:
+        '200':
+          description: Successfully retrieved user's rooms
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoomWithStats'
+              example:
+                success: true
+                data:
+                  - id: "3753b1b4-b57a-4dbb-afbb-16187261a65b"
+                    name: "General Discussion"
+                    description: "Main group chat"
+                    type: "group"
+                    isPrivate: false
+                    maxParticipants: 50
+                    participantCount: 12
+                    unreadCount: 3
+                    lastMessage:
+                      id: "msg123"
+                      content: "How are you today?"
+                      sender:
+                        id: "user456"
+                        fullName: "Dr. Smith"
+                      createdAt: "2025-06-14T10:30:00Z"
+                    createdAt: "2025-06-13T05:44:21Z"
+                    updatedAt: "2025-06-14T10:30:00Z"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Room Management
+      summary: Create new chat room
+      description: |
+        Create a new group chat room with specified settings and automatically join the creator as admin.
+
+        **WebSocket Integration:**
+        - **Event: room_joined**: Confirmation of joining the newly created room.
+          ```javascript
+          socket.on('room_joined', (data) => {
+            console.log('Joined room:', data.room);
+            console.log('Recent messages:', data.messages);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function createRoom() {
+          const roomData = {
+            name: "Medical Team Discussion",
+            description: "Chat for medical team coordination",
+            type: "group",
+            isPrivate: false,
+            maxParticipants: 25,
+            settings: { allowFileSharing: true, messageDeletionAllowed: true },
+            metadata: { department: "cardiology" }
+          };
+          const response = await chatService.createRoom(roomData);
+          console.log('Created room:', response.data);
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+            example:
+              name: "Medical Team Discussion"
+              description: "Chat for medical team coordination"
+              type: "group"
+              isPrivate: false
+              maxParticipants: 25
+              settings:
+                allowFileSharing: true
+                messageDeletionAllowed: true
+              metadata:
+                department: "cardiology"
+      responses:
+        '201':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/RoomDetails'
+                  message:
+                    type: string
+              example:
+                success: true
+                message: "Room created successfully"
+                data:
+                  id: "3753b1b4-b57a-4dbb-afbb-16187261a65b"
+                  name: "Medical Team Discussion"
+                  description: "Chat for medical team coordination"
+                  type: "group"
+                  isPrivate: false
+                  maxParticipants: 25
+                  participants:
+                    - id: "part123"
+                      role: "admin"
+                      user:
+                        id: "user123"
+                        fullName: "Dr. Johnson"
+                        email: "dr.johnson@hospital.com"
+                      joinedAt: "2025-06-14T10:00:00Z"
+                  createdBy:
+                    id: "user123"
+                    fullName: "Dr. Johnson"
+                  createdAt: "2025-06-14T10:00:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/chat/direct:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Room Management
+      summary: Create direct chat
+      description: |
+        Create or retrieve an existing direct chat between two users.
+
+        **WebSocket Integration:**
+        - **Event: room_joined**: Confirmation of joining the direct chat room.
+          ```javascript
+          socket.on('room_joined', (data) => {
+            console.log('Joined direct chat:', data.room);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function startDirectChat() {
+          const response = await chatService.createDirectChat("user456");
+          console.log('Direct chat:', response.data);
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetUserId
+              properties:
+                targetUserId:
+                  type: string
+                  format: uuid
+                  description: ID of the user to chat with
+            example:
+              targetUserId: "user456"
+      responses:
+        '201':
+          description: Direct chat created or retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/RoomDetails'
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/chat/rooms/{roomId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Room Management
+      summary: Get room details
+      description: |
+        Retrieve detailed information about a specific chat room, including participants and settings.
+
+        **WebSocket Integration:**
+        - **Event: room_updated**: Notifies when room information is updated.
+          ```javascript
+          socket.on('room_updated', (data) => {
+            console.log('Room updated:', data.roomId);
+            console.log('Last message:', data.lastMessage);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function getRoomDetails(roomId) {
+          const response = await chatService.request(`/api/chat/rooms/${roomId}`);
+          console.log('Room details:', response.data);
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/RoomId'
+      responses:
+        '200':
+          description: Room details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/RoomDetails'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/chat/rooms/{roomId}/join:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Room Management
+      summary: Join chat room
+      description: |
+        Join an existing chat room as a participant.
+
+        **WebSocket Integration:**
+        - **Event: join_room**: Client emits to join a chat room.
+          ```javascript
+          socket.emit('join_room', { roomId: 'room-uuid' });
+          ```
+        - **Event: room_joined**: Confirmation of joining the room.
+          ```javascript
+          socket.on('room_joined', (data) => {
+            console.log('Joined room:', data.room);
+          });
+          ```
+        - **Event: user_joined_room**: Notifies others when a user joins.
+          ```javascript
+          socket.on('user_joined_room', (data) => {
+            console.log(`${data.user.name} joined room ${data.roomId}`);
+          });
+          ```
+
+        **Frontend Example (React Hook):**
+        ```typescript
+        const { joinRoom } = useChat(token);
+        useEffect(() => {
+          joinRoom(roomId);
+        }, [roomId]);
+        ```
+      parameters:
+        - $ref: '#/components/parameters/RoomId'
+      responses:
+        '200':
+          description: Successfully joined room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/chat/rooms/{roomId}/leave:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Room Management
+      summary: Leave chat room
+      description: |
+        Leave a chat room and become an inactive participant.
+
+        **WebSocket Integration:**
+        - **Event: leave_room**: Client emits to leave a chat room.
+          ```javascript
+          socket.emit('leave_room', { roomId: 'room-uuid' });
+          ```
+        - **Event: room_left**: Confirmation of leaving the room.
+          ```javascript
+          socket.on('room_left', (data) => {
+            console.log('Left room:', data.roomId);
+          });
+          ```
+        - **Event: user_left_room**: Notifies others when a user leaves.
+          ```javascript
+          socket.on('user_left_room', (data) => {
+            console.log(`User ${data.userId} left room ${data.roomId}`);
+          });
+         ```
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function leaveRoom(roomId) {
+          await chatService.request(`/api/chat/rooms/${roomId}/leave`, { method: 'POST' });
+          console.log('Left room:', roomId);
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/RoomId'
+      responses:
+        '200':
+          description: Successfully left room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/chat/rooms/{roomId}/participants:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Room Management
+      summary: Get room participants
+      description: |
+        Retrieve a list of active participants in a chat room.
+
+        **WebSocket Integration:**
+        - **Event: user_joined_room**: Notifies when a new participant joins.
+          ```javascript
+          socket.on('user_joined_room', (data) => {
+            console.log(`${data.user.name} joined room ${data.roomId}`);
+          });
+          ```
+        - **Event: user_left_room**: Notifies when a participant leaves.
+          ```javascript
+          socket.on('user_left_room', (data) => {
+            console.log(`User ${data.userId} left room ${data.roomId}`);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function getParticipants(roomId) {
+          const response = await chatService.request(`/api/chat/rooms/${roomId}/participants`);
+          console.log('Participants:', response.data);
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/RoomId'
+      responses:
+        '200':
+          description: Participants retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Participant'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/chat/rooms/{roomId}/messages:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Message Management
+      summary: Get messages
+      description: |
+        Retrieve messages from a chat room with pagination and filtering options.
+
+        **WebSocket Integration:**
+        - **Event: new_message**: Notifies when a new message is received.
+          ```javascript
+          socket.on('new_message', (message) => {
+            console.log('New message from:', message.sender.fullName);
+            console.log('Content:', message.content);
+            displayMessage(message);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function fetchMessages(roomId) {
+          const response = await chatService.getMessages(roomId, { limit: 50 });
+          console.log('Messages:', response.data);
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/RoomId'
+        - name: limit
+          in: query
+          description: Number of messages to retrieve (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          description: Number of messages to skip for pagination
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: since
+          in: query
+          description: Get messages since this timestamp
+          schema:
+            type: string
+            format: date-time
+        - name: until
+          in: query
+          description: Get messages until this timestamp
+          schema:
+            type: string
+            format: date-time
+        - name: type
+          in: query
+          description: Filter by message type
+          schema:
+            type: string
+            enum: [text, image, file, system]
+      responses:
+        '200':
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+              example:
+                success: true
+                data:
+                  - id: "msg123"
+                    content: "Hello, how can I help you today?"
+                    type: "text"
+                    sender:
+                      id: "user456"
+                      fullName: "Dr. Smith"
+                      email: "dr.smith@hospital.com"
+                    edited: false
+                    deleted: false
+                    createdAt: "2025-06-14T10:30:00Z"
+                    updatedAt: "2025-06-14T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Message Management
+      summary: Send message
+      description: |
+        Send a new message to a chat room.
+
+        **WebSocket Integration:**
+        - **Event: send_message**: Client emits to send a message.
+          ```javascript
+          socket.emit('send_message', {
+            roomId: 'room-uuid',
+            content: 'Hello world',
+            type: 'text',
+            metadata: {},
+            replyToId: 'message-uuid'
+          });
+          ```
+        - **Event: new_message**: Notifies when the message is received.
+          ```javascript
+          socket.on('new_message', (message) => {
+            console.log('New message:', message.content);
+            displayMessage(message);
+          });
+          ```
+
+        **Frontend Example (React Component):**
+        ```typescript
+        const { sendMessage } = useChat(token);
+        const handleSendMessage = (e) => {
+          e.preventDefault();
+          sendMessage(roomId, newMessage);
+          setNewMessage('');
+        };
+        ```
+      parameters:
+        - $ref: '#/components/parameters/RoomId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+            example:
+              content: "Thank you for the consultation. I'll follow up with the test results."
+              type: "text"
+              replyToId: "msg456"
+              metadata:
+                priority: "normal"
+                tags: ["follow-up", "test-results"]
+      responses:
+        '201':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Message'
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/chat/messages/{messageId}:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Message Management
+      summary: Edit message
+      description: |
+        Edit an existing message (only by the original sender).
+
+        **WebSocket Integration:**
+        - **Event: edit_message**: Client emits to edit a message.
+          ```javascript
+          socket.emit('edit_message', {
+            messageId: 'message-uuid',
+            content: 'Updated content'
+          });
+          ```
+        - **Event: message_edited**: Notifies when a message is edited.
+          ```javascript
+          socket.on('message_edited', (message) => {
+            console.log('Message edited:', message.id);
+            updateMessageInUI(message);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function editMessage(messageId, content) {
+          const response = await chatService.editMessage(messageId, content);
+          console.log('Edited message:', response.data);
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/MessageId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  maxLength: 4000
+                  description: New message content
+            example:
+              content: "Thank you for the consultation. I'll follow up with the updated test results."
+      responses:
+        '200':
+          description: Message edited successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Message'
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - Message Management
+      summary: Delete message
+      description: |
+        Delete a message (soft delete by default, hard delete for admins).
+
+        **WebSocket Integration:**
+        - **Event: delete_message**: Client emits to delete a message.
+          ```javascript
+          socket.emit('delete_message', {
+            messageId: 'message-uuid',
+            soft: true
+          });
+          ```
+        - **Event: message_deleted**: Notifies when a message is deleted.
+          ```javascript
+          socket.on('message_deleted', (data) => {
+            console.log('Message deleted:', data.messageId);
+            if (data.soft) {
+              markMessageAsDeleted(data.messageId);
+            } else {
+              removeMessageFrom oiseaux(data.messageId);
+            }
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function deleteMessage(messageId, soft = true) {
+          await chatService.deleteMessage(messageId, soft);
+          console.log('Message deleted:', messageId);
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/MessageId'
+        - name: soft
+          in: query
+          description: Whether to perform soft delete (default) or hard delete
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Message deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/chat/rooms/{roomId}/read:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Message Management
+      summary: Mark messages as read
+      description: |
+        Mark messages as read up to a specific message or all messages in a room.
+
+        **WebSocket Integration:**
+        - **Event: mark_read**: Client emits to mark messages as read.
+          ```javascript
+          socket.emit('mark_read', {
+            roomId: 'room-uuid',
+            messageId: 'message-uuid'
+          });
+          ```
+        - **Event: message_read**: Notifies when a message is read by someone.
+          ```javascript
+          socket.on('message_read', (data) => {
+            console.log(`Message ${data.messageId} read by ${data.readBy}`);
+            updateReadStatus(data.messageId, data.readBy);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function markMessagesRead(roomId, messageId) {
+          await chatService.markAsRead(roomId, messageId);
+          console.log('Messages marked as read');
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/RoomId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messageId:
+                  type: string
+                  format: uuid
+                  description: Mark as read up to this message (optional, marks all if not provided)
+      responses:
+        '200':
+          description: Messages marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/chat/rooms/{roomId}/search:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Message Management
+      summary: Search messages
+      description: |
+        Search for messages within a chat room.
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function searchMessages(roomId, query) {
+          const response = await chatService.searchMessages(roomId, query, { limit: 20 });
+          console.log('Search results:', response.data);
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/RoomId'
+        - name: q
+          in: query
+          required: true
+          description: Search query string
+          schema:
+            type: string
+            minLength: 1
+        - name: limit
+          in: query
+          description: Number of results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          description: Number of results to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Search results retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/chat/appointment:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointment Chat
+      summary: Create appointment chat
+      description: |
+        Create a scheduled chat session for medical appointments (doctors only).
+
+        **WebSocket Integration:**
+        - **Event: appointment_joined**: Notifies when the appointment chat is joined.
+          ```javascript
+          socket.on('appointment_joined', (data) => {
+            console.log('Joined appointment chat:', data.appointmentChat);
+            initializeAppointmentUI(data.room);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function createAppointmentChat() {
+          const appointmentData = {
+            appointmentId: "apt123",
+            patientId: "user789",
+            scheduledStartTime: "2025-06-15T14:00:00Z",
+            scheduledEndTime: "2025-06-15T14:30:00Z",
+            settings: { autoCloseEnabled: true, preJoinAllowed: false, postChatDuration: 300 }
+          };
+          const response = await chatService.createAppointmentChat(appointmentData);
+          console.log('Appointment chat created:', response.data);
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppointmentChatRequest'
+            example:
+              appointmentId: "apt123"
+              patientId: "user789"
+              scheduledStartTime: "2025-06-15T14:00:00Z"
+              scheduledEndTime: "2025-06-15T14:30:00Z"
+              settings:
+                autoCloseEnabled: true
+                preJoinAllowed: false
+                postChatDuration: 300
+      responses:
+        '201':
+          description: Appointment chat created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AppointmentChat'
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointment Chat
+      summary: Get user's appointment chats
+      description: |
+        Retrieve appointment chats for the authenticated user (as doctor or patient).
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function getAppointmentChats(status) {
+          const response = await chatService.getAppointmentChats(status);
+          console.log('Appointment chats:', response.data);
+        }
+        ```
+      parameters:
+        - name: status
+          in: query
+          description: Filter by appointment chat status
+          schema:
+            type: string
+            enum: [scheduled, active, completed, cancelled]
+      responses:
+        '200':
+          description: Appointment chats retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppointmentChat'
+
+  /api/chat/appointment/{appointmentChatId}/status:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointment Chat
+      summary: Get appointment chat status
+      description: |
+        Get detailed status and timing information for an appointment chat.
+
+        **WebSocket Integration:**
+        - **Event: check_appointment_status**: Client emits to check appointment status.
+          ```javascript
+          socket.emit('check_appointment_status', {
+            appointmentChatId: 'appointment-uuid'
+          });
+          ```
+        - **Event: appointment_status**: Notifies of appointment status updates.
+          ```javascript
+          socket.on('appointment_status', (status) => {
+            console.log('Appointment status:', status.timeStatus);
+            console.log('Time until start:', status.timeUntilStart);
+            updateAppointmentTimer(status);
+          });
+          ```
+
+        **Frontend Example (React Component):**
+        ```typescript
+        useEffect(() => {
+          socket?.emit('check_appointment_status', { appointmentChatId });
+          socket?.on('appointment_status', (status) => {
+            setAppointmentStatus(status);
+            setCanJoin(status.timeStatus === 'active' || status.preJoinAllowed);
+          });
+        }, [socket, appointmentChatId]);
+        ```
+      parameters:
+        - $ref: '#/components/parameters/AppointmentChatId'
+      responses:
+        '200':
+          description: Appointment chat status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AppointmentChatStatus'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/chat/appointment/{appointmentChatId}/join:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointment Chat
+      summary: Join appointment chat
+      description: |
+        Join a scheduled appointment chat session.
+
+        **WebSocket Integration:**
+        - **Event: join_appointment_chat**: Client emits to join an appointment chat.
+          ```javascript
+          socket.emit('join_appointment_chat', {
+            appointmentChatId: 'appointment-uuid'
+          });
+          ```
+        - **Event: appointment_joined**: Notifies when successfully joined.
+          ```javascript
+          socket.on('appointment_joined', (data) => {
+            console.log('Joined appointment chat:', data.appointmentChat);
+            initializeAppointmentUI(data.room);
+          });
+          ```
+        - **Event: appointment_join_denied**: Notifies if join attempt is denied.
+          ```javascript
+          socket.on('appointment_join_denied', (data) => {
+            console.log('Cannot join:', data.reason);
+            if (data.availableAt) {
+              console.log('Available at:', data.availableAt);
+            }
+          });
+          ```
+        - **Event: appointment_participant_joined**: Notifies when another participant joins.
+          ```javascript
+          socket.on('appointment_participant_joined', (data) => {
+            console.log(`${data.user.name} joined the appointment`);
+          });
+          ```
+
+        **Frontend Example (React Component):**
+        ```typescript
+        const joinAppointment = () => {
+          socket?.emit('join_appointment_chat', { appointmentChatId });
+        };
+        ```
+      parameters:
+        - $ref: '#/components/parameters/AppointmentChatId'
+      responses:
+        '200':
+          description: Successfully joined appointment chat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AppointmentChat'
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/chat/appointment/{appointmentChatId}/end:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Appointment Chat
+      summary: End appointment chat
+      description: |
+        End an active appointment chat session.
+
+        **WebSocket Integration:**
+        - **Event: appointment_ended**: Notifies when the appointment chat ends.
+          ```javascript
+          socket.on('appointment_ended', (data) => {
+            console.log('Appointment ended');
+            showAppointmentEndedUI(data.appointmentChat);
+          });
+          ```
+
+        **Frontend Example (API Service):**
+        ```typescript
+        const chatService = new ChatAPIService('https://api.example.com', token);
+        async function endAppointmentChat(appointmentChatId) {
+          await chatService.endAppointmentChat(appointmentChatId);
+          console.log('Appointment chat ended');
+        }
+        ```
+      parameters:
+        - $ref: '#/components/parameters/AppointmentChatId'
+      responses:
+        '200':
+          description: Appointment chat ended successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AppointmentChat'
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+tags:
+  - name: Room Management
+    description: Operations for managing chat rooms and participants
+  - name: Message Management
+    description: Operations for sending, editing, and managing messages
+  - name: Appointment Chat
+    description: Medical appointment-specific chat functionality
+  - name: Utility
+    description: Utility endpoints for health checks and statistics
+
+x-websocket-events:
+  description: |
+    The chat system uses WebSocket for real-time communication. Connect to the WebSocket endpoint with authentication.
+    
+    ## Connection
+    ```javascript
+    const socket = io('/api/chat', {
+      auth: { token: 'your-jwt-token' }
+    });
+    ```
+    
+    ## Client-to-Server Events
+    
+    ### Room Management
+    - **join_room**: Join a chat room
+      ```javascript
+      socket.emit('join_room', { roomId: 'room-uuid' });
+      ```
+    
+    - **leave_room**: Leave a chat room
+      ```javascript
+      socket.emit('leave_room', { roomId: 'room-uuid' });
+      ```
+    
+    ### Messaging
+    - **send_message**: Send a message
+      ```javascript
+      socket.emit('send_message', {
+        roomId: 'room-uuid',
+        content: 'Hello world',
+        type: 'text',
+        metadata: {},
+        replyToId: 'message-uuid' // optional
+      });
+      ```
+    
+    - **edit_message**: Edit a message
+      ```javascript
+      socket.emit('edit_message', {
+        messageId: 'message-uuid',
+        content: 'Updated content'
+      });
+      ```
+    
+    - **delete_message**: Delete a message
+      ```javascript
+      socket.emit('delete_message', {
+        messageId: 'message-uuid',
+        soft: true
+      });
+      ```
+    
+    ### Typing Indicators
+    - **typing_start**: Indicate user started typing
+      ```javascript
+      socket.emit('typing_start', { roomId: 'room-uuid' });
+      ```
+    
+    - **typing_stop**: Indicate user stopped typing
+      ```javascript
+      socket.emit('typing_stop', { roomId: 'room-uuid' });
+      ```
+    
+    ### Read Status
+    - **mark_read**: Mark messages as read
+      ```javascript
+      socket.emit('mark_read', {
+        roomId: 'room-uuid',
+        messageId: 'message-uuid' // optional, marks all if not provided
+      });
+      ```
+    
+    ### Appointment Chat
+    - **join_appointment_chat**: Join appointment chat
+      ```javascript
+      socket.emit('join_appointment_chat', {
+        appointmentChatId: 'appointment-uuid'
+      });
+      ```
+    
+    - **check_appointment_status**: Check appointment status
+      ```javascript
+      socket.emit('check_appointment_status', {
+        appointmentChatId: 'appointment-uuid'
+      });
+      ```
+    
+    ### User Status
+    - **update_status**: Update user online status
+      ```javascript
+      socket.emit('update_status', {
+        status: 'online' // online, busy, away, invisible
+      });
+      ```
+    
+    ## Server-to-Client Events
+    
+    ### Connection Events
+    - **initial_data**: Sent on connection with user's rooms and data
+      ```javascript
+      socket.on('initial_data', (data) => {
+        console.log('User rooms:', data.rooms);
+        console.log('User info:', data.user);
+      });
+      ```
+    
+    ### Room Events
+    - **room_joined**: Confirmation of joining room
+      ```javascript
+      socket.on('room_joined', (data) => {
+        console.log('Joined room:', data.room);
+        console.log('Recent messages:', data.messages);
+      });
+      ```
+    
+    - **room_left**: Confirmation of leaving room
+      ```javascript
+      socket.on('room_left', (data) => {
+        console.log('Left room:', data.roomId);
+      });
+      ```
+    
+    - **user_joined_room**: Another user joined the room
+      ```javascript
+      socket.on('user_joined_room', (data) => {
+        console.log(`${data.user.name} joined room ${data.roomId}`);
+      });
+      ```
+    
+    - **user_left_room**: Another user left the room
+      ```javascript
+      socket.on('user_left_room', (data) => {
+        console.log(`User ${data.userId} left room ${data.roomId}`);
+      });
+      ```
+    
+    - **room_updated**: Room information updated
+      ```javascript
+      socket.on('room_updated', (data) => {
+        console.log('Room updated:', data.roomId);
+        console.log('Last message:', data.lastMessage);
+      });
+      ```
+    
+    ### Message Events
+    - **new_message**: New message received
+      ```javascript
+      socket.on('new_message', (message) => {
+        console.log('New message from:', message.sender.fullName);
+        console.log('Content:', message.content);
+        displayMessage(message);
+      });
+      ```
+    
+    - **message_edited**: Message was edited
+      ```javascript
+      socket.on('message_edited', (message) => {
+        console.log('Message edited:', message.id);
+        updateMessageInUI(message);
+      });
+      ```
+    
+    - **message_deleted**: Message was deleted
+      ```javascript
+      socket.on('message_deleted', (data) => {
+        console.log('Message deleted:', data.messageId);
+        if (data.soft) {
+          markMessageAsDeleted(data.messageId);
+        } else {
+          removeMessageFromUI(data.messageId);
+        }
+      });
+      ```
+    
+    - **message_read**: Message was read by someone
+      ```javascript
+      socket.on('message_read', (data) => {
+        console.log(`Message ${data.messageId} read by ${data.readBy}`);
+        updateReadStatus(data.messageId, data.readBy);
+      });
+      ```
+    
+    ### Typing Events
+    - **user_typing**: User typing status changed
+      ```javascript
+      socket.on('user_typing', (data) => {
+        if (data.isTyping) {
+          showTypingIndicator(data.userId, data.roomId);
+        } else {
+          hideTypingIndicator(data.userId, data.roomId);
+        }
+      });
+      ```
+    
+    ### User Presence Events
+    - **user_online**: User came online
+      ```javascript
+      socket.on('user_online', (data) => {
+        console.log(`${data.user.name} is now online`);
+        updateUserStatus(data.userId, 'online');
+      });
+      ```
+    
+    - **user_offline**: User went offline
+      ```javascript
+      socket.on('user_offline', (data) => {
+        console.log(`User ${data.userId} went offline`);
+        updateUserStatus(data.userId, 'offline');
+      });
+      ```
+    
+    - **user_status_changed**: User status changed
+      ```javascript
+      socket.on('user_status_changed', (data) => {
+        console.log(`User ${data.userId} status: ${data.status}`);
+        updateUserStatus(data.userId, data.status);
+      });
+      ```
+    
+    ### Appointment Events
+    - **appointment_joined**: Successfully joined appointment
+      ```javascript
+      socket.on('appointment_joined', (data) => {
+        console.log('Joined appointment chat:', data.appointmentChat);
+        initializeAppointmentUI(data.room);
+      });
+      ```
+    
+    - **appointment_join_denied**: Join attempt denied
+      ```javascript
+      socket.on('appointment_join_denied', (data) => {
+        console.log('Cannot join:', data.reason);
+        if (data.availableAt) {
+          console.log('Available at:', data.availableAt);
+        }
+      });
+      ```
+    
+    - **appointment_participant_joined**: Other participant joined
+      ```javascript
+      socket.on('appointment_participant_joined', (data) => {
+        console.log(`${data.user.name} joined the appointment`);
+      });
+      ```
+    
+    - **appointment_ended**: Appointment ended
+      ```javascript
+      socket.on('appointment_ended', (data) => {
+        console.log('Appointment ended');
+        showAppointmentEndedUI(data.appointmentChat);
+      });
+      ```
+    
+    - **appointment_status**: Appointment status update
+      ```javascript
+      socket.on('appointment_status', (status) => {
+        console.log('Appointment status:', status.timeStatus);
+        console.log('Time until start:', status.timeUntilStart);
+        updateAppointmentTimer(status);
+      });
+      ```
+    
+    ### Error Events
+    - **error**: Error occurred
+      ```javascript
+      socket.on('error', (error) => {
+        console.error('Chat error:', error.message);
+        showErrorToUser(error.message);
+      });
+      ```
+
+x-frontend-examples:
+  description: |
+    ## Frontend Integration Examples
+    
+    ### React Hook for Chat
+    ```typescript
+    import { useEffect, useState } from 'react';
+    import io, { Socket } from 'socket.io-client';
+    
+    interface Message {
+      id: string;
+      content: string;
+      sender: {
+        id: string;
+        fullName: string;
+      };
+      createdAt: string;
+    }
+    
+    interface Room {
+      id: string;
+      name: string;
+      type: string;
+      unreadCount: number;
+    }
+    
+    export const useChat = (token: string) => {
+      const [socket, setSocket] = useState<Socket | null>(null);
+      const [rooms, setRooms] = useState<Room[]>([]);
+      const [messages, setMessages] = useState<Record<string, Message[]>>({});
+      const [isConnected, setIsConnected] = useState(false);
+    
+      useEffect(() => {
+        const newSocket = io('/api/chat', {
+          auth: { token }
+        });
+    
+        newSocket.on('connect', () => {
+          setIsConnected(true);
+        });
+    
+        newSocket.on('disconnect', () => {
+          setIsConnected(false);
+        });
+    
+        newSocket.on('initial_data', (data) => {
+          setRooms(data.rooms);
+        });
+    
+        newSocket.on('new_message', (message: Message) => {
+          setMessages(prev => ({
+            ...prev,
+            [message.room.id]: [...(prev[message.room.id] || []), message]
+          }));
+        });
+    
+        setSocket(newSocket);
+    
+        return () => newSocket.close();
+      }, [token]);
+    
+      const sendMessage = (roomId: string, content: string) => {
+        if (socket) {
+          socket.emit('send_message', { roomId, content, type: 'text' });
+        }
+      };
+    
+      const joinRoom = (roomId: string) => {
+        if (socket) {
+          socket.emit('join_room', { roomId });
+        }
+      };
+    
+      return {
+        socket,
+        rooms,
+        messages,
+        isConnected,
+        sendMessage,
+        joinRoom
+      };
+    };
+    ```
+    
+    ### Chat Component Example
+    ```typescript
+    import React, { useState, useEffect } from 'react';
+    import { useChat } from './hooks/useChat';
+    
+    interface ChatProps {
+      token: string;
+      roomId: string;
+    }
+    
+    export const ChatComponent: React.FC<ChatProps> = ({ token, roomId }) => {
+      const { socket, messages, sendMessage, joinRoom } = useChat(token);
+      const [newMessage, setNewMessage] = useState('');
+      const [isTyping, setIsTyping] = useState(false);
+    
+      useEffect(() => {
+        if (socket && roomId) {
+          joinRoom(roomId);
+        }
+      }, [socket, roomId, joinRoom]);
+    
+      const handleSendMessage = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (newMessage.trim()) {
+          sendMessage(roomId, newMessage);
+          setNewMessage('');
+        }
+      };
+    
+      const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewMessage(e.target.value);
+        
+        if (!isTyping) {
+          setIsTyping(true);
+          socket?.emit('typing_start', { roomId });
+        }
+        
+        // Stop typing after 3 seconds of inactivity
+        setTimeout(() => {
+          setIsTyping(false);
+          socket?.emit('typing_stop', { roomId });
+        }, 3000);
+      };
+    
+      const roomMessages = messages[roomId] || [];
+    
+      return (
+        <div className="chat-container">
+          <div className="messages">
+            {roomMessages.map((message) => (
+              <div key={message.id} className="message">
+                <strong>{message.sender.fullName}:</strong> {message.content}
+                <span className="timestamp">
+                  {new Date(message.createdAt).toLocaleTimeString()}
+                </span>
+              </div>
+            ))}
+          </div>
+          
+          <form onSubmit={handleSendMessage} className="message-input">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={handleTyping}
+              placeholder="Type a message..."
+              maxLength={4000}
+            />
+            <button type="submit" disabled={!newMessage.trim()}>
+              Send
+            </button>
+          </form>
+        </div>
+      );
+    };
+    ```
+    
+    ### Appointment Chat Component
+    ```typescript
+    import React, { useState, useEffect } from 'react';
+    import { useChat } from './hooks/useChat';
+    
+    interface AppointmentChatProps {
+      token: string;
+      appointmentChatId: string;
+    }
+    
+    export const AppointmentChat: React.FC<AppointmentChatProps> = ({
+      token,
+      appointmentChatId
+    }) => {
+      const { socket } = useChat(token);
+      const [appointmentStatus, setAppointmentStatus] = useState<any>(null);
+      const [canJoin, setCanJoin] = useState(false);
+      const [timeUntilStart, setTimeUntilStart] = useState(0);
+    
+      useEffect(() => {
+        if (socket) {
+          // Check appointment status
+          socket.emit('check_appointment_status', { appointmentChatId });
+          
+          socket.on('appointment_status', (status) => {
+            setAppointmentStatus(status);
+            setTimeUntilStart(status.timeUntilStart);
+            setCanJoin(status.timeStatus === 'active' || status.preJoinAllowed);
+          });
+          
+          socket.on('appointment_join_denied', (data) => {
+            alert(`Cannot join: ${data.reason}`);
+          });
+          
+          socket.on('appointment_joined', (data) => {
+            setCanJoin(true);
+          });
+        }
+      }, [socket, appointmentChatId]);
+    
+      const joinAppointment = () => {
+        if (socket) {
+          socket.emit('join_appointment_chat', { appointmentChatId });
+        }
+      };
+    
+      const formatTime = (ms: number) => {
+        const minutes = Math.floor(ms / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      };
+    
+      if (!appointmentStatus) {
+        return <div>Loading appointment...</div>;
+      }
+    
+      return (
+        <div className="appointment-chat">
+          <div className="appointment-header">
+            <h3>Appointment with {appointmentStatus.doctor.fullName}</h3>
+            <p>Status: {appointmentStatus.timeStatus}</p>
+            
+            {timeUntilStart > 0 && (
+              <p>Starts in: {formatTime(timeUntilStart)}</p>
+            )}
+          </div>
+          
+          {canJoin ? (
+            <ChatComponent token={token} roomId={appointmentStatus.room.id} />
+          ) : (
+            <div className="waiting-room">
+              <p>Waiting for appointment to start...</p>
+              <button onClick={joinAppointment} disabled={!canJoin}>
+                Join Appointment
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    };
+    ```
+    
+    ### API Service Class
+    ```typescript
+    class ChatAPIService {
+      private baseURL: string;
+      private token: string;
+    
+      constructor(baseURL: string, token: string) {
+        this.baseURL = baseURL;
+        this.token = token;
+      }
+    
+      private async request(endpoint: string, options: RequestInit = {}) {
+        const response = await fetch(`${this.baseURL}${endpoint}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.token}`,
+            ...options.headers,
+          },
+        });
+    
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.statusText}`);
+        }
+    
+        return response.json();
+      }
+    
+      // Room management
+      async getRooms() {
+        return this.request('/api/chat/rooms');
+      }
+    
+      async createRoom(roomData: any) {
+        return this.request('/api/chat/rooms', {
+          method: 'POST',
+          body: JSON.stringify(roomData),
+        });
+      }
+    
+      async createDirectChat(targetUserId: string) {
+        return this.request('/api/chat/direct', {
+          method: 'POST',
+          body: JSON.stringify({ targetUserId }),
+        });
+      }
+    
+      // Message management
+      async getMessages(roomId: string, options: any = {}) {
+        const params = new URLSearchParams(options);
+        return this.request(`/api/chat/rooms/${roomId}/messages?${params}`);
+      }
+    
+      async sendMessage(roomId: string, content: string, options: any = {}) {
+        return this.request(`/api/chat/rooms/${roomId}/messages`, {
+          method: 'POST',
+          body: JSON.stringify({ content, ...options }),
+        });
+      }
+    
+      async editMessage(messageId: string, content: string) {
+        return this.request(`/api/chat/messages/${messageId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ content }),
+        });
+      }
+    
+      async deleteMessage(messageId: string, soft: boolean = true) {
+        return this.request(`/api/chat/messages/${messageId}?soft=${soft}`, {
+          method: 'DELETE',
+        });
+      }
+    
+      async markAsRead(roomId: string, messageId?: string) {
+        return this.request(`/api/chat/rooms/${roomId}/read`, {
+          method: 'POST',
+          body: JSON.stringify({ messageId }),
+        });
+      }
+    
+      async searchMessages(roomId: string, query: string, options: any = {}) {
+        const params = new URLSearchParams({ q: query, ...options });
+        return this.request(`/api/chat/rooms/${roomId}/search?${params}`);
+      }
+    
+      // Appointment chat
+      async createAppointmentChat(appointmentData: any) {
+        return this.request('/api/chat/appointment', {
+          method: 'POST',
+          body: JSON.stringify(appointmentData),
+        });
+      }
+    
+      async getAppointmentChats(status?: string) {
+        const params = status ? `?status=${status}` : '';
+        return this.request(`/api/chat/appointment${params}`);
+      }
+    
+      async joinAppointmentChat(appointmentChatId: string) {
+        return this.request(`/api/chat/appointment/${appointmentChatId}/join`, {
+          method: 'POST',
+        });
+      }
+    
+      async endAppointmentChat(appointmentChatId: string) {
+        return this.request(`/api/chat/appointment/${appointmentChatId}/end`, {
+          method: 'POST',
+        });
+      }
+    
+      // Utility
+      async getUnreadCounts() {
+        return this.request('/api/chat/unread-counts');
+      }
+    
+      async getHealthStatus() {
+        return this.request('/api/chat/health');
+      }
+    }
+    
+    export default ChatAPIService;
+    ```
+
+x-error-codes:
+  description: |
+    ## Error Handling
+    
+    The API returns consistent error responses with the following structure:
+    
+    ```json
+    {
+      "success": false,
+      "message": "Human-readable error message",
+      "error": "ERROR_CODE"
+    }
+    ```
+    
+    ### Common Error Codes
+    
+    - **UNAUTHORIZED**: Authentication required or token invalid
+    - **FORBIDDEN**: Access denied - insufficient permissions
+    - **NOT_FOUND**: Resource not found
+    - **BAD_REQUEST**: Invalid request data
+    - **VALIDATION_ERROR**: Request validation failed
+    - **RATE_LIMIT_EXCEEDED**: Too many requests
+    - **ROOM_FULL**: Cannot join room - at capacity
+    - **MESSAGE_TOO_LONG**: Message exceeds 4000 character limit
+    - **APPOINTMENT_NOT_AVAILABLE**: Appointment chat not yet available
+    - **APPOINTMENT_EXPIRED**: Appointment chat has expired
+    - **INTERNAL_ERROR**: Internal server error
+    
+    ### WebSocket Error Handling
+    
+    ```javascript
+    socket.on('error', (error) => {
+      switch (error.code) {
+        case 'AUTHENTICATION_FAILED':
+          // Redirect to login
+          break;
+        case 'ROOM_ACCESS_DENIED':
+          // Show access denied message
+          break;
+        case 'MESSAGE_SEND_FAILED':
+          // Retry sending message
+          break;
+        default:
+          // Show generic error
+          console.error('Chat error:', error.message);
+      }
+    });
+    ```
+
+x-best-practices:
+  description: |
+    ## Best Practices for Frontend Integration
+    
+    ### 1. Connection Management
+    - Always handle connection/disconnection events
+    - Implement automatic reconnection with exponential backoff
+    - Store messages locally and sync when reconnected
+    
+    ### 2. Message Handling
+    - Implement optimistic UI updates for sent messages
+    - Handle message editing and deletion gracefully
+    - Show appropriate loading states
+    
+    ### 3. Real-time Features
+    - Debounce typing indicators (don't send on every keystroke)
+    - Update read status when messages come into view
+    - Handle user presence updates efficiently
+    
+    ### 4. Performance
+    - Paginate message history
+    - Implement virtual scrolling for large chat lists
+    - Debounce search queries
+    
+    ### 5. Error Handling
+    - Show user-friendly error messages
+    - Implement retry mechanisms for failed operations
+    - Handle offline/online state transitions
+    
+    ### 6. Appointment Chats
+    - Check appointment status before allowing join
+    - Show countdown timers for scheduled appointments
+    - Handle appointment state transitions smoothly
+    
+    ### 7. Security
+    - Validate all user inputs client-side
+    - Never expose sensitive tokens in client-side code
+    - Implement proper logout cleanup

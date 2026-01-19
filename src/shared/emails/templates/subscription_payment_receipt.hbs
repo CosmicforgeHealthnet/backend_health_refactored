@@ -1,0 +1,87 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Heading -->
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+        Subscription Payment Receipt
+    </h1>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>{{fullName}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your subscription upgrade has been processed successfully! Here are the details of your payment.
+    </p>
+
+    <!-- Subscription Details -->
+    <div style="background-color: #F5F8FF; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3964EA;">
+        <h3 style="color: #3964EA; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Subscription Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Plan:</strong> {{planName}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Billing Cycle:</strong> {{billingCycle}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Next Billing Date:</strong> {{nextBillingDate}}
+        </p>
+    </div>
+
+    <!-- Payment Details -->
+    <div style="background-color: #F5F8FF; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3964EA;">
+        <h3 style="color: #3964EA; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Payment Details
+        </h3>
+        <div style="border-top: 2px solid #3964EA; padding-top: 15px;">
+            <p style="font-size: 18px; margin: 0; color: #3964EA; font-weight: bold; text-align: center;">
+                Amount Paid: {{currency}} {{totalAmount}}
+            </p>
+        </div>
+    </div>
+
+    <!-- Transaction Details -->
+    <div style="background-color: #F5F8FF; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3964EA;">
+        <h3 style="color: #3964EA; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Transaction Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Transaction ID:</strong> <span style="font-family: monospace;">{{transactionId}}</span>
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Payment Method:</strong> {{paymentMethod}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Payment Date:</strong> {{paidAt}}
+        </p>
+    </div>
+
+    <!-- Benefits Section -->
+    <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+        <h3 style="color: #065f46; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Your New Benefits
+        </h3>
+        <p style="color: #065f46; margin: 0; font-size: 14px;">
+            You now have access to enhanced features with your {{planName}} plan. 
+            Visit your dashboard to explore all the new capabilities!
+        </p>
+    </div>
+
+    <!-- Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        {{> button url=dashboardLink text="Manage My Subscription" }}
+    </div>
+
+    <!-- Thank you message -->
+    <p style="font-size: 14px; color: #555; margin: 20px 0;">
+        Thank you for upgrading your CosmicForge Health subscription. We're excited to serve you better!
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px;">
+        The CosmicForge Team
+    </p>
+
+</div>

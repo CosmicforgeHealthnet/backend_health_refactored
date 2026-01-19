@@ -1,0 +1,66 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Heading -->
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+        Verification Request Submitted
+    </h1>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>Dr. {{fullName}}</strong>,
+    </p>
+
+    <!-- Intro message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
+        Thank you for submitting your verification request to join <strong>CosmicForge Health</strong> 
+        as a verified medical professional.
+    </p>
+
+    <!-- Processing info -->
+    {{#if estimatedProcessingTime}}
+    <p style="font-size: 16px; margin-bottom: 30px;">
+        Processing typically takes <strong>{{estimatedProcessingTime}} hours</strong>. 
+        We'll notify you immediately when verification is complete.
+    </p>
+    {{/if}}
+
+    <!-- Verification Details Box -->
+    <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #4f46e5;">
+        <h3 style="margin-top: 0; color: #374151; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Verification Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Verification ID:</strong> {{verificationId}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>License Number:</strong> {{licenseNumber}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Issuing Authority:</strong> {{issuingAuthority}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #4b5563;">
+            <strong>Country:</strong> {{countryCode}}
+        </p>
+    </div>
+
+    <!-- Next steps -->
+    {{#if nextSteps}}
+    <p style="font-size: 16px; margin-bottom: 30px;">
+        {{nextSteps}}
+    </p>
+    {{/if}}
+
+    <!-- Button -->
+    {{> button url=dashboardLink text="View Verification Status" }}
+
+    <!-- Fallback link -->
+    <p style="font-size: 14px; color: #555; word-break: break-all; margin: 20px 0;">
+        If the button doesn't work, copy and paste this link into your browser:<br />
+        <a href="{{dashboardLink}}" style="color: #272EA7;">{{dashboardLink}}</a>
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px;">
+        The CosmicForge Health Team
+    </p>
+
+</div>

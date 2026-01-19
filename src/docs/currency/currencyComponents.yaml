@@ -1,0 +1,250 @@
+# File 1: currency/currencyComponents.yaml
+components:
+  schemas:
+    # ================================
+    # CURRENCY CONVERSION SCHEMAS
+    # ================================
+    
+    # Main conversion request
+    CurrencyConversionRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: float
+          minimum: 0
+          description: "Amount to convert"
+          example: 100.50
+        fromCurrency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          description: "Source currency code (ISO 4217)"
+          example: "USD"
+        toCurrency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          nullable: true
+          description: "Target currency code (optional - auto-detected from user location)"
+          example: "NGN"
+      required:
+        - amount
+        - fromCurrency
+
+    # Main conversion response
+    CurrencyConversionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        originalAmount:
+          type: number
+          format: float
+          example: 100
+        originalCurrency:
+          type: string
+          example: "USD"
+        convertedAmount:
+          type: number
+          format: float
+          example: 165000
+        convertedCurrency:
+          type: string
+          example: "NGN"
+        exchangeRate:
+          type: number
+          format: float
+          example: 1650
+        userCountry:
+          type: string
+          example: "Nigeria"
+        isSupported:
+          type: boolean
+          description: "Whether currency is supported by payment gateways"
+          example: true
+        supportedByPaystack:
+          type: boolean
+          example: true
+        supportedByFlutterwave:
+          type: boolean
+          example: true
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00.000Z"
+
+    # Supported currencies response
+    SupportedCurrenciesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/SupportedCurrencies'
+
+    SupportedCurrencies:
+      type: object
+      properties:
+        paystack:
+          type: array
+          items:
+            type: string
+          example: ["NGN", "USD", "GHS", "ZAR", "KES"]
+        flutterwave:
+          type: array
+          items:
+            type: string
+          example: ["NGN", "USD", "EUR", "GBP", "KES", "UGX"]
+        combined:
+          type: array
+          items:
+            type: string
+          example: ["NGN", "USD", "EUR", "GBP", "GHS", "ZAR", "KES"]
+        total:
+          type: integer
+          example: 15
+
+    # Currency support check response
+    CurrencySupportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/CurrencySupport'
+
+    CurrencySupport:
+      type: object
+      properties:
+        currency:
+          type: string
+          example: "NGN"
+        paystack:
+          type: boolean
+          example: true
+        flutterwave:
+          type: boolean
+          example: true
+        anyGateway:
+          type: boolean
+          example: true
+
+    # Local currency response
+    LocalCurrencyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/LocalCurrencyData'
+
+    LocalCurrencyData:
+      type: object
+      properties:
+        country:
+          type: string
+          example: "Nigeria"
+        currency:
+          type: string
+          example: "NGN"
+        isSupported:
+          type: boolean
+          example: true
+        paymentGateways:
+          $ref: '#/components/schemas/CurrencySupport'
+
+    # Error response
+    CurrencyErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "Currency conversion failed"
+        message:
+          type: string
+          example: "Unable to fetch exchange rate"
+        originalAmount:
+          type: number
+          format: float
+          nullable: true
+        originalCurrency:
+          type: string
+          nullable: true
+        convertedAmount:
+          type: number
+          format: float
+          nullable: true
+        convertedCurrency:
+          type: string
+          nullable: true
+        exchangeRate:
+          type: number
+          format: float
+          example: 1
+        userCountry:
+          type: string
+          nullable: true
+        isSupported:
+          type: boolean
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    CurrencyBadRequest:
+      description: Bad request - Invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CurrencyErrorResponse'
+          examples:
+            missingAmount:
+              summary: Missing amount parameter
+              value:
+                success: false
+                error: "Amount and fromCurrency are required"
+                example:
+                  amount: 100
+                  fromCurrency: "USD"
+            invalidCurrency:
+              summary: Invalid currency code
+              value:
+                success: false
+                error: "Invalid currency code format"
+                message: "Currency codes must be 3-letter ISO codes"
+
+    CurrencyUnauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CurrencyErrorResponse'
+
+    CurrencyInternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CurrencyErrorResponse'
+          example:
+            success: false
+            error: "Internal server error"
+            message: "Currency conversion service unavailable"
+
+  parameters:
+    CurrencyCodeParam:
+      name: currency
+      in: path
+      description: "Currency code to check support for"
+      required: true
+      schema:
+        type: string
+        pattern: "^[A-Z]{3}$"
+        example: "NGN"

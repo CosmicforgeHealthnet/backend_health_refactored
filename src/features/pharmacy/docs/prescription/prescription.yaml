@@ -1,0 +1,506 @@
+paths:
+  /prescriptions/doctor/prescriptions:
+    post:
+      summary: Create a new prescription
+      description: |
+        Allows a doctor to create a new prescription during a consultation.
+        - Requires patient ID, medications, and consultation details.
+        - Generates a unique reference and sets initial status to PENDING.
+        - Returns the created prescription with populated relations.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePrescriptionRequest'
+      responses:
+        '201':
+          description: Prescription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Not a doctor
+    get:
+      summary: Get doctor's prescriptions
+      description: |
+        Retrieves a list of prescriptions created by the authenticated doctor.
+        - Supports pagination and filtering via query parameters.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of prescriptions per page
+      responses:
+        '200':
+          description: List of doctor's prescriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Not a doctor
+
+  /prescriptions/patient/prescriptions/{prescriptionId}/upload:
+    post:
+      summary: Upload prescription by patient
+      description: |
+        Allows a patient to upload a prescription to the platform.
+        - Verifies the prescription belongs to the patient and is in PENDING status.
+        - Updates status to PATIENT_UPLOADED.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription to upload
+      responses:
+        '200':
+          description: Prescription uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Not the patient's prescription
+        '404':
+          description: Prescription not found
+
+  /prescriptions/patient/prescriptions/{prescriptionId}/assign-pharmacy:
+    post:
+      summary: Assign pharmacy to prescription
+      description: |
+        Allows a patient to assign a pharmacy to fulfill their prescription.
+        - Verifies the pharmacy is active and the prescription is in a valid state (PENDING or PATIENT_UPLOADED).
+        - Updates the prescription with pharmacy and delivery details.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignPharmacyRequest'
+      responses:
+        '200':
+          description: Pharmacy assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Not the patient's prescription
+        '404':
+          description: Prescription or pharmacy not found
+
+  /prescriptions/patient/prescriptions:
+    get:
+      summary: Get patient's prescriptions
+      description: |
+        Retrieves a list of prescriptions for the authenticated patient.
+        - Supports pagination and filtering via query parameters.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of prescriptions per page
+      responses:
+        '200':
+          description: List of patient's prescriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Not a patient
+
+  /prescriptions/pharmacy/prescriptions/{prescriptionId}/start-processing:
+    post:
+      summary: Start processing prescription
+      description: |
+        Allows a pharmacy to start processing an assigned prescription.
+        - Verifies the prescription is assigned to the pharmacy and in PHARMACY_ASSIGNED status.
+        - Assigns a pharmacist and updates status to PHARMACY_PROCESSING.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartProcessingRequest'
+      responses:
+        '200':
+          description: Prescription processing started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Not assigned to this pharmacy
+        '404':
+          description: Prescription or pharmacist not found
+
+  /prescriptions/pharmacy/prescriptions/{prescriptionId}/provide-costs:
+    post:
+      summary: Provide medication costs
+      description: |
+        Allows a pharmacy to provide cost details and invoice for a prescription.
+        - Calculates total cost including delivery fee and updates payment information.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProvideCostsRequest'
+      responses:
+        '200':
+          description: Costs provided successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Not assigned to this pharmacy
+        '404':
+          description: Prescription not found
+
+  /prescriptions/pharmacy/prescriptions/{prescriptionId}/mark-ready:
+    post:
+      summary: Mark prescription as ready
+      description: |
+        Allows a pharmacy to mark a prescription as ready for delivery or pickup.
+        - Updates status to READY_FOR_DELIVERY or READY_FOR_PICKUP.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkReadyRequest'
+      responses:
+        '200':
+          description: Prescription marked as ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Not assigned to this pharmacy
+        '404':
+          description: Prescription not found
+
+  /prescriptions/pharmacy/prescriptions/{prescriptionId}/complete:
+    post:
+      summary: Complete prescription fulfillment
+      description: |
+        Allows a pharmacy to mark a prescription as completed.
+        - Updates status to COMPLETED and sets payment status to PAID.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      responses:
+        '200':
+          description: Prescription completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Not assigned to this pharmacy
+        '404':
+          description: Prescription not found
+
+  /prescriptions/pharmacy/prescriptions:
+    get:
+      summary: Get pharmacy's prescriptions
+      description: |
+        Retrieves a list of prescriptions assigned to the authenticated pharmacy.
+        - Supports pagination and filtering via query parameters.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of prescriptions per page
+      responses:
+        '200':
+          description: List of pharmacy's prescriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Not a pharmacy
+
+  /prescriptions/{prescriptionId}/cancel:
+    post:
+      summary: Cancel a prescription
+      description: |
+        Allows a doctor, patient, or pharmacy to cancel a prescription.
+        - Requires a cancellation reason.
+        - Cannot cancel a completed prescription.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelPrescriptionRequest'
+      responses:
+        '200':
+          description: Prescription cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - User not authorized to cancel
+        '404':
+          description: Prescription not found
+
+  /prescriptions/{prescriptionId}/chat:
+    post:
+      summary: Add chat message
+      description: |
+        Allows a patient or pharmacy to add a chat message related to a prescription.
+        - Verifies the sender's access to the prescription.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatMessageRequest'
+      responses:
+        '200':
+          description: Chat message added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - User not authorized to chat
+        '404':
+          description: Prescription not found
+
+  /prescriptions/{prescriptionId}:
+    get:
+      summary: Get prescription by ID
+      description: |
+        Retrieves a specific prescription by its ID with all related details.
+        - Accessible by doctors, patients, or pharmacies associated with the prescription.
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      responses:
+        '200':
+          description: Prescription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - User not authorized
+        '404':
+          description: Prescription not found
+
+  /prescriptions/search:
+    get:
+      summary: Search prescriptions
+      description: |
+        Searches for prescriptions based on query parameters.
+        - Accessible by doctors, patients, or pharmacies.
+        - Supports filtering by various criteria (e.g., status, date).
+      tags: [Prescription]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: query
+          schema:
+            type: string
+          description: Search query string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of prescriptions per page
+      responses:
+        '200':
+          description: List of matching prescriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - User not authorized

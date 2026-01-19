@@ -1,0 +1,473 @@
+# src/docs/lab/waitlist/labWaitlist.yaml
+paths:
+  /lab_pharm/waitlist/join:
+    post:
+      tags:
+        - Lab Waitlist
+      summary: Join lab registration waitlist
+      description: |
+        Join the lab registration waitlist. This endpoint does not require authentication.
+        Users will receive a confirmation email and be notified when lab registration opens.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabWaitlistJoin'
+            examples:
+              basic_entry:
+                summary: Basic waitlist entry
+                value:
+                  fullName: "Dr. Jane Smith"
+                  email: "jane.smith@medicenter.com"
+                  facilityName: "Downtown Medical Center"
+                  role: "lab"
+                  phone: "123456789"
+              detailed_entry:
+                summary: Detailed waitlist entry
+                value:
+                  fullName: "Dr. John Doe"
+                  email: "john.doe@diaglab.com"
+                  facilityName: "Advanced Diagnostic Laboratory"
+                  phone: "+1234567890"
+                  facilityType: "diagnostic_lab"
+                  city: "New York"
+                  state: "NY"
+      responses:
+        '201':
+          $ref: '#/components/responses/WaitlistJoined'
+        '400':
+          description: Validation error or duplicate email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                duplicate_email:
+                  summary: Email already in waitlist
+                  value:
+                    success: false
+                    error: "Email already registered in waitlist"
+                validation_error:
+                  summary: Validation errors
+                  value:
+                    success: false
+                    error: "Validation failed"
+                    details:
+                      - field: "fullName"
+                        message: "Full name is required"
+                        value: ""
+                      - field: "email"
+                        message: "Please provide a valid email address"
+                        value: "invalid-email"
+
+  /lab_pharm/waitlist/check:
+    get:
+      tags:
+        - Lab Waitlist
+      summary: Check if email exists in waitlist
+      description: Check if an email address is already registered in the waitlist
+      parameters:
+        - name: email
+          in: query
+          required: true
+          description: Email address to check
+          schema:
+            type: string
+            format: email
+            example: "john.doe@example.com"
+      responses:
+        '200':
+          description: Email check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      exists:
+                        type: boolean
+                        example: true
+                      email:
+                        type: string
+                        format: email
+                        example: "john.doe@example.com"
+                  message:
+                    type: string
+                    example: "Email is already in the waitlist"
+        '400':
+          description: Missing email parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Email parameter is required"
+
+  # Admin Endpoints
+  /lab_pharm/admin/waitlist:
+    get:
+      tags:
+        - Lab Waitlist Admin
+      summary: Get all waitlist entries
+      description: Retrieve all waitlist entries with optional filtering (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filter by status
+          schema:
+            type: string
+            enum: [pending, contacted, registered, declined]
+            example: "pending"
+        - name: limit
+          in: query
+          required: false
+          description: Number of results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          description: Number of results to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          $ref: '#/components/responses/WaitlistEntriesFound'
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab_pharm/admin/waitlist/search:
+    get:
+      tags:
+        - Lab Waitlist Admin
+      summary: Search waitlist entries
+      description: Search waitlist entries by name, email, or facility name (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query
+          schema:
+            type: string
+            minLength: 2
+            example: "medical center"
+      responses:
+        '200':
+          $ref: '#/components/responses/WaitlistEntriesFound'
+        '400':
+          description: Invalid search query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Search query must be at least 2 characters"
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab_pharm/admin/waitlist/{id}:
+    get:
+      tags:
+        - Lab Waitlist Admin
+      summary: Get waitlist entry by ID
+      description: Retrieve a specific waitlist entry (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WaitlistId'
+      responses:
+        '200':
+          $ref: '#/components/responses/WaitlistEntryFound'
+        '404':
+          $ref: '#/components/responses/WaitlistEntryNotFound'
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab_pharm/admin/waitlist/{id}/status:
+    put:
+      tags:
+        - Lab Waitlist Admin
+      summary: Update waitlist entry status
+      description: Update the status of a waitlist entry (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WaitlistId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WaitlistStatusUpdate'
+            example:
+              status: "contacted"
+              adminNotes: "Contacted via phone, interested in registration"
+      responses:
+        '200':
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Waitlist entry status updated successfully"
+                  data:
+                    $ref: '#/components/schemas/LabWaitlistEntry'
+        '400':
+          description: Invalid status or missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Status is required"
+        '404':
+          $ref: '#/components/responses/WaitlistEntryNotFound'
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab_pharm/admin/waitlist/send-launch-notifications:
+    post:
+      tags:
+        - Lab Waitlist Admin
+      summary: Send launch notifications to all pending entries
+      description: Send launch notification emails to all pending waitlist entries (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Launch notifications sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Launch notifications sent. 45 successful, 2 failed."
+                  data:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 47
+                      successful:
+                        type: integer
+                        example: 45
+                      failed:
+                        type: integer
+                        example: 2
+                      errors:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            email:
+                              type: string
+                              format: email
+                            error:
+                              type: string
+                        example:
+                          - email: "invalid@email.com"
+                            error: "Invalid email address"
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab_pharm/admin/waitlist/{id}/send-launch-notification:
+    post:
+      tags:
+        - Lab Waitlist Admin
+      summary: Send launch notification to specific entry
+      description: Send launch notification email to a specific waitlist entry (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WaitlistId'
+      responses:
+        '200':
+          description: Launch notification sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Launch notification sent successfully"
+                  data:
+                    $ref: '#/components/schemas/LabWaitlistEntry'
+        '400':
+          description: Notification already sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Launch notification already sent to this entry"
+        '404':
+          $ref: '#/components/responses/WaitlistEntryNotFound'
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab_pharm/admin/waitlist/stats:
+    get:
+      tags:
+        - Lab Waitlist Admin
+      summary: Get waitlist statistics
+      description: Retrieve comprehensive waitlist statistics (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Waitlist statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Waitlist statistics retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/WaitlistStats'
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab_pharm/admin/waitlist/location:
+    get:
+      tags:
+        - Lab Waitlist Admin
+      summary: Get waitlist entries by location
+      description: Retrieve waitlist entries filtered by city and/or state (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: city
+          in: query
+          required: false
+          description: City name
+          schema:
+            type: string
+            example: "New York"
+        - name: state
+          in: query
+          required: false
+          description: State name
+          schema:
+            type: string
+            example: "NY"
+      responses:
+        '200':
+          $ref: '#/components/responses/WaitlistEntriesFound'
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab_pharm/admin/waitlist/recent:
+    get:
+      tags:
+        - Lab Waitlist Admin
+      summary: Get recent waitlist registrations
+      description: Retrieve recent waitlist entries (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Number of results to return (max 50)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          $ref: '#/components/responses/WaitlistEntriesFound'
+        '400':
+          description: Invalid limit parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Limit cannot exceed 50"
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'
+
+  /lab_pharm/admin/waitlist/cleanup:
+    delete:
+      tags:
+        - Lab Waitlist Admin
+      summary: Cleanup old waitlist entries
+      description: Remove old declined waitlist entries (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: olderThanDays
+          in: query
+          required: false
+          description: Remove entries older than specified days (default 365)
+          schema:
+            type: integer
+            minimum: 30
+            default: 365
+      responses:
+        '200':
+          description: Cleanup completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Cleanup completed. 5 old entries removed."
+                  data:
+                    type: object
+                    properties:
+                      deletedCount:
+                        type: integer
+                        example: 5
+                      olderThanDays:
+                        type: integer
+                        example: 365
+        '403':
+          $ref: '#/components/responses/AdminUnauthorized'

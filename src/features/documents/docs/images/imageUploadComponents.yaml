@@ -1,0 +1,353 @@
+# docs/images/imageUploadComponents.yaml
+components:
+  schemas:
+    # ================================
+    # IMAGE UPLOAD SCHEMAS
+    # ================================
+    ImageUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          description: "Upload success message"
+          example: "3 images uploaded successfully"
+        count:
+          type: integer
+          minimum: 0
+          description: "Number of images uploaded"
+          example: 3
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/UploadedImageInfo'
+          description: "Array of uploaded image information"
+        folder:
+          $ref: '#/components/schemas/ImageFolderInfo'
+          description: "Folder information where images were stored"
+
+    UploadedImageInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Unique image identifier"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        originalName:
+          type: string
+          description: "Original filename"
+          example: "vacation-photo.jpg"
+        fileName:
+          type: string
+          description: "Stored filename on server"
+          example: "123e4567-e89b-12d3-a456-426614174000.jpg"
+        fileSize:
+          type: integer
+          minimum: 0
+          description: "File size in bytes"
+          example: 2048576
+        mimeType:
+          type: string
+          description: "MIME type of the image"
+          example: "image/jpeg"
+        documentType:
+          type: string
+          enum: [image]
+          description: "Document type (always 'image')"
+          example: "image"
+        url:
+          type: string
+          format: uri
+          description: "Permanent public URL to access the image"
+          example: "https://yourapp.com/api/documents/images/123e4567-e89b-12d3-a456-426614174000"
+        thumbnailUrl:
+          type: string
+          format: uri
+          description: "URL for thumbnail version (if available)"
+          example: "https://yourapp.com/api/documents/images/123e4567-e89b-12d3-a456-426614174000/thumbnail"
+        downloadUrl:
+          type: string
+          format: uri
+          description: "Direct download URL"
+          example: "https://yourapp.com/api/documents/files/123e4567-e89b-12d3-a456-426614174000/download"
+        secureUrl:
+          type: string
+          format: uri
+          description: "Signed URL for secure access (optional)"
+          example: "https://yourapp.com/files/123e4567-e89b-12d3-a456-426614174000?token=abc123&expires=1234567890"
+        uploadedAt:
+          type: string
+          format: date-time
+          description: "When the image was uploaded"
+          example: "2025-07-17T10:30:00Z"
+        folderId:
+          type: string
+          format: uuid
+          description: "ID of the folder containing the image"
+          example: "folder-123-456"
+        folderName:
+          type: string
+          description: "Name of the folder containing the image"
+          example: "Images"
+
+    ImageFolderInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Folder ID"
+          example: "folder-123-456"
+        name:
+          type: string
+          description: "Folder name"
+          example: "Images"
+        type:
+          type: string
+          enum: [images]
+          description: "Folder type"
+          example: "images"
+
+    # Public Image Serving Response
+    PublicImageResponse:
+      type: object
+      description: "Raw image data served with appropriate headers"
+      properties:
+        imageData:
+          type: string
+          format: binary
+          description: "Raw image binary data"
+
+    # Error Responses
+    ImageUploadErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: "Error message"
+        details:
+          type: string
+          nullable: true
+          description: "Additional error details (development mode only)"
+
+    # Upload Request Schema
+    ImageUploadRequest:
+      type: object
+      properties:
+        images:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: "Array of image files to upload"
+          maxItems: 10
+        folderName:
+          type: string
+          description: "Optional custom folder name"
+          example: "Profile Pictures"
+        folderDescription:
+          type: string
+          description: "Optional folder description"
+          example: "User profile images"
+
+  # Response definitions
+  responses:
+    ImageUploadSuccess:
+      description: Images uploaded successfully
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ImageUploadResponse'
+          examples:
+            singleImage:
+              summary: Single image upload
+              value:
+                success: true
+                message: "1 image uploaded successfully"
+                count: 1
+                images:
+                  - id: "123e4567-e89b-12d3-a456-426614174000"
+                    originalName: "profile.jpg"
+                    fileName: "123e4567-e89b-12d3-a456-426614174000.jpg"
+                    fileSize: 1024000
+                    mimeType: "image/jpeg"
+                    documentType: "image"
+                    url: "https://yourapp.com/api/documents/images/123e4567-e89b-12d3-a456-426614174000"
+                    thumbnailUrl: "https://yourapp.com/api/documents/images/123e4567-e89b-12d3-a456-426614174000/thumbnail"
+                    downloadUrl: "https://yourapp.com/api/documents/files/123e4567-e89b-12d3-a456-426614174000/download"
+                    uploadedAt: "2025-07-17T10:30:00Z"
+                    folderId: "folder-123"
+                    folderName: "Images"
+                folder:
+                  id: "folder-123"
+                  name: "Images"
+                  type: "images"
+            multipleImages:
+              summary: Multiple images upload
+              value:
+                success: true
+                message: "3 images uploaded successfully"
+                count: 3
+                images:
+                  - id: "123e4567-e89b-12d3-a456-426614174000"
+                    originalName: "photo1.jpg"
+                    url: "https://yourapp.com/api/documents/images/123e4567-e89b-12d3-a456-426614174000"
+                  - id: "456e7890-e89b-12d3-a456-426614174001"
+                    originalName: "photo2.png"
+                    url: "https://yourapp.com/api/documents/images/456e7890-e89b-12d3-a456-426614174001"
+
+    ImageNotFound:
+      description: Image not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ImageUploadErrorResponse'
+          example:
+            success: false
+            error: "Image not found"
+
+    ImageUploadBadRequest:
+      description: Bad request - Invalid image upload parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ImageUploadErrorResponse'
+          examples:
+            noImages:
+              summary: No images provided
+              value:
+                success: false
+                error: "No images were processed"
+            fileTooLarge:
+              summary: File too large
+              value:
+                success: false
+                error: "Image exceeds maximum size of 10MB"
+            invalidFileType:
+              summary: Invalid file type
+              value:
+                success: false
+                error: "Only image files are allowed"
+            invalidExtension:
+              summary: Invalid file extension
+              value:
+                success: false
+                error: "Image has invalid extension. Allowed: .jpg, .jpeg, .png, .gif, .webp, .svg, .bmp"
+
+    ImageUploadUnauthorized:
+      description: Authentication required for image upload
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ImageUploadErrorResponse'
+          example:
+            success: false
+            error: "Authentication required"
+
+    ImageUploadInternalError:
+      description: Internal server error during image upload
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ImageUploadErrorResponse'
+          example:
+            success: false
+            error: "Failed to upload images"
+
+    PublicImageSuccess:
+      description: Image served successfully
+      content:
+        image/jpeg:
+          schema:
+            type: string
+            format: binary
+          example: "[Binary image data]"
+        image/png:
+          schema:
+            type: string
+            format: binary
+          example: "[Binary image data]"
+        image/gif:
+          schema:
+            type: string
+            format: binary
+          example: "[Binary image data]"
+        image/webp:
+          schema:
+            type: string
+            format: binary
+          example: "[Binary image data]"
+
+  # Parameters
+  parameters:
+    ImageIdParam:
+      name: imageId
+      in: path
+      description: "Unique image identifier"
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: "123e4567-e89b-12d3-a456-426614174000"
+
+    ThumbnailParam:
+      name: thumbnail
+      in: path
+      description: "Request thumbnail version of image"
+      required: false
+      schema:
+        type: boolean
+        default: false
+
+  # Request Bodies
+  requestBodies:
+    ImageUpload:
+      description: "Images to upload"
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              images:
+                type: array
+                items:
+                  type: string
+                  format: binary
+                description: "Image files (max 10 files, 10MB each)"
+                maxItems: 10
+              folderName:
+                type: string
+                description: "Optional custom folder name"
+                example: "Profile Pictures"
+              folderDescription:
+                type: string
+                description: "Optional folder description"
+                example: "User profile images"
+            required:
+              - images
+          encoding:
+            images:
+              contentType: image/jpeg, image/png, image/gif, image/webp, image/svg+xml, image/bmp
+
+  # Security schemes
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authentication (required for upload)"
+
+# Tags
+tags:
+  - name: Image Upload
+    description: "Upload and serve images with permanent URLs"
+    externalDocs:
+      description: "Learn more about image handling"
+      url: "https://docs.yourapp.com/images"

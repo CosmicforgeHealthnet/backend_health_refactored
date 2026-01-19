@@ -1,0 +1,116 @@
+<!-- Patient Zoom Meeting Link Template -->
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Status Banner -->
+    <div style="background: linear-gradient(135deg, #2563eb, #1d4ed8); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">🎥 Zoom Meeting Ready</h2>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hello <strong>{{patientName}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your Zoom meeting link is ready for your appointment with <strong>Dr. {{doctorName}}</strong>.
+    </p>
+
+    <!-- Appointment Details -->
+    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #1d4ed8; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Appointment Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #1e40af;">
+            <strong>Doctor:</strong> Dr. {{doctorName}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #1e40af;">
+            <strong>Date & Time:</strong> {{appointmentDate}} at {{appointmentTime}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #1e40af;">
+            <strong>Duration:</strong> {{duration}} minutes
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #1e40af;">
+            <strong>Appointment ID:</strong> #{{appointmentId}}
+        </p>
+    </div>
+
+    <!-- Meeting Link Section -->
+    <div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #0c4a6e; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            🔗 Zoom Meeting Details
+        </h3>
+        
+        <!-- Join Link -->
+        <div style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <p style="font-size: 14px; margin: 5px 0; color: #0c4a6e;">
+                <strong>Meeting ID:</strong> {{zoomMeetingId}}
+            </p>
+            {{#if meetingPassword}}
+            <p style="font-size: 14px; margin: 5px 0; color: #0c4a6e;">
+                <strong>Passcode:</strong> {{meetingPassword}}
+            </p>
+            {{/if}}
+            {{#if hostKey}}
+            <p style="font-size: 14px; margin: 5px 0; color: #dc2626;">
+                <strong>Host Key:</strong> {{hostKey}} <em>(Keep confidential)</em>
+            </p>
+            {{/if}}
+        </div>
+    </div>
+
+     <!-- Quick Join Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{meetingLink}}" style="background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+            🎥 Join Zoom Meeting
+        </a>
+    </div>
+  <p style="font-size: 14px; margin: 5px 0; color: #0c4a6e;"></p>
+                <strong>Join Meeting Link:</strong>
+            </p>
+            <a href="{{meetingLink}}" style="color: #2563eb; text-decoration: none; font-weight: bold; font-size: 16px; word-break: break-all;">
+                {{meetingLink}}
+            </a>
+    <!-- Host Instructions -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #92400e; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Host Checklist
+        </h3>
+        <p style="color: #92400e; margin: 5px 0; font-size: 14px;">
+            • Join 5 minutes early to prepare the meeting room
+        </p>
+        <p style="color: #92400e; margin: 5px 0; font-size: 14px;">
+            • Use your Passcode if prompted to enable access
+        </p>
+    </div>
+
+    <!-- Dashboard Link -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{dashboardLink}}" style="color: #3964EA; text-decoration: none; font-weight: bold;">
+            View My Appointments
+        </a>
+    </div>
+</div> 
+        </div>   
+
+    <!-- Instructions -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #92400e; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            📋 Before Your Appointment
+        </h3>
+        <p style="color: #92400e; margin: 5px 0; font-size: 14px;">
+            • Test your camera and microphone beforehand
+        </p>
+        <p style="color: #92400e; margin: 5px 0; font-size: 14px;">
+            • Join 5-10 minutes early to ensure everything works
+        </p>
+        <p style="color: #92400e; margin: 5px 0; font-size: 14px;">
+            • Have your medical history and questions ready
+        </p>
+        <p style="color: #92400e; margin: 5px 0; font-size: 14px;">
+            • Ensure you're in a quiet, private location
+        </p>
+    </div>
+
+
+</div>
+

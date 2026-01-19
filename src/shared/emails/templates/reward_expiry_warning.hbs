@@ -1,0 +1,111 @@
+
+<!-- src/emails/templates/reward_expiry_warning.hbs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Reward Expiring Soon - CosmicForge Health</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; color: black; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; margin: 40px auto; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); overflow: hidden;">
+        <tr>
+            <td style="padding: 30px; text-align: center; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <img src="https://backend.cosmicforge-healthnet.com/images/e47c6604-d9cc-4fb2-9c87-b4d9337c2156.png" alt="CosmicForge Health" style="max-height: 60px;">
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 40px 30px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 12px 24px; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 14px; margin-bottom: 20px;">
+                        ⚠️ EXPIRING SOON
+                    </div>
+                </div>
+                <h1 style="font-size: 24px; color: #333; margin: 0 0 20px 0; font-weight: 600; text-align: center;">
+                    Don't Lose Your Reward!
+                </h1>
+                
+                <p style="font-size: 16px; line-height: 1.6; color: #555; margin: 0 0 20px 0; text-align: center;">
+                    Your reward expires in <strong>{{daysUntilExpiry}} days</strong>. Use it now to save on your subscription!
+                </p>
+
+                <!-- Expiring Reward Card -->
+                <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #ef4444;">
+                    <h2 style="color: #dc2626; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">
+                        ⏰ Expiring Reward
+                    </h2>
+                    
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #374151; width: 40%;">
+                                Reward:
+                            </td>
+                            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #1f2937;">
+                                {{rewardDescription}}
+                            </td>
+                        </tr>
+                        {{#if rewardValue}}
+                        <tr>
+                            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #374151;">
+                                Discount:
+                            </td>
+                            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #16a34a; font-weight: bold; font-size: 18px;">
+                                {{rewardValue}}% OFF
+                            </td>
+                        </tr>
+                        {{/if}}
+                        <tr>
+                            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #374151;">
+                                Code:
+                            </td>
+                            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #1f2937; font-family: monospace; font-weight: bold;">
+                                {{rewardCode}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: 600; color: #374151;">
+                                Expires:
+                            </td>
+                            <td style="padding: 8px 0; color: #ef4444; font-weight: bold;">
+                                {{expiryDate}}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Urgent Action -->
+                <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #16a34a;">
+                    <h2 style="color: #15803d; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+                        🚀 Use Your Reward Now
+                    </h2>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <a href="{{checkoutLink}}"
+                            style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">
+                            💳 Apply Discount Now
+                        </a>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{{dashboardLink}}" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 0 10px; display: inline-block;">
+                        🎁 View All Rewards
+                    </a>
+                </div>
+
+                <p style="margin-top: 30px; font-size: 14px; color: #777; line-height: 1.5; text-align: center;">
+                    Need help? <a href="{{supportLink}}" style="color: #2563eb; text-decoration: none;">Contact support</a>
+                    <br><br>
+                    <strong>The CosmicForge Health Team</strong>
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 20px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-align: center; font-size: 12px;">
+                <p style="margin: 0; opacity: 0.9;">
+                    &copy; {{currentYear}} CosmicForge Health. All rights reserved.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

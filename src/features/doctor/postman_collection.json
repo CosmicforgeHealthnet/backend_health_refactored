@@ -1,0 +1,364 @@
+{
+  "info": {
+    "name": "CosmicForge - Doctor Feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Submit a doctor's verification request",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            "submit"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Upload verification documents with enhanced naming",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/{id}/documents",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            ":id",
+            "documents"
+          ],
+          "variable": []
+        },
+        "description": "Upload documents with custom names, folder organization, and FHIR detection"
+      }
+    },
+    {
+      "name": "Get current verification status for authenticated doctor",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            "status"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Get editable verification info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/{id}/edit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            ":id",
+            "edit"
+          ],
+          "variable": []
+        },
+        "description": "Get verification information that can be edited by doctor"
+      }
+    },
+    {
+      "name": "Update doctor verification information",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/{id}/update",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            ":id",
+            "update"
+          ],
+          "variable": []
+        },
+        "description": "Update verification details (only allowed for certain statuses)"
+      }
+    },
+    {
+      "name": "List supported verification countries",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/countries",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            "countries"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Get verification requirements for a country",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/countries/{countryCode}/requirements",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            "countries",
+            ":countryCode",
+            "requirements"
+          ],
+          "variable": []
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "Enhanced resubmit with document options",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/resubmit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            "resubmit"
+          ],
+          "variable": []
+        },
+        "description": "Resubmit verification with option to copy previous documents or upload new ones"
+      }
+    },
+    {
+      "name": "Get doctor onboarding status (Admin/Support)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/admin/doctor/{doctorId}/onboarding-status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            "admin",
+            "doctor",
+            ":doctorId",
+            "onboarding-status"
+          ],
+          "variable": []
+        },
+        "description": "Check complete setup status including verification, wallet, and subscription"
+      }
+    },
+    {
+      "name": "Fix doctor setup (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/admin/doctor/{doctorId}/fix-setup",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            "admin",
+            "doctor",
+            ":doctorId",
+            "fix-setup"
+          ],
+          "variable": []
+        },
+        "description": "Manually fix incomplete wallet/subscription setup for specific doctor"
+      }
+    },
+    {
+      "name": "Fix all incomplete setups (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/doctor/verification/admin/fix-all-incomplete-setups",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "doctor",
+            "verification",
+            "admin",
+            "fix-all-incomplete-setups"
+          ],
+          "variable": []
+        },
+        "description": "Batch fix all doctors with incomplete wallet/subscription setups"
+      }
+    },
+    {
+      "name": "Create a new doctor profile",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/api/doctor-profiles",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "api",
+            "doctor-profiles"
+          ],
+          "variable": []
+        },
+        "description": "Creates a doctor profile for the authenticated user.  \n- Requires a valid JWT access token in the Authorization header (Bearer <token>).  \n-  `professionalLicense` are mandatory.  \n- Optionally links to an existing user via `userId`.\n"
+      }
+    },
+    {
+      "name": "Get a doctor profile by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/api/doctor-profiles/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "api",
+            "doctor-profiles",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Retrieves a doctor profile by its UUID.  \n- Requires a valid JWT access token.  \n- The authenticated user must own the profile.\n"
+      }
+    },
+    {
+      "name": "Update a doctor profile",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/api/doctor-profiles/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "api",
+            "doctor-profiles",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Updates a doctor profile by its UUID.  \n- Requires a valid JWT access token.  \n- The authenticated user must own the profile.  \n- Only provided fields are updated.\n"
+      }
+    },
+    {
+      "name": "Delete a doctor profile",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/api/doctor-profiles/{id}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "api",
+            "doctor-profiles",
+            ":id"
+          ],
+          "variable": []
+        },
+        "description": "Deletes a doctor profile by its UUID.  \n- Requires a valid JWT access token.  \n- The authenticated user must own the profile.\n"
+      }
+    },
+    {
+      "name": "Get a doctor profile by user ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/api/doctor-profiles/user/{userId}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "api",
+            "doctor-profiles",
+            "user",
+            ":userId"
+          ],
+          "variable": []
+        },
+        "description": "Retrieves the doctor profile associated with a user ID.  \n- Requires a valid JWT access token.  \n- The authenticated user must match the userId.\n"
+      }
+    },
+    {
+      "name": "Get doctor FAQs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/faq/doctor",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "faq",
+            "doctor"
+          ],
+          "variable": []
+        },
+        "description": "Get FAQs specifically for doctors"
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+<div style="padding: 20px; font-family: Arial, sans-serif;"></div>
+  <h2 style="color: #007bff; margin-bottom: 20px;">You're Invited to Join Our Lab Team!</h2>
+  
+  <p>Dear {{personnelName}},</p>
+  
+  <p>You have been invited to join <strong>{{facilityName}}</strong> as a <strong>{{roleName}}</strong> by {{assignedByName}}.</p>
+  
+  <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #333;">Facility Details:</h3>
+    <p><strong>Name:</strong> {{facilityName}}</p>
+    <p><strong>Address:</strong> {{facilityAddress}}</p>
+    <p><strong>Phone:</strong> {{facilityPhone}}</p>
+    <p><strong>Your Role:</strong> {{roleName}}</p>
+  </div>
+  
+  {{> button url=acceptLink text="Accept Invitation" color="#28a745"}}
+  
+  <p><strong>Important:</strong> This invitation expires on {{expiresAt}} ({{expiresInDays}} days from now).</p>
+  
+  <p>If you have any questions, please contact {{assignedByName}} or visit our <a href="{{supportLink}}">support center</a>.</p>
+  
+  <p>Best regards,<br>The CosmicForge Health Team</p>
+</div>

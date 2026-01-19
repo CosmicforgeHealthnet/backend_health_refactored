@@ -1,0 +1,252 @@
+components:
+  schemas:
+    LabWaitlistJoin:
+      type: object
+      required:
+        - fullName
+        - email
+        - facilityName
+      properties:
+        fullName:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Dr. Jane Smith"
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: "jane.smith@medicenter.com"
+        facilityName:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Downtown Medical Center"
+        phone:
+          type: string
+          minLength: 7
+          maxLength: 20
+          example: "+1234567890"
+        role:
+          type: string
+          enum: [lab, pharmacy]
+          example: "lab"
+        facilityType:
+          type: string
+          enum: [diagnostic_lab, pathology_lab, radiology_center, medical_center, hospital_lab]
+          example: "diagnostic_lab"
+        city:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "New York"
+        state:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "NY"
+
+    LabWaitlistEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        fullName:
+          type: string
+          example: "Dr. Jane Smith"
+        email:
+          type: string
+          format: email
+          example: "jane.smith@medicenter.com"
+        facilityName:
+          type: string
+          example: "Downtown Medical Center"
+        phone:
+          type: string
+          example: "+1234567890"
+        facilityType:
+          type: string
+          example: "diagnostic_lab"
+        city:
+          type: string
+          example: "New York"
+        state:
+          type: string
+          example: "NY"
+        status:
+          type: string
+          enum: [pending, contacted, registered, declined]
+          example: "pending"
+        emailSent:
+          type: boolean
+          example: true
+        emailSentAt:
+          type: string
+          format: date-time
+          example: "2024-01-10T09:05:00Z"
+        adminNotes:
+          type: string
+          example: "Contacted via phone, very interested"
+        launchNotificationSent:
+          type: boolean
+          example: false
+        launchNotificationSentAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-10T09:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-10T09:00:00Z"
+
+    WaitlistStatusUpdate:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pending, contacted, registered, declined]
+          example: "contacted"
+        adminNotes:
+          type: string
+          maxLength: 1000
+          example: "Contacted via phone, interested in registration"
+
+    WaitlistStats:
+      type: object
+      properties:
+        statusCounts:
+          type: object
+          properties:
+            pending:
+              type: integer
+              example: 45
+            contacted:
+              type: integer
+              example: 12
+            registered:
+              type: integer
+              example: 8
+            declined:
+              type: integer
+              example: 3
+        totalCount:
+          type: integer
+          example: 68
+        pendingNotifications:
+          type: integer
+          example: 40
+        recentEntries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabWaitlistEntry'
+
+  parameters:
+    WaitlistId:
+      name: id
+      in: path
+      required: true
+      description: Waitlist entry UUID
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+  responses:
+    WaitlistJoined:
+      description: Successfully joined waitlist
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Successfully joined the lab registration waitlist. You'll be notified when registration opens!"
+              data:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  fullName:
+                    type: string
+                  email:
+                    type: string
+                    format: email
+                  facilityName:
+                    type: string
+                  status:
+                    type: string
+                    example: "pending"
+                  joinedAt:
+                    type: string
+                    format: date-time
+
+    WaitlistEntriesFound:
+      description: Waitlist entries found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Waitlist entries retrieved successfully"
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LabWaitlistEntry'
+              count:
+                type: integer
+                example: 25
+
+    WaitlistEntryFound:
+      description: Waitlist entry found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Waitlist entry retrieved successfully"
+              data:
+                $ref: '#/components/schemas/LabWaitlistEntry'
+
+    WaitlistEntryNotFound:
+      description: Waitlist entry not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Waitlist entry not found"
+
+    AdminUnauthorized:
+      description: Unauthorized access - admin privileges required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Access denied. Platform administrator privileges required."

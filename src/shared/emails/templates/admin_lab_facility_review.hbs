@@ -1,0 +1,24 @@
+<div style="padding: 20px; font-family: Arial, sans-serif;"></div>
+  <h2 style="color: #ffc107; margin-bottom: 20px;">⚠️ New Lab Facility Requires Review</h2>
+  
+  <p>A new lab facility registration has been submitted and requires admin review.</p>
+  
+  <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #856404;">Facility Details:</h3>
+    <p><strong>Facility Name:</strong> {{facilityName}}</p>
+    <p><strong>Type:</strong> {{facilityType}}</p>
+    <p><strong>Owner:</strong> {{ownerName}} ({{ownerEmail}})</p>
+    <p><strong>Registration Number:</strong> {{registrationNumber}}</p>
+    <p><strong>License Number:</strong> {{licenseNumber}}</p>
+    <p><strong>Address:</strong> {{facilityAddress}}</p>
+    <p><strong>Submitted:</strong> {{submittedAt}}</p>
+  </div>
+  
+  <div style="text-align: center; margin: 30px 0;">
+    {{> button url=adminDashboardLink text="Review Registration" color="#007bff"}}
+    {{> button url=approveLink text="Quick Approve" color="#28a745"}}
+    {{> button url=rejectLink text="Request Changes" color="#ffc107"}}
+  </div>
+  
+  <p>Please review this registration promptly to maintain our service quality standards.</p>
+</div>

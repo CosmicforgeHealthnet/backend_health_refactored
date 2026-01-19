@@ -1,0 +1,35 @@
+CountryMapping:
+  type: object
+  properties:
+    countryName:
+      type: string
+      description: Full country name
+      example: Nigeria
+    countryCode:
+      type: string
+      description: ISO country code
+      example: NG
+    aliases:
+      type: array
+      items:
+        type: string
+      description: Alternative names for the country
+      example:
+        - nigeria
+        - ng
+EmergencyContext:
+  type: object
+  properties:
+    userLocation:
+      $ref: "#/components/schemas/LocationInfo"
+    detectedAutomatically:
+      type: boolean
+      description: Whether location was detected automatically
+    ipAddress:
+      type: string
+      description: User's IP address (masked for privacy)
+      example: 192.168.1.xxx
+    timezone:
+      type: string
+      description: User's timezone
+      example: Africa/Lagos

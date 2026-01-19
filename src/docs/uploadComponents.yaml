@@ -1,0 +1,64 @@
+components:
+  schemas:
+    # =============================================================================
+    # UPLOAD SCHEMAS
+    # =============================================================================
+    
+    FileUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "3 files uploaded successfully"
+        folder:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            name:
+              type: string
+              example: "Medical Records 2024"
+            type:
+              type: string
+              enum: [verification, medical_records, prescription, lab_results, profile, other]
+              example: "medical_records"
+            fileCount:
+              type: integer
+              example: 3
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                example: "987fcdeb-51a2-43d1-9c4e-123456789abc"
+              originalFileName:
+                type: string
+                example: "prescription_2024.pdf"
+              documentType:
+                type: string
+                example: "prescription"
+              fileSize:
+                type: integer
+                example: 2048576
+              mimeType:
+                type: string
+                example: "application/pdf"
+              status:
+                type: string
+                enum: [uploaded, processing, ready, corrupted, deleted]
+                example: "ready"
+              url:
+                type: string
+                example: "https://api.example.com/files/987fcdeb-51a2-43d1-9c4e-123456789abc/download?token=abc123"
+              createdAt:
+                type: string
+                format: date-time
+                example: "2024-06-13T10:30:00Z"

@@ -1,0 +1,69 @@
+# 1. src/docs/pharmacy/auth/pharmacyAuth.yaml
+paths:
+  /pharmacy/auth/register:
+    post:
+      summary: Register a new pharmacy
+      description: |
+        Creates a new pharmacy user account and associated pharmacy profile.
+        - Sets user role to "pharmacy" and status to "pending_email_verification".
+        - Creates a pharmacy profile with "pending" verification status.
+        - Sends a verification email (non-blocking); response indicates if email was sent successfully.
+        - After email verification, pharmacies must upload documents for admin approval.
+      tags: [PharmacyAuth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PharmacySignUp'
+      responses:
+        '201':
+          description: Pharmacy registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PharmacyRegistrationResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /pharmacy/auth/login:
+    post:
+      summary: Login pharmacy user
+      tags: [PharmacyAuth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PharmacyLogin'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+        '403':
+          description: Not a pharmacy account
+
+  /pharmacy/auth/profile:
+    get:
+      summary: Get pharmacy profile
+      tags: [PharmacyAuth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pharmacy profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PharmacyProfileResponse'
+        '404':
+          description: Profile not found

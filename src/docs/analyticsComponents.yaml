@@ -1,0 +1,817 @@
+components:
+  schemas:
+    # =============================================================================
+    # ANALYTICS SCHEMAS
+    # =============================================================================
+    
+    DashboardAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        dashboard:
+          type: object
+          properties:
+            period:
+              type: string
+              example: "30 days"
+            activitySummary:
+              type: object
+              properties:
+                period:
+                  type: string
+                  example: "30 days"
+                folderActivity:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      accessType:
+                        type: string
+                        example: "view"
+                      count:
+                        type: integer
+                        example: 15
+                  example:
+                    - accessType: "view"
+                      count: 25
+                    - accessType: "upload"
+                      count: 8
+                fileActivity:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      accessType:
+                        type: string
+                        example: "download"
+                      count:
+                        type: integer
+                        example: 12
+                      avg_duration:
+                        type: number
+                        example: 1250.5
+                  example:
+                    - accessType: "download"
+                      count: 32
+                      avg_duration: 1450.2
+                    - accessType: "view"
+                      count: 45
+                      avg_duration: 800.1
+            accessStats:
+              type: object
+              properties:
+                folders:
+                  type: object
+                  properties:
+                    totalAccesses:
+                      type: integer
+                      example: 67
+                    uniqueFolders:
+                      type: integer
+                      example: 8
+                    activeDays:
+                      type: integer
+                      example: 15
+                files:
+                  type: object
+                  properties:
+                    totalAccesses:
+                      type: integer
+                      example: 134
+                    uniqueFiles:
+                      type: integer
+                      example: 23
+                    downloads:
+                      type: integer
+                      example: 45
+                    avgDownloadTime:
+                      type: number
+                      example: 1200.5
+            folderStats:
+              type: object
+              properties:
+                totalFolders:
+                  type: integer
+                  example: 12
+                foldersByType:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  example:
+                    medical_records: 5
+                    prescription: 3
+                    verification: 2
+                    other: 2
+                averageFilesPerFolder:
+                  type: integer
+                  example: 4
+            fileStats:
+              type: object
+              properties:
+                totalFiles:
+                  type: integer
+                  example: 48
+                totalSize:
+                  type: integer
+                  example: 104857600
+                readyFiles:
+                  type: integer
+                  example: 46
+                encryptedFiles:
+                  type: integer
+                  example: 32
+                documentTypes:
+                  type: integer
+                  example: 8
+                documentTypeDistribution:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  example:
+                    prescription: 15
+                    lab_result: 12
+                    medical_record: 10
+                    verification: 8
+                    other: 3
+                mimeTypeDistribution:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  example:
+                    "application/pdf": 35
+                    "image/jpeg": 8
+                    "image/png": 5
+                uploadTrends:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  example:
+                    "2024-06-10": 5
+                    "2024-06-11": 3
+                    "2024-06-12": 7
+                    "2024-06-13": 2
+                averageFileSize:
+                  type: integer
+                  example: 2185116
+            recentActivity:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [file, folder]
+                    example: "file"
+                  action:
+                    type: string
+                    enum: [uploaded, updated, deleted, accessed]
+                    example: "uploaded"
+                  resource:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      name:
+                        type: string
+                        example: "lab_results_june.pdf"
+                      documentType:
+                        type: string
+                        example: "lab_result"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-06-13T10:30:00Z"
+              example:
+                - type: "file"
+                  action: "uploaded"
+                  resource:
+                    id: "123e4567-e89b-12d3-a456-426614174000"
+                    name: "prescription_june.pdf"
+                    documentType: "prescription"
+                  timestamp: "2024-06-13T10:30:00Z"
+                - type: "folder"
+                  action: "updated"
+                  resource:
+                    id: "987fcdeb-51a2-43d1-9c4e-123456789abc"
+                    name: "Medical Records"
+                  timestamp: "2024-06-13T09:15:00Z"
+            generatedAt:
+              type: string
+              format: date-time
+              example: "2024-06-13T11:00:00Z"
+    
+    AnalyticsOverviewResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        overview:
+          type: object
+          properties:
+            folders:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  example: 12
+                byType:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  example:
+                    medical_records: 5
+                    prescription: 3
+                    verification: 2
+                    other: 2
+                averageFiles:
+                  type: integer
+                  example: 4
+            storage:
+              type: object
+              properties:
+                totalSize:
+                  type: integer
+                  example: 104857600
+                totalSizeFormatted:
+                  type: string
+                  example: "100 MB"
+                totalFiles:
+                  type: integer
+                  example: 48
+                encryptedFiles:
+                  type: integer
+                  example: 32
+                encryptionPercentage:
+                  type: integer
+                  example: 67
+            generatedAt:
+              type: string
+              format: date-time
+              example: "2024-06-13T11:00:00Z"
+    
+    StorageAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        storage:
+          type: object
+          properties:
+            totalSize:
+              type: integer
+              example: 104857600
+            totalSizeFormatted:
+              type: string
+              example: "100 MB"
+            totalFiles:
+              type: integer
+              example: 48
+            encryptedFiles:
+              type: integer
+              example: 32
+            encryptionPercentage:
+              type: integer
+              example: 67
+            storageByFolderType:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                medical_records: 52428800
+                prescription: 31457280
+                verification: 15728640
+                other: 5242880
+            storageByDocumentType:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                prescription: 31457280
+                lab_result: 26214400
+                medical_record: 20971520
+                verification: 15728640
+                other: 10485760
+            averageFileSize:
+              type: integer
+              example: 2185116
+    
+    SecurityAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        security:
+          type: object
+          properties:
+            period:
+              type: string
+              example: "30 days"
+            securityScore:
+              type: integer
+              minimum: 0
+              maximum: 100
+              example: 85
+            riskLevel:
+              type: string
+              enum: [low, medium, high, critical]
+              example: "low"
+            accessStats:
+              type: object
+              properties:
+                folders:
+                  type: object
+                  properties:
+                    totalAccesses:
+                      type: integer
+                      example: 67
+                    uniqueFolders:
+                      type: integer
+                      example: 8
+                    activeDays:
+                      type: integer
+                      example: 15
+                files:
+                  type: object
+                  properties:
+                    totalAccesses:
+                      type: integer
+                      example: 134
+                    uniqueFiles:
+                      type: integer
+                      example: 23
+                    downloads:
+                      type: integer
+                      example: 45
+                    avgDownloadTime:
+                      type: number
+                      example: 1200.5
+            suspiciousActivity:
+              type: array
+              items:
+                type: object
+                properties:
+                  ipAddress:
+                    type: string
+                    example: "192.168.1.100"
+                  userAgent:
+                    type: string
+                    example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+                  accessCount:
+                    type: integer
+                    example: 75
+                  uniqueFiles:
+                    type: integer
+                    example: 12
+                  firstAccess:
+                    type: string
+                    format: date-time
+                    example: "2024-06-12T08:00:00Z"
+                  lastAccess:
+                    type: string
+                    format: date-time
+                    example: "2024-06-13T10:30:00Z"
+                  riskLevel:
+                    type: string
+                    enum: [low, medium, high, critical]
+                    example: "medium"
+              example:
+                - ipAddress: "192.168.1.100"
+                  userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+                  accessCount: 75
+                  uniqueFiles: 12
+                  firstAccess: "2024-06-12T08:00:00Z"
+                  lastAccess: "2024-06-13T10:30:00Z"
+                  riskLevel: "medium"
+            recommendations:
+              type: array
+              items:
+                type: string
+              example:
+                - "Your account security looks good!"
+                - "Consider enabling two-factor authentication"
+    
+    AccessAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        analytics:
+          type: object
+          properties:
+            period:
+              type: string
+              example: "7 days"
+            accessStats:
+              type: object
+              properties:
+                folders:
+                  type: object
+                  properties:
+                    totalAccesses:
+                      type: integer
+                      example: 25
+                    uniqueFolders:
+                      type: integer
+                      example: 5
+                    activeDays:
+                      type: integer
+                      example: 6
+                files:
+                  type: object
+                  properties:
+                    totalAccesses:
+                      type: integer
+                      example: 48
+                    uniqueFiles:
+                      type: integer
+                      example: 12
+                    downloads:
+                      type: integer
+                      example: 18
+                    avgDownloadTime:
+                      type: number
+                      example: 950.2
+            suspiciousActivity:
+              type: array
+              items:
+                type: object
+                properties:
+                  ipAddress:
+                    type: string
+                    example: "10.0.0.1"
+                  userAgent:
+                    type: string
+                    example: "Chrome/91.0.4472.124"
+                  accessCount:
+                    type: integer
+                    example: 25
+                  uniqueFiles:
+                    type: integer
+                    example: 5
+                  riskLevel:
+                    type: string
+                    example: "low"
+            securityScore:
+              type: integer
+              minimum: 0
+              maximum: 100
+              example: 92
+    
+    FileAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        analytics:
+          type: object
+          properties:
+            totalFiles:
+              type: integer
+              example: 48
+            totalSize:
+              type: integer
+              example: 104857600
+            readyFiles:
+              type: integer
+              example: 46
+            encryptedFiles:
+              type: integer
+              example: 32
+            documentTypes:
+              type: integer
+              example: 8
+            documentTypeDistribution:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                prescription: 15
+                lab_result: 12
+                medical_record: 10
+                verification: 8
+                profile: 3
+            mimeTypeDistribution:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                "application/pdf": 35
+                "image/jpeg": 8
+                "image/png": 3
+                "image/tiff": 2
+            uploadTrends:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                "Mon Jun 10 2024": 5
+                "Tue Jun 11 2024": 3
+                "Wed Jun 12 2024": 7
+                "Thu Jun 13 2024": 2
+            averageFileSize:
+              type: integer
+              example: 2185116
+    
+    FolderAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        analytics:
+          type: object
+          properties:
+            totalFolders:
+              type: integer
+              example: 12
+            foldersByType:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                medical_records: 5
+                prescription: 3
+                verification: 2
+                lab_results: 1
+                other: 1
+            averageFilesPerFolder:
+              type: integer
+              example: 4
+            largestFolder:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+                name:
+                  type: string
+                  example: "Medical Records 2024"
+                folderType:
+                  type: string
+                  enum: [verification, medical_records, prescription, lab_results, profile, other]
+                  example: "medical_records"
+                fileCount:
+                  type: integer
+                  example: 12
+            oldestFolder:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  example: "987fcdeb-51a2-43d1-9c4e-123456789abc"
+                name:
+                  type: string
+                  example: "Archive 2023"
+                createdAt:
+                  type: string
+                  format: date-time
+                  example: "2023-01-15T10:00:00Z"
+            newestFolder:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  example: "456789ab-cdef-1234-5678-90abcdef1234"
+                name:
+                  type: string
+                  example: "Recent Uploads"
+                createdAt:
+                  type: string
+                  format: date-time
+                  example: "2024-06-13T09:30:00Z"
+    
+    ActivitySummaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        activity:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [file, folder]
+                example: "file"
+              action:
+                type: string
+                enum: [uploaded, updated, deleted, accessed]
+                example: "uploaded"
+              resource:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  name:
+                    type: string
+                    example: "prescription_june.pdf"
+                  documentType:
+                    type: string
+                    example: "prescription"
+              timestamp:
+                type: string
+                format: date-time
+                example: "2024-06-13T10:30:00Z"
+          example:
+            - type: "file"
+              action: "uploaded"
+              resource:
+                id: "123e4567-e89b-12d3-a456-426614174000"
+                name: "lab_results_june.pdf"
+                documentType: "lab_result"
+              timestamp: "2024-06-13T10:30:00Z"
+            - type: "folder"
+              action: "updated"
+              resource:
+                id: "987fcdeb-51a2-43d1-9c4e-123456789abc"
+                name: "Medical Records"
+              timestamp: "2024-06-13T09:15:00Z"
+    
+    DownloadStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        downloads:
+          type: object
+          properties:
+            period:
+              type: string
+              example: "30 days"
+            totalDownloads:
+              type: integer
+              example: 45
+            avgDownloadTime:
+              type: number
+              example: 1250.5
+            uniqueFiles:
+              type: integer
+              example: 23
+            generatedAt:
+              type: string
+              format: date-time
+              example: "2024-06-13T11:00:00Z"
+    
+    UsageTrendsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        trends:
+          type: object
+          properties:
+            metric:
+              type: string
+              example: "uploads"
+            period:
+              type: string
+              example: "30 days"
+            data:
+              type: object
+              properties:
+                folderActivity:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      accessType:
+                        type: string
+                        example: "view"
+                      count:
+                        type: integer
+                        example: 15
+                  example:
+                    - accessType: "view"
+                      count: 25
+                    - accessType: "upload"
+                      count: 8
+                fileActivity:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      accessType:
+                        type: string
+                        example: "download"
+                      count:
+                        type: integer
+                        example: 12
+                      avg_duration:
+                        type: number
+                        example: 1200.5
+                  example:
+                    - accessType: "download"
+                      count: 32
+                      avg_duration: 1450.2
+            generatedAt:
+              type: string
+              format: date-time
+              example: "2024-06-13T11:00:00Z"
+    
+    FileTypeDistributionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        distribution:
+          type: object
+          properties:
+            documentTypes:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                prescription: 15
+                lab_result: 12
+                medical_record: 10
+                verification: 8
+                profile: 3
+            mimeTypes:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                "application/pdf": 35
+                "image/jpeg": 8
+                "image/png": 3
+                "image/tiff": 2
+            totalFiles:
+              type: integer
+              example: 48
+            generatedAt:
+              type: string
+              format: date-time
+              example: "2024-06-13T11:00:00Z"
+
+    GenerateReportRequest:
+      type: object
+      properties:
+        reportType:
+          type: string
+          enum: [comprehensive, storage, security, activity]
+          default: comprehensive
+          example: "comprehensive"
+        days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          default: 30
+          example: 30
+        format:
+          type: string
+          enum: [json]
+          default: json
+          example: "json"
+    
+    AnalyticsReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        report:
+          type: object
+          properties:
+            type:
+              type: string
+              example: "comprehensive"
+            period:
+              type: string
+              example: "30 days"
+            generatedAt:
+              type: string
+              format: date-time
+              example: "2024-06-13T11:00:00Z"
+            userId:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            data:
+              type: object
+              description: "Report data varies by type"
+              example:
+                dashboard:
+                  period: "30 days"
+                  totalFolders: 12
+                  totalFiles: 48
+                  totalSize: 104857600
+                  encryptedFiles: 32

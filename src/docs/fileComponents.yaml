@@ -1,0 +1,213 @@
+components:
+  schemas:
+    # =============================================================================
+    # FILE SCHEMAS
+    # =============================================================================
+    
+    FileStatus:
+      type: string
+      enum:
+        - uploaded
+        - processing
+        - ready
+        - corrupted
+        - deleted
+      description: "Status of the file"
+      example: "ready"
+    
+    SecurityLevel:
+      type: string
+      enum:
+        - public
+        - private
+        - confidential
+        - restricted
+      description: "Security level of the file"
+      example: "confidential"
+    
+    File:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "File ID"
+          example: "987fcdeb-51a2-43d1-9c4e-123456789abc"
+        originalFileName:
+          type: string
+          description: "Original filename"
+          example: "prescription_june.pdf"
+        documentType:
+          type: string
+          description: "Document type (dynamic from frontend)"
+          example: "prescription"
+        fileSize:
+          type: integer
+          description: "File size in bytes"
+          example: 2048576
+        mimeType:
+          type: string
+          description: "MIME type"
+          example: "application/pdf"
+        status:
+          $ref: "#/components/schemas/FileStatus"
+        securityLevel:
+          $ref: "#/components/schemas/SecurityLevel"
+        isEncrypted:
+          type: boolean
+          description: "Whether file is encrypted"
+          example: true
+        downloadCount:
+          type: integer
+          description: "Number of times downloaded"
+          example: 3
+        lastAccessedAt:
+          type: string
+          format: date-time
+          description: "Last access timestamp"
+          example: "2024-06-13T10:30:00Z"
+        url:
+          type: string
+          description: "Signed URL for file access"
+          example: "https://api.example.com/files/987fcdeb-51a2-43d1-9c4e-123456789abc/download?token=abc123"
+        thumbnailUrl:
+          type: string
+          description: "Thumbnail URL if available"
+          example: "https://api.example.com/files/987fcdeb-51a2-43d1-9c4e-123456789abc/preview"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Upload timestamp"
+          example: "2024-06-10T14:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: "Last update timestamp"
+          example: "2024-06-13T09:15:00Z"
+        folder:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            name:
+              type: string
+              example: "Medical Records 2024"
+            folderType:
+              type: string
+              enum: [verification, medical_records, prescription, lab_results, profile, other]
+              example: "medical_records"
+    
+    FileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        file:
+          $ref: "#/components/schemas/File"
+    
+    FileDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        file:
+          $ref: "#/components/schemas/File"
+    
+    FilesListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/File"
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: "Total number of items"
+              example: 48
+            page:
+              type: integer
+              description: "Current page number"
+              example: 1
+            limit:
+              type: integer
+              description: "Items per page"
+              example: 20
+            totalPages:
+              type: integer
+              description: "Total number of pages"
+              example: 3
+    
+    UpdateFileRequest:
+      type: object
+      properties:
+        documentType:
+          type: string
+          description: "Document type"
+          example: "lab_result"
+        metadata:
+          type: object
+          description: "Additional file metadata"
+          example:
+            department: "cardiology"
+            urgency: "high"
+        securityLevel:
+          $ref: "#/components/schemas/SecurityLevel"
+    
+    BulkDeleteRequest:
+      type: object
+      required:
+        - fileIds
+      properties:
+        fileIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: "Array of file IDs to delete"
+          example: ["987fcdeb-51a2-43d1-9c4e-123456789abc", "456789ab-cdef-1234-5678-90abcdef1234"]
+    
+    FileStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        stats:
+          type: object
+          properties:
+            totalFiles:
+              type: integer
+              description: "Total number of files"
+              example: 48
+            totalSize:
+              type: integer
+              description: "Total size in bytes"
+              example: 104857600
+            totalSizeFormatted:
+              type: string
+              description: "Human readable size"
+              example: "100 MB"
+            readyFiles:
+              type: integer
+              description: "Number of ready files"
+              example: 46
+            encryptedFiles:
+              type: integer
+              description: "Number of encrypted files"
+              example: 32
+            documentTypes:
+              type: integer
+              description: "Number of unique document types"
+              example: 8

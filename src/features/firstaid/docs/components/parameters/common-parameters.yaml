@@ -1,0 +1,37 @@
+LocationHeaders:
+  - name: X-User-Country
+    in: header
+    description: Override detected country
+    required: false
+    schema:
+      type: string
+      example: NG
+  - name: X-User-City
+    in: header
+    description: Override detected city
+    required: false
+    schema:
+      type: string
+      example: Lagos
+CommonQueryParams:
+  - name: format
+    in: query
+    description: Response format preference
+    required: false
+    schema:
+      type: string
+      enum:
+        - json
+        - text
+      default: json
+  - name: lang
+    in: query
+    description: Language preference for tips (future feature)
+    required: false
+    schema:
+      type: string
+      enum:
+        - en
+        - fr
+        - es
+      default: en

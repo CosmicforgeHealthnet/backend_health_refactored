@@ -1,0 +1,615 @@
+# ================================
+# WALLET COMPONENTS - SMART ROUTING & ACCOUNT RESOLUTION
+# ================================
+
+# docs/api/payments/walletComponents.yaml
+components:
+  schemas:
+    # ================================
+    # ACCOUNT RESOLUTION SCHEMAS
+    # ================================
+    
+    AccountResolutionRequest:
+      type: object
+      required:
+        - accountNumber
+        - bankCode
+      properties:
+        accountNumber:
+          type: string
+          minLength: 10
+          maxLength: 10
+          pattern: '^[0-9]{10}$'
+          description: "10-digit account number"
+          example: "0123456789"
+        bankCode:
+          type: string
+          minLength: 3
+          maxLength: 6
+          description: "Bank code from supported banks list"
+          example: "044"
+
+    ResolvedAccountDetails:
+      type: object
+      properties:
+        accountNumber:
+          type: string
+          example: "0123456789"
+        bankCode:
+          type: string
+          example: "044"
+        accountName:
+          type: string
+          example: "JOHN DOE"
+          description: "Account holder's name as returned by bank"
+        bankName:
+          type: string
+          example: "Access Bank"
+          description: "Bank name"
+        resolvedVia:
+          type: string
+          enum: [flutterwave, paystack]
+          example: "flutterwave"
+          description: "Which processor successfully resolved the account"
+        validationInfo:
+          type: object
+          properties:
+            isValid:
+              type: boolean
+              example: true
+            verificationLevel:
+              type: string
+              enum: [basic, enhanced]
+              example: "basic"
+            lastVerified:
+              type: string
+              format: date-time
+
+    SupportedBank:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Access Bank"
+          description: "Bank display name"
+        code:
+          type: string
+          example: "044"
+          description: "Bank code for API calls"
+        processor:
+          type: string
+          enum: [flutterwave, paystack, both]
+          example: "both"
+          description: "Which processor(s) support this bank"
+        country:
+          type: string
+          example: "NG"
+          description: "Country code"
+        isActive:
+          type: boolean
+          example: true
+          description: "Whether bank is currently active for transactions"
+        features:
+          type: array
+          items:
+            type: string
+            enum: [account_resolution, instant_transfer, bulk_transfer]
+          example: ["account_resolution", "instant_transfer"]
+
+    # ================================
+    # SMART WITHDRAWAL SCHEMAS
+    # ================================
+
+    SmartWithdrawalRequest:
+      type: object
+      required:
+        - amountUsd
+        - requestedCurrency
+        - bankDetails
+      properties:
+        amountUsd:
+          type: number
+          minimum: 10
+          maximum: 50000
+          description: "Amount to withdraw in USD (minimum $10)"
+          example: 100.00
+        requestedCurrency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          enum: [NGN, USD, GHS, KES, UGX]
+          description: "Preferred currency for withdrawal"
+          example: "NGN"
+        bankDetails:
+          $ref: '#/components/schemas/EnhancedBankDetails'
+        preferences:
+          type: object
+          properties:
+            preferredProcessor:
+              type: string
+              enum: [flutterwave, paystack, auto]
+              default: "auto"
+              description: "Preferred processor (auto = smart routing)"
+            splitIfNeeded:
+              type: boolean
+              default: true
+              description: "Allow splitting withdrawal across processors if needed"
+            prioritizeSpeed:
+              type: boolean
+              default: false
+              description: "Prioritize fastest processing over lowest fees"
+
+    EnhancedBankDetails:
+      type: object
+      required:
+        - bankCode
+        - accountNumber
+        - accountName
+        - bankName
+      properties:
+        bankCode:
+          type: string
+          description: "Bank code from supported banks list"
+          example: "044"
+        accountNumber:
+          type: string
+          pattern: '^[0-9]{10}$'
+          description: "10-digit account number"
+          example: "0123456789"
+        accountName:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: "Account holder's name (use resolved name from /resolve-account)"
+          example: "JOHN DOE"
+        bankName:
+          type: string
+          description: "Bank display name"
+          example: "Access Bank"
+        isResolved:
+          type: boolean
+          default: false
+          description: "Whether account details were auto-resolved"
+        resolvedVia:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Which processor resolved the account (if applicable)"
+
+    SmartWithdrawalResponse:
+      type: object
+      properties:
+        withdrawals:
+          type: array
+          items:
+            $ref: '#/components/schemas/WithdrawalTransaction'
+          description: "Array of withdrawal transactions (multiple if split)"
+        totalAmount:
+          type: number
+          example: 50000.00
+          description: "Total amount in requested currency"
+        currency:
+          type: string
+          example: "NGN"
+        routingStrategy:
+          type: string
+          enum: [single_flutterwave, single_paystack, split_withdrawal]
+          example: "single_flutterwave"
+          description: "Strategy used for routing"
+        isMultipleTransactions:
+          type: boolean
+          example: false
+          description: "Whether withdrawal was split across processors"
+        estimatedProcessingTime:
+          type: string
+          example: "1-3 business days"
+        fees:
+          type: object
+          properties:
+            flutterwaveFee:
+              type: number
+              example: 100.00
+            paystackFee:
+              type: number
+              example: 0.00
+            totalFees:
+              type: number
+              example: 100.00
+            currency:
+              type: string
+              example: "NGN"
+        processorBalances:
+          type: object
+          properties:
+            flutterwave:
+              type: number
+              example: 75000.00
+              description: "Available balance on Flutterwave"
+            paystack:
+              type: number
+              example: 25000.00
+              description: "Available balance on Paystack"
+            currency:
+              type: string
+              example: "NGN"
+
+    WithdrawalTransaction:
+      type: object
+      properties:
+        withdrawal:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            amountUsd:
+              type: number
+              example: 100.00
+            status:
+              type: string
+              enum: [pending, processing, completed, failed, cancelled]
+              example: "pending"
+            createdAt:
+              type: string
+              format: date-time
+        processor:
+          type: string
+          enum: [flutterwave, paystack]
+          example: "flutterwave"
+          description: "Processor handling this transaction"
+        amount:
+          type: number
+          example: 50000.00
+          description: "Amount in requested currency for this processor"
+        reference:
+          type: string
+          example: "WDW-FW-12345-1640995200"
+          description: "Unique reference for this transaction"
+        estimatedCompletion:
+          type: string
+          format: date-time
+          description: "Estimated completion time"
+    
+    SupportedCurrency:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 3
+          maxLength: 3
+          example: "NGN"
+          description: "ISO currency code"
+        name:
+          type: string
+          example: "Nigerian Naira"
+          description: "Currency display name"
+        processors:
+          type: array
+          items:
+            type: string
+            enum: [flutterwave, paystack]
+          example: ["flutterwave", "paystack"]
+          description: "Which processors support this currency"
+        rates:
+          type: object
+          properties:
+            flutterwave:
+              type: number
+              example: 1650.00
+              description: "Exchange rate from USD on Flutterwave"
+            paystack:
+              type: number
+              example: 1650.00
+              description: "Exchange rate from USD on Paystack"
+        fees:
+          type: object
+          properties:
+            flutterwave:
+              type: number
+              example: 50.00
+              description: "Withdrawal fee on Flutterwave"
+            paystack:
+              type: number
+              example: 100.00
+              description: "Withdrawal fee on Paystack"
+        recommended:
+          type: boolean
+          example: true
+          description: "Whether this currency is recommended for the user"
+        metadata:
+          type: object
+          properties:
+            symbol:
+              type: string
+              example: "₦"
+            decimalPlaces:
+              type: integer
+              example: 2
+            isMainCurrency:
+              type: boolean
+              example: true
+              description: "Whether this is a major/primary currency"
+    # ================================
+    # ENHANCED WITHDRAWAL HISTORY
+    # ================================
+
+    EnhancedWalletWithdrawal:
+      allOf:
+        - $ref: '#/components/schemas/WalletWithdrawal'
+        - type: object
+          properties:
+            processor:
+              type: string
+              enum: [flutterwave, paystack]
+              example: "flutterwave"
+              description: "Processor used for this withdrawal"
+            parentWithdrawalId:
+              type: string
+              format: uuid
+              description: "Parent withdrawal ID (for linked split withdrawals)"
+            isPartOfSplit:
+              type: boolean
+              example: false
+              description: "Whether this is part of a split withdrawal"
+            splitInfo:
+              type: object
+              properties:
+                totalTransactions:
+                  type: integer
+                  example: 2
+                  description: "Total number of transactions in split"
+                currentTransaction:
+                  type: integer
+                  example: 1
+                  description: "Current transaction number"
+                siblingTransactions:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: "IDs of related transactions in split"
+            routingInfo:
+              type: object
+              properties:
+                strategy:
+                  type: string
+                  enum: [single_flutterwave, single_paystack, split_withdrawal]
+                reason:
+                  type: string
+                  example: "Sufficient balance available on Flutterwave"
+                processorBalanceAtTime:
+                  type: object
+                  properties:
+                    flutterwave:
+                      type: number
+                    paystack:
+                      type: number
+            fees:
+              type: object
+              properties:
+                processorFee:
+                  type: number
+                  example: 100.00
+                exchangeFee:
+                  type: number
+                  example: 0.00
+                totalFee:
+                  type: number
+                  example: 100.00
+                currency:
+                  type: string
+                  example: "NGN"
+
+    # ================================
+    # ADMIN SCHEMAS
+    # ================================
+
+    FreezeWalletRequest:
+      type: object
+      required:
+        - doctorId
+        - reason
+      properties:
+        doctorId:
+          type: string
+          format: uuid
+          description: "Doctor's user ID"
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: "Reason for freezing the wallet"
+          example: "Suspicious activity detected"
+        freezeType:
+          type: string
+          enum: [temporary, permanent, investigation]
+          default: "temporary"
+          description: "Type of freeze"
+        notifyDoctor:
+          type: boolean
+          default: true
+          description: "Whether to notify doctor about the freeze"
+        adminNotes:
+          type: string
+          maxLength: 1000
+          description: "Internal admin notes"
+
+    UnfreezeWalletRequest:
+      type: object
+      required:
+        - doctorId
+      properties:
+        doctorId:
+          type: string
+          format: uuid
+          description: "Doctor's user ID"
+        unfreezeReason:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: "Reason for unfreezing the wallet"
+          example: "Investigation completed, no issues found"
+        notifyDoctor:
+          type: boolean
+          default: true
+          description: "Whether to notify doctor about the unfreeze"
+        adminNotes:
+          type: string
+          maxLength: 1000
+          description: "Internal admin notes"
+
+    # ================================
+    # PROCESSOR BALANCE SCHEMAS
+    # ================================
+
+    ProcessorBalance:
+      type: object
+      properties:
+        processor:
+          type: string
+          enum: [flutterwave, paystack]
+        currency:
+          type: string
+          example: "NGN"
+        availableBalance:
+          type: number
+          example: 150000.00
+        ledgerBalance:
+          type: number
+          example: 150000.00
+        lastUpdated:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, inactive, error]
+          example: "active"
+
+    SmartRoutingMetrics:
+      type: object
+      properties:
+        totalWithdrawals:
+          type: integer
+          example: 150
+        routingBreakdown:
+          type: object
+          properties:
+            flutterwaveOnly:
+              type: integer
+              example: 80
+            paystackOnly:
+              type: integer
+              example: 45
+            splitWithdrawals:
+              type: integer
+              example: 25
+        successRates:
+          type: object
+          properties:
+            flutterwave:
+              type: number
+              example: 95.5
+              description: "Success rate percentage"
+            paystack:
+              type: number
+              example: 92.3
+            overall:
+              type: number
+              example: 94.2
+        averageProcessingTime:
+          type: object
+          properties:
+            flutterwave:
+              type: string
+              example: "2.5 hours"
+            paystack:
+              type: string
+              example: "4.2 hours"
+        feeSavings:
+          type: object
+          properties:
+            totalSaved:
+              type: number
+              example: 15000.00
+              description: "Total fees saved through smart routing"
+            currency:
+              type: string
+              example: "NGN"
+            averageSavingsPerWithdrawal:
+              type: number
+              example: 100.00
+
+    # ================================
+    # ERROR SCHEMAS
+    # ================================
+
+    AccountResolutionError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          enum: 
+            - "Account number and bank code are required"
+            - "Unable to resolve account details. Please verify account number and bank."
+            - "Account resolution temporarily unavailable"
+            - "Invalid bank code"
+            - "Account number format invalid"
+        details:
+          type: object
+          properties:
+            accountNumber:
+              type: string
+              example: "0123456789"
+            bankCode:
+              type: string
+              example: "044"
+            attempts:
+              type: array
+              items:
+                type: object
+                properties:
+                  processor:
+                    type: string
+                  error:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+
+    InsufficientFundsError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "Insufficient funds across all payment processors"
+        processorBalances:
+          type: object
+          properties:
+            flutterwave:
+              type: number
+              example: 30000.00
+            paystack:
+              type: number
+              example: 20000.00
+            totalAvailable:
+              type: number
+              example: 50000.00
+            requested:
+              type: number
+              example: 100000.00
+            currency:
+              type: string
+              example: "NGN"
+        suggestions:
+          type: array
+          items:
+            type: string
+          example: 
+            - "Reduce withdrawal amount to NGN 50,000 or less"
+            - "Wait for pending settlements to complete"
+            - "Contact support if you believe this is an error"

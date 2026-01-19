@@ -1,0 +1,92 @@
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Status Banner -->
+    <div style="background: linear-gradient(135deg, #dc2626, #b91c1c); text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Appointment Cancelled</h2>
+    </div>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>{{patientName}}</strong>,
+    </p>
+
+    <!-- Main message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+        Your appointment with <strong>Dr. {{doctorName}}</strong> has been cancelled.
+    </p>
+
+    <!-- Cancellation Details -->
+    <div style="background-color: #fee2e2; border-left: 4px solid #dc2626; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #b91c1c; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Cancellation Details
+        </h3>
+        <p style="font-size: 14px; margin: 5px 0; color: #7f1d1d;">
+            <strong>Doctor:</strong> Dr. {{doctorName}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #7f1d1d;">
+            <strong>Original Date & Time:</strong> {{appointmentDate}} at {{appointmentTime}}
+        </p>
+        <p style="font-size: 14px; margin: 5px 0; color: #7f1d1d;">
+            <strong>Cancelled By:</strong> {{cancelledBy}}
+        </p>
+        {{#if cancellationReason}}
+        <p style="font-size: 14px; margin: 5px 0; color: #7f1d1d;">
+            <strong>Reason:</strong> {{cancellationReason}}
+        </p>
+        {{/if}}
+        <p style="font-size: 14px; margin: 5px 0; color: #7f1d1d;">
+            <strong>Appointment ID:</strong> #{{appointmentId}}
+        </p>
+    </div>
+
+    <!-- Refund Information -->
+    {{#if refundAmount}}
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #15803d; margin-top: 0; font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+            Refund Information
+        </h3>
+        <p style="color: #166534; margin: 0 0 15px 0; font-size: 14px;">
+            <strong>Refund Amount:</strong> ${{refundAmount}}
+        </p>
+        <p style="color: #166534; margin: 0; font-size: 14px;">
+            Your refund will be processed within <strong>{{refundProcessingTime}}</strong> and will appear in your original payment method.
+        </p>
+    </div>
+    {{/if}}
+
+    <!-- Action Buttons -->
+    <div style="text-align: center; margin: 30px 0;">
+        {{ button url=rebookLink text="Book Another Appointment" }}
+    </div>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <a href="{{dashboardLink}}" style="color: #3964EA; text-decoration: none; font-weight: bold;">
+            📋 View My Appointments
+        </a>
+    </div>
+
+    <!-- Alternative Doctors -->
+    <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #0c4a6e; margin: 0; font-weight: 600; text-align: center; font-size: 14px;">
+            <strong>Need care urgently?</strong> Browse our available doctors and book an appointment that fits your schedule.
+        </p>
+    </div>
+
+    <!-- Apology Note -->
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #92400e; margin: 0; text-align: center; font-size: 14px;">
+            We sincerely apologize for any inconvenience this cancellation may have caused. Your health and care experience are our top priorities.
+        </p>
+    </div>
+
+    <!-- Support info -->
+    <p style="font-size: 14px; color: #555; margin: 20px 0; text-align: center;">
+        If you have any questions about this cancellation or need help rebooking, please contact our 
+        <a href="{{supportLink}}" style="color: #3964EA; text-decoration: none;">support team</a>.
+    </p>
+
+    <!-- Sign off -->
+    <p style="margin-top: 30px; font-size: 14px; text-align: center;">
+        <strong>The CosmicForge Health Team</strong>
+    </p>
+
+</div>

@@ -1,0 +1,309 @@
+[33m1906d73[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mziggy[m[33m)[m Merge branch 'main' of github.com:CosmicforgeHealthnet/backend_health into ziggy
+[33m2f25f25[m Add SOS controller updates and swagger documentation
+[33m1569b6a[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m update referral and waitlist
+[33m12b71d1[m update referral and waitlist
+[33md0c3902[m WIP: local changes before pulling main
+[33m0787d72[m refractor
+[33mda5f05c[m update
+[33md602309[m adding functionality to the referral routes
+[33m5ffab41[m Merge pull request #292 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m0b39184[m[33m ([m[1;31morigin/sub-main(Developmet)[m[33m)[m Merge pull request #291 from Trimph-A/main
+[33m19e91ce[m Merge branch 'CosmicforgeHealthnet:main' into main
+[33m13b05a0[m Add country restriction for patient registration and update User entity to include country field
+[33mc854db3[m Merge pull request #290 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m5e91a3a[m Merge pull request #289 from Trimph-A/main
+[33m9449b79[m Merge branch 'CosmicforgeHealthnet:main' into main
+[33mf1657c3[m Update package dependencies: bump pg to 8.16.3, add xlsx 0.18.5, and update related dependencies; refactor adminVerificationController and authController for improved code clarity.
+[33m6fd6904[m adding consultationfee_currency to the appointment
+[33m0664203[m remove usage middleware
+[33m9a49c7c[m Merge pull request #288 from CosmicforgeHealthnet/sub-main(Developmet)
+[33ma221b72[m Merge pull request #287 from Trimph-A/main
+[33m330bdd7[m Merge branch 'CosmicforgeHealthnet:main' into main
+[33m3f425a3[m Add node-cache dependency and update verification statuses; implement removePendingCredits method
+[33m50692d0[m remove usage middleware
+[33m95f7597[m remove usage middleware
+[33mdb07c1d[m adding lab waitlist
+[33m7c613ad[m update
+[33m193c550[m Merge pull request #286 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m598cbb5[m Merge branch 'sub-main(Developmet)' of github.com:CosmicforgeHealthnet/backend_health into sub-main(Developmet)
+[33m01213fa[m update in the firstaid content
+[33m903d9dd[m add user ratings messages and also fix referral bugs
+[33m02fd96f[m Merge pull request #285 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m75fbb99[m Merge pull request #284 from Trimph-A/main
+[33m4b3e006[m Merge branch 'CosmicforgeHealthnet:main' into main
+[33m7974b6a[m Exclude incomplete submissions from admin verification queue by updating query conditions in the AdminVerificationController.
+[33m6477b16[m add user ratings to user and also fix referral bugs
+[33ma5c1f5a[m updating profile validator
+[33m9e051b2[m add user ratings to user and also fix referral bugs
+[33m4feecd0[m update
+[33m1766532[m Merge pull request #283 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m15c741d[m Merge pull request #282 from Trimph-A/main
+[33m5974bf7[m Merge branch 'CosmicforgeHealthnet:main' into main
+[33m8d787ef[m Implement automated and manual verification processes for doctor verification requests based on tier. Enhance document handling for Tier 1, requiring documents only if API verification fails, and ensure document requirements are enforced for Tier 2 and Tier 3. Update response messages to reflect processing type and estimated times.
+[33mcedbfd2[m Merge pull request #281 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m73e8c0c[m Merge pull request #280 from Trimph-A/main
+[33md393ea4[m Refactor admin verification controller to improve thumbnail handling and logging. Update API paths in marketing components and enhance user email retrieval in marketing analytics service to include phone number.
+[33m418824f[m update swagger docs
+[33mc72bd88[m Merge pull request #279 from CosmicforgeHealthnet/sub-main(Developmet)
+[33md0f3dec[m Merge pull request #278 from Trimph-A/main
+[33m72954a7[m Merge branch 'main' of https://github.com/Trimph-A/backend_health
+[33m13cba3a[m Enhance user profile update functionality by adding 'bannerUrl' and 'departmentSpecialty' fields. Update validation to require at least one of the new fields. Modify related documentation to reflect these changes.
+[33m88be5fc[m Add migration to add 'departmentSpecialty' column to 'users' table
+[33m81acb27[m Merge pull request #277 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m698af10[m Merge branch 'sub-main(Developmet)' of github.com:CosmicforgeHealthnet/backend_health into sub-main(Developmet)
+[33ma92d206[m firstsaid update
+[33m6e72694[m fix lab steps internal server error
+[33mcfc4aa5[m fix appointment bug
+[33m33c92b8[m fix appointment bug
+[33m6d7aff3[m lab facility entity
+[33m4502805[m remove migration file for add departmentSpecialty
+[33m714e588[m remove migration file for add departmentSpecialty
+[33mb6dd2be[m remove migration file for add departmentSpecialty
+[33m809e62e[m remove migration file for add departmentSpecialty
+[33m9236bc7[m fixing breaking User.departmentSpecialty
+[33m25f301e[m breaking register endpoint to 3 steps
+[33mf8d49fb[m Merge pull request #276 from CosmicforgeHealthnet/sub-main(Developmet)
+[33me40b37a[m Merge pull request #275 from Trimph-A/main
+[33m2c55640[m Merge branch 'CosmicforgeHealthnet:main' into main
+[33md20f66a[m Merge branch 'main' of https://github.com/Trimph-A/backend_health
+[33md1d726d[m Add department specialty field to user registration and update related services and documentation
+[33mc65f707[m remove appointment job
+[33maf53076[m remove appointment job
+[33ma09fdda[m Merge pull request #274 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m37b869c[m Merge pull request #273 from Trimph-A/main
+[33m0165b0f[m Merge branch 'CosmicforgeHealthnet:main' into main
+[33m7c4ce2d[m Refactor error handling in user registration and improve logging for invalid inputs
+[33m893bddc[m Merge pull request #272 from CosmicforgeHealthnet/sub-main(Developmet)
+[33mf2fde7a[m Merge branch 'sub-main(Developmet)' of github.com:CosmicforgeHealthnet/backend_health into sub-main(Developmet)
+[33ma8bbcdf[m updated the appointment approval usage  up for testing in the frontend,
+[33m82ec34a[m remove appointment job
+[33m0f91ddd[m update profile setup
+[33mf75736d[m update profile setup
+[33mbd86a17[m Merge pull request #271 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m37bf1fb[m Merge pull request #270 from Trimph-A/main
+[33mfaae99c[m Merge branch 'main' of https://github.com/Trimph-A/backend_health
+[33m4727768[m Add dynamic currency route to app.js
+[33md04a6a0[m Merge pull request #269 from CosmicforgeHealthnet/sub-main(Developmet)
+[33me76da0c[m Merge pull request #268 from Trimph-A/main
+[33m035f01b[m Merge branch 'sub-main(Developmet)' into main
+[33mafe646c[m Merge branch 'main' of https://github.com/Trimph-A/backend_health
+[33mb967cab[m Add phone number support in user registration, enhance error handling for invalid phone formats, and implement 404 route logging in app.js
+[33m7d8f3df[m update actin url
+[33me6fbb0a[m use
+[33ma31437b[m fix and merge conflict
+[33meb5c377[m Fix conflict
+[33m1e33cdd[m removing chidex motherfucking usage middleware because it was failing
+[33m0a111d3[m fetching pull
+[33m2ed287c[m resolving relative appoinment time
+[33m5dabafb[m resolving relative appoinment time
+[33md6241f2[m resolving relative appoinment time
+[33m8e741da[m resolving relative appoinment time
+[33m0f17038[m resolving relative appoinment time
+[33ma436a66[m resolving relative appoinment time
+[33m68d1da0[m fixing profiling issues
+[33m251a93b[m Fix conflict
+[33m6cddc97[m pull changes
+[33mbf47873[m update
+[33m7136772[m removing profilelicense from doctor profile
+[33mcb253b8[m update
+[33m5cc4b9a[m Fix conflict
+[33mbe16416[m configuration of whatsapp notification messaging
+[33mec27296[m Fix conflict
+[33m4c3b918[m lab order flow &appointment update
+[33m106101e[m Fix conflict
+[33mb64528f[m pull changes
+[33mf5049ea[m Fix conflic
+[33ma3e59f5[m fix conflict
+[33m67656d1[m updating doctor reminder profile completion
+[33md03e779[m removing profilelicense from doctor profile
+[33m9ff9bff[m fix conflict
+[33m57eca6d[m configuration of whatsapp notification messaging
+[33m9c88244[m fix conflict
+[33md87b650[m removing chidex motherfucking usage middleware because it was failing
+[33m7a034fd[m fetching pull
+[33m674b15b[m change url
+[33m439175a[m subscription updated
+[33ma289c12[m resolving relative appoinment time
+[33m3f0a9be[m resolving relative appoinment time
+[33mfeafbeb[m resolving relative appoinment time
+[33m664f0d5[m resolving relative appoinment time
+[33m2840598[m resolving relative appoinment time
+[33me05c5c7[m resolving relative appoinment time
+[33m1f56f8f[m Merge pull request #267 from CosmicforgeHealthnet/sub-main(Developmet)
+[33md7cbef3[m update basic in doctors  subscription
+[33m181e15b[m[33m ([m[1;32mmain[m[33m)[m Merge pull request #266 from CosmicforgeHealthnet/sub-main(Developmet)
+[33mc46854a[m fixing profiling issues
+[33m22d147a[m first aid
+[33m2152a49[m Merge branch 'chidex' into sub-main(Developmet)
+[33m5af7c2a[m Merge branch 'sub-main(Developmet)' of github.com:CosmicforgeHealthnet/backend_health into sub-main(Developmet)
+[33m8bb86d2[m update appointment
+[33m1272c06[m Merge pull request #265 from CosmicforgeHealthnet/sub-main(Developmet)
+[33mb491f7b[m Merge pull request #264 from Trimph-A/main
+[33m97a7a5f[m Merge branch 'CosmicforgeHealthnet:main' into main
+[33m64673d9[m Add FHIR and compliance routes, update app routing, and enhance consent and audit functionalities
+[33m7ae217a[m adding refund to cancel appointment
+[33mfaef410[m Merge pull request #263 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m1afcafa[m adding refund to cancel appointment
+[33m4bc25f2[m update on rescheduling
+[33mb44b94e[m[33m ([m[1;31morigin/chidex[m[33m)[m Merge branch 'sub-main(Developmet)' into chidex
+[33m46b3e7e[m updated subscription payment process
+[33m809d88c[m Merge pull request #262 from CosmicforgeHealthnet/sub-main(Developmet)
+[33mca79628[m update sub
+[33m48fa928[m updated current plan
+[33me17d72b[m removed notification from auth
+[33m0750dbe[m Merge pull request #261 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m679ce15[m work on  subscription
+[33m6ec06aa[m fixing notification services to appointment
+[33m1371db6[m fixing notification services to appointment
+[33m8203aac[m fixing notification services to appointment
+[33mf039c46[m fixing notification services to appointment
+[33m88bf26d[m fixing notification services to appointment
+[33m4026d4c[m fixing notification services to appointment
+[33mda6f34d[m fixing notification services to appointment
+[33m38fc8fd[m adding notification services to appointment
+[33ma85d41d[m adding notification services to appointment
+[33m3987393[m appointment flow setup
+[33m9a47af9[m email testup
+[33m9a3f4e2[m email testup
+[33m7d699ea[m Merge pull request #260 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m8247947[m Merge pull request #259 from Trimph-A/main
+[33me594569[m Add global response middleware to include location data in successful responses
+[33m549d30f[m Merge pull request #258 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m985687c[m Merge pull request #257 from Trimph-A/main
+[33m9db560a[m Fix import path for CurrencyService in dynamicCurrencyController
+[33m7f227ae[m Merge pull request #256 from CosmicforgeHealthnet/sub-main(Developmet)
+[33mbf66bd7[m Merge pull request #255 from Trimph-A/main
+[33mf72c0d1[m Fix import path for dynamic currency controller in dynamicCurrencyRoutes.js
+[33m12b4870[m Merge pull request #254 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m8d3df20[m Merge pull request #253 from Trimph-A/main
+[33m73d7f66[m Add dynamic currency conversion endpoints and update app routing
+[33m57c2f78[m Merge branch 'main' of https://github.com/Trimph-A/backend_health
+[33m3fe24ce[m Refactor email service import path in VerificationReminderJob class
+[33m8975297[m Merge pull request #252 from CosmicforgeHealthnet/sub-main(Developmet)
+[33mc6dafcd[m email fixes
+[33m69bb808[m email fixes
+[33mfe6270a[m email fixes
+[33m9397b4c[m email fixes
+[33mde574a4[m appointment email fix up
+[33mcd129cc[m update
+[33ma1cc119[m update
+[33m0aa4586[m update
+[33m6101871[m update
+[33m56b6957[m update
+[33m3d31c3d[m email reduction
+[33mea87a63[m pull changes
+[33m0c370d7[m appointment changes
+[33mf0d6e97[m wrote DoctorSpecializationAccessMiddleware
+[33m1c7e6ea[m added phamacy and removed ai chat
+[33m707742c[m Merge pull request #251 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m45e4df7[m Merge branch 'sub-main(Developmet)' of github.com:CosmicforgeHealthnet/backend_health into sub-main(Developmet)
+[33m7de4061[m remove basic plan for the subscritioins
+[33m76bacd3[m fixing appointment flow
+[33m6e509c4[m updating user doctor profile to return professional license
+[33mdea6bcd[m Merge pull request #250 from CosmicforgeHealthnet/sub-main(Developmet)
+[33mafa529b[m Merge pull request #249 from CosmicforgeHealthnet/samuelolubukun
+[33m599dcb0[m update appointment
+[33m7901293[m updating doctor reminder profile completion
+[33m0704b6f[m removing profilelicense from doctor profile
+[33m743aff3[m removing profilelicense from doctor profile
+[33mb9cf876[m configuration of whatsapp notification messaging changes
+[33mee88838[m configuration of whatsapp notification messaging
+[33m6126cfd[m configuration of whatsapp notification messaging
+[33mb8dde2d[m[33m ([m[1;31morigin/samuelolubukun[m[33m)[m Applying patch fix to chatbot sessions again
+[33m126824c[m verification changes
+[33mf614d5c[m lab order flow &appointment update
+[33m4ad891d[m Merge branch 'sub-main(Developmet)'
+[33m2fc6bf5[m update
+[33maac26f0[m update
+[33m719fc70[m appointment fixes
+[33m2cac194[m Applying patch fix to chatbot sessions
+[33mbc58751[m migration for the emergencysteps and condition table
+[33m237c893[m lab order processing update
+[33mb90f425[m added lab order section
+[33m3001082[m working on the emergency and the  non-emergency feature
+[33m228f25c[m Merge pull request #247 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m838bccd[m Merge pull request #246 from Trimph-A/main
+[33m3c000cc[m Fix syntax in entities index by adding a missing comma after the prescription entry.
+[33m1503e4f[m Merge pull request #245 from CosmicforgeHealthnet/sub-main(Developmet)
+[33ma3cdd59[m Merge branch 'main' into sub-main(Developmet)
+[33m342ba12[m Merge pull request #244 from Trimph-A/main
+[33m27bce9d[m Merge branch 'sub-main(Developmet)' into main
+[33m7644350[m Update dependencies and implement prescription management features
+[33m8744b6e[m lab auth
+[33mae0f03f[m update
+[33mfeddf98[m Update database.js
+[33meff77b3[m Merge pull request #243 from CosmicforgeHealthnet/sub-main(Developmet)
+[33med57819[m Merge pull request #242 from CosmicforgeHealthnet/samuelolubukun
+[33m611e489[m Merge branch 'main' into samuelolubukun
+[33m17e272c[m multimodal features added to chatbot
+[33md8ed103[m Merge pull request #240 from Trimph-A/main
+[33m28f4b3e[m Update logging for pharmacy Swagger UI to improve clarity in server output.
+[33m4218c11[m Merge pull request #238 from CosmicforgeHealthnet/sub-main(Developmet)
+[33me68e9b3[m Merge pull request #237 from Trimph-A/main
+[33m29de9f4[m Comment out document upload status check in doctor verification service for future implementation.
+[33m4033e44[m Merge pull request #236 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m555da8d[m Merge pull request #235 from Trimph-A/main
+[33mc583d12[m Update pharmacy API documentation paths in Swagger setup to use a new endpoint. Adjust logging to reflect the updated path for pharmacy API documentation.
+[33m15a33ba[m Merge pull request #234 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m4e57fbd[m Merge pull request #233 from Trimph-A/main
+[33m1a783b1[m Add bearer authentication to pharmacy document upload routes in Swagger documentation and service implementation. Enhance logging in the upload process for better traceability.
+[33m7d41d2a[m Merge pull request #232 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m04d5e09[m Merge pull request #231 from Trimph-A/main
+[33m7690674[m Update document upload status check in doctor verification service to allow uploads only for MANUAL_REVIEW status.
+[33m4dd3b1d[m Comment out document upload status check in doctor verification service for future implementation.
+[33mc8bf3be[m Merge pull request #230 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m66e81d4[m Merge pull request #229 from Trimph-A/main
+[33m9413a56[m Add documentsSubmitted field to PharmacyProfile and related services. Update pharmacy registration and profile handling to manage document submission status. Enhance document upload routes with JWT authentication for improved security.
+[33m1560477[m Merge pull request #228 from CosmicforgeHealthnet/sub-main(Developmet)
+[33mc218243[m Merge pull request #227 from Trimph-A/main
+[33m8d4de73[m Add bearer authentication to pharmacy document retrieval routes in Swagger documentation and YAML files. Update routes to enforce JWT authentication for improved security.
+[33m59c3f47[m Merge pull request #226 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m6f28dfc[m Merge pull request #225 from Trimph-A/main
+[33md9ce230[m Remove bearer authentication from pharmacy document upload and retrieval routes in Swagger documentation and YAML files for improved accessibility.
+[33m6e855c4[m Remove JWT authentication middleware from document upload and retrieval routes in pharmacy document management. Comment out duplicate document check in doctor verification service for future implementation.
+[33m3dccaa0[m Update social media links in email footer and add TikTok icon for improved engagement.
+[33m85c0564[m Merge pull request #224 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m728c39d[m Merge pull request #223 from Trimph-A/main
+[33m65c8679[m Enhance email handling in pharmacy registration by normalizing email input and adding debug logging for better traceability. Introduce a new wallet password reset email helper function.
+[33m825af3d[m Merge pull request #222 from CosmicforgeHealthnet/sub-main(Developmet)
+[33md568734[m Merge pull request #221 from Trimph-A/main
+[33m3cf4939[m Enhance admin and doctor verification functionalities by adding new document management routes, including viewing, downloading, and generating thumbnails for documents. Implement improved document upload processing with enhanced naming and categorization. Update Swagger documentation to reflect new endpoints and parameters for better API usability.
+[33mdad7abe[m Merge pull request #220 from CosmicforgeHealthnet/main
+[33m5740975[m Merge pull request #219 from Trimph-A/main
+[33mabb2176[m 1000 limit for doctor
+[33m058b9da[m Merge pull request #218 from CosmicforgeHealthnet/sub-main(Developmet)
+[33me545e69[m Merge pull request #217 from Trimph-A/main
+[33m3843365[m Enhance pharmacy functionality by adding new routes, Swagger documentation, and user entity fields. Updated package.json with migration commands and improved server logging for pharmacy API. Added constants for pharmacy roles and integrated pharmacy-related entities.
+[33m0b66f89[m Merge branch 'main' of https://github.com/Trimph-A/backend_health
+[33md62aaec[m Added debug logging for MFA status in disableMFA function
+[33mbb5aa55[m Merge pull request #216 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m5c709ad[m Merge pull request #215 from CosmicforgeHealthnet/samuelolubukun
+[33m58c58f1[m limit guard update
+[33m4146bee[m limit guard update
+[33mdc2ecfd[m pull changes
+[33me517392[m delete user
+[33m506b797[m Merge pull request #213 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m23db7c6[m Merge pull request #212 from Trimph-A/main
+[33m36171d6[m Enhance authentication API documentation
+[33m2494719[m feat: implement multi-factor authentication (MFA) support
+[33m62704b0[m Merge pull request #211 from CosmicforgeHealthnet/sub-main(Developmet)
+[33mdee0b47[m Update server.js
+[33mc143e52[m Merge pull request #210 from CosmicforgeHealthnet/samuelolubukun
+[33mf90d360[m revert: ssl database config changes
+[33ma41167d[m feat: chatbot migration and database config
+[33mb370ee0[m Merge pull request #208 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m8031dd0[m Merge pull request #207 from CosmicforgeHealthnet/samuelolubukun
+[33m371fa37[m Merge main branch with chatbot integration - resolve Swagger conflicts
+[33mf5c2b34[m Add comprehensive AI chatbot integration with Flask backend
+[33mbbad82d[m Merge pull request #204 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m351f91b[m Merge pull request #203 from Trimph-A/main
+[33m0f9229d[m Update error message in doctor verification controller for clarity on user status eligibility
+[33m7e3f164[m Merge pull request #202 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m5274bf0[m updated the email card
+[33mbb1327f[m Merge branch 'sub-main(Developmet)' of github.com:CosmicforgeHealthnet/backend_health into sub-main(Developmet)
+[33mceb7488[m refactor notification system to work with websocket properlly
+[33m3169312[m Merge pull request #200 from CosmicforgeHealthnet/sub-main(Developmet)
+[33m1675f2c[m Merge pull request #199 from Trimph-A/main
+[33mbf515bb[m Refactor EmailService to use cPanel SMTP settings and enhance error handling in send method. Added verifyConnection method for SMTP connection verification.
+[33m6f993c2[m Merge pull request #198 from CosmicforgeHealthnet/sub-main(Developmet)
+[33mcd633f4[m Merge pull request #196 from CosmicforgeHealthnet/sub-main(Developmet)

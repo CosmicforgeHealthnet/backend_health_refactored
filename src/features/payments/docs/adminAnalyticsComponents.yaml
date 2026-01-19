@@ -1,0 +1,808 @@
+components:
+  schemas:
+    # ================================
+    # ENHANCED PAYMENT STATISTICS
+    # ================================
+    EnhancedPaymentStatistics:
+      type: object
+      properties:
+        overview:
+          $ref: '#/components/schemas/PaymentOverview'
+          description: "General payment overview"
+        appointmentPayments:
+          $ref: '#/components/schemas/AppointmentPaymentStats'
+          description: "Appointment-specific statistics"
+        fundsManagement:
+          $ref: '#/components/schemas/FundsManagementStats'
+          description: "Funds management statistics"
+        providerPerformance:
+          $ref: '#/components/schemas/ProviderPerformanceStats'
+          description: "Payment provider performance"
+        timeBasedAnalytics:
+          $ref: '#/components/schemas/TimeBasedAnalytics'
+          description: "Time-based analytics"
+        generatedAt:
+          type: string
+          format: date-time
+          description: "When statistics were generated"
+          example: "2024-02-01T12:00:00Z"
+
+    PaymentOverview:
+      type: object
+      properties:
+        totalTransactions:
+          type: integer
+          minimum: 0
+          description: "Total number of transactions"
+          example: 1250
+        totalAmount:
+          type: number
+          format: float
+          description: "Total payment amount (USD)"
+          example: 125000.50
+        completedTransactions:
+          type: integer
+          minimum: 0
+          description: "Number of completed transactions"
+          example: 1100
+        failedTransactions:
+          type: integer
+          minimum: 0
+          description: "Number of failed transactions"
+          example: 50
+        pendingTransactions:
+          type: integer
+          minimum: 0
+          description: "Number of pending transactions"
+          example: 100
+        successRate:
+          type: number
+          format: float
+          description: "Overall success rate percentage"
+          example: 88.0
+        averageTransactionAmount:
+          type: number
+          format: float
+          description: "Average transaction amount (USD)"
+          example: 100.00
+
+    AppointmentPaymentStats:
+      type: object
+      properties:
+        totalAppointmentPayments:
+          type: integer
+          minimum: 0
+          description: "Total appointment payments"
+          example: 800
+        totalAppointmentAmount:
+          type: number
+          format: float
+          description: "Total appointment payment amount (USD)"
+          example: 80000.00
+        averageAppointmentAmount:
+          type: number
+          format: float
+          description: "Average appointment payment amount (USD)"
+          example: 100.00
+        cancelledAppointments:
+          type: integer
+          minimum: 0
+          description: "Number of cancelled appointments"
+          example: 45
+        cancellationRate:
+          type: number
+          format: float
+          description: "Appointment cancellation rate percentage"
+          example: 5.6
+        rescheduledAppointments:
+          type: integer
+          minimum: 0
+          description: "Number of rescheduled appointments"
+          example: 120
+        rescheduleRate:
+          type: number
+          format: float
+          description: "Appointment reschedule rate percentage"
+          example: 15.0
+        averageReschedulesPerAppointment:
+          type: number
+          format: float
+          description: "Average number of reschedules per appointment"
+          example: 0.3
+
+    FundsManagementStats:
+      type: object
+      properties:
+        pendingAppointmentFunds:
+          type: number
+          format: float
+          description: "Funds pending appointment completion (USD)"
+          example: 15000.00
+        pendingDisputeFunds:
+          type: number
+          format: float
+          description: "Funds in dispute window (USD)"
+          example: 8000.00
+        releasedFunds:
+          type: number
+          format: float
+          description: "Funds released to doctors (USD)"
+          example: 50000.00
+        refundedFunds:
+          type: number
+          format: float
+          description: "Funds refunded to patients (USD)"
+          example: 7000.00
+        totalFundsInSystem:
+          type: number
+          format: float
+          description: "Total funds currently in system (USD)"
+          example: 23000.00
+        averageDisputeWindowDays:
+          type: number
+          format: float
+          description: "Average dispute window duration in days"
+          example: 7.0
+        fundsDistribution:
+          type: array
+          items:
+            $ref: '#/components/schemas/FundsDistributionItem'
+          description: "Funds distribution by status"
+
+    FundsDistributionItem:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending_appointment, pending_dispute, released, refunded]
+          description: "Funds status"
+          example: "pending_appointment"
+        amount:
+          type: number
+          format: float
+          description: "Amount in this status (USD)"
+          example: 15000.00
+        percentage:
+          type: number
+          format: float
+          description: "Percentage of total funds"
+          example: 65.2
+        count:
+          type: integer
+          minimum: 0
+          description: "Number of transactions in this status"
+          example: 150
+
+    ProviderPerformanceStats:
+      type: object
+      properties:
+        flutterwave:
+          $ref: '#/components/schemas/ProviderStats'
+          description: "Flutterwave performance statistics"
+        paystack:
+          $ref: '#/components/schemas/ProviderStats'
+          description: "Paystack performance statistics"
+        comparison:
+          $ref: '#/components/schemas/ProviderComparison'
+          description: "Provider comparison metrics"
+
+    ProviderStats:
+      type: object
+      properties:
+        transactionCount:
+          type: integer
+          minimum: 0
+          description: "Number of transactions"
+          example: 650
+        totalAmount:
+          type: number
+          format: float
+          description: "Total amount processed (USD)"
+          example: 65000.00
+        successRate:
+          type: number
+          format: float
+          description: "Success rate percentage"
+          example: 92.5
+        averageProcessingTime:
+          type: number
+          format: float
+          description: "Average processing time in seconds"
+          example: 45.2
+        totalFees:
+          type: number
+          format: float
+          description: "Total fees charged (USD)"
+          example: 975.00
+        averageFeePercentage:
+          type: number
+          format: float
+          description: "Average fee percentage"
+          example: 1.5
+        failureReasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/FailureReason'
+          description: "Common failure reasons"
+
+    FailureReason:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: "Failure reason"
+          example: "Insufficient funds"
+        count:
+          type: integer
+          minimum: 0
+          description: "Number of occurrences"
+          example: 25
+        percentage:
+          type: number
+          format: float
+          description: "Percentage of total failures"
+          example: 45.5
+
+    ProviderComparison:
+      type: object
+      properties:
+        recommendedProvider:
+          type: string
+          enum: [flutterwave, paystack]
+          description: "Currently recommended provider"
+          example: "flutterwave"
+        feeComparison:
+          $ref: '#/components/schemas/FeeComparison'
+          description: "Fee comparison between providers"
+        performanceComparison:
+          $ref: '#/components/schemas/PerformanceComparison'
+          description: "Performance comparison between providers"
+
+    FeeComparison:
+      type: object
+      properties:
+        flutterwaveAverageFee:
+          type: number
+          format: float
+          description: "Flutterwave average fee percentage"
+          example: 1.4
+        paystackAverageFee:
+          type: number
+          format: float
+          description: "Paystack average fee percentage"
+          example: 1.6
+        savings:
+          type: number
+          format: float
+          description: "Savings by using recommended provider (USD)"
+          example: 1200.00
+
+    PerformanceComparison:
+      type: object
+      properties:
+        flutterwaveSuccessRate:
+          type: number
+          format: float
+          description: "Flutterwave success rate"
+          example: 92.5
+        paystackSuccessRate:
+          type: number
+          format: float
+          description: "Paystack success rate"
+          example: 89.2
+        flutterwaveAvgProcessingTime:
+          type: number
+          format: float
+          description: "Flutterwave average processing time (seconds)"
+          example: 45.2
+        paystackAvgProcessingTime:
+          type: number
+          format: float
+          description: "Paystack average processing time (seconds)"
+          example: 52.1
+
+    TimeBasedAnalytics:
+      type: object
+      properties:
+        daily:
+          $ref: '#/components/schemas/DailyAnalytics'
+          description: "Daily analytics"
+        weekly:
+          $ref: '#/components/schemas/WeeklyAnalytics'
+          description: "Weekly analytics"
+        monthly:
+          $ref: '#/components/schemas/MonthlyAnalytics'
+          description: "Monthly analytics"
+        trends:
+          $ref: '#/components/schemas/TrendAnalytics'
+          description: "Trend analysis"
+
+    DailyAnalytics:
+      type: object
+      properties:
+        todayTransactions:
+          type: integer
+          minimum: 0
+          description: "Today's transactions"
+          example: 45
+        todayAmount:
+          type: number
+          format: float
+          description: "Today's transaction amount (USD)"
+          example: 4500.00
+        yesterdayTransactions:
+          type: integer
+          minimum: 0
+          description: "Yesterday's transactions"
+          example: 38
+        yesterdayAmount:
+          type: number
+          format: float
+          description: "Yesterday's transaction amount (USD)"
+          example: 3800.00
+        dailyGrowth:
+          type: number
+          format: float
+          description: "Daily growth percentage"
+          example: 18.4
+
+    WeeklyAnalytics:
+      type: object
+      properties:
+        thisWeekTransactions:
+          type: integer
+          minimum: 0
+          description: "This week's transactions"
+          example: 280
+        thisWeekAmount:
+          type: number
+          format: float
+          description: "This week's transaction amount (USD)"
+          example: 28000.00
+        lastWeekTransactions:
+          type: integer
+          minimum: 0
+          description: "Last week's transactions"
+          example: 245
+        lastWeekAmount:
+          type: number
+          format: float
+          description: "Last week's transaction amount (USD)"
+          example: 24500.00
+        weeklyGrowth:
+          type: number
+          format: float
+          description: "Weekly growth percentage"
+          example: 14.3
+
+    MonthlyAnalytics:
+      type: object
+      properties:
+        thisMonthTransactions:
+          type: integer
+          minimum: 0
+          description: "This month's transactions"
+          example: 1200
+        thisMonthAmount:
+          type: number
+          format: float
+          description: "This month's transaction amount (USD)"
+          example: 120000.00
+        lastMonthTransactions:
+          type: integer
+          minimum: 0
+          description: "Last month's transactions"
+          example: 980
+        lastMonthAmount:
+          type: number
+          format: float
+          description: "Last month's transaction amount (USD)"
+          example: 98000.00
+        monthlyGrowth:
+          type: number
+          format: float
+          description: "Monthly growth percentage"
+          example: 22.4
+
+    TrendAnalytics:
+      type: object
+      properties:
+        transactionVolumetrend:
+          type: string
+          enum: [increasing, decreasing, stable]
+          description: "Transaction volume trend"
+          example: "increasing"
+        averageAmountTrend:
+          type: string
+          enum: [increasing, decreasing, stable]
+          description: "Average amount trend"
+          example: "stable"
+        successRateTrend:
+          type: string
+          enum: [improving, declining, stable]
+          description: "Success rate trend"
+          example: "improving"
+        appointmentBookingTrend:
+          type: string
+          enum: [increasing, decreasing, stable]
+          description: "Appointment booking trend"
+          example: "increasing"
+
+    # ================================
+    # AUTO-BILLING ANALYTICS
+    # ================================
+    AutoBillingAnalyticsResponse:
+      type: object
+      properties:
+        overview:
+          $ref: '#/components/schemas/AutoBillingOverview'
+          description: "Auto-billing overview"
+        paymentMethods:
+          $ref: '#/components/schemas/AutoBillingPaymentMethodStats'
+          description: "Payment method statistics"
+        performance:
+          $ref: '#/components/schemas/AutoBillingPerformance'
+          description: "Auto-billing performance metrics"
+        trends:
+          $ref: '#/components/schemas/AutoBillingTrends'
+          description: "Auto-billing trends"
+        recommendations:
+          $ref: '#/components/schemas/AutoBillingRecommendations'
+          description: "Auto-billing recommendations"
+        generatedAt:
+          type: string
+          format: date-time
+          description: "When analytics were generated"
+          example: "2024-02-01T12:00:00Z"
+
+    AutoBillingOverview:
+      type: object
+      properties:
+        totalUsersWithAutoBilling:
+          type: integer
+          minimum: 0
+          description: "Total users with auto-billing enabled"
+          example: 450
+        totalPaymentMethods:
+          type: integer
+          minimum: 0
+          description: "Total payment methods with auto-billing"
+          example: 620
+        totalAutoBillingTransactions:
+          type: integer
+          minimum: 0
+          description: "Total auto-billing transactions"
+          example: 2850
+        totalAutoBillingAmount:
+          type: number
+          format: float
+          description: "Total auto-billing amount (USD)"
+          example: 142500.00
+        averageAutoBillingAmount:
+          type: number
+          format: float
+          description: "Average auto-billing amount (USD)"
+          example: 50.00
+        overallSuccessRate:
+          type: number
+          format: float
+          description: "Overall auto-billing success rate"
+          example: 94.2
+
+    AutoBillingPaymentMethodStats:
+      type: object
+      properties:
+        byCardBrand:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardBrandStats'
+          description: "Statistics by card brand"
+        byCardType:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardTypeStats'
+          description: "Statistics by card type"
+        byBank:
+          type: array
+          items:
+            $ref: '#/components/schemas/BankStats'
+          description: "Statistics by issuing bank"
+        byCountry:
+          type: array
+          items:
+            $ref: '#/components/schemas/CountryStats'
+          description: "Statistics by card country"
+
+    CardBrandStats:
+      type: object
+      properties:
+        brand:
+          type: string
+          enum: [visa, mastercard, amex, discover, unknown]
+          description: "Card brand"
+          example: "visa"
+        count:
+          type: integer
+          minimum: 0
+          description: "Number of payment methods"
+          example: 280
+        successRate:
+          type: number
+          format: float
+          description: "Success rate for this brand"
+          example: 95.2
+        totalTransactions:
+          type: integer
+          minimum: 0
+          description: "Total transactions for this brand"
+          example: 1200
+        totalAmount:
+          type: number
+          format: float
+          description: "Total amount for this brand (USD)"
+          example: 60000.00
+
+    CardTypeStats:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [credit, debit, prepaid, unknown]
+          description: "Card type"
+          example: "credit"
+        count:
+          type: integer
+          minimum: 0
+          description: "Number of payment methods"
+          example: 380
+        successRate:
+          type: number
+          format: float
+          description: "Success rate for this type"
+          example: 96.1
+        totalTransactions:
+          type: integer
+          minimum: 0
+          description: "Total transactions for this type"
+          example: 1800
+        totalAmount:
+          type: number
+          format: float
+          description: "Total amount for this type (USD)"
+          example: 90000.00
+
+    BankStats:
+      type: object
+      properties:
+        bankName:
+          type: string
+          description: "Bank name"
+          example: "First Bank of Nigeria"
+        count:
+          type: integer
+          minimum: 0
+          description: "Number of payment methods"
+          example: 85
+        successRate:
+          type: number
+          format: float
+          description: "Success rate for this bank"
+          example: 92.8
+        totalTransactions:
+          type: integer
+          minimum: 0
+          description: "Total transactions for this bank"
+          example: 420
+        totalAmount:
+          type: number
+          format: float
+          description: "Total amount for this bank (USD)"
+          example: 21000.00
+
+    CountryStats:
+      type: object
+      properties:
+        country:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: "Country code"
+          example: "NG"
+        countryName:
+          type: string
+          description: "Country name"
+          example: "Nigeria"
+        count:
+          type: integer
+          minimum: 0
+          description: "Number of payment methods"
+          example: 520
+        successRate:
+          type: number
+          format: float
+          description: "Success rate for this country"
+          example: 94.5
+        totalTransactions:
+          type: integer
+          minimum: 0
+          description: "Total transactions for this country"
+          example: 2400
+        totalAmount:
+          type: number
+          format: float
+          description: "Total amount for this country (USD)"
+          example: 120000.00
+
+    AutoBillingPerformance:
+      type: object
+      properties:
+        successfulTransactions:
+          type: integer
+          minimum: 0
+          description: "Number of successful transactions"
+          example: 2685
+        failedTransactions:
+          type: integer
+          minimum: 0
+          description: "Number of failed transactions"
+          example: 165
+        averageProcessingTime:
+          type: number
+          format: float
+          description: "Average processing time in seconds"
+          example: 3.2
+        retryRate:
+          type: number
+          format: float
+          description: "Retry rate percentage"
+          example: 8.5
+        failureReasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/FailureReason'
+          description: "Common failure reasons"
+        hourlyPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/HourlyPerformance'
+          description: "Performance by hour of day"
+
+    HourlyPerformance:
+      type: object
+      properties:
+        hour:
+          type: integer
+          minimum: 0
+          maximum: 23
+          description: "Hour of day (0-23)"
+          example: 14
+        transactions:
+          type: integer
+          minimum: 0
+          description: "Number of transactions in this hour"
+          example: 45
+        successRate:
+          type: number
+          format: float
+          description: "Success rate for this hour"
+          example: 96.2
+        averageAmount:
+          type: number
+          format: float
+          description: "Average transaction amount for this hour (USD)"
+          example: 52.30
+
+    AutoBillingTrends:
+      type: object
+      properties:
+        adoptionRate:
+          type: number
+          format: float
+          description: "Auto-billing adoption rate percentage"
+          example: 65.5
+        monthlyGrowth:
+          type: number
+          format: float
+          description: "Monthly growth in auto-billing usage"
+          example: 12.3
+        churnRate:
+          type: number
+          format: float
+          description: "Auto-billing churn rate percentage"
+          example: 2.1
+        averageLifespan:
+          type: number
+          format: float
+          description: "Average payment method lifespan in days"
+          example: 456.7
+        seasonalTrends:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonalTrend'
+          description: "Seasonal usage trends"
+
+    SeasonalTrend:
+      type: object
+      properties:
+        period:
+          type: string
+          description: "Time period"
+          example: "Q1 2024"
+        transactionCount:
+          type: integer
+          minimum: 0
+          description: "Number of transactions in period"
+          example: 750
+        amount:
+          type: number
+          format: float
+          description: "Total amount in period (USD)"
+          example: 37500.00
+        successRate:
+          type: number
+          format: float
+          description: "Success rate for period"
+          example: 93.8
+
+    AutoBillingRecommendations:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+          description: "System recommendations"
+        improvementAreas:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImprovementArea'
+          description: "Areas for improvement"
+
+    Recommendation:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [optimization, security, user_experience, cost_reduction]
+          description: "Type of recommendation"
+          example: "optimization"
+        title:
+          type: string
+          description: "Recommendation title"
+          example: "Optimize retry logic for failed transactions"
+        description:
+          type: string
+          description: "Detailed recommendation description"
+          example: "Implement intelligent retry logic to improve success rates for temporarily failed transactions"
+        priority:
+          type: string
+          enum: [high, medium, low]
+          description: "Priority level"
+          example: "high"
+        estimatedImpact:
+          type: string
+          description: "Estimated impact"
+          example: "Could improve success rate by 2-3%"
+
+    ImprovementArea:
+      type: object
+      properties:
+        area:
+          type: string
+          description: "Area name"
+          example: "Token Expiry Management"
+        currentScore:
+          type: number
+          format: float
+          description: "Current performance score (0-100)"
+          example: 78.5
+        targetScore:
+          type: number
+          format: float
+          description: "Target performance score (0-100)"
+          example: 95.0
+        actions:
+          type: array
+          items:
+            type: string
+          description: "Recommended actions"
+          example: ["Implement proactive token refresh", "Add token expiry alerts"]
