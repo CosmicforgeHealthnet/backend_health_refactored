@@ -5,7 +5,7 @@ const {
   getSupportedCurrencies,
   checkCurrencySupport,
   getUserLocalCurrency
-} = require("../controllers/dynamiccurrencyController");
+} = require("../controllers/dynamicCurrencyController");
 const { getLocationFromIP } = require('../../../shared/middlewares/locationMiddleware');
 
 // Apply location middleware to all routes
