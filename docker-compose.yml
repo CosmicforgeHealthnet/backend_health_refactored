@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    container_name: cosmicforge_health_backend
+    restart: always
+    env_file:
+      - .env.production
+    ports:
+      - "5000:3000"
+    networks:
+      - shared_app-network
+
+networks:
+  shared_app-network:
+    external: true
