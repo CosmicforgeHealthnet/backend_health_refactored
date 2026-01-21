@@ -81,14 +81,16 @@ Since you are using **Nginx** as a gateway, it handles routing based on the URL 
 
 ## ⚙️ Configuration
 
-### Environment Variables
-The backend uses `.env.development` for local development.
+### Environment Variables configuration
+*   **Development:** Uses `docker-compose.yml` which loads `.env.development`.
+*   **Production:** Uses `docker-compose.prod.yml` which loads `.env`.
 
-**Key Docker Configurations:**
-*   `REDIS_URL=redis://redis:6379` - Tells the backend to connect to the `redis` container host.
-*   `AI_SERVICE_URL=http://ai_service:8001/api/v1` - Tells the backend how to reach the AI service container.
-
-**Note:** The `docker-compose.yml` automatically sets these for the container environment.
+**Important for VPS:**
+On your server, rename your production env file to `.env`:
+```bash
+mv .env.production .env
+```
+Then run the production script.
 
 ### Docker Compose (`docker-compose.yml`)
 *   Defines the services, networks, and volumes.
