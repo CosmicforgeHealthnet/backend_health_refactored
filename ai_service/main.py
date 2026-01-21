@@ -57,6 +57,17 @@ app.add_middleware(
 
 app.include_router(api_router, prefix="/api/v1")
 
+@app.get("/")
+async def root():
+    return {
+        "service": "CosmicForge Patient Intelligence API",
+        "version": "1.0.0",
+        "status": "running",
+        "docs": "/ai/docs",
+        "redoc": "/ai/redoc",
+        "api": "/ai/api/v1"
+    }
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
 
