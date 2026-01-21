@@ -61,6 +61,22 @@ You can also use the following shortcuts:
 *   **Backend Direct:** `http://localhost:5000`
 *   **AI Service Direct:** `http://localhost:8001`
 
+### 🌐 Accessing via Your Domain (`api.cosmicforge-healthnet.com`)
+
+Since you are using **Nginx** as a gateway, it handles routing based on the URL path.
+
+*   **Main Application (Backend):**
+    *   URL: `https://api.cosmicforge-healthnet.com/`
+    *   Example API Call: `https://api.cosmicforge-healthnet.com/api/users`
+    *   *How it works:* Nginx forwards all requests at the root `/` to the Node.js backend.
+
+*   **AI Service:**
+    *   URL: `https://api.cosmicforge-healthnet.com/ai/`
+    *   Example API Call: `https://api.cosmicforge-healthnet.com/ai/analyze`
+    *   *How it works:* Nginx takes requests starting with `/ai/`, strips the `/ai` prefix, and forwards them to the Python AI service (e.g. `.../ai/analyze` becomes `/analyze` on the python container).
+
+**Note:** Ensure your DNS points `api.cosmicforge-healthnet.com` to your VPS IP address.
+
 ---
 
 ## ⚙️ Configuration
