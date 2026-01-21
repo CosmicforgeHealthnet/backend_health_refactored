@@ -22,7 +22,9 @@
     "test": "jest",
     "start:cron": "node src/cron.js",
     "lint": "eslint .",
-    "generate-postman": "node src/docs/generatePostman.js"
+    "generate-postman": "node src/docs/generatePostman.js",
+    "docker:dev": "docker-compose up --build",
+    "docker:prod": "docker-compose up -d --build"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^11.0.1",

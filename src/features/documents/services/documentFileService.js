@@ -4,7 +4,9 @@ const DocumentFolderRepository = require('../repositories/documentFolderReposito
 const AccessLogRepository = require('../repositories/accessLogRepository');
 const crypto = require('node:crypto');
 const fs = require('node:fs').promises;
+
 const path = require('node:path');
+const patientActivityListener = require('../../patient/services/patientActivityListener');
 
 class DocumentFileService {
 
@@ -20,11 +22,11 @@ class DocumentFileService {
       console.log('userId:', userId);
       console.log('folderId:', folderId);
       console.log('processedFiles length:', processedFiles?.length);
-      
+
       if (!userId) {
         throw new Error('userId is required but was not provided');
       }
-      
+
       // Verify folder ownership
       const folder = await DocumentFolderRepository.getFolderById(folderId, userId);
       if (!folder) {
@@ -35,7 +37,7 @@ class DocumentFileService {
 
       for (let i = 0; i < processedFiles.length; i++) {
         const processedFile = processedFiles[i];
-        
+
         // Check for duplicates
         const existingFiles = await DocumentFileRepository.getFilesByHash(userId, processedFile.fileHash);
         if (existingFiles.length > 0) {
@@ -57,7 +59,7 @@ class DocumentFileService {
           status: 'ready',
           isEncrypted: !!processedFile.encryptionKey,
           securityLevel: this.determineSecurityLevel(processedFile.mimeType, processedFile.documentType),
-          
+
           // ===== NEW: FHIR FIELDS =====
           fhirResourceType: processedFile.fhirResourceType,
           patientIdentifier: processedFile.patientIdentifier,
@@ -65,7 +67,7 @@ class DocumentFileService {
           fhirVersion: processedFile.fhirVersion,
           fhirSensitivityLevel: processedFile.fhirSensitivityLevel,
           fhirResourceId: processedFile.fhirResourceId,
-          
+
           // Enhanced metadata with FHIR information
           metadata: {
             ...processedFile.enhancedMetadata,
@@ -91,8 +93,8 @@ class DocumentFileService {
           ipAddress,
           userAgent,
           null,
-          { 
-            action: 'file_uploaded', 
+          {
+            action: 'file_uploaded',
             documentType: processedFile.documentType,
             isFHIRResource: !!processedFile.fhirResourceType,
             fhirResourceType: processedFile.fhirResourceType,
@@ -117,7 +119,7 @@ class DocumentFileService {
           status: file.status,
           createdAt: file.createdAt,
           url: this.generateSignedUrl(file),
-          
+
           // FHIR information in response
           fhirInfo: {
             resourceType: file.fhirResourceType,
@@ -140,7 +142,7 @@ class DocumentFileService {
   static async getFile(fileId, userId, ipAddress, userAgent) {
     try {
       const file = await DocumentFileRepository.getFileById(fileId, userId);
-      
+
       if (!file) {
         return { success: false, error: 'File not found or access denied' };
       }
@@ -190,9 +192,9 @@ class DocumentFileService {
   static async downloadFile(fileId, userId, ipAddress, userAgent) {
     try {
       const startTime = Date.now();
-      
+
       const file = await DocumentFileRepository.getFileById(fileId, userId);
-      
+
       if (!file) {
         return { success: false, error: 'File not found or access denied' };
       }
@@ -229,7 +231,7 @@ class DocumentFileService {
         ipAddress,
         userAgent,
         downloadDuration,
-        { 
+        {
           action: 'file_downloaded',
           fileSize: file.fileSize,
           duration: downloadDuration
@@ -300,7 +302,7 @@ class DocumentFileService {
         ipAddress,
         userAgent,
         null,
-        { 
+        {
           action: 'file_updated',
           changes: Object.keys(updateData)
         }
@@ -482,7 +484,7 @@ class DocumentFileService {
   static determineSecurityLevel(mimeType, documentType) {
     const sensitiveTypes = ['verification', 'medical_records', 'prescription'];
     const sensitiveMimes = ['application/pdf'];
-    
+
     if (sensitiveTypes.includes(documentType) || sensitiveMimes.includes(mimeType)) {
       return 'confidential';
     }
@@ -495,16 +497,16 @@ class DocumentFileService {
   static generateSignedUrl(file, thumbnail = false) {
     const baseUrl = process.env.FILE_SERVER_URL;
     const secret = process.env.URL_SIGNING_SECRET;
-    
+
     if (!baseUrl || !secret) {
       throw new Error('FILE_SERVER_URL and URL_SIGNING_SECRET must be set');
     }
-    
+
     const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
     const token = crypto.createHash('sha256')
       .update(`${file.id}:${expiresAt}:${secret}`)
       .digest('hex');
-    
+
     return `${baseUrl}/files/${file.id}?token=${token}&expires=${expiresAt}&thumbnail=${thumbnail}`;
   }
 
@@ -514,20 +516,20 @@ class DocumentFileService {
   static decryptBuffer(encryptedBuffer, encryptionKey) {
     try {
       const algorithm = 'aes-256-gcm';
-      
+
       // Extract components from the encrypted buffer
       const iv = encryptedBuffer.slice(0, 16);           // First 16 bytes: IV
       const authTag = encryptedBuffer.slice(16, 32);     // Next 16 bytes: Auth tag
       const encrypted = encryptedBuffer.slice(32);       // Rest: encrypted data
-      
+
       // Create decipher with IV
       const decipher = crypto.createDecipheriv(algorithm, Buffer.from(encryptionKey, 'hex'), iv);
       decipher.setAuthTag(authTag);
-      
+
       // Decrypt the data
       let decrypted = decipher.update(encrypted);
       decrypted = Buffer.concat([decrypted, decipher.final()]);
-      
+
       return decrypted;
     } catch (error) {
       throw new Error(`Failed to decrypt file: ${error.message}`);
@@ -541,17 +543,17 @@ class DocumentFileService {
     try {
       const algorithm = 'aes-256-gcm';
       const iv = crypto.randomBytes(16);  // Generate random IV
-      
+
       // Create cipher with IV
       const cipher = crypto.createCipheriv(algorithm, Buffer.from(encryptionKey, 'hex'), iv);
-      
+
       // Encrypt the data
       let encrypted = cipher.update(buffer);
       encrypted = Buffer.concat([encrypted, cipher.final()]);
-      
+
       // Get the authentication tag
       const authTag = cipher.getAuthTag();
-      
+
       // Combine IV + authTag + encrypted data
       return Buffer.concat([iv, authTag, encrypted]);
     } catch (error) {
@@ -566,11 +568,11 @@ class DocumentFileService {
     try {
       if (userId) {
         const files = await DocumentFileRepository.getFolderFiles(folderId, userId, { limit: 1000 });
-        
+
         const combinedHash = crypto.createHash('sha256')
           .update(files.files.map(f => f.fileHash).sort().join(''))
           .digest('hex');
-        
+
         await DocumentFolderRepository.updateFolderHash(folderId, combinedHash);
       } else {
         // Fallback - just update with empty hash
@@ -609,7 +611,7 @@ class DocumentFileService {
         'view_patient_files',
         ipAddress,
         userAgent,
-        { 
+        {
           action: 'patient_files_accessed',
           fileCount: result.files.length,
           resourceTypes: [...new Set(result.files.map(f => f.fhirResourceType).filter(Boolean))]
@@ -624,7 +626,7 @@ class DocumentFileService {
         mimeType: file.mimeType,
         createdAt: file.createdAt,
         url: this.generateSignedUrl(file),
-        
+
         // FHIR-specific information
         fhirInfo: {
           resourceType: file.fhirResourceType,
@@ -633,7 +635,7 @@ class DocumentFileService {
           securityLabels: file.fhirSecurityLabels,
           version: file.fhirVersion
         },
-        
+
         folder: {
           id: file.folder.id,
           name: file.folder.name,
@@ -672,7 +674,7 @@ class DocumentFileService {
         'view_patient_summary',
         ipAddress,
         userAgent,
-        { 
+        {
           action: 'patient_summary_accessed',
           totalFiles: summary.totalFiles,
           resourceTypes: summary.resourceSummary.map(r => r.resourceType)
@@ -685,7 +687,7 @@ class DocumentFileService {
         summary: {
           totalFiles: summary.totalFiles,
           resourceTypes: summary.resourceSummary,
-          lastActivity: summary.resourceSummary.length > 0 ? 
+          lastActivity: summary.resourceSummary.length > 0 ?
             Math.max(...summary.resourceSummary.map(r => new Date(r.latestDate).getTime())) : null
         }
       };
@@ -709,7 +711,7 @@ class DocumentFileService {
         'view',
         ipAddress,
         userAgent,
-        { 
+        {
           action: 'resource_type_accessed',
           fileCount: result.files.length,
           patientCount: [...new Set(result.files.map(f => f.patientIdentifier).filter(Boolean))].length
@@ -724,7 +726,7 @@ class DocumentFileService {
         mimeType: file.mimeType,
         createdAt: file.createdAt,
         url: this.generateSignedUrl(file),
-        
+
         fhirInfo: {
           resourceType: file.fhirResourceType,
           resourceId: file.fhirResourceId,
@@ -733,7 +735,7 @@ class DocumentFileService {
           securityLabels: file.fhirSecurityLabels,
           version: file.fhirVersion
         },
-        
+
         folder: {
           id: file.folder.id,
           name: file.folder.name
@@ -781,7 +783,7 @@ class DocumentFileService {
         mimeType: file.mimeType,
         createdAt: file.createdAt,
         url: this.generateSignedUrl(file),
-        
+
         fhirInfo: {
           resourceType: file.fhirResourceType,
           resourceId: file.fhirResourceId,
@@ -790,7 +792,7 @@ class DocumentFileService {
           securityLabels: file.fhirSecurityLabels,
           version: file.fhirVersion
         },
-        
+
         folder: {
           id: file.folder.id,
           name: file.folder.name
@@ -830,7 +832,7 @@ class DocumentFileService {
           latestActivity: patient.latestActivity,
           resourceTypes: patient.resourceTypes,
           maxSensitivity: patient.maxSensitivity,
-          
+
           // Generate patient dashboard URL
           dashboardUrl: `/patients/${encodeURIComponent(patient.patientIdentifier)}`
         })),
@@ -860,10 +862,10 @@ class DocumentFileService {
           overview: {
             totalFHIRFiles: stats.totalFHIRFiles,
             totalPatients: stats.totalPatients,
-            averageFilesPerPatient: stats.totalPatients > 0 ? 
+            averageFilesPerPatient: stats.totalPatients > 0 ?
               Math.round(stats.totalFHIRFiles / stats.totalPatients * 10) / 10 : 0
           },
-          
+
           resourceDistribution: stats.resourceTypeDistribution.reduce((acc, item) => {
             if (!acc[item.resourceType]) {
               acc[item.resourceType] = { total: 0, byLevel: {} };
@@ -872,12 +874,12 @@ class DocumentFileService {
             acc[item.resourceType].byLevel[item.sensitivityLevel] = item.count;
             return acc;
           }, {}),
-          
+
           sensitivityOverview: stats.sensitivityDistribution.reduce((acc, item) => {
             acc[item.sensitivityLevel] = item.count;
             return acc;
           }, {}),
-          
+
           // Calculate compliance score (simple example)
           complianceScore: this.calculateComplianceScore(stats)
         }
@@ -903,7 +905,7 @@ class DocumentFileService {
           'view_related_files',
           ipAddress,
           userAgent,
-          { 
+          {
             action: 'related_files_accessed',
             sourceFileId: fileId,
             relatedFileCount: result.files.length
@@ -943,7 +945,7 @@ class DocumentFileService {
       // Validate FHIR update data
       const validFields = ['fhirSensitivityLevel', 'fhirSecurityLabels', 'consentDirectives', 'purposeOfUse'];
       const filteredData = {};
-      
+
       Object.keys(fhirUpdateData).forEach(key => {
         if (validFields.includes(key)) {
           filteredData[key] = fhirUpdateData[key];
@@ -967,7 +969,7 @@ class DocumentFileService {
         ipAddress,
         userAgent,
         null,
-        { 
+        {
           action: 'fhir_metadata_updated',
           updatedFields: Object.keys(filteredData),
           patientIdentifier: updatedFile.patientIdentifier
@@ -1031,7 +1033,7 @@ class DocumentFileService {
   static async getFHIRComplianceReport(userId) {
     try {
       const stats = await DocumentFileRepository.getFHIRStats(userId);
-      
+
       // Calculate compliance metrics
       const totalFiles = stats.totalFHIRFiles;
       const encryptedFiles = stats.sensitivityDistribution
@@ -1045,18 +1047,18 @@ class DocumentFileService {
           encryptedFiles,
           encryptionRate: totalFiles > 0 ? Math.round((encryptedFiles / totalFiles) * 100) : 0
         },
-        
+
         sensitivityBreakdown: stats.sensitivityDistribution,
-        
+
         resourceTypeBreakdown: stats.resourceTypeDistribution,
-        
+
         complianceChecks: {
           hasEncryptedSensitiveData: encryptedFiles > 0,
           hasPatientConsent: true, // This would check actual consent records
           hasAuditTrails: true, // This would check log completeness
           hasSensitivityLabeling: stats.resourceTypeDistribution.length > 0
         },
-        
+
         recommendations: this.generateComplianceRecommendations(stats)
       };
 
@@ -1078,30 +1080,30 @@ class DocumentFileService {
    */
   static calculateComplianceScore(stats) {
     let score = 0;
-    
+
     // Has FHIR data
     if (stats.totalFHIRFiles > 0) score += 20;
-    
+
     // Has proper sensitivity classification
     const hasSensitivityLabeling = stats.sensitivityDistribution.length > 0;
     if (hasSensitivityLabeling) score += 20;
-    
+
     // Has encrypted sensitive files
     const sensitiveFiles = stats.sensitivityDistribution
       .filter(s => s.sensitivityLevel === 'high' || s.sensitivityLevel === 'very_high')
       .reduce((sum, s) => sum + s.count, 0);
     if (sensitiveFiles > 0) score += 30;
-    
+
     // Has multiple resource types (comprehensive data)
     const resourceTypes = stats.resourceTypeDistribution.length;
     if (resourceTypes >= 3) score += 15;
     else if (resourceTypes >= 1) score += 10;
-    
+
     // Has patient records
     const hasPatientRecords = stats.resourceTypeDistribution
       .some(r => r.resourceType === 'Patient');
     if (hasPatientRecords) score += 15;
-    
+
     return Math.min(score, 100);
   }
 
@@ -1110,13 +1112,13 @@ class DocumentFileService {
    */
   static generateComplianceRecommendations(stats) {
     const recommendations = [];
-    
+
     // Check encryption coverage
     const totalFiles = stats.totalFHIRFiles;
     const sensitiveFiles = stats.sensitivityDistribution
       .filter(s => s.sensitivityLevel === 'high' || s.sensitivityLevel === 'very_high')
       .reduce((sum, s) => sum + s.count, 0);
-    
+
     if (sensitiveFiles / totalFiles < 0.8) {
       recommendations.push({
         type: 'security',
@@ -1125,11 +1127,11 @@ class DocumentFileService {
         action: 'Review and update sensitivity classifications'
       });
     }
-    
+
     // Check for patient records
     const hasPatientRecords = stats.resourceTypeDistribution
       .some(r => r.resourceType === 'Patient');
-    
+
     if (!hasPatientRecords) {
       recommendations.push({
         type: 'data_completeness',
@@ -1138,7 +1140,7 @@ class DocumentFileService {
         action: 'Ensure patient demographic data is properly stored'
       });
     }
-    
+
     // Check resource diversity
     if (stats.resourceTypeDistribution.length < 3) {
       recommendations.push({
@@ -1148,7 +1150,7 @@ class DocumentFileService {
         action: 'Consider expanding FHIR data collection'
       });
     }
-    
+
     return recommendations;
   }
 

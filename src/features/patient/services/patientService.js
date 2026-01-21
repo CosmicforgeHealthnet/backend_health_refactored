@@ -1,6 +1,7 @@
 const patientProfileRepository = require("../repositories/patientProfileRepository");
 const userRepository = require("../../auth/repositories/userRepository");
 const { USER_ROLES } = require("../../../shared/utils/constants");
+const patientActivityListener = require("./patientActivityListener"); // Import Listener
 
 class PatientService {
     /**
@@ -186,7 +187,15 @@ class PatientService {
             await patientProfileRepository.consentRepo.save({ ...data.consent, patientProfile: { id } });
         }
 
-        return await patientProfileRepository.update(id, updateData);
+        const updated = await patientProfileRepository.update(id, updateData);
+
+        // 👂 Trigger AI Listener
+        if (updated) {
+            const fullProfile = await this.getPatientProfileById(id); // Fetch fresh data for AI
+            patientActivityListener.onPatientProfileUpdated(id, fullProfile);
+        }
+
+        return updated;
     }
 
     async deletePatientProfile(id, req) {

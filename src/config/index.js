@@ -13,6 +13,7 @@ module.exports = {
     username: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
+    ssl: process.env.DB_SSL === 'true'
   },
   jwt: {
     secret: process.env.JWT_SECRET,
@@ -24,9 +25,9 @@ module.exports = {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     redirectUri: process.env.GOOGLE_REDIRECT_URI
   },
-   corsOrigins: process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',')
-  : ['http://localhost:3000', 'http://localhost:5173', '*', 'https://admin-cosmicforge-healthnet.vercel.app'],
+  corsOrigins: process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',')
+    : ['http://localhost:3000', 'http://localhost:5173', '*', 'https://admin-cosmicforge-healthnet.vercel.app'],
   nodeEnv: process.env.NODE_ENV || 'development',
   backendUrl: process.env.BACKEND_URL,
   flaskBackendUrl: process.env.FLASK_BACKEND_URL || 'http://localhost:8000'

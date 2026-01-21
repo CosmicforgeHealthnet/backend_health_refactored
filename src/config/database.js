@@ -11,16 +11,15 @@ const AppDataSource = new DataSource({
   username: config.db.username,
   password: config.db.password,
   database: config.db.database,
-  // ssl: config.db.ssl ? { rejectUnauthorized: false } : false,
-  ssl: false,
+  ssl: config.db.ssl ? { rejectUnauthorized: false } : false,
   // synchronize: process.env.NODE_ENV === 'development',
   synchronize: true,
   logging: false,
   entities,
-  // migrations: [
-  //   "src/migrations/*.js",
-  //   "src/migrations/chat/*.js"
-  // ],
+  migrations: [
+    "src/migrations/*.js",
+    "src/migrations/chat/*.js"
+  ],
 });
 
 module.exports = AppDataSource;
