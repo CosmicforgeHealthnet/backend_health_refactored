@@ -143,4 +143,6 @@ To deploy code changes:
 ## 🔧 Troubleshooting Common Issues
 
 *   **Redis Connection Error:** Ensure the `redis` service is up and the `REDIS_URL` in the backend corresponds to the service name (`redis`) defined in `docker-compose.yml`, not `localhost`.
-*   **Port Conflicts:** If ports 80, 5000, 6379, or 8001 are already in use on the host, modify the `ports` mapping in `docker-compose.yml` (e.g., `"5001:5000"`).
+*   **"Port is already allocated" Error:** This means the port (e.g., 6379) is already used by another service on your server.
+    *   **Fix in Production:** We disabled the external port mapping for Redis in `docker-compose.prod.yml` because internal services don't need it.
+    *   **Fix for other services:** Change the left-side port in `docker-compose.yml` (e.g., `"5001:5000"`).
