@@ -146,3 +146,12 @@ To deploy code changes:
 *   **"Port is already allocated" Error:** This means the port (e.g., 6379) is already used by another service on your server.
     *   **Fix in Production:** We disabled the external port mapping for Redis in `docker-compose.prod.yml` because internal services don't need it.
     *   **Fix for other services:** Change the left-side port in `docker-compose.yml` (e.g., `"5001:5000"`).
+
+*   **"Bind for 0.0.0.0:80 failed" Error:** Port 80 is occupied (usually by system Nginx or Apache).
+    *   **Fix:** Stop the system service occupying the port:
+        ```bash
+        sudo systemctl stop nginx
+        # or
+        sudo systemctl stop apache2
+        ```
+    *   **Alternative:** Change the port in `docker-compose.prod.yml` to something else (e.g., `"8080:80"`).
