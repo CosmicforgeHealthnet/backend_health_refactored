@@ -129,6 +129,7 @@ exports.login = async (req, res, next) => {
     const userAgent = req.headers["user-agent"];
 
     try {
+        console.log(email, password, deviceFingerprint);
         // 1) Validate inputs
         if (!email || !password || !deviceFingerprint) {
             return res.status(400).json({

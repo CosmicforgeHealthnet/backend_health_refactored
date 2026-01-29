@@ -1,0 +1,399 @@
+{
+    "info": {
+        "name": "CosmicForge - Compliance Feature",
+        "description": "Audit logs, data governance, consent management, and compliance reporting API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Audit Logs",
+            "item": [
+                {
+                    "name": "Get audit logs",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/audit?page=1&limit=50&userId=&action=&startDate=&endDate=",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "audit"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "Filter by user"
+                                },
+                                {
+                                    "key": "action",
+                                    "value": "",
+                                    "description": "Filter by action type"
+                                },
+                                {
+                                    "key": "startDate",
+                                    "value": "",
+                                    "description": "Filter from date"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "",
+                                    "description": "Filter to date"
+                                }
+                            ]
+                        },
+                        "description": "Get audit logs with filtering (Admin)"
+                    }
+                },
+                {
+                    "name": "Get audit log by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/audit/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "audit",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Audit log UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get specific audit log entry"
+                    }
+                },
+                {
+                    "name": "Export audit logs",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/audit/export?format=csv&startDate=&endDate=",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "audit",
+                                "export"
+                            ],
+                            "query": [
+                                {
+                                    "key": "format",
+                                    "value": "csv",
+                                    "description": "Export format (csv/json)"
+                                },
+                                {
+                                    "key": "startDate",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Export audit logs (Admin)"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Consent Management",
+            "item": [
+                {
+                    "name": "Get user consents",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/consent",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "consent"
+                            ]
+                        },
+                        "description": "Get user's consent records"
+                    }
+                },
+                {
+                    "name": "Grant consent",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"consentType\": \"data_sharing\",\n  \"granted\": true,\n  \"purpose\": \"Medical treatment and care coordination\",\n  \"validUntil\": \"2025-12-31\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/consent",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "consent"
+                            ]
+                        },
+                        "description": "Grant or update consent"
+                    }
+                },
+                {
+                    "name": "Revoke consent",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/consent/:consentId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "consent",
+                                ":consentId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "consentId",
+                                    "value": "",
+                                    "description": "Consent UUID"
+                                }
+                            ]
+                        },
+                        "description": "Revoke a consent"
+                    }
+                },
+                {
+                    "name": "Get consent history",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/consent/history",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "consent",
+                                "history"
+                            ]
+                        },
+                        "description": "Get consent history for user"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Data Governance",
+            "item": [
+                {
+                    "name": "Get data policies",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/governance/policies",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "governance",
+                                "policies"
+                            ]
+                        },
+                        "description": "Get data governance policies"
+                    }
+                },
+                {
+                    "name": "Request data export",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"format\": \"json\",\n  \"includeDocuments\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/governance/export-request",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "governance",
+                                "export-request"
+                            ]
+                        },
+                        "description": "Request personal data export (GDPR right)"
+                    }
+                },
+                {
+                    "name": "Request data deletion",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Account closure\",\n  \"confirmDeletion\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/governance/deletion-request",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "governance",
+                                "deletion-request"
+                            ]
+                        },
+                        "description": "Request data deletion (GDPR right to be forgotten)"
+                    }
+                },
+                {
+                    "name": "Get data retention info",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/governance/retention",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "governance",
+                                "retention"
+                            ]
+                        },
+                        "description": "Get data retention policies and schedules"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Compliance Reports",
+            "item": [
+                {
+                    "name": "Get compliance status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "status"
+                            ]
+                        },
+                        "description": "Get overall compliance status"
+                    }
+                },
+                {
+                    "name": "Get compliance report",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/report?type=hipaa&period=monthly",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "report"
+                            ],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "hipaa",
+                                    "description": "Report type (hipaa/gdpr/general)"
+                                },
+                                {
+                                    "key": "period",
+                                    "value": "monthly",
+                                    "description": "Report period"
+                                }
+                            ]
+                        },
+                        "description": "Generate compliance report (Admin)"
+                    }
+                }
+            ]
+        }
+    ]
+}

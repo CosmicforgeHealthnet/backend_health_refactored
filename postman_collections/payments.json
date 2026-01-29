@@ -1,0 +1,1110 @@
+{
+    "info": {
+        "name": "CosmicForge - Payments Feature",
+        "description": "Payment processing, wallet management, and financial transactions API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Core Payments",
+            "item": [
+                {
+                    "name": "Get payment options",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/options",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "options"
+                            ]
+                        },
+                        "description": "Get available payment options"
+                    }
+                },
+                {
+                    "name": "Initiate payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"amount\": 5000,\n  \"currency\": \"NGN\",\n  \"provider\": \"flutterwave\",\n  \"serviceType\": \"consultation\",\n  \"metadata\": {\n    \"appointmentId\": \"appointment-uuid\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/initiate",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "initiate"
+                            ]
+                        },
+                        "description": "Initiate a new payment"
+                    }
+                },
+                {
+                    "name": "Process payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"transactionId\": \"transaction-uuid\",\n  \"paymentReference\": \"provider-reference\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/process",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "process"
+                            ]
+                        },
+                        "description": "Process/verify a payment"
+                    }
+                },
+                {
+                    "name": "Payment callback",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/callback?reference=payment_ref&status=successful",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "callback"
+                            ],
+                            "query": [
+                                {
+                                    "key": "reference",
+                                    "value": "payment_ref"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "successful"
+                                }
+                            ]
+                        },
+                        "description": "Handle payment callback (provider redirects)"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Transactions",
+            "item": [
+                {
+                    "name": "Get transaction by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/transaction/:transactionId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "transaction",
+                                ":transactionId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "transactionId",
+                                    "value": "",
+                                    "description": "Transaction UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get transaction details"
+                    }
+                },
+                {
+                    "name": "Get transaction history",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/history?page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "history"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "description": "Get user's transaction history"
+                    }
+                },
+                {
+                    "name": "Get cancelled transactions",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/cancelled-transactions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "cancelled-transactions"
+                            ]
+                        },
+                        "description": "Get cancelled transactions"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Appointment Payments",
+            "item": [
+                {
+                    "name": "Create appointment payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"appointmentId\": \"appointment-uuid\",\n  \"amount\": 5000,\n  \"currency\": \"NGN\",\n  \"provider\": \"flutterwave\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/appointment/create",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "appointment",
+                                "create"
+                            ]
+                        },
+                        "description": "Create payment for appointment"
+                    }
+                },
+                {
+                    "name": "Get appointment payment status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/appointment/:transactionId/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "appointment",
+                                ":transactionId",
+                                "status"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "transactionId",
+                                    "value": "",
+                                    "description": "Transaction UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get appointment payment status"
+                    }
+                },
+                {
+                    "name": "Cancel appointment payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/appointment/:transactionId/cancel",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "appointment",
+                                ":transactionId",
+                                "cancel"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "transactionId",
+                                    "value": "",
+                                    "description": "Transaction UUID"
+                                }
+                            ]
+                        },
+                        "description": "Cancel appointment payment"
+                    }
+                },
+                {
+                    "name": "Reschedule appointment payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"newDate\": \"2024-02-20\",\n  \"newTime\": \"14:00\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/appointment/:transactionId/reschedule",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "appointment",
+                                ":transactionId",
+                                "reschedule"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "transactionId",
+                                    "value": "",
+                                    "description": "Transaction UUID"
+                                }
+                            ]
+                        },
+                        "description": "Reschedule appointment payment"
+                    }
+                },
+                {
+                    "name": "Retry appointment payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/appointment/:transactionId/retry",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "appointment",
+                                ":transactionId",
+                                "retry"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "transactionId",
+                                    "value": "",
+                                    "description": "Transaction UUID"
+                                }
+                            ]
+                        },
+                        "description": "Retry a failed appointment payment"
+                    }
+                },
+                {
+                    "name": "Get appointments overview",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/appointments/overview",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "appointments",
+                                "overview"
+                            ]
+                        },
+                        "description": "Get appointments payment overview"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Payment Methods",
+            "item": [
+                {
+                    "name": "Get payment methods",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/methods",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "methods"
+                            ]
+                        },
+                        "description": "Get user's saved payment methods"
+                    }
+                },
+                {
+                    "name": "Initialize card tokenization",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"provider\": \"flutterwave\",\n  \"currency\": \"NGN\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/methods/initialize-tokenization",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "methods",
+                                "initialize-tokenization"
+                            ]
+                        },
+                        "description": "Initialize secure card tokenization"
+                    }
+                },
+                {
+                    "name": "Tokenization callback",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"provider\": \"flutterwave\",\n  \"reference\": \"tokenization-reference\",\n  \"userId\": \"user-uuid\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/methods/tokenization-callback",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "methods",
+                                "tokenization-callback"
+                            ]
+                        },
+                        "description": "Handle tokenization callback"
+                    }
+                },
+                {
+                    "name": "Set default payment method",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/methods/:paymentMethodId/default",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "methods",
+                                ":paymentMethodId",
+                                "default"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "paymentMethodId",
+                                    "value": "",
+                                    "description": "Payment method UUID"
+                                }
+                            ]
+                        },
+                        "description": "Set payment method as default"
+                    }
+                },
+                {
+                    "name": "Remove payment method",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/methods/:paymentMethodId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "methods",
+                                ":paymentMethodId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "paymentMethodId",
+                                    "value": "",
+                                    "description": "Payment method UUID"
+                                }
+                            ]
+                        },
+                        "description": "Remove a saved payment method"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Wallet (Doctors)",
+            "item": [
+                {
+                    "name": "Get doctor wallet",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/wallet",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "wallet"
+                            ]
+                        },
+                        "description": "Get doctor's wallet details"
+                    }
+                },
+                {
+                    "name": "Update display currency",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"currency\": \"USD\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/wallet/currency",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "wallet",
+                                "currency"
+                            ]
+                        },
+                        "description": "Update wallet display currency"
+                    }
+                },
+                {
+                    "name": "Initiate withdrawal",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"amount\": 50000,\n  \"bankCode\": \"058\",\n  \"accountNumber\": \"0123456789\",\n  \"accountName\": \"John Doe\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/wallet/withdraw",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "wallet",
+                                "withdraw"
+                            ]
+                        },
+                        "description": "Initiate withdrawal request"
+                    }
+                },
+                {
+                    "name": "Get withdrawal history",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/wallet/withdrawals",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "wallet",
+                                "withdrawals"
+                            ]
+                        },
+                        "description": "Get withdrawal history"
+                    }
+                },
+                {
+                    "name": "Get supported banks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/wallet/supported-banks",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "wallet",
+                                "supported-banks"
+                            ]
+                        },
+                        "description": "Get list of supported banks"
+                    }
+                },
+                {
+                    "name": "Resolve bank account",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"accountNumber\": \"0123456789\",\n  \"bankCode\": \"058\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/wallet/resolve-account",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "wallet",
+                                "resolve-account"
+                            ]
+                        },
+                        "description": "Resolve/verify bank account details"
+                    }
+                },
+                {
+                    "name": "Set wallet password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"password\": \"securePassword123\",\n  \"confirmPassword\": \"securePassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/wallet/password",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "wallet",
+                                "password"
+                            ]
+                        },
+                        "description": "Set wallet password"
+                    }
+                },
+                {
+                    "name": "Verify wallet password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"password\": \"securePassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/wallet/password/verify",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "wallet",
+                                "password",
+                                "verify"
+                            ]
+                        },
+                        "description": "Verify wallet password for sensitive operations"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Dynamic Currency",
+            "item": [
+                {
+                    "name": "Convert currency",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"amount\": 100,\n  \"from\": \"USD\",\n  \"to\": \"NGN\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/dynamicCurrency/convert",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "dynamicCurrency",
+                                "convert"
+                            ]
+                        },
+                        "description": "Convert amount between currencies"
+                    }
+                },
+                {
+                    "name": "Get supported currencies",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/dynamicCurrency/supported",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "dynamicCurrency",
+                                "supported"
+                            ]
+                        },
+                        "description": "Get list of supported currencies"
+                    }
+                },
+                {
+                    "name": "Check currency support",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/dynamicCurrency/support/:currency",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "dynamicCurrency",
+                                "support",
+                                ":currency"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "currency",
+                                    "value": "NGN",
+                                    "description": "Currency code to check"
+                                }
+                            ]
+                        },
+                        "description": "Check if a currency is supported"
+                    }
+                },
+                {
+                    "name": "Get user local currency",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/dynamicCurrency/local",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "dynamicCurrency",
+                                "local"
+                            ]
+                        },
+                        "description": "Get user's local currency based on location"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Utility",
+            "item": [
+                {
+                    "name": "Get user payment settings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/user/settings",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "user",
+                                "settings"
+                            ]
+                        },
+                        "description": "Get user's payment settings"
+                    }
+                },
+                {
+                    "name": "Calculate payment fees",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/fees/calculate?amount=5000&currency=NGN&provider=flutterwave",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "fees",
+                                "calculate"
+                            ],
+                            "query": [
+                                {
+                                    "key": "amount",
+                                    "value": "5000"
+                                },
+                                {
+                                    "key": "currency",
+                                    "value": "NGN"
+                                },
+                                {
+                                    "key": "provider",
+                                    "value": "flutterwave"
+                                }
+                            ]
+                        },
+                        "description": "Calculate payment fees"
+                    }
+                },
+                {
+                    "name": "Get exchange rates",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/exchange-rates",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "exchange-rates"
+                            ]
+                        },
+                        "description": "Get current exchange rates"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin Analytics",
+            "item": [
+                {
+                    "name": "Get payment statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/statistics",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "statistics"
+                            ]
+                        },
+                        "description": "Get payment statistics (Admin only)"
+                    }
+                },
+                {
+                    "name": "Get service analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/analytics/services",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "analytics",
+                                "services"
+                            ]
+                        },
+                        "description": "Get service analytics (Admin only)"
+                    }
+                },
+                {
+                    "name": "Get provider performance",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/analytics/providers",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "analytics",
+                                "providers"
+                            ]
+                        },
+                        "description": "Get provider performance (Admin only)"
+                    }
+                },
+                {
+                    "name": "Get dashboard analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/analytics/dashboard",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "analytics",
+                                "dashboard"
+                            ]
+                        },
+                        "description": "Get dashboard analytics (Admin only)"
+                    }
+                },
+                {
+                    "name": "Process manual refund",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Customer requested refund\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/refund/:transactionId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "refund",
+                                ":transactionId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "transactionId",
+                                    "value": "",
+                                    "description": "Transaction UUID"
+                                }
+                            ]
+                        },
+                        "description": "Process manual refund (Admin only)"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Webhooks (Public)",
+            "item": [
+                {
+                    "name": "Flutterwave webhook",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "verif-hash",
+                                "value": "{{flutterwaveSecretHash}}",
+                                "description": "Flutterwave signature hash"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"event\": \"charge.completed\",\n  \"data\": {\n    \"tx_ref\": \"transaction-reference\",\n    \"status\": \"successful\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/webhooks/flutterwave",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "webhooks",
+                                "flutterwave"
+                            ]
+                        },
+                        "description": "Flutterwave webhook endpoint"
+                    }
+                },
+                {
+                    "name": "Paystack webhook",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "x-paystack-signature",
+                                "value": "{{paystackSignature}}",
+                                "description": "Paystack signature"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"event\": \"charge.success\",\n  \"data\": {\n    \"reference\": \"transaction-reference\",\n    \"status\": \"success\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/webhooks/paystack",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "webhooks",
+                                "paystack"
+                            ]
+                        },
+                        "description": "Paystack webhook endpoint"
+                    }
+                }
+            ]
+        }
+    ]
+}

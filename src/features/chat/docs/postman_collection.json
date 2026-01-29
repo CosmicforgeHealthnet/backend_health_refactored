@@ -1,0 +1,533 @@
+{
+    "info": {
+        "name": "CosmicForge - Chat Feature",
+        "description": "Real-time chat rooms and messaging API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Room Management",
+            "item": [
+                {
+                    "name": "Create room",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Health Discussion\",\n  \"type\": \"group\",\n  \"participants\": [\"user-uuid-1\", \"user-uuid-2\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms"
+                            ]
+                        },
+                        "description": "Create a new chat room"
+                    }
+                },
+                {
+                    "name": "Create direct chat",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"participantId\": \"user-uuid\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/direct",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "direct"
+                            ]
+                        },
+                        "description": "Create a direct chat with another user"
+                    }
+                },
+                {
+                    "name": "Get user rooms",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms"
+                            ]
+                        },
+                        "description": "Get all chat rooms for the authenticated user"
+                    }
+                },
+                {
+                    "name": "Get room details",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": "",
+                                    "description": "Chat room UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get details of a specific chat room"
+                    }
+                },
+                {
+                    "name": "Join room",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId/join",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId",
+                                "join"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": "",
+                                    "description": "Chat room UUID"
+                                }
+                            ]
+                        },
+                        "description": "Join a chat room"
+                    }
+                },
+                {
+                    "name": "Leave room",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId/leave",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId",
+                                "leave"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": "",
+                                    "description": "Chat room UUID"
+                                }
+                            ]
+                        },
+                        "description": "Leave a chat room"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Messages",
+            "item": [
+                {
+                    "name": "Send message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"content\": \"Hello, how can I help you today?\",\n  \"type\": \"text\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId/messages",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId",
+                                "messages"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": "",
+                                    "description": "Chat room UUID"
+                                }
+                            ]
+                        },
+                        "description": "Send a message to a chat room"
+                    }
+                },
+                {
+                    "name": "Get messages",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId/messages?limit=50&before=",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId",
+                                "messages"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50",
+                                    "description": "Number of messages to retrieve"
+                                },
+                                {
+                                    "key": "before",
+                                    "value": "",
+                                    "description": "Message ID for pagination"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": "",
+                                    "description": "Chat room UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get messages from a chat room"
+                    }
+                },
+                {
+                    "name": "Edit message",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"content\": \"Updated message content\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/messages/:messageId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "messages",
+                                ":messageId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "messageId",
+                                    "value": "",
+                                    "description": "Message UUID"
+                                }
+                            ]
+                        },
+                        "description": "Edit an existing message"
+                    }
+                },
+                {
+                    "name": "Delete message",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/messages/:messageId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "messages",
+                                ":messageId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "messageId",
+                                    "value": "",
+                                    "description": "Message UUID"
+                                }
+                            ]
+                        },
+                        "description": "Delete a message"
+                    }
+                },
+                {
+                    "name": "Mark as read",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId/read",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId",
+                                "read"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": "",
+                                    "description": "Chat room UUID"
+                                }
+                            ]
+                        },
+                        "description": "Mark messages as read in a room"
+                    }
+                },
+                {
+                    "name": "Search messages",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId/search?q=keyword",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "keyword",
+                                    "description": "Search query"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": "",
+                                    "description": "Chat room UUID"
+                                }
+                            ]
+                        },
+                        "description": "Search messages in a chat room"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Appointment Chats",
+            "item": [
+                {
+                    "name": "Create appointment chat",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"appointmentId\": \"appointment-uuid\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/appointment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "appointment"
+                            ]
+                        },
+                        "description": "Create a chat room for an appointment"
+                    }
+                },
+                {
+                    "name": "Get appointment chats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/appointment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "appointment"
+                            ]
+                        },
+                        "description": "Get all appointment chats for the user"
+                    }
+                },
+                {
+                    "name": "Get appointment chat status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/appointment/:appointmentChatId/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "appointment",
+                                ":appointmentChatId",
+                                "status"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "appointmentChatId",
+                                    "value": "",
+                                    "description": "Appointment chat UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get status of an appointment chat"
+                    }
+                },
+                {
+                    "name": "Join appointment chat",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/appointment/:appointmentChatId/join",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "appointment",
+                                ":appointmentChatId",
+                                "join"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "appointmentChatId",
+                                    "value": "",
+                                    "description": "Appointment chat UUID"
+                                }
+                            ]
+                        },
+                        "description": "Join an appointment chat"
+                    }
+                },
+                {
+                    "name": "End appointment chat",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/appointment/:appointmentChatId/end",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "appointment",
+                                ":appointmentChatId",
+                                "end"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "appointmentChatId",
+                                    "value": "",
+                                    "description": "Appointment chat UUID"
+                                }
+                            ]
+                        },
+                        "description": "End an appointment chat session"
+                    }
+                }
+            ]
+        }
+    ]
+}

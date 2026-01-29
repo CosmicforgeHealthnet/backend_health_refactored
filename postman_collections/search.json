@@ -1,0 +1,128 @@
+{
+    "info": {
+        "name": "CosmicForge - Search Feature",
+        "description": "Universal search across all accessible entities API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Universal search",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/search?q=doctor&entity=all&page=1&limit=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "search"
+                    ],
+                    "query": [
+                        {
+                            "key": "q",
+                            "value": "doctor",
+                            "description": "Search query"
+                        },
+                        {
+                            "key": "entity",
+                            "value": "all",
+                            "description": "Entity type to search (all, doctors, patients, appointments)"
+                        },
+                        {
+                            "key": "page",
+                            "value": "1"
+                        },
+                        {
+                            "key": "limit",
+                            "value": "20"
+                        }
+                    ]
+                },
+                "description": "Universal search across all accessible entities"
+            }
+        },
+        {
+            "name": "Get search suggestions",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/search/suggestions?q=card&limit=5",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "search",
+                        "suggestions"
+                    ],
+                    "query": [
+                        {
+                            "key": "q",
+                            "value": "card",
+                            "description": "Partial query for suggestions"
+                        },
+                        {
+                            "key": "limit",
+                            "value": "5"
+                        }
+                    ]
+                },
+                "description": "Get search suggestions based on partial query"
+            }
+        },
+        {
+            "name": "Get searchable entities",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/search/entities",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "search",
+                        "entities"
+                    ]
+                },
+                "description": "Get list of entities user can search"
+            }
+        },
+        {
+            "name": "Get search analytics (Admin)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/search/analytics",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "search",
+                        "analytics"
+                    ]
+                },
+                "description": "Get search analytics and metrics (Admin only)"
+            }
+        }
+    ]
+}

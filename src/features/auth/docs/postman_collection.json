@@ -1,0 +1,818 @@
+{
+    "info": {
+        "name": "CosmicForge - Auth Feature",
+        "description": "User authentication, MFA, referrals, and account management API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Registration & Login",
+            "item": [
+                {
+                    "name": "Signup",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"johndoe@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"role\": \"patient\",\n  \"phoneNumber\": \"+2348012345678\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/signup",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "signup"
+                            ]
+                        },
+                        "description": "Register a new user account. Sends verification email upon success."
+                    }
+                },
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"johndoe@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Login with email and password. Returns access and refresh tokens."
+                    }
+                },
+                {
+                    "name": "Refresh token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/refresh",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "refresh"
+                            ]
+                        },
+                        "description": "Refresh access token using refresh token"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Email Verification",
+            "item": [
+                {
+                    "name": "Verify email",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/verify-email?token=verification_token",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "verify-email"
+                            ],
+                            "query": [
+                                {
+                                    "key": "token",
+                                    "value": "verification_token",
+                                    "description": "Email verification token"
+                                }
+                            ]
+                        },
+                        "description": "Verify email address using token from verification email"
+                    }
+                },
+                {
+                    "name": "Resend verification email",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"johndoe@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/resend-verification",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "resend-verification"
+                            ]
+                        },
+                        "description": "Resend email verification link"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Password Reset",
+            "item": [
+                {
+                    "name": "Request password reset",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"johndoe@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/password-reset-request",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "password-reset-request"
+                            ]
+                        },
+                        "description": "Request password reset email"
+                    }
+                },
+                {
+                    "name": "Reset password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"token\": \"reset_token_from_email\",\n  \"newPassword\": \"NewSecurePassword123!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/reset-password",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "reset-password"
+                            ]
+                        },
+                        "description": "Reset password using token from reset email"
+                    }
+                },
+                {
+                    "name": "Resend password reset",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"johndoe@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/resend-password-reset",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "resend-password-reset"
+                            ]
+                        },
+                        "description": "Resend password reset email"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Magic Link (Passwordless)",
+            "item": [
+                {
+                    "name": "Request magic link",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"johndoe@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/magic-link",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "magic-link"
+                            ]
+                        },
+                        "description": "Request magic link for passwordless login"
+                    }
+                },
+                {
+                    "name": "Login via magic link",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/magic-login?token=magic_link_token",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "magic-login"
+                            ],
+                            "query": [
+                                {
+                                    "key": "token",
+                                    "value": "magic_link_token",
+                                    "description": "Magic link token"
+                                }
+                            ]
+                        },
+                        "description": "Authenticate via magic link token"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Google OAuth",
+            "item": [
+                {
+                    "name": "Initiate Google OAuth",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/google",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "google"
+                            ]
+                        },
+                        "description": "Redirects to Google OAuth consent screen"
+                    }
+                },
+                {
+                    "name": "Google OAuth callback",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/google/callback?code=google_auth_code",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "google",
+                                "callback"
+                            ],
+                            "query": [
+                                {
+                                    "key": "code",
+                                    "value": "google_auth_code",
+                                    "description": "Authorization code from Google"
+                                }
+                            ]
+                        },
+                        "description": "Handle Google OAuth callback and issue tokens"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Multi-Factor Authentication (MFA)",
+            "item": [
+                {
+                    "name": "Get MFA status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/mfa/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "mfa",
+                                "status"
+                            ]
+                        },
+                        "description": "Get current MFA status for authenticated user"
+                    }
+                },
+                {
+                    "name": "Setup MFA",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/mfa/setup",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "mfa",
+                                "setup"
+                            ]
+                        },
+                        "description": "Initialize MFA setup - returns QR code and secret"
+                    }
+                },
+                {
+                    "name": "Enable MFA",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"123456\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/mfa/enable",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "mfa",
+                                "enable"
+                            ]
+                        },
+                        "description": "Enable MFA by verifying TOTP code"
+                    }
+                },
+                {
+                    "name": "Disable MFA",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"123456\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/mfa/disable",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "mfa",
+                                "disable"
+                            ]
+                        },
+                        "description": "Disable MFA by verifying TOTP code"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Referrals",
+            "item": [
+                {
+                    "name": "Get my referral stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/my-stats",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "my-stats"
+                            ]
+                        },
+                        "description": "Get user's referral statistics and code"
+                    }
+                },
+                {
+                    "name": "Get my referrals",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/my-referrals",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "my-referrals"
+                            ]
+                        },
+                        "description": "Get list of users referred by current user"
+                    }
+                },
+                {
+                    "name": "Get leaderboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/leaderboard",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "leaderboard"
+                            ]
+                        },
+                        "description": "Get referral leaderboard"
+                    }
+                },
+                {
+                    "name": "Process referral",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"referralCode\": \"REF123ABC\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/process",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "process"
+                            ]
+                        },
+                        "description": "Process a referral code"
+                    }
+                },
+                {
+                    "name": "Verify referral",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"referralCode\": \"REF123ABC\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/verify",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "verify"
+                            ]
+                        },
+                        "description": "Verify a referral code is valid"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Referral Draws",
+            "item": [
+                {
+                    "name": "Get all draws (User)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/draws-user",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "draws-user"
+                            ]
+                        },
+                        "description": "Get all referral draws for users"
+                    }
+                },
+                {
+                    "name": "Get draw leaderboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/draws/:drawId/leaderboard",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "draws",
+                                ":drawId",
+                                "leaderboard"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "drawId",
+                                    "value": "",
+                                    "description": "Draw UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get leaderboard for a specific draw"
+                    }
+                },
+                {
+                    "name": "Get my draw stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/draws/:drawId/my-stats",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "draws",
+                                ":drawId",
+                                "my-stats"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "drawId",
+                                    "value": "",
+                                    "description": "Draw UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get user's stats for a specific draw"
+                    }
+                },
+                {
+                    "name": "Create draw (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"January Referral Challenge\",\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-01-31\",\n  \"prizes\": [\n    {\"position\": 1, \"prize\": \"$500\"},\n    {\"position\": 2, \"prize\": \"$300\"},\n    {\"position\": 3, \"prize\": \"$200\"}\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/draws",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "draws"
+                            ]
+                        },
+                        "description": "Create a new referral draw (Admin/Marketing)"
+                    }
+                },
+                {
+                    "name": "Get all draws (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/draws",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "draws"
+                            ]
+                        },
+                        "description": "Get all referral draws (Admin/Marketing)"
+                    }
+                },
+                {
+                    "name": "Start draw (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/draws/:drawId/start",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "draws",
+                                ":drawId",
+                                "start"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "drawId",
+                                    "value": "",
+                                    "description": "Draw UUID"
+                                }
+                            ]
+                        },
+                        "description": "Start a referral draw (Admin/Marketing)"
+                    }
+                },
+                {
+                    "name": "End draw (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/draws/:drawId/end",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "draws",
+                                ":drawId",
+                                "end"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "drawId",
+                                    "value": "",
+                                    "description": "Draw UUID"
+                                }
+                            ]
+                        },
+                        "description": "End a referral draw (Admin/Marketing)"
+                    }
+                },
+                {
+                    "name": "Get draw stats (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/referrals/draws/:drawId/stats",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "referrals",
+                                "draws",
+                                ":drawId",
+                                "stats"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "drawId",
+                                    "value": "",
+                                    "description": "Draw UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get detailed draw statistics (Admin/Marketing)"
+                    }
+                }
+            ]
+        }
+    ]
+}

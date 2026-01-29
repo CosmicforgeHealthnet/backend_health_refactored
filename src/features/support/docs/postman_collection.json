@@ -1,0 +1,787 @@
+{
+    "info": {
+        "name": "CosmicForge - Support Feature",
+        "description": "User support, insurance, reports, and disputes management API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "User Support Dashboard",
+            "item": [
+                {
+                    "name": "Get user support dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/user/:userId/dashboard",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "user",
+                                ":userId",
+                                "dashboard"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "User UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get user's complete support dashboard"
+                    }
+                },
+                {
+                    "name": "Get user support activity",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/user/:userId/activity",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "user",
+                                ":userId",
+                                "activity"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "User UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get user's support activity/history"
+                    }
+                },
+                {
+                    "name": "Get ticket details",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/user/:userId/:ticketType/:ticketId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "user",
+                                ":userId",
+                                ":ticketType",
+                                ":ticketId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "User UUID"
+                                },
+                                {
+                                    "key": "ticketType",
+                                    "value": "account",
+                                    "description": "Ticket type (account/insurance/report/dispute)"
+                                },
+                                {
+                                    "key": "ticketId",
+                                    "value": "",
+                                    "description": "Ticket UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get specific ticket details"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Account Support",
+            "item": [
+                {
+                    "name": "Get all account tickets",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/account?status=open&page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "account"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "open",
+                                    "description": "Filter by status"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "description": "Get all account tickets with optional filters"
+                    }
+                },
+                {
+                    "name": "Get account ticket by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/account/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "account",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Account ticket UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get specific account ticket"
+                    }
+                },
+                {
+                    "name": "Create account ticket",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"subject\": \"Account access issue\",\n  \"description\": \"Unable to access my account settings\",\n  \"priority\": \"medium\",\n  \"category\": \"access\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/account",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "account"
+                            ]
+                        },
+                        "description": "Create new account ticket"
+                    }
+                },
+                {
+                    "name": "Update account ticket",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"in_progress\",\n  \"notes\": \"Working on the issue\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/account/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "account",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Account ticket UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update account ticket"
+                    }
+                },
+                {
+                    "name": "Get user's account tickets",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/account/user/:userId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "account",
+                                "user",
+                                ":userId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "User UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get user's account tickets"
+                    }
+                },
+                {
+                    "name": "Assign ticket to agent",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"agentId\": \"agent-uuid\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/account/:id/assign",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "account",
+                                ":id",
+                                "assign"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Account ticket UUID"
+                                }
+                            ]
+                        },
+                        "description": "Assign account ticket to support agent"
+                    }
+                },
+                {
+                    "name": "Resolve ticket",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"resolution\": \"Issue resolved by resetting account settings\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/account/:id/resolve",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "account",
+                                ":id",
+                                "resolve"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Account ticket UUID"
+                                }
+                            ]
+                        },
+                        "description": "Mark account ticket as resolved"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Insurance Support",
+            "item": [
+                {
+                    "name": "Get all insurance tickets",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/insurance",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "insurance"
+                            ]
+                        },
+                        "description": "Get all insurance tickets with optional filters"
+                    }
+                },
+                {
+                    "name": "Get insurance ticket by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/insurance/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "insurance",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Insurance ticket UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get specific insurance ticket"
+                    }
+                },
+                {
+                    "name": "Create insurance ticket",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"insuranceProvider\": \"HealthPlus\",\n  \"policyNumber\": \"HP-12345\",\n  \"claimType\": \"consultation\",\n  \"description\": \"Claim for doctor consultation\",\n  \"amount\": 5000\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/insurance",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "insurance"
+                            ]
+                        },
+                        "description": "Create new insurance ticket"
+                    }
+                },
+                {
+                    "name": "Update insurance ticket",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"processing\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/insurance/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "insurance",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Insurance ticket UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update insurance ticket"
+                    }
+                },
+                {
+                    "name": "Get user's insurance tickets",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/insurance/user/:userId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "insurance",
+                                "user",
+                                ":userId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "User UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get user's insurance tickets"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Reports",
+            "item": [
+                {
+                    "name": "Get all reports",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/reports",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "reports"
+                            ]
+                        },
+                        "description": "Get all reports with optional filters"
+                    }
+                },
+                {
+                    "name": "Get report by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/reports/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "reports",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Report UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get specific report"
+                    }
+                },
+                {
+                    "name": "Create report",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"user_conduct\",\n  \"reportedUserId\": \"user-uuid\",\n  \"reason\": \"Inappropriate behavior\",\n  \"description\": \"Detailed description of the issue\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/reports",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "reports"
+                            ]
+                        },
+                        "description": "Create new report"
+                    }
+                },
+                {
+                    "name": "Update report",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"under_review\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/reports/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "reports",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Report UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update report"
+                    }
+                },
+                {
+                    "name": "Get user's reports",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/reports/user/:userId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "reports",
+                                "user",
+                                ":userId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "User UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get user's reports"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Disputes",
+            "item": [
+                {
+                    "name": "Get all disputes",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/disputes",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "disputes"
+                            ]
+                        },
+                        "description": "Get all disputes with optional filters"
+                    }
+                },
+                {
+                    "name": "Get dispute by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/disputes/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "disputes",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Dispute UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get specific dispute"
+                    }
+                },
+                {
+                    "name": "Create dispute",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"transactionId\": \"transaction-uuid\",\n  \"reason\": \"service_not_received\",\n  \"description\": \"Did not receive the consultation service\",\n  \"amount\": 5000\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/disputes",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "disputes"
+                            ]
+                        },
+                        "description": "Create new dispute"
+                    }
+                },
+                {
+                    "name": "Update dispute",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"investigating\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/disputes/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "disputes",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Dispute UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update dispute"
+                    }
+                },
+                {
+                    "name": "Get user's disputes",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/disputes/user/:userId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "disputes",
+                                "user",
+                                ":userId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "User UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get user's disputes"
+                    }
+                }
+            ]
+        }
+    ]
+}

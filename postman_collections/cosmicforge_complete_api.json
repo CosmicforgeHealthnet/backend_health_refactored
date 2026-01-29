@@ -1,0 +1,3272 @@
+{
+    "info": {
+        "name": "CosmicForge HealthNet - Complete API",
+        "description": "Complete API collection for CosmicForge HealthNet platform containing all features: Authentication, Patient, Doctor, Appointments, Chat, Notifications, Subscriptions, Payments, Support, Search, Marketing, First Aid, Documents, Compliance, and Pharmacy.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Auth",
+            "description": "User authentication, MFA, referrals, and account management",
+            "item": [
+                {
+                    "name": "Registration & Login",
+                    "item": [
+                        {
+                            "name": "Signup",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"johndoe@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"role\": \"patient\",\n  \"phoneNumber\": \"+2348012345678\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/signup",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "signup"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Login",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"johndoe@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/login",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "login"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Refresh token",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/refresh",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "refresh"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Email Verification",
+                    "item": [
+                        {
+                            "name": "Verify email",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/verify-email?token=verification_token",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "verify-email"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "token",
+                                            "value": "verification_token"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Resend verification email",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"johndoe@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/resend-verification",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "resend-verification"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Password Reset",
+                    "item": [
+                        {
+                            "name": "Request password reset",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"johndoe@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/password-reset-request",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "password-reset-request"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Reset password",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"token\": \"reset_token\",\n  \"newPassword\": \"NewSecurePassword123!\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/reset-password",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "reset-password"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Magic Link",
+                    "item": [
+                        {
+                            "name": "Request magic link",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"johndoe@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/magic-link",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "magic-link"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Login via magic link",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/magic-login?token=magic_link_token",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "magic-login"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "token",
+                                            "value": "magic_link_token"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Google OAuth",
+                    "item": [
+                        {
+                            "name": "Initiate Google OAuth",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/google",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "google"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Google OAuth callback",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/google/callback?code=auth_code",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "google",
+                                        "callback"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "code",
+                                            "value": "auth_code"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "MFA",
+                    "item": [
+                        {
+                            "name": "Get MFA status",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/mfa/status",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "mfa",
+                                        "status"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Setup MFA",
+                            "request": {
+                                "method": "POST",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/mfa/setup",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "mfa",
+                                        "setup"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Enable MFA",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"code\": \"123456\"}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/mfa/enable",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "mfa",
+                                        "enable"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Disable MFA",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"code\": \"123456\"}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/mfa/disable",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "mfa",
+                                        "disable"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Referrals",
+                    "item": [
+                        {
+                            "name": "Get my referral stats",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/referrals/my-stats",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "referrals",
+                                        "my-stats"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get my referrals",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/referrals/my-referrals",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "referrals",
+                                        "my-referrals"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get leaderboard",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/referrals/leaderboard",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "referrals",
+                                        "leaderboard"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Process referral",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"referralCode\": \"REF123ABC\"}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/referrals/process",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "referrals",
+                                        "process"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Patient",
+            "description": "Patient profile and health records management",
+            "item": [
+                {
+                    "name": "Profile Management",
+                    "item": [
+                        {
+                            "name": "Create patient profile",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"gender\": \"male\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"nationality\": \"Nigerian\",\n  \"language\": \"English\",\n  \"mobileNumber\": \"+2348012345678\",\n  \"address\": \"123 Main Street, Lagos\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/patient/profile",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "patient",
+                                        "profile"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get patient profile by ID",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/patient/profile/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "patient",
+                                        "profile",
+                                        ":id"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get patient profile by user ID",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/patient/profile/user/:userId",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "patient",
+                                        "profile",
+                                        "user",
+                                        ":userId"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "userId",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Update patient profile",
+                            "request": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"gender\": \"male\",\n  \"address\": \"456 Updated Street, Lagos\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/patient/profile/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "patient",
+                                        "profile",
+                                        ":id"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Delete patient profile",
+                            "request": {
+                                "method": "DELETE",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/patient/profile/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "patient",
+                                        "profile",
+                                        ":id"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Health Records",
+                    "item": [
+                        {
+                            "name": "Get health record options",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/patient/health-records",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "patient",
+                                        "health-records"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Manage health records",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"action\": \"add\",\n  \"type\": \"allergy\",\n  \"data\": {\"name\": \"Penicillin\", \"severity\": \"high\"}\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/patient/health-records",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "patient",
+                                        "health-records"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Doctor",
+            "description": "Doctor profile, verification, and management",
+            "item": [
+                {
+                    "name": "Public Routes",
+                    "item": [
+                        {
+                            "name": "Get all doctors",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/list",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "list"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get doctors with complete profiles",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/list/complete",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "list",
+                                        "complete"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get doctors by online status",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/list/online?isOnline=true",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "list",
+                                        "online"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "isOnline",
+                                            "value": "true"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Search doctors",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/search?query=cardiology",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "search"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "query",
+                                            "value": "cardiology"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get doctor ratings",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/:userId/ratings",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        ":userId",
+                                        "ratings"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "userId",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Profile Management",
+                    "item": [
+                        {
+                            "name": "Create doctor profile",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"departmentSpecialty\": \"Cardiology\",\n  \"yearsOfExperience\": 10,\n  \"licenseNumber\": \"MED-2024-001\",\n  \"consultationFee\": 5000\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/profile",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "profile"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get doctor profile by user ID",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/profile/user/:userId",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "profile",
+                                        "user",
+                                        ":userId"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "userId",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Update doctor profile",
+                            "request": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"consultationFee\": 7500}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/profile/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "profile",
+                                        ":id"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Update online status",
+                            "request": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"isOnline\": true}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/status",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Verification",
+                    "item": [
+                        {
+                            "name": "Submit verification documents",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "medicalLicense",
+                                            "type": "file"
+                                        },
+                                        {
+                                            "key": "idDocument",
+                                            "type": "file"
+                                        }
+                                    ]
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/verification/submit",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "verification",
+                                        "submit"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get verification status",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/verification/status",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "verification",
+                                        "status"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get verification history",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/doctor/verification/history",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "doctor",
+                                        "verification",
+                                        "history"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Appointments",
+            "description": "Appointment booking, management, and scheduling",
+            "item": [
+                {
+                    "name": "Update user timezone",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"timezone\": \"Africa/Lagos\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/timezone",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "timezone"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create appointment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"doctorId\": \"doctor-uuid\",\n  \"patientId\": \"patient-uuid\",\n  \"date\": \"2024-02-15\",\n  \"time\": \"14:00\",\n  \"type\": \"consultation\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update appointment",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"date\": \"2024-02-16\", \"time\": \"15:00\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get appointment by ID",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Cancel appointment",
+                    "request": {
+                        "method": "DELETE",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update doctor approval",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"approved\": true}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id/doctor-approval",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id",
+                                "doctor-approval"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Complete appointment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"notes\": \"Consultation completed\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id",
+                                "complete"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Process payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"paymentMethodId\": \"pm-uuid\", \"amount\": 5000}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id/payment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id",
+                                "payment"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Generate Google Meet link",
+                    "request": {
+                        "method": "POST",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id/meeting/google",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id",
+                                "meeting",
+                                "google"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get patient appointments",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/patient/:patientId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "patient",
+                                ":patientId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "patientId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get doctor appointments",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/doctor/:doctorId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "doctor",
+                                ":doctorId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Chat",
+            "description": "Real-time chat rooms and messaging",
+            "item": [
+                {
+                    "name": "Create room",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\": \"Health Discussion\", \"type\": \"group\", \"participants\": [\"user-uuid-1\", \"user-uuid-2\"]}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create direct chat",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"participantId\": \"user-uuid\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/direct",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "direct"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get user rooms",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get room details",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Send message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"content\": \"Hello!\", \"type\": \"text\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId/messages",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId",
+                                "messages"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get messages",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId/messages?limit=50",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId",
+                                "messages"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Mark as read",
+                    "request": {
+                        "method": "POST",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/rooms/:roomId/read",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "rooms",
+                                ":roomId",
+                                "read"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "roomId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create appointment chat",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"appointmentId\": \"appointment-uuid\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/chat/appointment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "chat",
+                                "appointment"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Notifications",
+            "description": "User notifications and alerts management",
+            "item": [
+                {
+                    "name": "Get notifications",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/notifications?type=all&isRead=all&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "notifications"
+                            ],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "all"
+                                },
+                                {
+                                    "key": "isRead",
+                                    "value": "all"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get notification counts",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/notifications/counts",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "notifications",
+                                "counts"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Mark notification as read",
+                    "request": {
+                        "method": "PUT",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/notifications/:id/read",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "notifications",
+                                ":id",
+                                "read"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Mark all as read",
+                    "request": {
+                        "method": "PUT",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/notifications/read-all",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "notifications",
+                                "read-all"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete notification",
+                    "request": {
+                        "method": "DELETE",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/notifications/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "notifications",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create notification",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"userId\": \"user-uuid\", \"type\": \"notification\", \"title\": \"Reminder\", \"message\": \"Your appointment is in 1 hour\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/notifications",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "notifications"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Subscriptions",
+            "description": "Subscription plans, billing, and usage management",
+            "item": [
+                {
+                    "name": "Get current subscription",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/current",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "current"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get available plans",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/plans",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "plans"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create subscription payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"planType\": \"patient\", \"tier\": \"premium\", \"billingCycle\": \"monthly\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/create-payment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "create-payment"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Upgrade subscription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"planType\": \"patient\", \"tier\": \"premium\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/upgrade",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "upgrade"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Cancel subscription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"reason\": \"No longer needed\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/cancel",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "cancel"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Check feature access",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/features/:featureName",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "features",
+                                ":featureName"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "featureName",
+                                    "value": "videoConsultation"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get usage info",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/usage",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "usage"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get auto-billing settings",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/auto-billing",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "auto-billing"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Enable auto-billing",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"paymentMethodId\": \"pm-uuid\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/auto-billing/enable",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "auto-billing",
+                                "enable"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Payments",
+            "description": "Payment processing, wallet management, and transactions",
+            "item": [
+                {
+                    "name": "Core Payments",
+                    "item": [
+                        {
+                            "name": "Get payment options",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/options",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "options"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Initiate payment",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"amount\": 5000, \"currency\": \"NGN\", \"provider\": \"flutterwave\", \"serviceType\": \"consultation\"}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/initiate",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "initiate"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Process payment",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"transactionId\": \"tx-uuid\", \"paymentReference\": \"ref\"}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/process",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "process"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Transactions",
+                    "item": [
+                        {
+                            "name": "Get transaction by ID",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/transaction/:transactionId",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "transaction",
+                                        ":transactionId"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "transactionId",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get transaction history",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/history?page=1&limit=20",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "history"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "page",
+                                            "value": "1"
+                                        },
+                                        {
+                                            "key": "limit",
+                                            "value": "20"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Payment Methods",
+                    "item": [
+                        {
+                            "name": "Get payment methods",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/methods",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "methods"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Initialize card tokenization",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"provider\": \"flutterwave\", \"currency\": \"NGN\"}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/methods/initialize-tokenization",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "methods",
+                                        "initialize-tokenization"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Set default payment method",
+                            "request": {
+                                "method": "PUT",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/methods/:paymentMethodId/default",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "methods",
+                                        ":paymentMethodId",
+                                        "default"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "paymentMethodId",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Remove payment method",
+                            "request": {
+                                "method": "DELETE",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/methods/:paymentMethodId",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "methods",
+                                        ":paymentMethodId"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "paymentMethodId",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Wallet (Doctors)",
+                    "item": [
+                        {
+                            "name": "Get doctor wallet",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/wallet",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "wallet"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Initiate withdrawal",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"amount\": 50000, \"bankCode\": \"058\", \"accountNumber\": \"0123456789\"}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/wallet/withdraw",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "wallet",
+                                        "withdraw"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get withdrawal history",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/wallet/withdrawals",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "wallet",
+                                        "withdrawals"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get supported banks",
+                            "request": {
+                                "method": "GET",
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/wallet/supported-banks",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "wallet",
+                                        "supported-banks"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Support",
+            "description": "User support, insurance, reports, and disputes",
+            "item": [
+                {
+                    "name": "Get user support dashboard",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/user/:userId/dashboard",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "user",
+                                ":userId",
+                                "dashboard"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get all account tickets",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/account",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "account"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create account ticket",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"subject\": \"Account issue\", \"description\": \"Description here\", \"priority\": \"medium\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/account",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "account"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get all insurance tickets",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/insurance",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "insurance"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create insurance ticket",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"insuranceProvider\": \"HealthPlus\", \"policyNumber\": \"HP-12345\", \"claimType\": \"consultation\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/insurance",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "insurance"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get all reports",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/reports",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "reports"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create report",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"type\": \"user_conduct\", \"reportedUserId\": \"user-uuid\", \"reason\": \"Reason here\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/reports",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "reports"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get all disputes",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/disputes",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "disputes"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create dispute",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"transactionId\": \"tx-uuid\", \"reason\": \"service_not_received\", \"amount\": 5000}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/support/disputes",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "support",
+                                "disputes"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Search",
+            "description": "Universal search across all accessible entities",
+            "item": [
+                {
+                    "name": "Universal search",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/search?q=doctor&entity=all&page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "doctor"
+                                },
+                                {
+                                    "key": "entity",
+                                    "value": "all"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get search suggestions",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/search/suggestions?q=card&limit=5",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "search",
+                                "suggestions"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "card"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get searchable entities",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/search/entities",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "search",
+                                "entities"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get search analytics (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/search/analytics",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "search",
+                                "analytics"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Marketing",
+            "description": "Marketing campaigns, waitlist, and promotional features",
+            "item": [
+                {
+                    "name": "Join waitlist",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"email\": \"user@example.com\", \"name\": \"John Doe\", \"interest\": \"lab_services\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/waitlist",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "waitlist"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get waitlist entries",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/waitlist",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "waitlist"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get wheel configuration",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/spin/config",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "spin",
+                                "config"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Spin the wheel",
+                    "request": {
+                        "method": "POST",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/spin",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "spin"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get active campaigns",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/campaigns",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "campaigns"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "First Aid",
+            "description": "Emergency first aid content, conditions, and step-by-step guides",
+            "item": [
+                {
+                    "name": "Sync first aid content",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/sync?lastSync=2024-01-01T00:00:00Z",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "sync"
+                            ],
+                            "query": [
+                                {
+                                    "key": "lastSync",
+                                    "value": "2024-01-01T00:00:00Z"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get all emergency steps",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/steps",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "steps"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get steps by condition",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/steps/:conditionId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "steps",
+                                ":conditionId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "conditionId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get all conditions",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/conditions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "conditions"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search conditions",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/conditions/search?q=burn",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "conditions",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "burn"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Documents",
+            "description": "Document management, file uploads, and FHIR resources",
+            "item": [
+                {
+                    "name": "Upload document",
+                    "request": {
+                        "method": "POST",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file"
+                                },
+                                {
+                                    "key": "title",
+                                    "value": "Medical Report",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get user documents",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents?page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get document by ID",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete document",
+                    "request": {
+                        "method": "DELETE",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get FHIR patients",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/patients",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "patients"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get patient summary",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/patients/:patientId/summary",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "patients",
+                                ":patientId",
+                                "summary"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "patientId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search FHIR",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"patientIdentifier\": \"12345\", \"fhirResourceType\": [\"Observation\"]}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "search"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Compliance",
+            "description": "Audit logs, data governance, consent management, and compliance reporting",
+            "item": [
+                {
+                    "name": "Get audit logs",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/audit?page=1&limit=50",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "audit"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get user consents",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/consent",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "consent"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Grant consent",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"consentType\": \"data_sharing\", \"granted\": true}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/consent",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "consent"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Revoke consent",
+                    "request": {
+                        "method": "DELETE",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/consent/:consentId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "consent",
+                                ":consentId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "consentId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Request data export",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"format\": \"json\", \"includeDocuments\": true}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/governance/export-request",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "governance",
+                                "export-request"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get compliance status",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/compliance/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "compliance",
+                                "status"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Pharmacy",
+            "description": "Pharmacy authentication, prescriptions, documents, and admin management",
+            "item": [
+                {
+                    "name": "Register pharmacy",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\": \"HealthPlus Pharmacy\", \"email\": \"pharmacy@example.com\", \"password\": \"password123\", \"licenseNumber\": \"PHARM-001\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "auth",
+                                "register"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Pharmacy login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"email\": \"pharmacy@example.com\", \"password\": \"password123\"}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get prescriptions",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/prescriptions?status=pending",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "prescriptions"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "pending"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Fill prescription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"medications\": [{\"name\": \"Amoxicillin\", \"quantity\": 21, \"price\": 2500}], \"totalAmount\": 2500}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/prescriptions/:id/fill",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "prescriptions",
+                                ":id",
+                                "fill"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Complete prescription",
+                    "request": {
+                        "method": "POST",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/prescriptions/:id/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "prescriptions",
+                                ":id",
+                                "complete"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get all pharmacies (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/admin/pharmacies",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "admin",
+                                "pharmacies"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Verify pharmacy (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"verified\": true}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/admin/verify/:pharmacyId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "admin",
+                                "verify",
+                                ":pharmacyId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "pharmacyId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

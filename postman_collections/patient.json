@@ -1,0 +1,281 @@
+{
+    "info": {
+        "name": "CosmicForge - Patient Feature",
+        "description": "Patient profile and health records management API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Profile Management",
+            "item": [
+                {
+                    "name": "Create patient profile",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"gender\": \"male\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"nationality\": \"Nigerian\",\n  \"language\": \"English\",\n  \"mobileNumber\": \"+2348012345678\",\n  \"address\": \"123 Main Street, Lagos\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/patient/profile",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "patient",
+                                "profile"
+                            ]
+                        },
+                        "description": "Creates a new patient profile for the authenticated user"
+                    }
+                },
+                {
+                    "name": "Get patient profile by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/patient/profile/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "patient",
+                                "profile",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Patient profile UUID"
+                                }
+                            ]
+                        },
+                        "description": "Retrieves a patient profile by its ID"
+                    }
+                },
+                {
+                    "name": "Get patient profile by user ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/patient/profile/user/:userId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "patient",
+                                "profile",
+                                "user",
+                                ":userId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "User UUID"
+                                }
+                            ]
+                        },
+                        "description": "Retrieves a patient profile by the user's ID"
+                    }
+                },
+                {
+                    "name": "Update patient profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"gender\": \"male\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"nationality\": \"Nigerian\",\n  \"language\": \"English\",\n  \"mobileNumber\": \"+2348012345678\",\n  \"address\": \"456 Updated Street, Lagos\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/patient/profile/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "patient",
+                                "profile",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Patient profile UUID"
+                                }
+                            ]
+                        },
+                        "description": "Updates an existing patient profile"
+                    }
+                },
+                {
+                    "name": "Delete patient profile",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/patient/profile/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "patient",
+                                "profile",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Patient profile UUID"
+                                }
+                            ]
+                        },
+                        "description": "Deletes a patient profile"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Health Records",
+            "item": [
+                {
+                    "name": "Get health record options",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/patient/health-records",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "patient",
+                                "health-records"
+                            ]
+                        },
+                        "description": "Gets available health record types and options"
+                    }
+                },
+                {
+                    "name": "Manage health records",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"action\": \"add\",\n  \"type\": \"allergy\",\n  \"data\": {\n    \"name\": \"Penicillin\",\n    \"severity\": \"high\",\n    \"reaction\": \"Rash and difficulty breathing\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/patient/health-records",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "patient",
+                                "health-records"
+                            ]
+                        },
+                        "description": "Add, update, or delete health records (allergies, medications, etc.)"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Legacy Routes (Deprecated)",
+            "item": [
+                {
+                    "name": "[DEPRECATED] Get profile options",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/patient/profile-options",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "patient",
+                                "profile-options"
+                            ]
+                        },
+                        "description": "DEPRECATED: Use /api/patient/health-records instead"
+                    }
+                },
+                {
+                    "name": "[DEPRECATED] Manage profile options",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/patient/profile-options",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "patient",
+                                "profile-options"
+                            ]
+                        },
+                        "description": "DEPRECATED: Use /api/patient/health-records instead"
+                    }
+                }
+            ]
+        }
+    ]
+}

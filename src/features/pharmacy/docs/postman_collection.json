@@ -1,0 +1,525 @@
+{
+    "info": {
+        "name": "CosmicForge - Pharmacy Feature",
+        "description": "Pharmacy authentication, prescriptions, documents, and admin management API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Pharmacy Auth",
+            "item": [
+                {
+                    "name": "Register pharmacy",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"HealthPlus Pharmacy\",\n  \"email\": \"pharmacy@example.com\",\n  \"password\": \"securePassword123\",\n  \"licenseNumber\": \"PHARM-2024-001\",\n  \"address\": \"123 Main Street, Lagos\",\n  \"phone\": \"+2348012345678\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "description": "Register a new pharmacy"
+                    }
+                },
+                {
+                    "name": "Pharmacy login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"pharmacy@example.com\",\n  \"password\": \"securePassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Login to pharmacy account"
+                    }
+                },
+                {
+                    "name": "Get pharmacy profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/auth/profile",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "auth",
+                                "profile"
+                            ]
+                        },
+                        "description": "Get pharmacy profile"
+                    }
+                },
+                {
+                    "name": "Update pharmacy profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"phone\": \"+2348098765432\",\n  \"operatingHours\": \"8:00 AM - 10:00 PM\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/auth/profile",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "auth",
+                                "profile"
+                            ]
+                        },
+                        "description": "Update pharmacy profile"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Prescriptions",
+            "item": [
+                {
+                    "name": "Get prescriptions",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/prescriptions?status=pending&page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "prescriptions"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "pending",
+                                    "description": "Filter by status"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "description": "Get prescriptions for pharmacy"
+                    }
+                },
+                {
+                    "name": "Get prescription by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/prescriptions/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "prescriptions",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Prescription UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get specific prescription"
+                    }
+                },
+                {
+                    "name": "Fill prescription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"medications\": [\n    {\n      \"name\": \"Amoxicillin\",\n      \"quantity\": 21,\n      \"price\": 2500\n    }\n  ],\n  \"totalAmount\": 2500,\n  \"notes\": \"Take with food\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/prescriptions/:id/fill",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "prescriptions",
+                                ":id",
+                                "fill"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Prescription UUID"
+                                }
+                            ]
+                        },
+                        "description": "Fill a prescription"
+                    }
+                },
+                {
+                    "name": "Update prescription status",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"ready\",\n  \"notes\": \"Ready for pickup\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/prescriptions/:id/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "prescriptions",
+                                ":id",
+                                "status"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Prescription UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update prescription status"
+                    }
+                },
+                {
+                    "name": "Complete prescription",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/prescriptions/:id/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "prescriptions",
+                                ":id",
+                                "complete"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Prescription UUID"
+                                }
+                            ]
+                        },
+                        "description": "Mark prescription as completed/dispensed"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Pharmacy Documents",
+            "item": [
+                {
+                    "name": "Upload document",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "description": "Document file"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "license",
+                                    "type": "text",
+                                    "description": "Document type"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/documents",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "documents"
+                            ]
+                        },
+                        "description": "Upload pharmacy document"
+                    }
+                },
+                {
+                    "name": "Get documents",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/documents",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "documents"
+                            ]
+                        },
+                        "description": "Get pharmacy documents"
+                    }
+                },
+                {
+                    "name": "Delete document",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/documents/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "documents",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Document UUID"
+                                }
+                            ]
+                        },
+                        "description": "Delete pharmacy document"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin",
+            "item": [
+                {
+                    "name": "Get all pharmacies",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/admin/pharmacies?status=active&page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "admin",
+                                "pharmacies"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "active"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "description": "Get all pharmacies (Admin)"
+                    }
+                },
+                {
+                    "name": "Verify pharmacy",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"verified\": true,\n  \"notes\": \"Documents verified successfully\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/admin/verify/:pharmacyId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "admin",
+                                "verify",
+                                ":pharmacyId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "pharmacyId",
+                                    "value": "",
+                                    "description": "Pharmacy UUID"
+                                }
+                            ]
+                        },
+                        "description": "Verify pharmacy (Admin)"
+                    }
+                },
+                {
+                    "name": "Suspend pharmacy",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"License expired\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/admin/suspend/:pharmacyId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "admin",
+                                "suspend",
+                                ":pharmacyId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "pharmacyId",
+                                    "value": "",
+                                    "description": "Pharmacy UUID"
+                                }
+                            ]
+                        },
+                        "description": "Suspend pharmacy (Admin)"
+                    }
+                },
+                {
+                    "name": "Get pharmacy analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pharmacy/admin/analytics",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pharmacy",
+                                "admin",
+                                "analytics"
+                            ]
+                        },
+                        "description": "Get pharmacy analytics (Admin)"
+                    }
+                }
+            ]
+        }
+    ]
+}

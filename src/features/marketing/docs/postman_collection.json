@@ -1,0 +1,249 @@
+{
+    "info": {
+        "name": "CosmicForge - Marketing Feature",
+        "description": "Marketing campaigns, waitlist, and promotional features API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Waitlist",
+            "item": [
+                {
+                    "name": "Join waitlist",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"user@example.com\",\n  \"name\": \"John Doe\",\n  \"phone\": \"+2348012345678\",\n  \"interest\": \"lab_services\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/waitlist",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "waitlist"
+                            ]
+                        },
+                        "description": "Join the waitlist for a feature"
+                    }
+                },
+                {
+                    "name": "Get waitlist entries",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/waitlist?page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "waitlist"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "description": "Get waitlist entries (Admin)"
+                    }
+                },
+                {
+                    "name": "Check waitlist status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/waitlist/status?email=user@example.com",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "waitlist",
+                                "status"
+                            ],
+                            "query": [
+                                {
+                                    "key": "email",
+                                    "value": "user@example.com"
+                                }
+                            ]
+                        },
+                        "description": "Check if email is on waitlist"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Spinning Wheel",
+            "item": [
+                {
+                    "name": "Get wheel configuration",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/spin/config",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "spin",
+                                "config"
+                            ]
+                        },
+                        "description": "Get spinning wheel configuration and prizes"
+                    }
+                },
+                {
+                    "name": "Spin the wheel",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/spin",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "spin"
+                            ]
+                        },
+                        "description": "Spin the wheel to win a prize"
+                    }
+                },
+                {
+                    "name": "Get user spin history",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/spin/history",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "spin",
+                                "history"
+                            ]
+                        },
+                        "description": "Get user's spinning wheel history"
+                    }
+                },
+                {
+                    "name": "Check spin eligibility",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/spin/eligibility",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "spin",
+                                "eligibility"
+                            ]
+                        },
+                        "description": "Check if user is eligible to spin"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Campaigns",
+            "item": [
+                {
+                    "name": "Get active campaigns",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/campaigns",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "campaigns"
+                            ]
+                        },
+                        "description": "Get active marketing campaigns"
+                    }
+                },
+                {
+                    "name": "Get campaign by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/marketing/campaigns/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marketing",
+                                "campaigns",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Campaign UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get specific campaign details"
+                    }
+                }
+            ]
+        }
+    ]
+}

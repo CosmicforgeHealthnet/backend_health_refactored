@@ -70,7 +70,6 @@ const marketingFeature = require('./features/marketing');
 const waitlistRoute = require("./features/marketing/routes/waitlistRoutes"); // Keep independent for legacy /lab_pharm
 const whatsappRoutesNotification = require("./features/NOTIFICATION/whatsapp/routes");
 const adminVerificationRoutes = require("./features/auth/routes/adminVerificationRoutes");
-const dynamicCurrency = require('./features/payments/routes/dynamicCurrencyRoutes');
 
 
 // LEFT FOR REFERENCE BUT FILES DELETED:
@@ -258,6 +257,8 @@ app.use("/api/pharmacy", pharmacyFeature.router);
 app.use("/api/compliance", complianceFeature.complianceRouter);
 app.use("/api", documentsFeature.documentsRouter);
 app.use("/api/firstaid", firstaidFeature.router);
+app.use("/api/marketing", marketingFeature.router);
+
 
 // ============================================
 // LEGACY ROUTES (Backward Compatibility)
@@ -277,13 +278,10 @@ app.use("/api/firstaid", firstaidFeature.router);
 // app.use("/appointments", authenticateJWT, appointmentRoutes);
 // app.use("/support", authenticateJWT, supportRoutes);
 app.use("/admin/verification", adminVerificationRoutes);
-app.use("/admin", adminVerificationRoutes);
 // app.use("/pharmacy", pharmacyRoutes);
 app.use("/lab", labRoutes);
 // app.use("/api/firstaid", firstaidRoutes);
 // app.use('/api/sos', sosRoutes);
-app.use("/dynamicCurrency", dynamicCurrency);
-app.use("/fhir", fhirRoutes);
 // app.use("/governance", dataGovernanceRoutes);
 // app.use("/audit", auditRoutes);
 // app.use("/consent", consentRoutes);
@@ -296,7 +294,6 @@ app.use("/lab_pharm", waitlistRoute);
 // app.use("/transactions/wallet", walletRoutes);
 // app.use("/transactions/disputes", disputeRoutes);
 // app.use("/subscription", subscriptionRoutes);
-app.use("/api/marketing", marketingFeature.router);
 app.use("/search", search);
 // app.use("/faq", faq);
 // app.use('/marketing', marketingRoutes);

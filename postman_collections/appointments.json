@@ -1,0 +1,573 @@
+{
+    "info": {
+        "name": "CosmicForge - Appointments Feature",
+        "description": "Appointment booking, management, and scheduling API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Timezone Management",
+            "item": [
+                {
+                    "name": "Update user timezone",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"timezone\": \"Africa/Lagos\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/timezone",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "timezone"
+                            ]
+                        },
+                        "description": "Update user's timezone preference"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Appointment CRUD",
+            "item": [
+                {
+                    "name": "Create appointment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"doctorId\": \"doctor-uuid\",\n  \"patientId\": \"patient-uuid\",\n  \"date\": \"2024-02-15\",\n  \"time\": \"14:00\",\n  \"type\": \"consultation\",\n  \"notes\": \"Initial consultation for health checkup\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments"
+                            ]
+                        },
+                        "description": "Create a new appointment"
+                    }
+                },
+                {
+                    "name": "Update appointment",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"date\": \"2024-02-16\",\n  \"time\": \"15:00\",\n  \"notes\": \"Updated notes\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Appointment UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update an existing appointment"
+                    }
+                },
+                {
+                    "name": "Get appointment by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Appointment UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get appointment details by ID"
+                    }
+                },
+                {
+                    "name": "Cancel appointment",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Appointment UUID"
+                                }
+                            ]
+                        },
+                        "description": "Cancel an appointment"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Doctor Approval",
+            "item": [
+                {
+                    "name": "Update doctor approval",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"approved\": true,\n  \"message\": \"Appointment confirmed\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id/doctor-approval",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id",
+                                "doctor-approval"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Appointment UUID"
+                                }
+                            ]
+                        },
+                        "description": "Doctor approves or rejects an appointment"
+                    }
+                },
+                {
+                    "name": "Complete appointment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"notes\": \"Consultation completed successfully\",\n  \"prescription\": \"Take medication as prescribed\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id",
+                                "complete"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Appointment UUID"
+                                }
+                            ]
+                        },
+                        "description": "Mark appointment as completed"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Payment & Meeting",
+            "item": [
+                {
+                    "name": "Process payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"paymentMethodId\": \"payment-method-uuid\",\n  \"amount\": 5000\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id/payment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id",
+                                "payment"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Appointment UUID"
+                                }
+                            ]
+                        },
+                        "description": "Process payment for appointment"
+                    }
+                },
+                {
+                    "name": "Generate Google Meet link",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id/meeting/google",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id",
+                                "meeting",
+                                "google"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Appointment UUID"
+                                }
+                            ]
+                        },
+                        "description": "Generate Google Meet link for virtual appointment"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Access Control",
+            "item": [
+                {
+                    "name": "Check specialization access",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/check-access/:patientId/:doctorId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "check-access",
+                                ":patientId",
+                                ":doctorId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "patientId",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "doctorId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Check if patient can book with this doctor based on subscription"
+                    }
+                },
+                {
+                    "name": "Get access info",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/access-info/:patientId/:doctorId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "access-info",
+                                ":patientId",
+                                ":doctorId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "patientId",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "doctorId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Get detailed access info for upgrade prompts"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Patient Appointments",
+            "item": [
+                {
+                    "name": "Get patient appointments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/patient/:patientId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "patient",
+                                ":patientId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "patientId",
+                                    "value": "",
+                                    "description": "Patient UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get all appointments for a patient"
+                    }
+                },
+                {
+                    "name": "Get patient upcoming appointments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/patient/:patientId/upcoming",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "patient",
+                                ":patientId",
+                                "upcoming"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "patientId",
+                                    "value": "",
+                                    "description": "Patient UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get upcoming appointments for a patient"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Doctor Appointments",
+            "item": [
+                {
+                    "name": "Get doctor appointments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/doctor/:doctorId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "doctor",
+                                ":doctorId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "",
+                                    "description": "Doctor UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get all appointments for a doctor"
+                    }
+                },
+                {
+                    "name": "Get doctor upcoming appointments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/doctor/:doctorId/upcoming",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "doctor",
+                                ":doctorId",
+                                "upcoming"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "",
+                                    "description": "Doctor UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get upcoming appointments for a doctor"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Google OAuth",
+            "item": [
+                {
+                    "name": "Initiate Google OAuth for doctor",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/auth/google/doctors/:doctorId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "auth",
+                                "google",
+                                "doctors",
+                                ":doctorId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "",
+                                    "description": "Doctor UUID"
+                                }
+                            ]
+                        },
+                        "description": "Redirect doctor to Google OAuth for calendar access"
+                    }
+                },
+                {
+                    "name": "Google OAuth callback",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/auth/google/callback?code=auth_code",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                "auth",
+                                "google",
+                                "callback"
+                            ],
+                            "query": [
+                                {
+                                    "key": "code",
+                                    "value": "auth_code",
+                                    "description": "Authorization code from Google"
+                                }
+                            ]
+                        },
+                        "description": "Handle Google OAuth callback and store tokens"
+                    }
+                }
+            ]
+        }
+    ]
+}

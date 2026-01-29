@@ -1,0 +1,553 @@
+{
+    "info": {
+        "name": "CosmicForge - Documents Feature",
+        "description": "Document management, file uploads, and FHIR resources API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Documents",
+            "item": [
+                {
+                    "name": "Upload document",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "description": "Document file to upload"
+                                },
+                                {
+                                    "key": "title",
+                                    "value": "Medical Report",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "medical_records",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents"
+                            ]
+                        },
+                        "description": "Upload a new document"
+                    }
+                },
+                {
+                    "name": "Get user documents",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents?page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "description": "Get user's documents"
+                    }
+                },
+                {
+                    "name": "Get document by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Document UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get specific document details"
+                    }
+                },
+                {
+                    "name": "Delete document",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/documents/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documents",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Document UUID"
+                                }
+                            ]
+                        },
+                        "description": "Delete a document"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Files",
+            "item": [
+                {
+                    "name": "Get file",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/files/:fileId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "files",
+                                ":fileId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "fileId",
+                                    "value": "",
+                                    "description": "File UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get file content"
+                    }
+                },
+                {
+                    "name": "Download file",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/files/:fileId/download",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "files",
+                                ":fileId",
+                                "download"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "fileId",
+                                    "value": "",
+                                    "description": "File UUID"
+                                }
+                            ]
+                        },
+                        "description": "Download file as attachment"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "FHIR Resources",
+            "item": [
+                {
+                    "name": "Get patients",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/patients?page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "patients"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "description": "Get all patients for the current user"
+                    }
+                },
+                {
+                    "name": "Get patient summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/patients/:patientId/summary",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "patients",
+                                ":patientId",
+                                "summary"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "patientId",
+                                    "value": "",
+                                    "description": "Patient UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get patient summary (overview of all resource types)"
+                    }
+                },
+                {
+                    "name": "Get patient files",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/patients/:patientId/files?page=1&limit=50&fhirResourceType=Observation",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "patients",
+                                ":patientId",
+                                "files"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "fhirResourceType",
+                                    "value": "Observation",
+                                    "description": "Optional filter by resource type"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "patientId",
+                                    "value": "",
+                                    "description": "Patient UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get all files for a specific patient"
+                    }
+                },
+                {
+                    "name": "Get files by resource type",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/resources/:resourceType?page=1&limit=50",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "resources",
+                                ":resourceType"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "resourceType",
+                                    "value": "Observation",
+                                    "description": "FHIR resource type"
+                                }
+                            ]
+                        },
+                        "description": "Get files by FHIR resource type"
+                    }
+                },
+                {
+                    "name": "Get resource types",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/resource-types",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "resource-types"
+                            ]
+                        },
+                        "description": "Get available FHIR resource types for user"
+                    }
+                },
+                {
+                    "name": "Search FHIR",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"patientIdentifier\": \"12345\",\n  \"fhirResourceType\": [\"Observation\", \"DiagnosticReport\"],\n  \"fhirSensitivityLevel\": \"high\",\n  \"dateFrom\": \"2024-01-01\",\n  \"dateTo\": \"2024-12-31\",\n  \"searchTerm\": \"blood test\",\n  \"page\": 1,\n  \"limit\": 50\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "search"
+                            ]
+                        },
+                        "description": "Advanced FHIR search"
+                    }
+                },
+                {
+                    "name": "Get related files",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/files/:fileId/related",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "files",
+                                ":fileId",
+                                "related"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "fileId",
+                                    "value": "",
+                                    "description": "File UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get related files for a patient"
+                    }
+                },
+                {
+                    "name": "Update FHIR metadata",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"fhirSensitivityLevel\": \"very_high\",\n  \"fhirSecurityLabels\": [{\"code\": \"R\", \"system\": \"http://terminology.hl7.org/CodeSystem/v3-Confidentiality\"}],\n  \"consentDirectives\": {\"canShare\": false},\n  \"purposeOfUse\": [\"treatment\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/files/:fileId/metadata",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "files",
+                                ":fileId",
+                                "metadata"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "fileId",
+                                    "value": "",
+                                    "description": "File UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update FHIR metadata (consent, security labels, etc.)"
+                    }
+                },
+                {
+                    "name": "Bulk update FHIR files",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"fileIds\": [\"uuid1\", \"uuid2\", \"uuid3\"],\n  \"updateData\": {\n    \"fhirSensitivityLevel\": \"high\",\n    \"consentDirectives\": {\"canShare\": true, \"restrictions\": [\"research\"]}\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/files/bulk",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "files",
+                                "bulk"
+                            ]
+                        },
+                        "description": "Bulk update FHIR files"
+                    }
+                },
+                {
+                    "name": "Get FHIR dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/dashboard",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "dashboard"
+                            ]
+                        },
+                        "description": "Get FHIR dashboard data"
+                    }
+                },
+                {
+                    "name": "Get FHIR stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/stats?detailed=true",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "stats"
+                            ],
+                            "query": [
+                                {
+                                    "key": "detailed",
+                                    "value": "true"
+                                }
+                            ]
+                        },
+                        "description": "Get FHIR statistics"
+                    }
+                },
+                {
+                    "name": "Get FHIR compliance report",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/fhir/compliance",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "compliance"
+                            ]
+                        },
+                        "description": "Get FHIR compliance report"
+                    }
+                }
+            ]
+        }
+    ]
+}

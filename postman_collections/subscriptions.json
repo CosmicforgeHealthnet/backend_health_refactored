@@ -1,0 +1,433 @@
+{
+    "info": {
+        "name": "CosmicForge - Subscriptions Feature",
+        "description": "Subscription plans, billing, and usage management API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Subscription Info",
+            "item": [
+                {
+                    "name": "Get current subscription",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/current",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "current"
+                            ]
+                        },
+                        "description": "Get user's current subscription details"
+                    }
+                },
+                {
+                    "name": "Get available plans",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/plans",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "plans"
+                            ]
+                        },
+                        "description": "Get available plans for user type"
+                    }
+                },
+                {
+                    "name": "Get plan pricing",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/plans/:planType/:tier/pricing",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "plans",
+                                ":planType",
+                                ":tier",
+                                "pricing"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "planType",
+                                    "value": "patient",
+                                    "description": "Plan type (patient/doctor)"
+                                },
+                                {
+                                    "key": "tier",
+                                    "value": "premium",
+                                    "description": "Plan tier (basic/premium/enterprise)"
+                                }
+                            ]
+                        },
+                        "description": "Get pricing for specific plan"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Subscription Management",
+            "item": [
+                {
+                    "name": "Create subscription payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"planType\": \"patient\",\n  \"tier\": \"premium\",\n  \"billingCycle\": \"monthly\",\n  \"paymentMethodId\": \"payment-method-uuid\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/create-payment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "create-payment"
+                            ]
+                        },
+                        "description": "Create subscription payment (payment-first upgrade)"
+                    }
+                },
+                {
+                    "name": "Upgrade with saved method",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"planType\": \"patient\",\n  \"tier\": \"premium\",\n  \"paymentMethodId\": \"payment-method-uuid\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/upgrade-with-saved-method",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "upgrade-with-saved-method"
+                            ]
+                        },
+                        "description": "Upgrade subscription using saved payment method"
+                    }
+                },
+                {
+                    "name": "Upgrade subscription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"planType\": \"patient\",\n  \"tier\": \"premium\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/upgrade",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "upgrade"
+                            ]
+                        },
+                        "description": "Upgrade/change subscription plan"
+                    }
+                },
+                {
+                    "name": "Cancel subscription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"No longer needed\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/cancel",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "cancel"
+                            ]
+                        },
+                        "description": "Cancel subscription"
+                    }
+                },
+                {
+                    "name": "Test subscription upgrade",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/test-upgrade/:transactionId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "test-upgrade",
+                                ":transactionId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "transactionId",
+                                    "value": "",
+                                    "description": "Transaction UUID"
+                                }
+                            ]
+                        },
+                        "description": "Test subscription upgrade (development)"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Features & Usage",
+            "item": [
+                {
+                    "name": "Check feature access",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/features/:featureName",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "features",
+                                ":featureName"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "featureName",
+                                    "value": "videoConsultation",
+                                    "description": "Feature name to check access for"
+                                }
+                            ]
+                        },
+                        "description": "Check if user has access to specific feature"
+                    }
+                },
+                {
+                    "name": "Get usage info",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/usage",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "usage"
+                            ]
+                        },
+                        "description": "Get usage limits and current usage"
+                    }
+                },
+                {
+                    "name": "Get usage summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/usage-summary",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "usage-summary"
+                            ]
+                        },
+                        "description": "Get comprehensive usage summary"
+                    }
+                },
+                {
+                    "name": "Get usage status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/usage-status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "usage-status"
+                            ]
+                        },
+                        "description": "Get quick usage status"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Auto-Billing",
+            "item": [
+                {
+                    "name": "Get auto-billing settings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/auto-billing",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "auto-billing"
+                            ]
+                        },
+                        "description": "Get auto-billing settings"
+                    }
+                },
+                {
+                    "name": "Enable auto-billing",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"paymentMethodId\": \"payment-method-uuid\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/auto-billing/enable",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "auto-billing",
+                                "enable"
+                            ]
+                        },
+                        "description": "Enable auto-billing"
+                    }
+                },
+                {
+                    "name": "Disable auto-billing",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/auto-billing/disable",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "auto-billing",
+                                "disable"
+                            ]
+                        },
+                        "description": "Disable auto-billing"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin Analytics",
+            "item": [
+                {
+                    "name": "Get subscription analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/subscription/analytics",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subscription",
+                                "analytics"
+                            ]
+                        },
+                        "description": "Get subscription analytics (Admin only)"
+                    }
+                }
+            ]
+        }
+    ]
+}

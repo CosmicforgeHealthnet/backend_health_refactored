@@ -1,0 +1,220 @@
+{
+    "info": {
+        "name": "CosmicForge - First Aid Feature",
+        "description": "Emergency first aid content, conditions, and step-by-step guides API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Content Sync",
+            "item": [
+                {
+                    "name": "Sync first aid content",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/sync?lastSync=2024-01-01T00:00:00Z",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "sync"
+                            ],
+                            "query": [
+                                {
+                                    "key": "lastSync",
+                                    "value": "2024-01-01T00:00:00Z",
+                                    "description": "Last sync timestamp"
+                                }
+                            ]
+                        },
+                        "description": "Sync first aid content for offline use"
+                    }
+                },
+                {
+                    "name": "Get sync status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/sync/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "sync",
+                                "status"
+                            ]
+                        },
+                        "description": "Get content sync status"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Emergency Steps",
+            "item": [
+                {
+                    "name": "Get all emergency steps",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/steps",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "steps"
+                            ]
+                        },
+                        "description": "Get all emergency step-by-step guides"
+                    }
+                },
+                {
+                    "name": "Get steps by condition",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/steps/:conditionId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "steps",
+                                ":conditionId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "conditionId",
+                                    "value": "",
+                                    "description": "Condition UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get emergency steps for a specific condition"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Conditions",
+            "item": [
+                {
+                    "name": "Get all conditions",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/conditions?category=all",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "conditions"
+                            ],
+                            "query": [
+                                {
+                                    "key": "category",
+                                    "value": "all",
+                                    "description": "Filter by category"
+                                }
+                            ]
+                        },
+                        "description": "Get all emergency conditions"
+                    }
+                },
+                {
+                    "name": "Get condition by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/conditions/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "conditions",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Condition UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get specific condition details"
+                    }
+                },
+                {
+                    "name": "Search conditions",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/firstaid/content/conditions/search?q=burn",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "firstaid",
+                                "content",
+                                "conditions",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "burn",
+                                    "description": "Search query"
+                                }
+                            ]
+                        },
+                        "description": "Search emergency conditions"
+                    }
+                }
+            ]
+        }
+    ]
+}

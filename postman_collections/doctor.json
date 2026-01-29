@@ -1,0 +1,401 @@
+{
+    "info": {
+        "name": "CosmicForge - Doctor Feature",
+        "description": "Doctor profile, verification, and management API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Public Doctor Routes",
+            "item": [
+                {
+                    "name": "Get all doctors",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/list",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "list"
+                            ]
+                        },
+                        "description": "Lists all registered doctors"
+                    }
+                },
+                {
+                    "name": "Get doctors with complete profiles",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/list/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "list",
+                                "complete"
+                            ]
+                        },
+                        "description": "Lists doctors who have completed their profile"
+                    }
+                },
+                {
+                    "name": "Get doctors by online status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/list/online?isOnline=true",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "list",
+                                "online"
+                            ],
+                            "query": [
+                                {
+                                    "key": "isOnline",
+                                    "value": "true",
+                                    "description": "Filter by online status (true/false)"
+                                }
+                            ]
+                        },
+                        "description": "Gets doctors filtered by their online availability status"
+                    }
+                },
+                {
+                    "name": "Search doctors",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/search?query=cardiology&page=1&limit=10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "query",
+                                    "value": "cardiology",
+                                    "description": "Search term (name, email, or specialty)"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        },
+                        "description": "Search doctors by name, email, or specialty"
+                    }
+                },
+                {
+                    "name": "Get doctor ratings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:userId/ratings",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":userId",
+                                "ratings"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get all ratings for a doctor"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Profile Management (Auth Required)",
+            "item": [
+                {
+                    "name": "Create doctor profile",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"departmentSpecialty\": \"Cardiology\",\n  \"yearsOfExperience\": 10,\n  \"licenseNumber\": \"MED-2024-001\",\n  \"hospitalAffiliation\": \"Lagos General Hospital\",\n  \"consultationFee\": 5000,\n  \"bio\": \"Experienced cardiologist with 10+ years of practice\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/profile",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "profile"
+                            ]
+                        },
+                        "description": "Creates a new doctor profile for the authenticated user"
+                    }
+                },
+                {
+                    "name": "Get doctor profile by user ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/profile/user/:userId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "profile",
+                                "user",
+                                ":userId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "",
+                                    "description": "Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Retrieves a doctor profile by the user's ID"
+                    }
+                },
+                {
+                    "name": "Update doctor profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"consultationFee\": 7500,\n  \"bio\": \"Updated bio information\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/profile/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "profile",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Doctor profile UUID"
+                                }
+                            ]
+                        },
+                        "description": "Updates an existing doctor profile"
+                    }
+                },
+                {
+                    "name": "Update online status",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"isOnline\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "status"
+                            ]
+                        },
+                        "description": "Updates the doctor's online availability status"
+                    }
+                },
+                {
+                    "name": "Update auth/profile info",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"fullName\": \"Dr. John Doe\",\n  \"profileImage\": \"https://example.com/image.jpg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/auth-info",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "auth-info"
+                            ]
+                        },
+                        "description": "Updates doctor's basic profile info (name, image, etc.)"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Verification",
+            "item": [
+                {
+                    "name": "Submit verification documents",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "medicalLicense",
+                                    "type": "file",
+                                    "description": "Medical license document"
+                                },
+                                {
+                                    "key": "idDocument",
+                                    "type": "file",
+                                    "description": "Government-issued ID"
+                                },
+                                {
+                                    "key": "medicalDegree",
+                                    "type": "file",
+                                    "description": "Medical degree certificate"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/verification/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "verification",
+                                "submit"
+                            ]
+                        },
+                        "description": "Submit documents for doctor verification"
+                    }
+                },
+                {
+                    "name": "Get verification status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/verification/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "verification",
+                                "status"
+                            ]
+                        },
+                        "description": "Get the current verification status"
+                    }
+                },
+                {
+                    "name": "Get verification history",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/verification/history",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "verification",
+                                "history"
+                            ]
+                        },
+                        "description": "Get verification submission history"
+                    }
+                }
+            ]
+        }
+    ]
+}
