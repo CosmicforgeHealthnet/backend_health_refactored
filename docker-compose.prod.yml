@@ -6,7 +6,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - /opt/render/project/uploads:/opt/render/project/uploads
+      - /opt/render/project/uploads:/opt/render/project/uploads:ro
     environment:
       - NODE_ENV=production
       - PORT=5000
