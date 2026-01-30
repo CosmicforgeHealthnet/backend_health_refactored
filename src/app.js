@@ -301,9 +301,11 @@ app.use("/search", search);
 // app.use('/referrals', authenticateJWT, referralRoutes);
 
 // Static file serving for uploads
-const uploadsPath = process.env.NODE_ENV === 'production'
-    ? '/opt/render/project/uploads/images'
-    : path.join(__dirname, '../uploads/images');
+const uploadsPath = process.env.UPLOAD_DIRECTORY
+    ? path.join(process.env.UPLOAD_DIRECTORY, 'images')
+    : process.env.NODE_ENV === 'production'
+        ? '/opt/render/project/uploads/images'
+        : path.join(__dirname, '../uploads/images');
 app.use('/images', express.static(uploadsPath));
 
 // Debug route

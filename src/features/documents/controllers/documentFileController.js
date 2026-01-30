@@ -74,7 +74,7 @@ class DocumentFileController {
       res.setHeader('Content-Length', fileBuffer.length);
       res.setHeader('Content-Disposition', `inline; filename="${file.originalFileName}"`);
       res.setHeader('Cache-Control', 'private, max-age=3600'); // Cache for 1 hour
-      
+
       // Send file
       res.send(fileBuffer);
 
@@ -120,14 +120,19 @@ class DocumentFileController {
     }
   }
 
-    /**
-   * Serve images publicly (no authentication required)
-   * GET /api/documents/images/:imageId
-   */
+  /**
+ * Serve images publicly (no authentication required)
+ * GET /api/documents/images/:imageId
+ */
   static async servePublicImage(req, res) {
     try {
-      const { imageId } = req.params;
-      
+      let { imageId } = req.params;
+
+      // Strip extension if present (e.g., .jpg, .png) to get the UUID
+      if (imageId.includes('.')) {
+        imageId = imageId.split('.')[0];
+      }
+
       // Get image from database
       const DocumentFileRepository = require('../repositories/documentFileRepository');
       const image = await DocumentFileRepository.getRepository().findOne({
@@ -140,23 +145,23 @@ class DocumentFileController {
 
       // Read and serve image file
       const imagePath = path.join(process.cwd(), image.filePath);
-      
+
       try {
         let imageBuffer = await fs.readFile(imagePath);
-        
+
         // Decrypt if encrypted
         if (image.isEncrypted && image.encryptionKey) {
           imageBuffer = DocumentFileService.decryptBuffer(imageBuffer, image.encryptionKey);
         }
-        
+
         // Set headers for public caching
         res.setHeader('Content-Type', image.mimeType);
         res.setHeader('Content-Length', imageBuffer.length);
         res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
         res.setHeader('ETag', image.fileHash); // Use file hash as ETag for caching
-        
+
         res.send(imageBuffer);
-        
+
       } catch (fileError) {
         console.error('File read error:', fileError);
         res.status(404).json({ error: 'Image file not found on disk' });
@@ -168,14 +173,19 @@ class DocumentFileController {
     }
   }
 
-    /**
-   * Serve image thumbnail publicly (no authentication required)
-   * GET /api/documents/images/:imageId/thumbnail
-   */
+  /**
+ * Serve image thumbnail publicly (no authentication required)
+ * GET /api/documents/images/:imageId/thumbnail
+ */
   static async serveImageThumbnail(req, res) {
     try {
-      const { imageId } = req.params;
-      
+      let { imageId } = req.params;
+
+      // Strip extension if present
+      if (imageId.includes('.')) {
+        imageId = imageId.split('.')[0];
+      }
+
       // Get image from database
       const DocumentFileRepository = require('../repositories/documentFileRepository');
       const image = await DocumentFileRepository.getRepository().findOne({
@@ -189,24 +199,24 @@ class DocumentFileController {
       // For now, serve the same image (you can add thumbnail generation later)
       // In the future, you could generate/serve actual thumbnails here
       const imagePath = path.join(process.cwd(), image.filePath);
-      
+
       try {
         let imageBuffer = await fs.readFile(imagePath);
-        
+
         // Decrypt if encrypted
         if (image.isEncrypted && image.encryptionKey) {
           const DocumentFileService = require('../services/documentFileService');
           imageBuffer = DocumentFileService.decryptBuffer(imageBuffer, image.encryptionKey);
         }
-        
+
         // Set headers for thumbnail (same as regular image for now)
         res.setHeader('Content-Type', image.mimeType);
         res.setHeader('Content-Length', imageBuffer.length);
         res.setHeader('Cache-Control', 'public, max-age=31536000');
         res.setHeader('ETag', image.fileHash);
-        
+
         res.send(imageBuffer);
-        
+
       } catch (fileError) {
         res.status(404).json({ error: 'Image file not found on disk' });
       }
@@ -237,14 +247,14 @@ class DocumentFileController {
       // Get or create "Images" folder
       const DocumentFolderRepository = require('../repositories/documentFolderRepository');
       let imageFolder;
-      
+
       try {
         // Try to find existing Images folder
         const existingFolder = await DocumentFolderRepository.getUserFolders(userId, {
           folderType: 'images',
           limit: 1
         });
-        
+
         if (existingFolder.folders.length > 0) {
           imageFolder = existingFolder.folders[0];
         } else {
@@ -305,7 +315,7 @@ class DocumentFileController {
             ipAddress,
             userAgent,
             null,
-            { 
+            {
               action: 'image_uploaded',
               documentType: 'image',
               isPublicAccess: true
@@ -327,7 +337,7 @@ class DocumentFileController {
 
       // Generate permanent URLs for images
       const baseUrl = process.env.APP_URL || process.env.FILE_SERVER_URL || 'http://localhost:3000';
-      
+
       const imageUrls = savedImages.map(image => ({
         id: image.id,
         originalName: image.originalFileName,
@@ -411,13 +421,13 @@ class DocumentFileController {
 
       if (result.success) {
         const { file } = result;
-        
+
         // Set appropriate headers
         res.setHeader('Content-Type', file.mimeType);
         res.setHeader('Content-Length', file.fileSize);
         res.setHeader('Content-Disposition', `attachment; filename="${file.originalFileName}"`);
         res.setHeader('Cache-Control', 'private, no-cache');
-        
+
         // Send file buffer
         res.send(file.buffer);
       } else {
@@ -443,7 +453,7 @@ class DocumentFileController {
       const userId = req.user.sub;
       const ipAddress = req.ip;
       const userAgent = req.get('User-Agent');
-      
+
       const { documentType, metadata, securityLevel } = req.body;
 
       const updateData = {};
@@ -792,7 +802,7 @@ class DocumentFileController {
   static validateSignedUrl(fileId, token, expires) {
     try {
       const expiresAt = parseInt(expires);
-      
+
       // Check if URL has expired
       if (Date.now() > expiresAt) {
         return false;
