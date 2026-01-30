@@ -81,6 +81,7 @@ const adminVerificationRoutes = require("./features/auth/routes/adminVerificatio
 // ============================================
 const { initWebSocket } = require("./config/websocket");
 const ChatSocketHandler = require("./features/chat/websocket/chatSocket");
+const NotificationSocketHandler = require("./features/notifications/websocket/notificationSocket");
 const checkUserTier = require("./shared/middlewares/checkUserTier");
 const { getLocationFromIP } = require("./shared/middlewares/locationMiddleware");
 
@@ -100,6 +101,10 @@ app.set("io", io);
 // Initialize chat WebSocket
 const chatSocketHandler = new ChatSocketHandler(io);
 chatSocketHandler.initialize();
+
+// Initialize notification WebSocket
+const notificationSocketHandler = new NotificationSocketHandler(io);
+notificationSocketHandler.initialize();
 
 // ============================================
 // SWAGGER DOCUMENTATION

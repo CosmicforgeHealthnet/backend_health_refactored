@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { app, httpServer } = require("./app");
 const AppDataSource = require("./config/database");
 const redisClient = require("./config/redisClient");
