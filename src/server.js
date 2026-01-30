@@ -31,7 +31,7 @@ async function startServer() {
     console.log("✔️  Database connected");
 
     // Try to connect to Redis (non-blocking)
-    // await connectRedis();
+    await connectRedis();
 
     // Run migrations
     try {

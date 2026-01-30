@@ -258,6 +258,7 @@ app.use("/api/compliance", complianceFeature.complianceRouter);
 app.use("/api", documentsFeature.documentsRouter);
 app.use("/api/firstaid", firstaidFeature.router);
 app.use("/api/marketing", marketingFeature.router);
+app.use("/api/admin/verification", adminVerificationRoutes);
 
 
 // ============================================
@@ -277,7 +278,6 @@ app.use("/api/marketing", marketingFeature.router);
 // app.use("/auth/mfa", mfaRoutes);
 // app.use("/appointments", authenticateJWT, appointmentRoutes);
 // app.use("/support", authenticateJWT, supportRoutes);
-app.use("/admin/verification", adminVerificationRoutes);
 // app.use("/pharmacy", pharmacyRoutes);
 app.use("/lab", labRoutes);
 // app.use("/api/firstaid", firstaidRoutes);

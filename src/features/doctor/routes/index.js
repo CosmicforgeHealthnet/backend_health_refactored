@@ -11,6 +11,14 @@ const profileController = require("../controllers/profileController");
 // Import verification controller from existing location
 const doctorVerificationController = require("../controllers/doctorVerificationController");
 
+// Import pricing and availability controllers
+const DoctorPricingController = require("../controllers/doctorPricingController");
+const DoctorAvailabilityController = require("../controllers/doctorAvailabilityController");
+
+// Instantiate controllers
+const pricingController = new DoctorPricingController();
+const availabilityController = new DoctorAvailabilityController();
+
 /**
  * @swagger
  * tags:
@@ -318,4 +326,224 @@ router.get("/verification/status", authenticateJWT, doctorVerificationController
  */
 router.get("/verification/history", authenticateJWT, doctorVerificationController.getVerificationHistory);
 
+// ============================================
+// PRICING ROUTES
+// ============================================
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/pricing:
+ *   post:
+ *     summary: Set doctor pricing
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Set pricing for a specific consultation type
+ */
+router.post("/:doctorId/pricing", authenticateJWT, pricingController.setPricing.bind(pricingController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/pricing:
+ *   get:
+ *     summary: Get doctor pricing
+ *     tags: [Doctor]
+ *     description: Get all pricing for a doctor
+ */
+router.get("/:doctorId/pricing", pricingController.getDoctorPricing.bind(pricingController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/pricing/{pricingId}:
+ *   put:
+ *     summary: Update doctor pricing
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Update a specific pricing record
+ */
+router.put("/:doctorId/pricing/:pricingId", authenticateJWT, pricingController.updatePricing.bind(pricingController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/pricing/{pricingId}:
+ *   delete:
+ *     summary: Delete doctor pricing
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Delete a specific pricing record
+ */
+router.delete("/:doctorId/pricing/:pricingId", authenticateJWT, pricingController.deletePricing.bind(pricingController));
+
+// ============================================
+// AVAILABILITY ROUTES
+// ============================================
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/availability:
+ *   post:
+ *     summary: Set weekly availability
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Set weekly availability schedule for a doctor
+ */
+router.post("/:doctorId/availability", authenticateJWT, availabilityController.setAvailability.bind(availabilityController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/availability:
+ *   put:
+ *     summary: Replace weekly availability
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Replace existing weekly availability schedule
+ */
+router.put("/:doctorId/availability", authenticateJWT, availabilityController.replaceAvailability.bind(availabilityController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/availability:
+ *   get:
+ *     summary: Get doctor availability
+ *     tags: [Doctor]
+ *     description: Get weekly availability for a doctor
+ */
+router.get("/:doctorId/availability", availabilityController.getDoctorAvailability.bind(availabilityController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/availability/slots:
+ *   get:
+ *     summary: Get available slots
+ *     tags: [Doctor]
+ *     description: Get available time slots for a specific date
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: timezone
+ *         schema:
+ *           type: string
+ */
+router.get("/:doctorId/availability/slots", availabilityController.getAvailableSlots.bind(availabilityController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/availability/summary:
+ *   get:
+ *     summary: Get availability summary
+ *     tags: [Doctor]
+ *     description: Get availability summary for a date range
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ */
+router.get("/:doctorId/availability/summary", availabilityController.getAvailabilitySummary.bind(availabilityController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/availability/{availabilityId}:
+ *   put:
+ *     summary: Update availability
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Update a specific availability record
+ */
+router.put("/:doctorId/availability/:availabilityId", authenticateJWT, availabilityController.updateAvailability.bind(availabilityController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/availability/{availabilityId}:
+ *   delete:
+ *     summary: Delete availability
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Delete a specific availability record
+ */
+router.delete("/:doctorId/availability/:availabilityId", authenticateJWT, availabilityController.deleteAvailability.bind(availabilityController));
+
+// ============================================
+// UNAVAILABILITY ROUTES
+// ============================================
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/unavailability:
+ *   post:
+ *     summary: Set unavailability period
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Set a period of unavailability (vacation, sick, etc.)
+ */
+router.post("/:doctorId/unavailability", authenticateJWT, availabilityController.setUnavailability.bind(availabilityController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/unavailability:
+ *   get:
+ *     summary: Get unavailability periods
+ *     tags: [Doctor]
+ *     description: Get unavailability periods for a date range
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ */
+router.get("/:doctorId/unavailability", availabilityController.getUnavailability.bind(availabilityController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/unavailability/{unavailabilityId}:
+ *   put:
+ *     summary: Update unavailability
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Update a specific unavailability record
+ */
+router.put("/:doctorId/unavailability/:unavailabilityId", authenticateJWT, availabilityController.updateUnavailability.bind(availabilityController));
+
+/**
+ * @swagger
+ * /api/doctor/{doctorId}/unavailability/{unavailabilityId}:
+ *   delete:
+ *     summary: Delete unavailability
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Delete a specific unavailability record
+ */
+router.delete("/:doctorId/unavailability/:unavailabilityId", authenticateJWT, availabilityController.deleteUnavailability.bind(availabilityController));
+
 module.exports = router;
+

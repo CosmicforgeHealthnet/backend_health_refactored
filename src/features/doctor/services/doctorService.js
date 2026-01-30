@@ -111,11 +111,18 @@ class DoctorService {
         );
 
         if (data.professionalLicense) {
-            await doctorProfileRepository.professionalLicenseRepo.delete({ doctorProfile: { id } });
-            await doctorProfileRepository.professionalLicenseRepo.save({ ...data.professionalLicense, doctorProfile: { id } });
+            const existingLicense = await doctorProfileRepository.professionalLicenseRepo.findOne({ where: { doctorProfile: { id } } });
+            if (existingLicense) {
+                await doctorProfileRepository.professionalLicenseRepo.update(existingLicense.id, data.professionalLicense);
+            } else {
+                await doctorProfileRepository.professionalLicenseRepo.save({ ...data.professionalLicense, doctorProfile: { id } });
+            }
         }
 
         if (data.professionalCertificate && Array.isArray(data.professionalCertificate)) {
+            // For arrays, simple replacement is often safer unless we have IDs, but user asked for "update it" behavior.
+            // Assuming certificates are replaced as a list for now, or we'd need complex diffing.
+            // Keeping delete/create for list items is standard unless items have persistent IDs passed from frontend.
             await doctorProfileRepository.professionalCertificateRepo.delete({ doctorProfile: { id } });
             for (const certificate of data.professionalCertificate) {
                 await doctorProfileRepository.professionalCertificateRepo.save({ ...certificate, doctorProfile: { id } });
@@ -123,18 +130,30 @@ class DoctorService {
         }
 
         if (data.clinicalPractice) {
-            await doctorProfileRepository.clinicalPracticeRepo.delete({ doctorProfile: { id } });
-            await doctorProfileRepository.clinicalPracticeRepo.save({ ...data.clinicalPractice, doctorProfile: { id } });
+            const existingPractice = await doctorProfileRepository.clinicalPracticeRepo.findOne({ where: { doctorProfile: { id } } });
+            if (existingPractice) {
+                await doctorProfileRepository.clinicalPracticeRepo.update(existingPractice.id, data.clinicalPractice);
+            } else {
+                await doctorProfileRepository.clinicalPracticeRepo.save({ ...data.clinicalPractice, doctorProfile: { id } });
+            }
         }
 
         if (data.digitalHealthTools) {
-            await doctorProfileRepository.digitalHealthToolsRepo.delete({ doctorProfile: { id } });
-            await doctorProfileRepository.digitalHealthToolsRepo.save({ ...data.digitalHealthTools, doctorProfile: { id } });
+            const existingTools = await doctorProfileRepository.digitalHealthToolsRepo.findOne({ where: { doctorProfile: { id } } });
+            if (existingTools) {
+                await doctorProfileRepository.digitalHealthToolsRepo.update(existingTools.id, data.digitalHealthTools);
+            } else {
+                await doctorProfileRepository.digitalHealthToolsRepo.save({ ...data.digitalHealthTools, doctorProfile: { id } });
+            }
         }
 
         if (data.wallet) {
-            await doctorProfileRepository.walletRepo.delete({ doctorProfile: { id } });
-            await doctorProfileRepository.walletRepo.save({ ...data.wallet, doctorProfile: { id } });
+            const existingWallet = await doctorProfileRepository.walletRepo.findOne({ where: { doctorProfile: { id } } });
+            if (existingWallet) {
+                await doctorProfileRepository.walletRepo.update(existingWallet.id, data.wallet);
+            } else {
+                await doctorProfileRepository.walletRepo.save({ ...data.wallet, doctorProfile: { id } });
+            }
         }
 
         return await doctorProfileRepository.update(id, updateData);

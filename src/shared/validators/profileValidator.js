@@ -166,7 +166,7 @@ const patientProfileSchema = Joi.object({
       vaccine: Joi.string().trim().max(100).required().messages({
         'string.empty': 'vaccine is required for immunizations',
       }),
-      
+
       certificateUrl: Joi.string().uri().allow('').optional().messages({
         'string.uri': 'certificateUrl must be a valid URL',
       }),
@@ -254,10 +254,10 @@ const patientProfileSchema = Joi.object({
   }).optional(),
 })
 
-// .fork([ 'createdAt', 'updatedAt'], (field) => field.forbidden().messages({
-//   'any.unknown': `${field.id} is not allowed`,
-// }))
-;
+  // .fork([ 'createdAt', 'updatedAt'], (field) => field.forbidden().messages({
+  //   'any.unknown': `${field.id} is not allowed`,
+  // }))
+  ;
 
 // Doctor profile specific schemas
 const professionalLicenseSchema = Joi.object({
@@ -344,16 +344,16 @@ const professionalCertificateSchema = Joi.object({
   //   'string.uri': 'verificationLink must be a valid URL',
   // }),
   verificationLink: Joi.alternatives()
-  .try(
-    Joi.string().uri().messages({
-      'string.uri': 'verificationLink must be a valid URL',
-    }),
-    Joi.string().messages({
-      'string.base': 'verificationLink must be text or a valid URL',
-    })
-  )
-  .allow('', null) // top-level allow (extra safety)
-  .optional()
+    .try(
+      Joi.string().uri().messages({
+        'string.uri': 'verificationLink must be a valid URL',
+      }),
+      Joi.string().messages({
+        'string.base': 'verificationLink must be text or a valid URL',
+      })
+    )
+    .allow('', null) // top-level allow (extra safety)
+    .optional()
 });
 
 const clinicalPracticeSchema = Joi.object({
@@ -476,10 +476,81 @@ const patientProfileUpdateSchema = patientProfileSchema.fork(
   (field) => field.optional()
 );
 
-const doctorProfileUpdateSchema = doctorProfileSchema.fork(
-  Object.keys(doctorProfileSchema.describe().keys),
-  (field) => field.optional()
-);
+// const doctorProfileUpdateSchema = doctorProfileSchema.fork(
+//   Object.keys(doctorProfileSchema.describe().keys),
+//   (field) => field.optional()
+// );
+
+const doctorProfileUpdateSchema = Joi.object({
+  profilePhoto: Joi.string().uri().optional(),
+  contactNumber: Joi.string().trim().pattern(/^\+?[1-9]\d{1,14}([-]?\d+)*$/).optional(),
+  residentialAddress: Joi.string().trim().max(500).optional(),
+  professionalLicense: Joi.object({
+    medicalLicenseNumber: Joi.string().trim().max(50).optional(),
+    countryOfLicense: Joi.string().trim().max(100).optional(),
+    licenseAuthority: Joi.string().trim().max(100).optional(),
+    licenseExpiryDate: Joi.date().iso().optional(),
+    licenseDocument: Joi.string().uri().optional(),
+    yearsOfExperience: Joi.number().integer().positive().optional(),
+    areasOfSpecialization: Joi.array().items(Joi.string().trim().max(100)).optional(),
+    subspecialty: Joi.string().trim().max(100).allow('', null).optional(),
+    medicalInstitution: Joi.string().trim().max(100).optional(),
+  }).optional(),
+  professionalCertificate: Joi.array().items(
+    Joi.object({
+      institution: Joi.string().trim().max(100).optional(),
+      degree: Joi.string().trim().max(50).optional(),
+      fieldOfStudy: Joi.string().trim().max(100).optional(),
+      startYear: Joi.number().integer().min(1900).optional(),
+      endYear: Joi.number().integer().min(1900).optional(),
+      certificateName: Joi.string().trim().max(100).optional(),
+      issuingBody: Joi.string().trim().max(100).optional(),
+      issueDate: Joi.date().iso().optional(),
+      expiryDate: Joi.date().iso().optional(),
+      certificateDocument: Joi.string().uri().optional(),
+      verificationLink: Joi.alternatives()
+        .try(Joi.string().uri(), Joi.string())
+        .allow('', null)
+        .optional(),
+    })
+  ).optional(),
+  clinicalPractice: Joi.object({
+    clinicName: Joi.string().trim().max(100).optional(),
+    location: Joi.string().trim().max(500).optional(),
+    daysAvailableFrom: Joi.string()
+      .valid('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')
+      .insensitive()
+      .optional(),
+    daysAvailableTo: Joi.string()
+      .valid('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')
+      .insensitive()
+      .optional(),
+    timeAvailableFrom: Joi.string()
+      .pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+      .optional(),
+    timeAvailableTo: Joi.string()
+      .pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+      .optional(),
+    consultationFee: Joi.number().positive().optional(),
+  }).optional(),
+  digitalHealthTools: Joi.object({
+    consentToUseAITools: Joi.boolean().allow(null, '').optional(),
+    usageDescription: Joi.string().trim().max(500).allow('', null).optional(),
+    useARVR: Joi.boolean().allow(null, '').optional(),
+  }).optional(),
+  wallet: Joi.object({
+    paymentMethod: Joi.string().valid('bank_transfer', 'mobile_money').insensitive().optional(),
+    bankName: Joi.string().trim().max(100).optional(),
+    accountNumber: Joi.string().trim().max(50).optional(),
+    accountName: Joi.string().trim().max(100).optional(),
+    swiftCode: Joi.string().trim().max(20).optional(),
+    sortCode: Joi.string().trim().max(20).optional(),
+    frequencyPayout: Joi.string().valid('daily', 'weekly', 'monthly').insensitive().optional(),
+  }).optional(),
+  gender: Joi.string().valid('male', 'female', 'other').insensitive().optional(),
+  dateOfBirth: Joi.date().iso().optional(),
+  nationality: Joi.string().trim().max(100).optional(),
+}).unknown(false);
 
 // Middleware to validate request body
 const validate = (schema) => (req, res, next) => {
