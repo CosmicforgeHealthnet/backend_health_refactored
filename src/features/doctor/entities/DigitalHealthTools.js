@@ -5,9 +5,9 @@ module.exports = new EntitySchema({
   tableName: 'digital_health_tools',
   columns: {
     id: { primary: true, type: 'uuid', generated: 'uuid' },
-    consentToUseAITools: { type: 'boolean' },
+    consentToUseAITools: { type: 'boolean', nullable: true },
     usageDescription: { type: 'text', nullable: true },
-    useARVR: { type: 'boolean' },
+    useARVR: { type: 'boolean', nullable: true },
     createdAt: { type: 'timestamp', createDate: true },
     updatedAt: { type: 'timestamp', updateDate: true },
   },
@@ -18,7 +18,6 @@ module.exports = new EntitySchema({
       inverseSide: 'digitalHealthTools',
       joinColumn: { name: 'doctorProfileId' },
       onDelete: "CASCADE"
-
     },
   },
-});
+}); 

@@ -1,6 +1,6 @@
 
 // ===================================
-// src/repositories/DoctorPricingRepository.js
+// src/features/doctor/repositories/doctorPricingRepository.js
 // ===================================
 
 const AppDataSource = require('../../../config/database');
