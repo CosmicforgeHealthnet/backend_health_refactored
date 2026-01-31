@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "CosmicForge - Patient Feature",
-        "description": "Patient profile and health records management API endpoints",
+        "description": "Patient profile, health records, and profile options API endpoints.\n\n**Field Notation:**\n- Fields marked with `(REQUIRED)` must be included\n- Fields marked with `(OPTIONAL)` can be omitted\n- Fields with `(DEFAULT: value)` have default values if not provided",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "variable": [
@@ -9,6 +9,12 @@
             "key": "baseUrl",
             "value": "http://localhost:3000",
             "type": "string"
+        },
+        {
+            "key": "patientId",
+            "value": "",
+            "type": "string",
+            "description": "Patient Profile UUID"
         }
     ],
     "auth": {
@@ -37,7 +43,12 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"gender\": \"male\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"nationality\": \"Nigerian\",\n  \"language\": \"English\",\n  \"mobileNumber\": \"+2348012345678\",\n  \"address\": \"123 Main Street, Lagos\"\n}"
+                            "raw": "{\n  \"fullName\": \"John Doe\",\n  \"gender\": \"male\",\n  \"dateOfBirth\": \"1990-05-15\",\n  \"nationality\": \"Nigerian\",\n  \"mobileNumber\": \"+2348012345678\",\n  \"address\": \"123 Health Avenue, Lagos\",\n  \"language\": \"English\",\n  \"genotype\": \"AA\",\n  \"bloodGroup\": \"O+\",\n  \"height\": 180,\n  \"weight\": 75,\n  \"smokes\": false,\n  \"drinksAlcohol\": true,\n  \"physicalActivityLevel\": \"moderate\",\n  \"dietType\": \"omnivore\",\n  \"sleepDuration\": 7.5,\n  \"profileType\": \"individual\",\n  \n  \"emergencyContactFullName\": \"Jane Doe\",\n  \"emergencyContactMobile\": \"+2348098765432\",\n  \"emergencyContactRelationship\": \"Sister\",\n\n  \"healthInsurance\": {\n    \"providerName\": \"AXA Mansard\",\n    \"policyNo\": \"AXA-99887766\",\n    \"validityDate\": \"2026-12-31\",\n    \"healthCardUrl\": \"https://example.com/card.jpg\"\n  },\n\n  \"disability\": {\n    \"hasDisability\": false\n  },\n\n  \"consent\": {\n    \"telemedicine\": true,\n    \"dataCollection\": true,\n    \"recordSharing\": true,\n    \"emergencyContact\": true,\n    \"healthTips\": true,\n    \"familyAccess\": false,\n    \"notificationsAppointments\": true,\n    \"notificationsPrescriptions\": true,\n    \"notificationsTestResults\": true,\n    \"notificationsPromotions\": false,\n    \"preferredCommunication\": \"email\",\n    \"languagePreference\": \"English\",\n    \"signature\": \"John Doe\"\n  }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/patient/profile",
@@ -50,7 +61,7 @@
                                 "profile"
                             ]
                         },
-                        "description": "Creates a new patient profile for the authenticated user"
+                        "description": "Creates a new patient profile for the authenticated user.\n\n**Common Fields:**\n- `fullName` (OPTIONAL): String - Override user's name\n- `gender` (OPTIONAL): 'male', 'female', 'other'\n- `dateOfBirth` (OPTIONAL): YYYY-MM-DD\n- `nationality` (OPTIONAL): String\n\n**Contact & Vitals (OPTIONAL):**\n- `mobileNumber`: Phone number\n- `address`: String\n- `language`: String\n- `genotype`: String (e.g. AA, AS)\n- `bloodGroup`: String (e.g. O+)\n- `height`: Number (cm)\n- `weight`: Number (kg)\n- `bmi`: Number\n- `bloodPressure`: String (e.g. 120/80)\n- `heartRate`: Number (bpm)\n- `respiratoryRate`: Number\n- `temperature`: Number\n- `spO2`: Number\n- `bloodGlucose`: Number\n\n**Lifestyle (OPTIONAL):**\n- `smokes`: Boolean\n- `drinksAlcohol`: Boolean\n- `physicalActivityLevel`: String\n- `dietType`: String\n- `sleepDuration`: Number\n- `profileType`: 'individual' or 'group' (Default: individual)\n\n**Emergency Contact (OPTIONAL):**\n- `emergencyContactFullName`: String\n- `emergencyContactMobile`: String\n- `emergencyContactRelationship`: String\n\n**Nested Objects (OPTIONAL):**\n- `healthInsurance`: { `providerName` (REQUIRED), `policyNo`, `validityDate`, `healthCardUrl` }\n- `disability`: { `hasDisability` (REQUIRED) }\n- `consent`: All boolean fields + `preferredCommunication`, `languagePreference`, `signature` are REQUIRED if this object is present.\n\n**Medical History Arrays (OPTIONAL):**\n- `medicalConditions`: [{ `name` (REQUIRED), `year`, `status` }]\n- `surgeries`: [{ `name` (REQUIRED), `date`, `location` }]\n- `allergies`: [{ `allergen` (REQUIRED), `type`, `description` }]\n- `medications`: [{ `name` (REQUIRED), `dose`, `frequency` }]\n- `immunizations`: [{ `vaccine` (REQUIRED), `date` }]\n- `familyHistories`: [{ `medicalCondition` (REQUIRED), `affectedRelative` }]"
                     }
                 },
                 {
@@ -72,12 +83,12 @@
                             "variable": [
                                 {
                                     "key": "id",
-                                    "value": "",
-                                    "description": "Patient profile UUID"
+                                    "value": "{{patientId}}",
+                                    "description": "(REQUIRED) Patient profile UUID"
                                 }
                             ]
                         },
-                        "description": "Retrieves a patient profile by its ID"
+                        "description": "Retrieves a patient profile by its ID. No body required."
                     }
                 },
                 {
@@ -101,11 +112,11 @@
                                 {
                                     "key": "userId",
                                     "value": "",
-                                    "description": "User UUID"
+                                    "description": "(REQUIRED) User UUID"
                                 }
                             ]
                         },
-                        "description": "Retrieves a patient profile by the user's ID"
+                        "description": "Retrieves a patient profile by the user's ID. No body required."
                     }
                 },
                 {
@@ -120,7 +131,12 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"gender\": \"male\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"nationality\": \"Nigerian\",\n  \"language\": \"English\",\n  \"mobileNumber\": \"+2348012345678\",\n  \"address\": \"456 Updated Street, Lagos\"\n}"
+                            "raw": "{\n  \"weight\": 78,\n  \"bloodPressure\": \"118/78\",\n  \"physicalActivityLevel\": \"active\",\n  \n  \"medications\": [\n    {\n      \"name\": \"Vitamin C\",\n      \"dose\": \"1000mg\",\n      \"frequency\": \"Daily\"\n    }\n  ],\n  \n  \"allergies\": [\n    {\n      \"type\": \"Food\",\n      \"allergen\": \"Peanuts\",\n      \"description\": \"Mild rash\"\n    }\n  ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/patient/profile/:id",
@@ -136,12 +152,12 @@
                             "variable": [
                                 {
                                     "key": "id",
-                                    "value": "",
-                                    "description": "Patient profile UUID"
+                                    "value": "{{patientId}}",
+                                    "description": "(REQUIRED) Patient profile UUID"
                                 }
                             ]
                         },
-                        "description": "Updates an existing patient profile"
+                        "description": "Updates an existing patient profile. **All fields are optional** - include only what you want to update. See 'Create patient profile' for full field documentation.\n\n**Note on Arrays:** Providing an array (e.g., `medications`) will typically **replace** the existing array."
                     }
                 },
                 {
@@ -163,18 +179,18 @@
                             "variable": [
                                 {
                                     "key": "id",
-                                    "value": "",
-                                    "description": "Patient profile UUID"
+                                    "value": "{{patientId}}",
+                                    "description": "(REQUIRED) Patient profile UUID"
                                 }
                             ]
                         },
-                        "description": "Deletes a patient profile"
+                        "description": "Deletes a patient profile. No body required."
                     }
                 }
             ]
         },
         {
-            "name": "Health Records",
+            "name": "Health Records / Profile Options",
             "item": [
                 {
                     "name": "Get health record options",
@@ -192,7 +208,7 @@
                                 "health-records"
                             ]
                         },
-                        "description": "Gets available health record types and options"
+                        "description": "Gets available health record types and options. No body required."
                     }
                 },
                 {
@@ -207,7 +223,12 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"action\": \"add\",\n  \"type\": \"allergy\",\n  \"data\": {\n    \"name\": \"Penicillin\",\n    \"severity\": \"high\",\n    \"reaction\": \"Rash and difficulty breathing\"\n  }\n}"
+                            "raw": "{\n  \"operations\": [\n    {\n      \"action\": \"add\",\n      \"type\": \"allergy\",\n      \"data\": {\n        \"allergen\": \"Dust\",\n        \"reaction\": \"Sneezing\"\n      }\n    },\n    {\n      \"action\": \"update\",\n      \"type\": \"medication\",\n      \"id\": \"existing-med-id\",\n      \"data\": {\n        \"dosage\": \"500mg\"\n      }\n    }\n  ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/patient/health-records",
@@ -220,59 +241,7 @@
                                 "health-records"
                             ]
                         },
-                        "description": "Add, update, or delete health records (allergies, medications, etc.)"
-                    }
-                }
-            ]
-        },
-        {
-            "name": "Legacy Routes (Deprecated)",
-            "item": [
-                {
-                    "name": "[DEPRECATED] Get profile options",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/patient/profile-options",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "patient",
-                                "profile-options"
-                            ]
-                        },
-                        "description": "DEPRECATED: Use /api/patient/health-records instead"
-                    }
-                },
-                {
-                    "name": "[DEPRECATED] Manage profile options",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/api/patient/profile-options",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "patient",
-                                "profile-options"
-                            ]
-                        },
-                        "description": "DEPRECATED: Use /api/patient/health-records instead"
+                        "description": "Add, update, or delete specific health record items dynamically.\n\n**Body Fields:**\n- `operations` (REQUIRED): Array of operation objects\n\n**Operation Object:**\n- `action` (REQUIRED): 'add', 'update', or 'delete'\n- `type` (REQUIRED): 'allergy', 'medication', 'condition', etc.\n- `data` (REQUIRED for add/update): Object with record details\n- `id` (REQUIRED for update/delete): ID of the record to modify"
                     }
                 }
             ]

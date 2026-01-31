@@ -6,13 +6,13 @@ module.exports = new EntitySchema({
   tableName: "family_histories",
   columns: {
     id: { primary: true, type: "uuid", generated: "uuid" },
-    medicalCondition: { type: "varchar" },
-    affectedRelative: { type: "varchar" }, // e.g., 'Mother', 'Father'
+    medicalCondition: { type: "varchar", nullable: true },
+    affectedRelative: { type: "varchar", nullable: true }, // e.g., 'Mother', 'Father'
     createdAt: { type: "timestamp", createDate: true },
   },
   relations: {
     patientProfile: {
-      type: "one-to-one",
+      type: "many-to-one",
       target: "PatientProfile",
       inverseSide: "familyHistories",
       joinColumn: { name: "patientProfileId" },

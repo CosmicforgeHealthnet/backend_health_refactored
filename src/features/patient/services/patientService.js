@@ -154,37 +154,73 @@ class PatientService {
         );
 
         // Update related entities
+        // Update related entities
         const relatedEntities = [
-            { key: 'medicalConditions', repo: patientProfileRepository.medicalConditionRepo },
-            { key: 'surgeries', repo: patientProfileRepository.surgeryRepo },
-            { key: 'allergies', repo: patientProfileRepository.allergyRepo },
-            { key: 'familyHistories', repo: patientProfileRepository.familyHistoryRepo },
-            { key: 'medications', repo: patientProfileRepository.medicationRepo },
-            { key: 'immunizations', repo: patientProfileRepository.immunizationRepo },
+            { key: 'medicalConditions', repo: patientProfileRepository.medicalConditionRepo, uniqueField: 'name' },
+            { key: 'surgeries', repo: patientProfileRepository.surgeryRepo, uniqueField: 'name' },
+            { key: 'allergies', repo: patientProfileRepository.allergyRepo, uniqueField: 'allergen' },
+            { key: 'familyHistories', repo: patientProfileRepository.familyHistoryRepo, uniqueField: 'medicalCondition' },
+            { key: 'medications', repo: patientProfileRepository.medicationRepo, uniqueField: 'name' },
+            { key: 'immunizations', repo: patientProfileRepository.immunizationRepo, uniqueField: 'vaccine' },
         ];
 
-        for (const { key, repo } of relatedEntities) {
+        for (const { key, repo, uniqueField } of relatedEntities) {
             if (data[key] && Array.isArray(data[key])) {
-                await repo.delete({ patientProfile: { id } });
+                // await repo.delete({ patientProfile: { id } }); // REMOVED: Prevent wiping data
                 for (const item of data[key]) {
-                    await repo.save({ ...item, patientProfile: { id } });
+                    let existingRecord = null;
+
+                    // 1. Try to find by ID if provided
+                    if (item.id) {
+                        existingRecord = await repo.findOne({ where: { id: item.id, patientProfile: { id } } });
+                    }
+
+                    // 2. If no ID (or not found), try to find by unique business key
+                    if (!existingRecord && item[uniqueField]) {
+                        existingRecord = await repo.findOne({
+                            where: {
+                                patientProfile: { id },
+                                [uniqueField]: item[uniqueField]
+                            }
+                        });
+                    }
+
+                    if (existingRecord) {
+                        // Update existing record (partial update)
+                        await repo.update(existingRecord.id, item);
+                    } else {
+                        // Create new record
+                        await repo.save({ ...item, patientProfile: { id } });
+                    }
                 }
             }
         }
 
         if (data.healthInsurance) {
-            await patientProfileRepository.healthInsuranceRepo.delete({ patientProfile: { id } });
-            await patientProfileRepository.healthInsuranceRepo.save({ ...data.healthInsurance, patientProfile: { id } });
+            const existingInsurance = await patientProfileRepository.healthInsuranceRepo.findOne({ where: { patientProfile: { id } } });
+            if (existingInsurance) {
+                await patientProfileRepository.healthInsuranceRepo.update(existingInsurance.id, data.healthInsurance);
+            } else {
+                await patientProfileRepository.healthInsuranceRepo.save({ ...data.healthInsurance, patientProfile: { id } });
+            }
         }
 
         if (data.disability) {
-            await patientProfileRepository.disabilityRepo.delete({ patientProfile: { id } });
-            await patientProfileRepository.disabilityRepo.save({ ...data.disability, patientProfile: { id } });
+            const existingDisability = await patientProfileRepository.disabilityRepo.findOne({ where: { patientProfile: { id } } });
+            if (existingDisability) {
+                await patientProfileRepository.disabilityRepo.update(existingDisability.id, data.disability);
+            } else {
+                await patientProfileRepository.disabilityRepo.save({ ...data.disability, patientProfile: { id } });
+            }
         }
 
         if (data.consent) {
-            await patientProfileRepository.consentRepo.delete({ patientProfile: { id } });
-            await patientProfileRepository.consentRepo.save({ ...data.consent, patientProfile: { id } });
+            const existingConsent = await patientProfileRepository.consentRepo.findOne({ where: { patientProfile: { id } } });
+            if (existingConsent) {
+                await patientProfileRepository.consentRepo.update(existingConsent.id, data.consent);
+            } else {
+                await patientProfileRepository.consentRepo.save({ ...data.consent, patientProfile: { id } });
+            }
         }
 
         const updated = await patientProfileRepository.update(id, updateData);

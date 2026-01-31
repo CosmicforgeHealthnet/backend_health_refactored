@@ -471,15 +471,116 @@ const doctorProfileSchema = Joi.object({
 // }));
 
 // Update schemas (allow partial updates)
-const patientProfileUpdateSchema = patientProfileSchema.fork(
-  Object.keys(patientProfileSchema.describe().keys),
-  (field) => field.optional()
-);
+const patientProfileUpdateSchema = Joi.object({
+  gender: Joi.string().valid('male', 'female', 'other').insensitive().optional(),
+  dateOfBirth: Joi.date().iso().optional(),
+  nationality: Joi.string().trim().max(100).optional(),
+  genotype: Joi.string().trim().max(10).optional(),
+  bloodGroup: Joi.string().trim().max(10).optional(),
+  language: Joi.string().trim().max(50).optional(),
+  mobileNumber: Joi.string().trim().pattern(/^\+?[1-9]\d{1,14}$/).optional(),
+  address: Joi.string().trim().max(500).optional(),
+  emergencyContactFullName: Joi.string().trim().max(100).optional(),
+  emergencyContactMobile: Joi.string().trim().pattern(/^\+?[1-9]\d{1,14}$/).optional(),
+  emergencyContactRelationship: Joi.string().trim().max(50).optional(),
+  height: Joi.number().positive().optional(),
+  weight: Joi.number().positive().optional(),
+  bmi: Joi.number().positive().optional(),
+  bloodPressure: Joi.string().trim().max(20).optional(),
+  heartRate: Joi.number().integer().positive().optional(),
+  respiratoryRate: Joi.number().integer().positive().optional(),
+  temperature: Joi.number().positive().optional(),
+  spO2: Joi.number().integer().positive().optional(),
+  bloodGlucose: Joi.number().positive().optional(),
+  smokes: Joi.boolean().optional(),
+  drinksAlcohol: Joi.boolean().optional(),
+  physicalActivityLevel: Joi.string().trim().max(50).optional(),
+  dietType: Joi.string().trim().max(50).optional(),
+  sleepDuration: Joi.number().positive().optional(),
+  profileType: Joi.string().valid('individual', 'group').insensitive().optional(),
 
-// const doctorProfileUpdateSchema = doctorProfileSchema.fork(
-//   Object.keys(doctorProfileSchema.describe().keys),
-//   (field) => field.optional()
-// );
+  medicalConditions: Joi.array().items(
+    Joi.object({
+      id: Joi.string().uuid().optional(),
+      name: Joi.string().trim().max(100).optional(),
+      year: Joi.number().integer().min(1900).optional(),
+      status: Joi.string().trim().max(50).optional(),
+    })
+  ).optional(),
+
+  surgeries: Joi.array().items(
+    Joi.object({
+      id: Joi.string().uuid().optional(),
+      name: Joi.string().trim().max(100).optional(),
+      date: Joi.date().iso().optional(),
+      location: Joi.string().trim().max(100).optional(),
+    })
+  ).optional(),
+
+  allergies: Joi.array().items(
+    Joi.object({
+      id: Joi.string().uuid().optional(),
+      type: Joi.string().trim().max(100).optional(),
+      allergen: Joi.string().trim().max(100).optional(),
+      description: Joi.string().trim().max(200).optional(),
+    })
+  ).optional(),
+
+  familyHistories: Joi.array().items(
+    Joi.object({
+      id: Joi.string().uuid().optional(),
+      medicalCondition: Joi.string().trim().max(100).optional(),
+      affectedRelative: Joi.string().trim().max(50).optional(),
+    })
+  ).optional(),
+
+  medications: Joi.array().items(
+    Joi.object({
+      id: Joi.string().uuid().optional(),
+      name: Joi.string().trim().max(100).optional(),
+      dose: Joi.string().trim().max(50).optional(),
+      frequency: Joi.string().trim().max(50).optional(),
+    })
+  ).optional(),
+
+  immunizations: Joi.array().items(
+    Joi.object({
+      id: Joi.string().uuid().optional(),
+      vaccine: Joi.string().trim().max(100).optional(),
+      certificateUrl: Joi.string().uri().allow('').optional(),
+      date: Joi.date().iso().optional(),
+      dose: Joi.string().allow('').trim().max(50).optional(),
+    })
+  ).optional(),
+
+  healthInsurance: Joi.object({
+    providerName: Joi.string().trim().max(100).optional(),
+    validityDate: Joi.date().iso().allow('').optional(),
+    policyNo: Joi.string().trim().max(50).allow('').optional(),
+    healthCardUrl: Joi.string().uri().optional().allow(''),
+  }).optional(),
+
+  disability: Joi.object({
+    hasDisability: Joi.boolean().optional(),
+  }).optional(),
+
+  consent: Joi.object({
+    telemedicine: Joi.boolean().optional(),
+    dataCollection: Joi.boolean().optional(),
+    recordSharing: Joi.boolean().optional(),
+    emergencyContact: Joi.boolean().optional(),
+    preferredCommunication: Joi.string().trim().max(50).optional(),
+    languagePreference: Joi.string().trim().max(50).optional(),
+    healthTips: Joi.boolean().optional(),
+    familyAccess: Joi.boolean().optional(),
+    notificationsAppointments: Joi.boolean().optional(),
+    notificationsPrescriptions: Joi.boolean().optional(),
+    notificationsTestResults: Joi.boolean().optional(),
+    notificationsPromotions: Joi.boolean().optional(),
+    signature: Joi.string().trim().max(100).optional(),
+  }).optional(),
+}).unknown(false);
+
 
 const doctorProfileUpdateSchema = Joi.object({
   profilePhoto: Joi.string().uri().optional(),

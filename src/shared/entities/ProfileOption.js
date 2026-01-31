@@ -11,12 +11,15 @@ module.exports = new EntitySchema({
         },
         profileType: {
             type: 'varchar', // 'patient' or 'doctor'
+            nullable: true,
         },
         field: {
             type: 'varchar',
+            nullable: true,
         },
         value: {
             type: 'varchar',
+            nullable: true,
         },
         createdAt: {
             type: 'timestamp',

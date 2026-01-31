@@ -7,13 +7,13 @@ module.exports = new EntitySchema({
   columns: {
     id: { primary: true, type: "uuid", generated: "uuid" },
     name: { type: "varchar" },
-    dose: { type: "varchar" }, // e.g., '500mg'
-    frequency: { type: "varchar" }, // e.g., 'Twice daily'
+    dose: { type: "varchar", nullable: true }, // e.g., '500mg'
+    frequency: { type: "varchar", nullable: true }, // e.g., 'Twice daily'
     createdAt: { type: "timestamp", createDate: true },
   },
   relations: {
     patientProfile: {
-      type: "one-to-one",
+      type: "many-to-one",
       target: "PatientProfile",
       inverseSide: "medications",
       joinColumn: { name: "patientProfileId" },
