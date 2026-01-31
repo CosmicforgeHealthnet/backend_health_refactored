@@ -112,6 +112,73 @@ router.get("/list/online", profileController.getDoctorsByOnlineStatus);
  *           type: string
  *           minLength: 3
  */
+// ============================================
+// VERIFICATION ROUTES
+// ============================================
+
+/**
+ * @swagger
+ * /api/doctor/verification/submit:
+ *   post:
+ *     summary: Submit verification documents
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Submit documents for doctor verification.
+ *       
+ *       **Legacy route**: `POST /doctor/verification/submit` (deprecated)
+ */
+router.post("/verification/submit", authenticateJWT, doctorVerificationController.submitVerification);
+
+/**
+ * @swagger
+ * /api/doctor/verification/status:
+ *   get:
+ *     summary: Get verification status
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Get the current verification status.
+ *       
+ *       **Legacy route**: `GET /doctor/verification/status` (deprecated)
+ */
+router.get("/verification/status", authenticateJWT, doctorVerificationController.getVerificationStatus);
+
+/**
+ * @swagger
+ * /api/doctor/verification/history:
+ *   get:
+ *     summary: Get verification history
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Get the verification history for the doctor.
+ *       
+ *       **Legacy route**: `GET /doctor/verification/history` (deprecated)
+ */
+router.get("/verification/history", authenticateJWT, doctorVerificationController.getVerificationHistory);
+
+/**
+ * @swagger
+ * /api/doctor/search:
+ *   get:
+ *     summary: Search doctors
+ *     tags: [Doctor]
+ *     description: |
+ *       Search doctors by name, email, or specialty.
+ *       
+ *       **Legacy route**: `GET /user/doctors/search` (deprecated)
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 3
+ */
 router.get("/search", profileController.searchDoctors);
 
 /**
@@ -281,50 +348,7 @@ router.post("/rating", authenticateJWT, profileController.addRating);
 // VERIFICATION ROUTES
 // ============================================
 
-/**
- * @swagger
- * /api/doctor/verification/submit:
- *   post:
- *     summary: Submit verification documents
- *     tags: [Doctor]
- *     security:
- *       - bearerAuth: []
- *     description: |
- *       Submit documents for doctor verification.
- *       
- *       **Legacy route**: `POST /doctor/verification/submit` (deprecated)
- */
-router.post("/verification/submit", authenticateJWT, doctorVerificationController.submitVerification);
 
-/**
- * @swagger
- * /api/doctor/verification/status:
- *   get:
- *     summary: Get verification status
- *     tags: [Doctor]
- *     security:
- *       - bearerAuth: []
- *     description: |
- *       Get the current verification status.
- *       
- *       **Legacy route**: `GET /doctor/verification/status` (deprecated)
- */
-router.get("/verification/status", authenticateJWT, doctorVerificationController.getVerificationStatus);
-
-/**
- * @swagger
- * /api/doctor/verification/history:
- *   get:
- *     summary: Get verification history
- *     tags: [Doctor]
- *     security:
- *       - bearerAuth: []
- *     description: |
- *       Get the verification history for the doctor.
- *       
- *       **Legacy route**: `GET /doctor/verification/history` (deprecated)
- */
-router.get("/verification/history", authenticateJWT, doctorVerificationController.getVerificationHistory);
 
 // ============================================
 // PRICING ROUTES
