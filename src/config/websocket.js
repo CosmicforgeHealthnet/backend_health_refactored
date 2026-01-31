@@ -25,18 +25,6 @@ module.exports = {
       },
     });
 
-    // Log server initialization
-    console.log("✅ Socket.IO server configured with:");
-    console.log(`   CORS Origins: ${config.corsOrigins.join(", ")}`);
-    console.log(`   Transports: websocket, polling`);
-    console.log(`   Ping Timeout: 60s`);
-    console.log(`   Ping Interval: 25s`);
-    console.log(`   Connection Recovery: 2 minutes`);
-
-    // Add server-level event logging
-    io.engine.on("initial_headers", (headers, request) => {
-      console.log(`🔗 Initial headers for ${request.url}`);
-    });
 
     io.engine.on("headers", (headers, request) => {
       headers["X-Powered-By"] = "CosmicForge-Health-Socket.IO";
