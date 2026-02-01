@@ -320,6 +320,7 @@ const uploadsPath = process.env.UPLOAD_DIRECTORY
     : process.env.NODE_ENV === 'production'
         ? '/opt/render/project/uploads/images'
         : path.join(__dirname, '../uploads/images');
+console.log('Static file serving /images from:', uploadsPath);
 app.use('/images', express.static(uploadsPath));
 
 // Debug route
