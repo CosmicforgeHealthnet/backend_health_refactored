@@ -208,6 +208,23 @@ class PatientService {
 
         await patientProfileRepository.delete(id);
     }
+
+    async updateAuthInfo(userId, { fullName, profileImageUrl, bannerUrl }) {
+        const updates = { fullName, profileImageUrl, bannerUrl };
+        await userRepository.updateAuthInfo(userId, updates);
+        const updatedUser = await userRepository.findById(userId);
+        return {
+            id: updatedUser.id,
+            fullName: updatedUser.fullName,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            status: updatedUser.status,
+            profileImageUrl: updatedUser.profileImageUrl,
+            bannerUrl: updatedUser.bannerUrl,
+            createdAt: updatedUser.createdAt,
+            updatedAt: updatedUser.updatedAt
+        };
+    }
 }
 
 module.exports = new PatientService();

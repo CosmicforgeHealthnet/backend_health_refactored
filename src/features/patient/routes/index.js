@@ -171,4 +171,23 @@ router.post("/health-records", profileController.manageProfileOptions);
 router.get("/profile-options", profileController.getProfileOptions);
 router.post("/profile-options", profileController.manageProfileOptions);
 
+// ============================================
+// AUTH INFO ROUTES
+// ============================================
+
+/**
+ * @swagger
+ * /api/patient/auth-info:
+ *   put:
+ *     summary: Update auth/profile info
+ *     tags: [Patient]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Updates patient's basic profile info (name, image, etc.).
+ *       
+ *       **Legacy route**: `PUT /user/update-auth` (deprecated)
+ */
+router.put("/auth-info", profileController.updateAuthInfo);
+
 module.exports = router;

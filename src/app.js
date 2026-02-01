@@ -36,7 +36,7 @@ const documentsFeature = require("./features/documents");
 const firstaidFeature = require("./features/firstaid");
 
 // Legacy feature locations (to be moved)
-const labRoutes = require("./features/LAB/routes");
+const labRoutes = require("./features/lab/routes");
 // const pharmacyRoutes = require("./routes/pharmacy/index");
 // const firstaidRoutes = require('./routes/firstaid/index');
 // const sosRoutes = require('./routes/firstaid/content/sosRoutes');
@@ -68,8 +68,14 @@ const search = require("./features/search/routes/searchRoutes");
 // const faq = require("./routes/faqRoutes");
 const marketingFeature = require('./features/marketing');
 const waitlistRoute = require("./features/marketing/routes/waitlistRoutes"); // Keep independent for legacy /lab_pharm
-const whatsappRoutesNotification = require("./features/NOTIFICATION/whatsapp/routes");
+const whatsappRoutesNotification = require("./features/notifications/whatsapp/routes");
 const adminVerificationRoutes = require("./features/auth/routes/adminVerificationRoutes");
+
+// Legacy Compatibility Routes
+
+
+// Legacy Compatibility Routes
+
 
 
 // LEFT FOR REFERENCE BUT FILES DELETED:
@@ -130,7 +136,7 @@ const loadSwaggerDoc = (docPath, title) => {
 
 const swaggerDoc = loadSwaggerDoc("./docs/swagger.bundle.json", "Main");
 const pharmacySwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/pharmacy-swagger.bundle.json", "Pharmacy");
-const labSwaggerDoc = loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.json", "Lab");
+const labSwaggerDoc = loadSwaggerDoc("./features/lab/docs/lab-swagger.bundle.json", "Lab");
 const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundle.json", "SOS");
 
 // ============================================
@@ -264,9 +270,12 @@ app.use("/api/marketing", marketingFeature.router);
 // LEGACY ROUTES (Backward Compatibility)
 // These routes are deprecated and will be removed in v2.0
 // ============================================
+// app.use("/auth/mfa", legacyMfaRoutes);
 // app.use("/auth", legacyAuthRoutes);
 // app.use("/user", authenticateJWT, legacyUserRoutes);
 // app.use("/doctor/verification", legacyDoctorVerificationRoutes);
+// MOUNTED MANUALLY:
+// app.use("/doctor/verification", require("./routes/legacy/doctorVerificationRoutes.compatibility"));
 
 // ============================================
 // OTHER ROUTES (To be refactored in future phases)

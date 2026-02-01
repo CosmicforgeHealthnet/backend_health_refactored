@@ -180,3 +180,35 @@ exports.manageProfileOptions = [
         }
     },
 ];
+
+/**
+ * Update auth/profile info (common user data)
+ * @route PUT /api/patient/auth-info
+ * @legacy PUT /user/update-auth (deprecated)
+ */
+exports.updateAuthInfo = async (req, res, next) => {
+    try {
+        const userId = req.user.sub;
+        const { fullName, profileImageUrl, bannerUrl } = req.body;
+
+        if (!fullName && !profileImageUrl && !bannerUrl) {
+            return res.status(400).json({
+                error: "At least one field (fullName, profileImageUrl, bannerUrl) is required"
+            });
+        }
+
+        const updatedUser = await userService.updateAuthInfo(userId, {
+            fullName,
+            profileImageUrl,
+            bannerUrl
+        });
+
+        return res.json({
+            success: true,
+            data: updatedUser,
+            message: "Authentication information updated successfully"
+        });
+    } catch (err) {
+        next(err);
+    }
+};
