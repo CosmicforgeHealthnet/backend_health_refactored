@@ -6,7 +6,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - /root/apps/cosmicforge_health_backend/uploads:/app/uploads:ro
+      - /root/apps/cosmicforge_health_backend/uploads:/app/uploads
     environment:
       - NODE_ENV=production
       - PORT=5000
