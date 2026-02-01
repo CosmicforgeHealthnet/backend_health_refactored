@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { app, httpServer } = require("./app");
 const AppDataSource = require("./config/database");
 const redisClient = require("./config/redisClient");
@@ -31,7 +32,7 @@ async function startServer() {
     console.log("✔️  Database connected");
 
     // Try to connect to Redis (non-blocking)
-    // await connectRedis();
+    await connectRedis();
 
     // Run migrations
     try {

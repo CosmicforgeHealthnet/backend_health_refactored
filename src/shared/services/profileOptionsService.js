@@ -20,7 +20,7 @@ class ProfileOptionsService {
     return {
       patientProfileOptions: {
         ...options
-          .filter(o => o.profileType.toLowerCase() === 'patient')
+          .filter(o => o.profileType && o.profileType.toLowerCase() === 'patient')
           .reduce((acc, o) => {
             acc[o.field] = acc[o.field] || [];
             acc[o.field].push(o.value);
@@ -30,7 +30,7 @@ class ProfileOptionsService {
       },
       doctorProfileOptions: {
         ...options
-          .filter(o => o.profileType.toLowerCase() === 'doctor')
+          .filter(o => o.profileType && o.profileType.toLowerCase() === 'doctor')
           .reduce((acc, o) => {
             acc[o.field] = acc[o.field] || [];
             acc[o.field].push(o.value);

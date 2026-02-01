@@ -62,4 +62,5 @@ module.exports = [
     ...safeImport('../features/marketing/entities'),
     // ...safeImport('../features/admin/entities'), // Merged to auth/verification
     // ...Object.values(transactions),
+    require('../shared/entities/ProfileOption'),
 ];

@@ -1,11 +1,11 @@
 // src/repositories/doctorProfileRepository.js
 const AppDataSource = require('../../../config/database');
-const DoctorProfile = require('../entities/DoctorProfile/Index');
-const ProfessionalLicense = require('../entities/DoctorProfile/ProfessionalLicense');
-const ProfessionalCertificate = require('../entities/DoctorProfile/ProfessionalCertificate');
-const ClinicalPractice = require('../entities/DoctorProfile/ClinicalPractice');
-const DigitalHealthTools = require('../entities/DoctorProfile/DigitalHealthTools');
-const Wallet = require('../entities/DoctorProfile/Wallet');
+const DoctorProfile = require('../entities/DoctorProfile');
+const ProfessionalLicense = require('../entities/ProfessionalLicense');
+const ProfessionalCertificate = require('../entities/ProfessionalCertificate');
+const ClinicalPractice = require('../entities/ClinicalPractice');
+const DigitalHealthTools = require('../entities/DigitalHealthTools');
+const Wallet = require('../entities/DoctorWallet');
 
 class DoctorProfileRepository {
   constructor() {

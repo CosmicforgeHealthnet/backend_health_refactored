@@ -16,6 +16,11 @@ const VerificationRequest = require('./VerificationRequest');
 const VerificationReviewQueue = require('./VerificationReviewQueue');
 const VerificationStatusHistory = require('./VerificationStatusHistory');
 
+// Scheduling and pricing entities
+const DoctorPricing = require('./DoctorPricing');
+const DoctorAvailability = require('./DoctorAvailability');
+const DoctorUnavailability = require('./DoctorUnavailability');
+
 module.exports = {
     // Profile entities
     DoctorProfile,
@@ -32,5 +37,10 @@ module.exports = {
     VerificationRequest,
     VerificationReviewQueue,
     VerificationStatusHistory,
-    UserRating: require('./UserRatings')
+    UserRating: require('./UserRatings'),
+
+    // Scheduling and pricing entities
+    DoctorPricing,
+    DoctorAvailability,
+    DoctorUnavailability
 };

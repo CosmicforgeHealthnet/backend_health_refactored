@@ -87,6 +87,7 @@ const adminVerificationRoutes = require("./features/auth/routes/adminVerificatio
 // ============================================
 const { initWebSocket } = require("./config/websocket");
 const ChatSocketHandler = require("./features/chat/websocket/chatSocket");
+const NotificationSocketHandler = require("./features/notifications/websocket/notificationSocket");
 const checkUserTier = require("./shared/middlewares/checkUserTier");
 const { getLocationFromIP } = require("./shared/middlewares/locationMiddleware");
 
@@ -106,6 +107,10 @@ app.set("io", io);
 // Initialize chat WebSocket
 const chatSocketHandler = new ChatSocketHandler(io);
 chatSocketHandler.initialize();
+
+// Initialize notification WebSocket
+const notificationSocketHandler = new NotificationSocketHandler(io);
+notificationSocketHandler.initialize();
 
 // ============================================
 // SWAGGER DOCUMENTATION
@@ -264,6 +269,7 @@ app.use("/api/compliance", complianceFeature.complianceRouter);
 app.use("/api", documentsFeature.documentsRouter);
 app.use("/api/firstaid", firstaidFeature.router);
 app.use("/api/marketing", marketingFeature.router);
+app.use("/api/admin/verification", adminVerificationRoutes);
 
 
 // ============================================
@@ -286,7 +292,6 @@ app.use("/api/marketing", marketingFeature.router);
 // app.use("/auth/mfa", mfaRoutes);
 // app.use("/appointments", authenticateJWT, appointmentRoutes);
 // app.use("/support", authenticateJWT, supportRoutes);
-app.use("/admin/verification", adminVerificationRoutes);
 // app.use("/pharmacy", pharmacyRoutes);
 app.use("/lab", labRoutes);
 // app.use("/api/firstaid", firstaidRoutes);

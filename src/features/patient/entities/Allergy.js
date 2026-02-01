@@ -6,14 +6,14 @@ module.exports = new EntitySchema({
   tableName: "allergies",
   columns: {
     id: { primary: true, type: "uuid", generated: "uuid" },
-    type: { type: "varchar" }, // e.g., 'Food', 'Drug'
-    allergen: { type: "varchar" },
-    description: { type: "text" },
+    type: { type: "varchar", nullable: true }, // e.g., 'Food', 'Drug'
+    allergen: { type: "varchar", nullable: true },
+    description: { type: "text", nullable: true },
     createdAt: { type: "timestamp", createDate: true },
   },
   relations: {
     patientProfile: {
-      type: "one-to-one",
+      type: "many-to-one",
       target: "PatientProfile",
       inverseSide: "allergies",
       joinColumn: { name: "patientProfileId" },

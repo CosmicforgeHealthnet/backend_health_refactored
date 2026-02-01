@@ -5,7 +5,7 @@ module.exports = new EntitySchema({
   tableName: 'patient_profiles',
   columns: {
     id: { primary: true, type: 'uuid', generated: 'uuid' },
-    userId: { type: 'uuid', unique: true }, 
+    userId: { type: 'uuid', unique: true },
     profilePhoto: { type: 'varchar', nullable: true },
     gender: { type: 'varchar' },
     dateOfBirth: { type: 'date' },
@@ -46,37 +46,37 @@ module.exports = new EntitySchema({
       onDelete: 'CASCADE'
     },
     medicalConditions: {
-      type: 'one-to-one',
+      type: 'one-to-many',
       target: 'MedicalCondition',
       inverseSide: 'patientProfile',
       cascade: true
     },
     surgeries: {
-      type: 'one-to-one',
+      type: 'one-to-many',
       target: 'Surgery',
       inverseSide: 'patientProfile',
       cascade: true
     },
     allergies: {
-      type: 'one-to-one',
+      type: 'one-to-many',
       target: 'Allergy',
       inverseSide: 'patientProfile',
       cascade: true
     },
     familyHistories: {
-      type: 'one-to-one',
+      type: 'one-to-many',
       target: 'FamilyHistory',
       inverseSide: 'patientProfile',
       cascade: true
     },
     medications: {
-      type: 'one-to-one',
+      type: 'one-to-many',
       target: 'Medication',
       inverseSide: 'patientProfile',
       cascade: true
     },
     immunizations: {
-      type: 'one-to-one',
+      type: 'one-to-many',
       target: 'Immunization',
       inverseSide: 'patientProfile',
       cascade: true

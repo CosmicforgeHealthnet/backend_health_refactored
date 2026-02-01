@@ -6,15 +6,15 @@ module.exports = new EntitySchema({
   tableName: "immunizations",
   columns: {
     id: { primary: true, type: "uuid", generated: "uuid" },
-    vaccine: { type: "varchar" },
+    vaccine: { type: "varchar", nullable: true },
     certificateUrl: { type: "varchar", nullable: true },
-    date: { type: "date" },
-    dose: { type: "varchar" },
+    date: { type: "date", nullable: true },
+    dose: { type: "varchar", nullable: true },
     createdAt: { type: "timestamp", createDate: true },
   },
   relations: {
     patientProfile: {
-      type: "one-to-one",
+      type: "many-to-one",
       target: "PatientProfile",
       inverseSide: "immunizations",
       joinColumn: { name: "patientProfileId" },

@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "CosmicForge - Doctor Feature",
-        "description": "Doctor profile, verification, and management API endpoints",
+        "description": "Doctor profile, verification, pricing, availability, and management API endpoints.\n\n**Field Notation:**\n- Fields marked with `(REQUIRED)` must be included\n- Fields marked with `(OPTIONAL)` can be omitted\n- Fields with `(DEFAULT: value)` have default values if not provided",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "variable": [
@@ -9,6 +9,12 @@
             "key": "baseUrl",
             "value": "http://localhost:3000",
             "type": "string"
+        },
+        {
+            "key": "doctorId",
+            "value": "",
+            "type": "string",
+            "description": "Doctor's user UUID"
         }
     ],
     "auth": {
@@ -41,7 +47,7 @@
                                 "list"
                             ]
                         },
-                        "description": "Lists all registered doctors"
+                        "description": "Lists all registered doctors. No body required."
                     }
                 },
                 {
@@ -61,7 +67,27 @@
                                 "complete"
                             ]
                         },
-                        "description": "Lists doctors who have completed their profile"
+                        "description": "Lists doctors who have completed their profile. No body required."
+                    }
+                },
+                {
+                    "name": "Get verified doctors",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/list/verified",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "list",
+                                "verified"
+                            ]
+                        },
+                        "description": "Lists doctors who have completed verification. No body required."
                     }
                 },
                 {
@@ -84,7 +110,7 @@
                                 {
                                     "key": "isOnline",
                                     "value": "true",
-                                    "description": "Filter by online status (true/false)"
+                                    "description": "(REQUIRED) Filter by online status: true or false"
                                 }
                             ]
                         },
@@ -97,7 +123,7 @@
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/doctor/search?query=cardiology&page=1&limit=10",
+                            "raw": "{{baseUrl}}/api/doctor/search?q=cardiology&page=1&limit=10",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -108,21 +134,76 @@
                             ],
                             "query": [
                                 {
-                                    "key": "query",
+                                    "key": "q",
                                     "value": "cardiology",
-                                    "description": "Search term (name, email, or specialty)"
+                                    "description": "(REQUIRED) Search term - min 3 characters. Searches by name, email, or specialty"
                                 },
                                 {
                                     "key": "page",
-                                    "value": "1"
+                                    "value": "1",
+                                    "description": "(OPTIONAL) Page number for pagination"
                                 },
                                 {
                                     "key": "limit",
-                                    "value": "10"
+                                    "value": "10",
+                                    "description": "(OPTIONAL) Number of results per page"
                                 }
                             ]
                         },
                         "description": "Search doctors by name, email, or specialty"
+                    }
+                },
+                {
+                    "name": "Get specific doctor",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:userId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":userId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get doctor details by user ID. No body required."
+                    }
+                },
+                {
+                    "name": "Get doctor online status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:userId/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":userId",
+                                "status"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get a doctor's current online status. No body required."
                     }
                 },
                 {
@@ -144,12 +225,12 @@
                             "variable": [
                                 {
                                     "key": "userId",
-                                    "value": "",
-                                    "description": "Doctor's user UUID"
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
                                 }
                             ]
                         },
-                        "description": "Get all ratings for a doctor"
+                        "description": "Get all ratings for a doctor. No body required."
                     }
                 }
             ]
@@ -169,7 +250,12 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"departmentSpecialty\": \"Cardiology\",\n  \"yearsOfExperience\": 10,\n  \"licenseNumber\": \"MED-2024-001\",\n  \"hospitalAffiliation\": \"Lagos General Hospital\",\n  \"consultationFee\": 5000,\n  \"bio\": \"Experienced cardiologist with 10+ years of practice\"\n}"
+                            "raw": "{\n  \"_comment\": \"FIELD DEFINITIONS - Remove this comment before sending\",\n\n  \"gender\": \"male\",\n  \"dateOfBirth\": \"1985-03-15\",\n  \"nationality\": \"Nigerian\",\n  \"profilePhoto\": \"https://example.com/photo.jpg\",\n  \"contactNumber\": \"+234-123-456-7890\",\n  \"residentialAddress\": \"123 Medical Center Road, Lagos\",\n\n  \"professionalLicense\": {\n    \"medicalLicenseNumber\": \"MED-2024-001234\",\n    \"countryOfLicense\": \"Nigeria\",\n    \"licenseAuthority\": \"Medical and Dental Council of Nigeria\",\n    \"licenseExpiryDate\": \"2027-12-31\",\n    \"licenseDocument\": \"https://example.com/license.pdf\",\n    \"yearsOfExperience\": 10,\n    \"areasOfSpecialization\": [\"cardiology\", \"internal medicine\"],\n    \"subspecialty\": \"Interventional Cardiology\",\n    \"medicalInstitution\": \"Lagos University Teaching Hospital\"\n  },\n\n  \"professionalCertificate\": [\n    {\n      \"institution\": \"University of Lagos\",\n      \"degree\": \"MBBS\",\n      \"fieldOfStudy\": \"Medicine and Surgery\",\n      \"startYear\": 2005,\n      \"endYear\": 2011,\n      \"certificateName\": \"Bachelor of Medicine, Bachelor of Surgery\",\n      \"issuingBody\": \"University of Lagos\",\n      \"issueDate\": \"2011-07-15\",\n      \"expiryDate\": null,\n      \"certificateDocument\": \"https://example.com/degree.pdf\",\n      \"verificationLink\": \"https://verify.unilag.edu.ng\"\n    }\n  ],\n\n  \"clinicalPractice\": {\n    \"clinicName\": \"HeartCare Specialist Clinic\",\n    \"location\": \"456 Hospital Road, Victoria Island, Lagos\",\n    \"daysAvailableFrom\": \"monday\",\n    \"daysAvailableTo\": \"friday\",\n    \"timeAvailableFrom\": \"09:00:00\",\n    \"timeAvailableTo\": \"17:00:00\",\n    \"consultationFee\": 15000\n  },\n\n  \"digitalHealthTools\": {\n    \"consentToUseAITools\": true,\n    \"usageDescription\": \"AI-assisted diagnosis and treatment recommendations\",\n    \"useARVR\": false\n  },\n\n  \"wallet\": {\n    \"paymentMethod\": \"bank_transfer\",\n    \"bankName\": \"First Bank of Nigeria\",\n    \"accountNumber\": \"1234567890\",\n    \"accountName\": \"Dr. John Doe\",\n    \"swiftCode\": \"FBNINGLA\",\n    \"sortCode\": \"011\",\n    \"frequencyPayout\": \"weekly\"\n  }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/doctor/profile",
@@ -182,7 +268,34 @@
                                 "profile"
                             ]
                         },
-                        "description": "Creates a new doctor profile for the authenticated user"
+                        "description": "Creates a new doctor profile for the authenticated user.\n\n**ALL FIELDS ARE OPTIONAL** - You can create a profile with any combination of fields.\n\n**Top-Level Fields:**\n- `gender` (OPTIONAL): 'male', 'female', or 'other'\n- `dateOfBirth` (OPTIONAL): ISO date format YYYY-MM-DD\n- `nationality` (OPTIONAL): String, max 100 chars\n- `profilePhoto` (OPTIONAL): Valid URL\n- `contactNumber` (OPTIONAL): Phone number (e.g., +234-123-456-7890)\n- `residentialAddress` (OPTIONAL): String, max 500 chars\n\n**professionalLicense Object (OPTIONAL):**\n- `medicalLicenseNumber` (OPTIONAL): String, max 50 chars\n- `countryOfLicense` (OPTIONAL): String, max 100 chars\n- `licenseAuthority` (OPTIONAL): String, max 100 chars\n- `licenseExpiryDate` (OPTIONAL): ISO date YYYY-MM-DD\n- `licenseDocument` (OPTIONAL): Valid URL\n- `yearsOfExperience` (OPTIONAL): Positive integer\n- `areasOfSpecialization` (OPTIONAL): Array of strings\n- `subspecialty` (OPTIONAL): String, max 100 chars\n- `medicalInstitution` (OPTIONAL): String, max 100 chars\n\n**professionalCertificate Array (OPTIONAL):**\nEach certificate object requires:\n- `institution` (REQUIRED): String, max 100 chars\n- `degree` (REQUIRED): String, max 50 chars\n- `fieldOfStudy` (REQUIRED): String, max 100 chars\n- `startYear` (REQUIRED): Integer >= 1900\n- `endYear` (REQUIRED): Integer >= 1900\n- `certificateName` (REQUIRED): String, max 100 chars\n- `issuingBody` (REQUIRED): String, max 100 chars\n- `issueDate` (REQUIRED): ISO date\n- `expiryDate` (OPTIONAL): ISO date\n- `certificateDocument` (OPTIONAL): Valid URL\n- `verificationLink` (OPTIONAL): String or URL\n\n**clinicalPractice Object (OPTIONAL):**\n- `clinicName` (REQUIRED if object present): String\n- `location` (REQUIRED if object present): String\n- `daysAvailableFrom` (REQUIRED if object present): Day of week\n- `daysAvailableTo` (REQUIRED if object present): Day of week\n- `timeAvailableFrom` (OPTIONAL): HH:MM:SS format\n- `timeAvailableTo` (OPTIONAL): HH:MM:SS format\n- `consultationFee` (OPTIONAL): Positive number\n\n**digitalHealthTools Object (OPTIONAL):**\n- `consentToUseAITools` (OPTIONAL): Boolean\n- `usageDescription` (OPTIONAL): String, max 500 chars\n- `useARVR` (OPTIONAL): Boolean\n\n**wallet Object (OPTIONAL):**\n- `paymentMethod` (REQUIRED if object present): 'bank_transfer' or 'mobile_money'\n- `bankName` (REQUIRED if object present): String\n- `accountNumber` (REQUIRED if object present): String\n- `accountName` (REQUIRED if object present): String\n- `swiftCode` (OPTIONAL): String, max 20 chars\n- `sortCode` (OPTIONAL): String, max 20 chars\n- `frequencyPayout` (REQUIRED if object present): 'daily', 'weekly', or 'monthly'"
+                    }
+                },
+                {
+                    "name": "Get doctor profile by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/profile/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "profile",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "(REQUIRED) Doctor profile UUID"
+                                }
+                            ]
+                        },
+                        "description": "Retrieves a doctor profile by its ID. No body required."
                     }
                 },
                 {
@@ -205,12 +318,12 @@
                             "variable": [
                                 {
                                     "key": "userId",
-                                    "value": "",
-                                    "description": "Doctor's user UUID"
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
                                 }
                             ]
                         },
-                        "description": "Retrieves a doctor profile by the user's ID"
+                        "description": "Retrieves a doctor profile by the user's ID. No body required."
                     }
                 },
                 {
@@ -225,7 +338,12 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"consultationFee\": 7500,\n  \"bio\": \"Updated bio information\"\n}"
+                            "raw": "{\n  \"_comment\": \"ALL FIELDS ARE OPTIONAL - Include only what you want to update\",\n\n  \"gender\": \"male\",\n  \"dateOfBirth\": \"1985-03-15\",\n  \"nationality\": \"Nigerian\",\n  \"profilePhoto\": \"https://example.com/updated-photo.jpg\",\n  \"contactNumber\": \"+234-987-654-3210\",\n  \"residentialAddress\": \"789 New Address, Ikoyi, Lagos\",\n\n  \"professionalLicense\": {\n    \"yearsOfExperience\": 12,\n    \"areasOfSpecialization\": [\"cardiology\", \"internal medicine\", \"echocardiography\"]\n  },\n\n  \"clinicalPractice\": {\n    \"consultationFee\": 20000\n  },\n\n  \"digitalHealthTools\": {\n    \"consentToUseAITools\": true\n  }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/doctor/profile/:id",
@@ -242,11 +360,38 @@
                                 {
                                     "key": "id",
                                     "value": "",
-                                    "description": "Doctor profile UUID"
+                                    "description": "(REQUIRED) Doctor profile UUID"
                                 }
                             ]
                         },
-                        "description": "Updates an existing doctor profile"
+                        "description": "Updates an existing doctor profile. **All fields are optional** - include only the fields you want to update. See 'Create doctor profile' for full field documentation."
+                    }
+                },
+                {
+                    "name": "Delete doctor profile",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/profile/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "profile",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "(REQUIRED) Doctor profile UUID"
+                                }
+                            ]
+                        },
+                        "description": "Deletes a doctor profile. No body required."
                     }
                 },
                 {
@@ -261,7 +406,12 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"isOnline\": true\n}"
+                            "raw": "{\n  \"isOnline\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/doctor/status",
@@ -274,7 +424,7 @@
                                 "status"
                             ]
                         },
-                        "description": "Updates the doctor's online availability status"
+                        "description": "Updates the doctor's online availability status.\n\n**Body Fields:**\n- `isOnline` (REQUIRED): Boolean - true for online, false for offline"
                     }
                 },
                 {
@@ -289,7 +439,12 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"fullName\": \"Dr. John Doe\",\n  \"profileImage\": \"https://example.com/image.jpg\"\n}"
+                            "raw": "{\n  \"fullName\": \"Dr. John Adebayo Doe\",\n  \"profileImageUrl\": \"https://example.com/profile-image.jpg\",\n  \"bannerUrl\": \"https://example.com/banner-image.jpg\",\n  \"departmentSpecialty\": \"Cardiology\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/doctor/auth-info",
@@ -302,7 +457,40 @@
                                 "auth-info"
                             ]
                         },
-                        "description": "Updates doctor's basic profile info (name, image, etc.)"
+                        "description": "Updates doctor's basic profile info (name, images, specialty).\n\n**At least one field is required:**\n- `fullName` (OPTIONAL): String - Doctor's display name\n- `profileImageUrl` (OPTIONAL): Valid URL for profile image\n- `bannerUrl` (OPTIONAL): Valid URL for banner image\n- `departmentSpecialty` (OPTIONAL): String - Medical specialty"
+                    }
+                },
+                {
+                    "name": "Add rating",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"userId\": \"{{doctorId}}\",\n  \"rating\": 5,\n  \"message\": \"Excellent doctor, very professional and caring. Highly recommended!\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/rating",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "rating"
+                            ]
+                        },
+                        "description": "Add a rating for a doctor.\n\n**Body Fields:**\n- `userId` (REQUIRED): String - UUID of the doctor being rated\n- `rating` (REQUIRED): Number - Rating value (typically 1-5)\n- `message` (OPTIONAL): String - Review text/comment"
                     }
                 }
             ]
@@ -314,29 +502,24 @@
                     "name": "Submit verification documents",
                     "request": {
                         "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "multipart/form-data"
-                            }
-                        ],
+                        "header": [],
                         "body": {
                             "mode": "formdata",
                             "formdata": [
                                 {
                                     "key": "medicalLicense",
                                     "type": "file",
-                                    "description": "Medical license document"
+                                    "description": "(REQUIRED) Medical license document - PDF, JPG, or PNG"
                                 },
                                 {
                                     "key": "idDocument",
                                     "type": "file",
-                                    "description": "Government-issued ID"
+                                    "description": "(REQUIRED) Government-issued ID - PDF, JPG, or PNG"
                                 },
                                 {
                                     "key": "medicalDegree",
                                     "type": "file",
-                                    "description": "Medical degree certificate"
+                                    "description": "(REQUIRED) Medical degree certificate - PDF, JPG, or PNG"
                                 }
                             ]
                         },
@@ -352,7 +535,7 @@
                                 "submit"
                             ]
                         },
-                        "description": "Submit documents for doctor verification"
+                        "description": "Submit documents for doctor verification.\n\n**Form Data Files (All REQUIRED):**\n- `medicalLicense`: Medical license document\n- `idDocument`: Government-issued ID\n- `medicalDegree`: Medical degree certificate\n\n**Accepted formats:** PDF, JPG, PNG"
                     }
                 },
                 {
@@ -372,7 +555,7 @@
                                 "status"
                             ]
                         },
-                        "description": "Get the current verification status"
+                        "description": "Get the current verification status. No body required."
                     }
                 },
                 {
@@ -392,7 +575,812 @@
                                 "history"
                             ]
                         },
-                        "description": "Get verification submission history"
+                        "description": "Get verification submission history. No body required."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Pricing",
+            "description": "Doctor consultation pricing management",
+            "item": [
+                {
+                    "name": "Set doctor pricing",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"consultationType\": \"consultation\",\n  \"price\": 5000,\n  \"currency\": \"NGN\",\n  \"duration\": 30,\n  \"description\": \"Standard consultation (30 minutes)\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/pricing",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "pricing"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Set pricing for a specific consultation type. If pricing for the same type+duration exists, it will be updated.\n\n**Body Fields:**\n- `consultationType` (REQUIRED): Enum - 'consultation', 'follow-up', 'routine-checkup', or 'urgent'\n- `price` (REQUIRED): Number - Price amount (decimal)\n- `currency` (OPTIONAL, DEFAULT: 'NGN'): String - 3-letter currency code\n- `duration` (OPTIONAL, DEFAULT: 30): Integer - Duration in minutes\n- `description` (OPTIONAL): String - Description of the pricing"
+                    }
+                },
+                {
+                    "name": "Set pricing - Follow-up",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"consultationType\": \"follow-up\",\n  \"price\": 3000,\n  \"currency\": \"NGN\",\n  \"duration\": 15,\n  \"description\": \"Follow-up consultation (15 minutes)\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/pricing",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "pricing"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Example: Set follow-up consultation pricing"
+                    }
+                },
+                {
+                    "name": "Set pricing - Urgent",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"consultationType\": \"urgent\",\n  \"price\": 10000,\n  \"currency\": \"NGN\",\n  \"duration\": 30,\n  \"description\": \"Urgent consultation - priority booking\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/pricing",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "pricing"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Example: Set urgent consultation pricing"
+                    }
+                },
+                {
+                    "name": "Get doctor pricing",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/pricing",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "pricing"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get all pricing for a doctor. No body required."
+                    }
+                },
+                {
+                    "name": "Update doctor pricing",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"price\": 7500,\n  \"duration\": 45,\n  \"description\": \"Extended consultation (45 minutes)\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/pricing/:pricingId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "pricing",
+                                ":pricingId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                },
+                                {
+                                    "key": "pricingId",
+                                    "value": "",
+                                    "description": "(REQUIRED) Pricing record UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update a specific pricing record.\n\n**Body Fields (all OPTIONAL - include only what to update):**\n- `price`: Number - New price amount\n- `currency`: String - 3-letter currency code\n- `duration`: Integer - Duration in minutes\n- `description`: String - Description"
+                    }
+                },
+                {
+                    "name": "Delete doctor pricing",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/pricing/:pricingId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "pricing",
+                                ":pricingId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                },
+                                {
+                                    "key": "pricingId",
+                                    "value": "",
+                                    "description": "(REQUIRED) Pricing record UUID"
+                                }
+                            ]
+                        },
+                        "description": "Delete a specific pricing record. No body required."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Availability",
+            "description": "Doctor weekly availability schedule management with timezone support",
+            "item": [
+                {
+                    "name": "Set weekly availability",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[\n  {\n    \"dayOfWeek\": \"monday\",\n    \"startTime\": \"09:00\",\n    \"endTime\": \"17:00\",\n    \"slotDuration\": 30,\n    \"breakTime\": 10,\n    \"maxAppointments\": 15,\n    \"isAvailable\": true\n  },\n  {\n    \"dayOfWeek\": \"tuesday\",\n    \"startTime\": \"09:00\",\n    \"endTime\": \"17:00\",\n    \"slotDuration\": 30,\n    \"breakTime\": 10\n  },\n  {\n    \"dayOfWeek\": \"wednesday\",\n    \"startTime\": \"09:00\",\n    \"endTime\": \"13:00\",\n    \"slotDuration\": 30,\n    \"breakTime\": 10\n  },\n  {\n    \"dayOfWeek\": \"thursday\",\n    \"startTime\": \"10:00\",\n    \"endTime\": \"18:00\",\n    \"slotDuration\": 45,\n    \"breakTime\": 15\n  },\n  {\n    \"dayOfWeek\": \"friday\",\n    \"startTime\": \"09:00\",\n    \"endTime\": \"15:00\",\n    \"slotDuration\": 30,\n    \"breakTime\": 10\n  }\n]",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/availability",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "availability"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Set weekly availability schedule. **Will fail if days already exist** - use PUT to replace/update.\n\n**Request Body:** Array of availability objects\n\n**Each Object Fields:**\n- `dayOfWeek` (REQUIRED): Enum - 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'\n- `startTime` (REQUIRED): String - Start time in HH:MM format\n- `endTime` (REQUIRED): String - End time in HH:MM format\n- `slotDuration` (OPTIONAL, DEFAULT: 30): Integer - Slot duration in minutes\n- `breakTime` (OPTIONAL, DEFAULT: 0): Integer - Break between appointments in minutes\n- `maxAppointments` (OPTIONAL, DEFAULT: null): Integer - Max appointments per day (null = unlimited)\n- `isAvailable` (OPTIONAL, DEFAULT: true): Boolean - Whether doctor is available\n\n**Note:** Timezone is automatically detected from the doctor's profile"
+                    }
+                },
+                {
+                    "name": "Replace weekly availability",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[\n  {\n    \"dayOfWeek\": \"monday\",\n    \"startTime\": \"10:00\",\n    \"endTime\": \"18:00\",\n    \"slotDuration\": 45,\n    \"breakTime\": 15\n  },\n  {\n    \"dayOfWeek\": \"friday\",\n    \"startTime\": \"09:00\",\n    \"endTime\": \"15:00\",\n    \"slotDuration\": 30,\n    \"breakTime\": 10\n  }\n]",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/availability",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "availability"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Replace existing weekly availability schedule. **Deletes existing entries for specified days and creates new ones.**\n\nSee 'Set weekly availability' for field documentation."
+                    }
+                },
+                {
+                    "name": "Get doctor availability",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/availability",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "availability"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get weekly availability for a doctor. No body required."
+                    }
+                },
+                {
+                    "name": "Get available slots",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/availability/slots?date=2026-02-01&timezone=Africa/Lagos",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "availability",
+                                "slots"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date",
+                                    "value": "2026-02-01",
+                                    "description": "(REQUIRED) Date to check - YYYY-MM-DD format"
+                                },
+                                {
+                                    "key": "timezone",
+                                    "value": "Africa/Lagos",
+                                    "description": "(OPTIONAL) Timezone for slot times. Defaults to user's detected timezone. Examples: 'Africa/Lagos', 'America/New_York', 'Europe/London', 'UTC'"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get available time slots for a specific date.\n\n**Response includes:**\n- `availableSlots`: Array of available time strings (HH:MM)\n- `bookedSlots`: Array of already booked times\n- `doctorTimezone`: Doctor's configured timezone\n- `targetTimezone`: Timezone used for display\n- `totalSlots`: Total number of slots\n- `availableCount`: Number of available slots"
+                    }
+                },
+                {
+                    "name": "Get availability summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/availability/summary?startDate=2026-02-01&endDate=2026-02-07&timezone=Africa/Lagos",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "availability",
+                                "summary"
+                            ],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2026-02-01",
+                                    "description": "(REQUIRED) Start date of range - YYYY-MM-DD"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2026-02-07",
+                                    "description": "(REQUIRED) End date of range - YYYY-MM-DD"
+                                },
+                                {
+                                    "key": "timezone",
+                                    "value": "Africa/Lagos",
+                                    "description": "(OPTIONAL) Timezone for display"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get availability summary for a date range. Useful for calendar views.\n\n**Response includes:**\n- `summary`: Array of daily availability info\n- `totalDays`: Number of days in range\n- `daysWithAvailability`: Count of days with available slots"
+                    }
+                },
+                {
+                    "name": "Update availability record",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"startTime\": \"10:00\",\n  \"endTime\": \"16:00\",\n  \"slotDuration\": 45,\n  \"breakTime\": 15,\n  \"maxAppointments\": 10,\n  \"isAvailable\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/availability/:availabilityId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "availability",
+                                ":availabilityId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                },
+                                {
+                                    "key": "availabilityId",
+                                    "value": "",
+                                    "description": "(REQUIRED) Availability record UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update a specific availability record.\n\n**Body Fields (all OPTIONAL - include only what to update):**\n- `startTime`: String - Start time HH:MM\n- `endTime`: String - End time HH:MM\n- `slotDuration`: Integer - Slot duration in minutes\n- `breakTime`: Integer - Break between appointments\n- `maxAppointments`: Integer or null - Max appointments per day\n- `isAvailable`: Boolean - Whether available"
+                    }
+                },
+                {
+                    "name": "Delete availability record",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/availability/:availabilityId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "availability",
+                                ":availabilityId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                },
+                                {
+                                    "key": "availabilityId",
+                                    "value": "",
+                                    "description": "(REQUIRED) Availability record UUID"
+                                }
+                            ]
+                        },
+                        "description": "Delete a specific availability record. No body required."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Unavailability",
+            "description": "Doctor unavailability periods - vacations, sick leave, meetings, etc.",
+            "item": [
+                {
+                    "name": "Set unavailability - Full days",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"startDate\": \"2026-02-15\",\n  \"endDate\": \"2026-02-20\",\n  \"startTime\": null,\n  \"endTime\": null,\n  \"reason\": \"Annual vacation\",\n  \"type\": \"vacation\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/unavailability",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "unavailability"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Set full day unavailability period (e.g., vacation).\n\n**Body Fields:**\n- `startDate` (REQUIRED): String - Start date YYYY-MM-DD\n- `endDate` (REQUIRED): String - End date YYYY-MM-DD\n- `startTime` (OPTIONAL): null or String HH:MM - Leave null for full day\n- `endTime` (OPTIONAL): null or String HH:MM - Leave null for full day\n- `reason` (OPTIONAL): String - Reason for unavailability, max 255 chars\n- `type` (OPTIONAL, DEFAULT: 'other'): Enum - 'vacation', 'sick', 'meeting', 'personal', 'other'"
+                    }
+                },
+                {
+                    "name": "Set unavailability - Partial day",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"startDate\": \"2026-02-10\",\n  \"endDate\": \"2026-02-10\",\n  \"startTime\": \"09:00\",\n  \"endTime\": \"12:00\",\n  \"reason\": \"Medical appointment\",\n  \"type\": \"personal\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/unavailability",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "unavailability"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Set partial day unavailability (e.g., morning only).\n\nSee 'Set unavailability - Full days' for field documentation."
+                    }
+                },
+                {
+                    "name": "Set unavailability - Sick leave",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"startDate\": \"2026-02-05\",\n  \"endDate\": \"2026-02-07\",\n  \"startTime\": null,\n  \"endTime\": null,\n  \"reason\": \"Feeling unwell\",\n  \"type\": \"sick\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/unavailability",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "unavailability"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Example: Set sick leave unavailability"
+                    }
+                },
+                {
+                    "name": "Set unavailability - Meeting",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"startDate\": \"2026-02-12\",\n  \"endDate\": \"2026-02-12\",\n  \"startTime\": \"14:00\",\n  \"endTime\": \"16:00\",\n  \"reason\": \"Hospital board meeting\",\n  \"type\": \"meeting\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/unavailability",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "unavailability"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Example: Set meeting unavailability (partial day)"
+                    }
+                },
+                {
+                    "name": "Get unavailability periods",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/unavailability?startDate=2026-02-01&endDate=2026-02-28",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "unavailability"
+                            ],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2026-02-01",
+                                    "description": "(REQUIRED) Start of date range - YYYY-MM-DD"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2026-02-28",
+                                    "description": "(REQUIRED) End of date range - YYYY-MM-DD"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get unavailability periods for a date range. No body required."
+                    }
+                },
+                {
+                    "name": "Update unavailability",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"endDate\": \"2026-02-22\",\n  \"reason\": \"Extended vacation - visiting family\",\n  \"type\": \"vacation\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/unavailability/:unavailabilityId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "unavailability",
+                                ":unavailabilityId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                },
+                                {
+                                    "key": "unavailabilityId",
+                                    "value": "",
+                                    "description": "(REQUIRED) Unavailability record UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update a specific unavailability record.\n\n**Body Fields (all OPTIONAL - include only what to update):**\n- `startDate`: String - Start date YYYY-MM-DD\n- `endDate`: String - End date YYYY-MM-DD\n- `startTime`: String or null - Start time HH:MM\n- `endTime`: String or null - End time HH:MM\n- `reason`: String - Reason for unavailability\n- `type`: Enum - 'vacation', 'sick', 'meeting', 'personal', 'other'"
+                    }
+                },
+                {
+                    "name": "Delete unavailability",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/:doctorId/unavailability/:unavailabilityId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                ":doctorId",
+                                "unavailability",
+                                ":unavailabilityId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's user UUID"
+                                },
+                                {
+                                    "key": "unavailabilityId",
+                                    "value": "",
+                                    "description": "(REQUIRED) Unavailability record UUID"
+                                }
+                            ]
+                        },
+                        "description": "Delete/deactivate a specific unavailability record (soft delete). No body required."
                     }
                 }
             ]

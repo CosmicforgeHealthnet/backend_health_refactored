@@ -7,9 +7,9 @@ module.exports = new EntitySchema({
   tableName: "surgeries",
   columns: {
     id: { primary: true, type: "uuid", generated: "uuid" },
-    name: { type: "varchar" },
-    date: { type: "date" },
-    location: { type: "varchar" },
+    name: { type: "varchar", nullable: true },
+    date: { type: "date", nullable: true },
+    location: { type: "varchar", nullable: true },
     createdAt: { type: "timestamp", createDate: true },
   },
   relations: {

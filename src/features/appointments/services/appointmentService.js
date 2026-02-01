@@ -9,8 +9,8 @@ const patientService = require("../../patient/services/patientService");
 
 const ZoomMeetingService = require("./zoomMeet/zoomMeetingService");
 const JitsiMeetingService = require("./Jitsi/jitsiMeetingService");
-const DoctorPricingService = require("./doctorPricingService");
-const DoctorAvailabilityService = require("./doctorAvailabilityService");
+const DoctorPricingService = require("../../doctor/services/doctorPricingService");
+const DoctorAvailabilityService = require("../../doctor/services/doctorAvailabilityService");
 const userRepository = require("../../auth/repositories/userRepository");
 const { USER_ROLES } = require("../../../shared/utils/constants");
 const AppointmentChatService = require("../../chat/services/appointmentChatService");

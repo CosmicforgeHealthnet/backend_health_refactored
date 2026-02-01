@@ -35,19 +35,17 @@ class ChatSocketHandler {
           return next(new Error("Authentication token required"));
         }
 
-        let decoded = {};
-        await jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
-          decoded = payload;
-          if (err) {
-            console.log(err);
-            // return res.status(401).json({ error: 'Invalid or expired token' });
-          }
-        });
+        let decoded;
+        try {
+          decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (err) {
+          console.log("JWT verification failed:", err.message);
+          return next(new Error("Invalid or expired token"));
+        }
 
         const { sub: id } = decoded;
         const user = await this.userRepo.findOne({ where: { id } });
 
-        console.log("user", user);
         if (!user) {
           return next(new Error("User not found"));
         }
