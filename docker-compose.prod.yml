@@ -6,13 +6,14 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./uploads:/app/uploads:ro
+      - /root/apps/cosmicforge_health_backend/uploads:/app/uploads:ro
     environment:
       - NODE_ENV=production
       - PORT=5000
       - UPLOAD_DIRECTORY=/app/uploads
       - AI_SERVICE_URL=http://ai_service:8001/api/v1
       - REDIS_URL=redis://redis:6379
+      - REDIS_DEV_HOST=redis
       # Add other DB credentials here or use .env file
     env_file:
       - .env.production
