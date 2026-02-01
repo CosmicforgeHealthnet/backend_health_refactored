@@ -10,6 +10,9 @@ LagacyCode/
 .env.development
 .env.example
 
+# Uploads
+uploads/
+/uploads
 # Logs
 logs/
 *.log
