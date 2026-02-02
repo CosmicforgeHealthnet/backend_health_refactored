@@ -11,9 +11,11 @@ const config = require('../../../config/verificationConfig');
 
 // Environment-based upload paths
 const getUploadPath = (subPath = '') => {
-  const basePath = process.env.NODE_ENV === 'production'
-    ? '/opt/render/project/uploads'
-    : path.join(__dirname, '../../../../uploads');
+  // Use UPLOAD_DIRECTORY env var which is correctly set to /app/uploads
+  const basePath = process.env.UPLOAD_DIRECTORY ||
+    (process.env.NODE_ENV === 'production'
+      ? '/app/uploads'  // ✅ Container path
+      : path.join(__dirname, '../../../../uploads'));
 
   return subPath ? path.join(basePath, subPath) : basePath;
 };
