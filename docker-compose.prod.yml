@@ -6,7 +6,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - /opt/render/project/uploads:/app/uploads
+      - /root/apps/backend_health_refactored/uploads:/app/uploads
     environment:
       - NODE_ENV=production
       - PORT=5000
