@@ -44,6 +44,12 @@ router.get(
   appointmentController.getAvailableTimezones.bind(appointmentController)
 );
 
+// Analytics - Place before /:id routes
+router.get(
+  "/analytics",
+  appointmentController.getAnalytics.bind(appointmentController)
+);
+
 // ===================================
 // MAIN APPOINTMENT ROUTES WITH TIMEZONE VALIDATION
 // ===================================

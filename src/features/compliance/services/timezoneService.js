@@ -62,7 +62,7 @@ class TimezoneService {
         utcDate.getUTCSeconds()
       );
 
-      
+
       return utcTimestamp;
     } catch (error) {
       throw new Error(`Failed to convert to UTC: ${error.message}`);
@@ -249,7 +249,7 @@ class TimezoneService {
    */
   static async updateUserTimezone(userId, timezone, req) {
     try {
-      const userRepository = require("../repositories/userRepository");
+      const userRepository = require("../../auth/repositories/userRepository");
 
       const updateData = {
         timezone: timezone,

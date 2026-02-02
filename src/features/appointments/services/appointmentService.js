@@ -353,6 +353,10 @@ class AppointmentService {
     return await this.appointmentRepository.findAll(filters);
   }
 
+  async getAnalytics(filters) {
+    return await this.appointmentRepository.getAnalytics(filters);
+  }
+
   async updateAppointment(id, updateData) {
     const appointment = await this.appointmentRepository.findById(id);
     if (!appointment) {

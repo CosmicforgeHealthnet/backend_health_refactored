@@ -11,6 +11,9 @@ const profileController = require("../controllers/profileController");
 // Import verification controller from existing location
 const doctorVerificationController = require("../controllers/doctorVerificationController");
 
+// Import document upload middleware
+const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
+
 // Import pricing and availability controllers
 const DoctorPricingController = require("../controllers/doctorPricingController");
 const DoctorAvailabilityController = require("../controllers/doctorAvailabilityController");
@@ -133,6 +136,56 @@ router.post("/verification/submit", authenticateJWT, doctorVerificationControlle
 
 /**
  * @swagger
+ * /api/doctor/verification/resubmit:
+ *   post:
+ *     summary: Resubmit verification
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Resubmit a rejected or expired verification request.
+ */
+router.post("/verification/resubmit", authenticateJWT, doctorVerificationController.resubmitVerification.bind(doctorVerificationController));
+
+/**
+ * @swagger
+ * /api/doctor/verification/{id}/update:
+ *   put:
+ *     summary: Update verification info
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Update information for a pending verification request.
+ */
+router.put("/verification/:id/update", authenticateJWT, doctorVerificationController.updateVerificationInfo.bind(doctorVerificationController));
+
+/**
+ * @swagger
+ * /api/doctor/verification/{id}/edit:
+ *   get:
+ *     summary: Get editable verification info
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Get information that can be edited for a verification request.
+ */
+router.get("/verification/:id/edit", authenticateJWT, doctorVerificationController.getEditableVerificationInfo.bind(doctorVerificationController));
+
+/**
+ * @swagger
+ * /api/doctor/verification/{id}/documents:
+ *   post:
+ *     summary: Upload verification documents
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     consumes:
+ *       - multipart/form-data
+ *     description: Upload documents for a verification request.
+ */
+router.post("/verification/:id/documents", authenticateJWT, DocumentUploadMiddleware.processUploadedFiles, doctorVerificationController.uploadDocuments.bind(doctorVerificationController));
+
+/**
+ * @swagger
  * /api/doctor/verification/status:
  *   get:
  *     summary: Get verification status
@@ -145,6 +198,26 @@ router.post("/verification/submit", authenticateJWT, doctorVerificationControlle
  *       **Legacy route**: `GET /doctor/verification/status` (deprecated)
  */
 router.get("/verification/status", authenticateJWT, doctorVerificationController.getVerificationStatus);
+
+/**
+ * @swagger
+ * /api/doctor/verification/countries:
+ *   get:
+ *     summary: Get supported countries
+ *     tags: [Doctor]
+ *     description: Get list of countries supported for verification.
+ */
+router.get("/verification/countries", doctorVerificationController.getSupportedCountries.bind(doctorVerificationController));
+
+/**
+ * @swagger
+ * /api/doctor/verification/countries/{countryCode}/requirements:
+ *   get:
+ *     summary: Get country requirements
+ *     tags: [Doctor]
+ *     description: Get verification requirements for a specific country.
+ */
+router.get("/verification/countries/:countryCode/requirements", doctorVerificationController.getCountryRequirements.bind(doctorVerificationController));
 
 /**
  * @swagger
@@ -219,6 +292,22 @@ router.get("/:userId/status", profileController.getOnlineStatus);
  *       **Legacy route**: `GET /user/:userId/ratings` (deprecated)
  */
 router.get("/:userId/ratings", profileController.getRatings);
+
+// ============================================
+// ADMIN SUPPORT ROUTES
+// ============================================
+
+/**
+ * @swagger
+ * /api/doctor/admin/{doctorId}/onboarding-status:
+ *   get:
+ *     summary: Get doctor onboarding status
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Get comprehensive onboarding status for a doctor (Admin only).
+ */
+router.get("/admin/:doctorId/onboarding-status", authenticateJWT, doctorVerificationController.getDoctorOnboardingStatus.bind(doctorVerificationController));
 
 // ============================================
 // PROTECTED DOCTOR ROUTES (auth required)
@@ -570,4 +659,3 @@ router.put("/:doctorId/unavailability/:unavailabilityId", authenticateJWT, avail
 router.delete("/:doctorId/unavailability/:unavailabilityId", authenticateJWT, availabilityController.deleteUnavailability.bind(availabilityController));
 
 module.exports = router;
-

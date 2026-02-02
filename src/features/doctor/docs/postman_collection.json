@@ -45,9 +45,21 @@
                                 "api",
                                 "doctor",
                                 "list"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "(OPTIONAL) Page number"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10",
+                                    "description": "(OPTIONAL) Items per page"
+                                }
                             ]
                         },
-                        "description": "Lists all registered doctors. No body required."
+                        "description": "Lists all registered doctors with pagination."
                     }
                 },
                 {
@@ -65,9 +77,21 @@
                                 "doctor",
                                 "list",
                                 "complete"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "(OPTIONAL) Page number"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10",
+                                    "description": "(OPTIONAL) Items per page"
+                                }
                             ]
                         },
-                        "description": "Lists doctors who have completed their profile. No body required."
+                        "description": "Lists doctors who have completed their profile with pagination."
                     }
                 },
                 {
@@ -85,9 +109,21 @@
                                 "doctor",
                                 "list",
                                 "verified"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "(OPTIONAL) Page number"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10",
+                                    "description": "(OPTIONAL) Items per page"
+                                }
                             ]
                         },
-                        "description": "Lists doctors who have completed verification. No body required."
+                        "description": "Lists doctors who have completed verification with pagination."
                     }
                 },
                 {
@@ -576,6 +612,231 @@
                             ]
                         },
                         "description": "Get verification submission history. No body required."
+                    }
+                },
+                {
+                    "name": "Get supported countries",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/verification/countries",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "verification",
+                                "countries"
+                            ]
+                        },
+                        "description": "Get list of countries supported for verification. No body required."
+                    }
+                },
+                {
+                    "name": "Get country requirements",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/verification/countries/:countryCode/requirements",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "verification",
+                                "countries",
+                                ":countryCode",
+                                "requirements"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "countryCode",
+                                    "value": "NG",
+                                    "description": "(REQUIRED) Two-letter country code (e.g., NG, US, GB)"
+                                }
+                            ]
+                        },
+                        "description": "Get verification requirements for a specific country."
+                    }
+                },
+                {
+                    "name": "Resubmit verification",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"licenseNumber\": \"MED-2024-001234\",\n  \"countryCode\": \"NG\",\n  \"replaceDocuments\": false\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/verification/resubmit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "verification",
+                                "resubmit"
+                            ]
+                        },
+                        "description": "Resubmit a rejected or expired verification request.\n\n**Body Fields:**\n- `licenseNumber` (OPTIONAL): Update license number\n- `countryCode` (OPTIONAL): Update country code\n- `replaceDocuments` (OPTIONAL, DEFAULT: false): If true, previous documents are discarded. If false, they are carried over."
+                    }
+                },
+                {
+                    "name": "Update verification info",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"licenseNumber\": \"MED-2024-NEW-123\",\n  \"issuingAuthority\": \"New Authority Name\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/verification/:id/update",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "verification",
+                                ":id",
+                                "update"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "(REQUIRED) Verification Request UUID"
+                                }
+                            ]
+                        },
+                        "description": "Update information for a pending verification request.\n\n**Body Fields:** (All Optional)\n- `licenseNumber`\n- `countryCode`\n- `issuingAuthority`\n- `licenseType`\n- `issueDate`\n- `expiryDate`"
+                    }
+                },
+                {
+                    "name": "Get editable verification info",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/verification/:id/edit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "verification",
+                                ":id",
+                                "edit"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "(REQUIRED) Verification Request UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get information that can be edited for a verification request."
+                    }
+                },
+                {
+                    "name": "Upload additional documents",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "files",
+                                    "type": "file",
+                                    "description": "(REQUIRED) One or more document files"
+                                },
+                                {
+                                    "key": "documentType",
+                                    "value": "additional_document",
+                                    "type": "text",
+                                    "description": "(OPTIONAL) Type of document"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/verification/:id/documents",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "verification",
+                                ":id",
+                                "documents"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "(REQUIRED) Verification Request UUID"
+                                }
+                            ]
+                        },
+                        "description": "Upload documents for a verification request. Used for additional documents or re-uploading."
+                    }
+                },
+                {
+                    "name": "Get doctor onboarding status (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/admin/:doctorId/onboarding-status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "admin",
+                                ":doctorId",
+                                "onboarding-status"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "doctorId",
+                                    "value": "{{doctorId}}",
+                                    "description": "(REQUIRED) Doctor's User UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get comprehensive onboarding status for a doctor (Admin only)."
                     }
                 }
             ]

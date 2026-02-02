@@ -171,16 +171,52 @@ class DoctorService {
 
     // --- Doctor Search & Status Methods ---
 
-    async getAllDoctors() {
-        return userRepository.findAllDoctors();
+    async getAllDoctors({ page = 1, limit = 10 } = {}) {
+        const skip = (page - 1) * limit;
+        const take = limit;
+        const result = await userRepository.findAllDoctors({ skip, take });
+
+        return {
+            data: result.doctors,
+            meta: {
+                total: result.total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(result.total / limit)
+            }
+        };
     }
 
-    async getAllDoctorsWithCompleteProfile() {
-        return userRepository.findAllCompleteProfileDoctors();
+    async getAllDoctorsWithCompleteProfile({ page = 1, limit = 10 } = {}) {
+        const skip = (page - 1) * limit;
+        const take = limit;
+        const result = await userRepository.findAllCompleteProfileDoctors({ skip, take });
+
+        return {
+            data: result.doctors,
+            meta: {
+                total: result.total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(result.total / limit)
+            }
+        };
     }
 
-    async getAllVerifiedDoctors() {
-        return userRepository.findVerifiedDoctors();
+    async getAllVerifiedDoctors({ page = 1, limit = 10 } = {}) {
+        const skip = (page - 1) * limit;
+        const take = limit;
+        const result = await userRepository.findVerifiedDoctors({ skip, take });
+
+        return {
+            data: result.doctors,
+            meta: {
+                total: result.total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(result.total / limit)
+            }
+        };
     }
 
     async getADoctor(userId) {

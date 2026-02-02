@@ -44,10 +44,12 @@ class AppointmentController {
         dateRange: req.query.startDate && req.query.endDate ? {
           startDate: req.query.startDate,
           endDate: req.query.endDate
-        } : null
+        } : null,
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 10
       };
 
-      const appointments = await this.appointmentService.getAppointments(filters);
+      const result = await this.appointmentService.getAppointments(filters);
 
       // Add timezone-aware display times for each appointment
       // const enhancedAppointments = appointments.map(appointment => {
@@ -67,12 +69,36 @@ class AppointmentController {
 
       res.json({
         success: true,
-        // appointments: enhancedAppointments,
-        appointments: appointments,
+        appointments: result.data,
+        meta: result.meta,
         timezoneContext: {
           userTimezone: req.userTimezone,
           // count: enhancedAppointments.length
         }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  async getAnalytics(req, res) {
+    try {
+      const filters = {
+        patientId: req.query.patientId,
+        doctorId: req.query.doctorId,
+        startDate: req.query.startDate,
+        endDate: req.query.endDate
+      };
+
+      const analytics = await this.appointmentService.getAnalytics(filters);
+
+      res.json({
+        success: true,
+        analytics,
+        // timezoneContext: req.userTimezoneData
       });
     } catch (error) {
       res.status(500).json({
