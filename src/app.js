@@ -322,6 +322,12 @@ const uploadsPath = process.env.UPLOAD_DIRECTORY
         : path.join(__dirname, '../uploads/images');
 console.log('Static file serving /images from:', uploadsPath);
 app.use('/images', express.static(uploadsPath));
+app.use('/images', (req, res) => {
+    res.status(404).json({
+        error: 'Image file not found',
+        path: req.originalUrl
+    });
+});
 
 // Debug route
 app.get('/debug-files', (req, res) => {
