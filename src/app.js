@@ -320,8 +320,13 @@ const uploadsPath = process.env.UPLOAD_DIRECTORY
     : process.env.NODE_ENV === 'production'
         ? '/opt/render/project/uploads/images'
         : path.join(__dirname, '../uploads/images');
-console.log('Static file serving /images from:', uploadsPath);
-app.use('/images', express.static(uploadsPath));
+// Force absolute path resolution if ENV is relative
+const finalUploadsPath = (process.env.UPLOAD_DIRECTORY && !path.isAbsolute(process.env.UPLOAD_DIRECTORY))
+    ? path.join(__dirname, '..', process.env.UPLOAD_DIRECTORY, 'images')
+    : uploadsPath;
+
+console.log('Static file serving /images from:', finalUploadsPath);
+app.use('/images', express.static(finalUploadsPath));
 app.use('/images', (req, res) => {
     res.status(404).json({
         error: 'Image file not found',
@@ -333,10 +338,23 @@ app.use('/images', (req, res) => {
 app.get('/debug-files', (req, res) => {
     const fs = require('node:fs');
     try {
-        const files = fs.readdirSync('../uploads/images');
-        res.json({ files, cwd: process.cwd() });
+        // Use the same path variable as the static middleware
+        const files = fs.readdirSync(finalUploadsPath);
+        res.json({
+            status: 'success',
+            resolvedPath: finalUploadsPath,
+            cwd: process.cwd(),
+            filesCount: files.length,
+            // Show first 20 files
+            files: files.slice(0, 20)
+        });
     } catch (error) {
-        res.json({ error: error.message, cwd: process.cwd() });
+        res.status(500).json({
+            status: 'error',
+            error: error.message,
+            resolvedPath: finalUploadsPath,
+            cwd: process.cwd()
+        });
     }
 });
 
