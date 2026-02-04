@@ -1,6 +1,7 @@
 const userRepository = require("../../auth/repositories/userRepository");
 const doctorProfileRepository = require("../repositories/doctorProfileRepository");
 const { USER_ROLES } = require("../../../shared/utils/constants");
+const cache = require("../../../shared/utils/cache");
 
 class DoctorService {
     async createDoctorProfile(data) {
@@ -156,7 +157,14 @@ class DoctorService {
             }
         }
 
-        return await doctorProfileRepository.update(id, updateData);
+        const updatedProfile = await doctorProfileRepository.update(id, updateData);
+
+        // Invalidate doctor cache
+        await cache.invalidatePattern('doctors:*');
+        await cache.del(`doctor:${checkownerprofile.user ? checkownerprofile.user.id : 'unknown'}`);
+        await cache.del(`doctor:${id}`);
+
+        return updatedProfile;
     }
 
     async deleteDoctorProfile(id, req) {
@@ -172,55 +180,77 @@ class DoctorService {
     // --- Doctor Search & Status Methods ---
 
     async getAllDoctors({ page = 1, limit = 10 } = {}) {
-        const skip = (page - 1) * limit;
-        const take = limit;
-        const result = await userRepository.findAllDoctors({ skip, take });
+        return cache.getOrSet(
+            `doctors:all:page:${page}:limit:${limit}`,
+            async () => {
+                const skip = (page - 1) * limit;
+                const take = limit;
+                const result = await userRepository.findAllDoctors({ skip, take });
 
-        return {
-            data: result.doctors,
-            meta: {
-                total: result.total,
-                page: parseInt(page),
-                limit: parseInt(limit),
-                totalPages: Math.ceil(result.total / limit)
-            }
-        };
+                return {
+                    data: result.doctors,
+                    meta: {
+                        total: result.total,
+                        page: parseInt(page),
+                        limit: parseInt(limit),
+                        totalPages: Math.ceil(result.total / limit)
+                    }
+                };
+            },
+            300 // 5 minutes TTL
+        );
     }
 
     async getAllDoctorsWithCompleteProfile({ page = 1, limit = 10 } = {}) {
-        const skip = (page - 1) * limit;
-        const take = limit;
-        const result = await userRepository.findAllCompleteProfileDoctors({ skip, take });
+        return cache.getOrSet(
+            `doctors:complete:page:${page}:limit:${limit}`,
+            async () => {
+                const skip = (page - 1) * limit;
+                const take = limit;
+                const result = await userRepository.findAllCompleteProfileDoctors({ skip, take });
 
-        return {
-            data: result.doctors,
-            meta: {
-                total: result.total,
-                page: parseInt(page),
-                limit: parseInt(limit),
-                totalPages: Math.ceil(result.total / limit)
-            }
-        };
+                return {
+                    data: result.doctors,
+                    meta: {
+                        total: result.total,
+                        page: parseInt(page),
+                        limit: parseInt(limit),
+                        totalPages: Math.ceil(result.total / limit)
+                    }
+                };
+            },
+            300 // 5 minutes TTL
+        );
     }
 
     async getAllVerifiedDoctors({ page = 1, limit = 10 } = {}) {
-        const skip = (page - 1) * limit;
-        const take = limit;
-        const result = await userRepository.findVerifiedDoctors({ skip, take });
+        return cache.getOrSet(
+            `doctors:verified:page:${page}:limit:${limit}`,
+            async () => {
+                const skip = (page - 1) * limit;
+                const take = limit;
+                const result = await userRepository.findVerifiedDoctors({ skip, take });
 
-        return {
-            data: result.doctors,
-            meta: {
-                total: result.total,
-                page: parseInt(page),
-                limit: parseInt(limit),
-                totalPages: Math.ceil(result.total / limit)
-            }
-        };
+                return {
+                    data: result.doctors,
+                    meta: {
+                        total: result.total,
+                        page: parseInt(page),
+                        limit: parseInt(limit),
+                        totalPages: Math.ceil(result.total / limit)
+                    }
+                };
+            },
+            300 // 5 minutes TTL
+        );
     }
 
     async getADoctor(userId) {
-        return userRepository.findADoctor(userId);
+        return cache.getOrSet(
+            `doctor:${userId}`,
+            async () => userRepository.findADoctor(userId),
+            600 // 10 minutes TTL
+        );
     }
 
     async getDoctorsByOnlineStatus(isOnline) {
@@ -269,6 +299,11 @@ class DoctorService {
             throw new Error("Unauthorized: Only the doctor or an admin can update online status");
         }
         await userRepository.updateOnlineStatus(userId, isOnline);
+
+        // Invalidate specific doctor cache and lists
+        await cache.del(`doctor:${userId}`);
+        await cache.invalidatePattern('doctors:*'); // Status change affects lists
+
         return { id: userId, isOnline };
     }
 

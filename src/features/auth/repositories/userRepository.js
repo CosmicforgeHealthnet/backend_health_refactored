@@ -124,6 +124,7 @@ class UserRepository {
         "createdAt",
         "updatedAt",
         "departmentSpecialty",
+        "bannerUrl"
 
       ],
       relations: [
