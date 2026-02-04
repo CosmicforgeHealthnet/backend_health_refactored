@@ -61,6 +61,11 @@ class ChatSocketHandler {
 
     // Handle connections
     this.io.on("connection", (socket) => {
+      if (!socket.user) {
+        console.log(`Socket ${socket.id} connected without user - disconnecting`);
+        socket.disconnect(true);
+        return;
+      }
       console.log(`User ${socket.user.email} connected: ${socket.id}`);
       this.handleConnection(socket);
     });
@@ -564,7 +569,7 @@ class ChatSocketHandler {
   handleDisconnection(socket) {
     const userId = socket.userId;
 
-    console.log(`User ${socket.user.email} disconnected: ${socket.id}`);
+    console.log(`User ${socket.user?.email || userId} disconnected: ${socket.id}`);
 
     // Clean up typing indicators
     for (const [roomId, typingSet] of this.typingUsers.entries()) {

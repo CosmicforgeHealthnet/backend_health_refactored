@@ -1361,7 +1361,7 @@ class SubscriptionCompatibilityService {
    */
   static async _createSubscriptionFromUserData(userId) {
     try {
-      const userRepository = require("../repositories/userRepository");
+      const userRepository = require("../../auth/repositories/userRepository");
       let user;
       try {
         user = await userRepository.findById(userId);
@@ -1389,7 +1389,7 @@ class SubscriptionCompatibilityService {
    */
   static async _createBasicFromUserData(userId) {
     try {
-      const userRepository = require("../repositories/userRepository");
+      const userRepository = require("../../auth/repositories/userRepository");
       let user;
       try {
         user = await userRepository.findById(userId);
