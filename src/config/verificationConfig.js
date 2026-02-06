@@ -67,10 +67,11 @@ module.exports = {
 
   // Status transition rules
   ALLOWED_STATUS_TRANSITIONS: {
-    pending: ['in_progress', 'api_verification', 'manual_review', 'expired'],
-    in_progress: ['api_verification', 'manual_review', 'approved', 'rejected'],
+    pending: ['in_progress', 'api_verification', 'manual_review', 'expired', 'pending_documents'],
+    pending_documents: ['in_progress', 'pending', 'manual_review', 'expired'],
+    in_progress: ['api_verification', 'manual_review', 'approved', 'rejected', 'pending_documents'],
     api_verification: ['approved', 'rejected', 'manual_review'],
-    manual_review: ['approved', 'rejected'],
+    manual_review: ['approved', 'rejected', 'pending_documents'],
     approved: [], // Terminal state
     rejected: ['pending'], // Can resubmit
     expired: ['pending'] // Can resubmit
