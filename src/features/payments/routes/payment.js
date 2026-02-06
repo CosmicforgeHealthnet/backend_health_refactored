@@ -6,102 +6,13 @@ const { authenticateJWT, authorizeRoles } = require('../../../shared/middlewares
 const ValidationMiddleware = require('../../../shared/middlewares/validation');
 const RateLimiterMiddleware = require('../../../shared/middlewares/rateLimiter');
 const SanitizerMiddleware = require('../../../shared/middlewares/sanitizer');
-const crypto = require('crypto');
 
 // Webhook logic moved to ./webhooks.js
-const captureRawBody = require('../../../shared/middlewares/captureRawBody');
-// Middleware to capture raw body for signature verification
-// const captureRawBody = (req, res, next) => {
-//   let data = '';
-//   req.setEncoding('utf8');
-
-//   req.on('data', (chunk) => {
-//     data += chunk;
-//   });
-
-//   req.on('end', () => {
-//     req.rawBody = data;
-//     try {
-//       // Parse the JSON body after capturing raw body
-//       req.body = JSON.parse(data);
-//       next();
-//     } catch (error) {
-//       console.error('❌ Error parsing webhook JSON:', error);
-//       res.status(400).json({ error: 'Invalid JSON' });
-//     }
-//   });
-// };
-
-const captureRawBody = (req, res, next) => {
-  let data = '';
-  req.setEncoding('utf8');
-
-  req.on('data', (chunk) => {
-    data += chunk;
-    console.log('📥 Received chunk:', chunk.length, 'bytes');
-  });
-
-  req.on('end', () => {
-    console.log('📥 Raw body captured:', data.length, 'bytes');
-    req.rawBody = data;
-    try {
-      req.body = JSON.parse(data);
-      console.log('✅ JSON parsed successfully');
-      next();
-    } catch (error) {
-      console.error('❌ Error parsing webhook JSON:', error);
-      console.error('❌ Raw data:', data);
-      res.status(400).json({ error: 'Invalid JSON' });
-    }
-  });
-
-  req.on('error', (error) => {
-    console.error('❌ Request error:', error);
-    res.status(500).json({ error: 'Request processing failed' });
-  });
-};
-
 // Token verification logic moved to services/middleware (if needed)
 
 // ================================
 // PUBLIC ROUTES
 // ================================
-
-// // UPDATED WEBHOOK ROUTES WITH SIGNATURE VERIFICATION
-// router.post('/webhooks/flutterwave', 
-//   captureRawBody, 
-//   verifyFlutterwaveSignature, 
-//   PaymentController.handleWebhook
-// );
-
-// router.post('/webhooks/paystack', 
-//   captureRawBody, 
-//   verifyPaystackSignature, 
-//   PaymentController.handleWebhook
-// );
-
-// Dynamic webhook route with provider-specific verification
-// router.post('/webhooks/:provider', (req, res, next) => {
-//  console.log('🎯 WEBHOOK HIT:', req.params.provider);
-//  console.log('🎯 TIME:', new Date().toISOString());
-//  next();
-// }, captureRawBody, (req, res, next) => {
-//  const { provider } = req.params;
-
-//  console.log('🔍 Processing provider:', provider);
-
-//  if (provider === 'flutterwave') {
-//    return verifyFlutterwaveSignature(req, res, next);
-//  } else if (provider === 'paystack') {
-//    return verifyPaystackSignature(req, res, next);
-//  } else {
-//    console.log('⚠️ Unknown provider:', provider);
-//    return res.status(400).json({ error: 'Unknown provider' });
-//  }
-// }, PaymentController.handleWebhook);
-
-// WEBHOOK ROUTES MOVED TO separate webhook router
-// See src/features/payments/routes/webhooks.js
 
 // PAYMENT CALLBACK ROUTE (PUBLIC - for provider redirects)
 router.get('/callback', PaymentController.handlePaymentCallback);
