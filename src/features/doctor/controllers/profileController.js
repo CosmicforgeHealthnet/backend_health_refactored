@@ -150,10 +150,14 @@ exports.deleteProfile = async (req, res, next) => {
  */
 exports.getAllDoctors = async (req, res, next) => {
     try {
-        const doctors = await userService.getAllDoctors();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+
+        const result = await userService.getAllDoctors({ page, limit });
         return res.json({
             success: true,
-            data: doctors,
+            data: result.data,
+            meta: result.meta,
             message: "Doctors retrieved successfully",
         });
     } catch (err) {
@@ -168,10 +172,14 @@ exports.getAllDoctors = async (req, res, next) => {
  */
 exports.getAllDoctorsWithCompleteProfile = async (req, res, next) => {
     try {
-        const doctors = await userService.getAllDoctorsWithCompleteProfile();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+
+        const result = await userService.getAllDoctorsWithCompleteProfile({ page, limit });
         return res.json({
             success: true,
-            data: doctors,
+            data: result.data,
+            meta: result.meta,
             message: "Doctors with completed profile retrieved successfully",
         });
     } catch (err) {
@@ -186,10 +194,14 @@ exports.getAllDoctorsWithCompleteProfile = async (req, res, next) => {
  */
 exports.getAllVerifiedDoctors = async (req, res, next) => {
     try {
-        const doctors = await userService.getAllVerifiedDoctors();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+
+        const result = await userService.getAllVerifiedDoctors({ page, limit });
         return res.json({
             success: true,
-            data: doctors,
+            data: result.data,
+            meta: result.meta,
             message: "Doctors with completed verification retrieved successfully",
         });
     } catch (err) {

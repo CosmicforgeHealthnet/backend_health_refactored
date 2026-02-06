@@ -32,8 +32,8 @@ class UserRepository {
   }
 
   // New method to fetch all doctors
-  async findAllDoctors() {
-    return this.repo.find({
+  async findAllDoctors({ skip, take } = {}) {
+    const [doctors, total] = await this.repo.findAndCount({
       where: { role: USER_ROLES.DOCTOR },
       select: [
         "id",
@@ -59,11 +59,16 @@ class UserRepository {
         "doctorUnavailability",
         "ratings"
       ],
+      skip,
+      take,
+      order: { createdAt: "DESC" }
     });
+
+    return { doctors, total };
   }
 
-  async findAllCompleteProfileDoctors() {
-    return this.repo
+  async findAllCompleteProfileDoctors({ skip, take } = {}) {
+    const query = this.repo
       .createQueryBuilder("user")
       .select([
         "user.id",
@@ -77,7 +82,6 @@ class UserRepository {
         "user.totalRatings",
         "user.createdAt",
         "user.updatedAt",
-
       ])
       .addSelect("doctorProfile")
       .addSelect("professionalLicense")
@@ -96,8 +100,13 @@ class UserRepository {
       .innerJoin("doctorProfile.digitalHealthTools", "digitalHealthTools")
       .innerJoin("user.doctorPricing", "doctorPricing")
       .innerJoin("user.doctorAvailability", "doctorAvailability")
-      .where("user.role = :role", { role: USER_ROLES.DOCTOR })
-      .getMany();
+      .where("user.role = :role", { role: USER_ROLES.DOCTOR });
+
+    if (typeof skip === 'number') query.skip(skip);
+    if (typeof take === 'number') query.take(take);
+
+    const [doctors, total] = await query.getManyAndCount();
+    return { doctors, total };
   }
 
   async findADoctor(id) {
@@ -115,6 +124,7 @@ class UserRepository {
         "createdAt",
         "updatedAt",
         "departmentSpecialty",
+        "bannerUrl"
 
       ],
       relations: [
@@ -242,8 +252,8 @@ class UserRepository {
     return user?.status === "doctor_active";
   }
 
-  async findVerifiedDoctors() {
-    return this.repo
+  async findVerifiedDoctors({ skip, take } = {}) {
+    const query = this.repo
       .createQueryBuilder("user")
       .select([
         "user.id",
@@ -280,8 +290,13 @@ class UserRepository {
       .leftJoin("user.doctorUnavailability", "doctorUnavailability") // Optional
       .leftJoin("user.ratings", "ratings") // Optional
       .where("user.role = :role", { role: USER_ROLES.DOCTOR })
-      .andWhere("user.status = :status", { status: "doctor_active" })
-      .getMany();
+      .andWhere("user.status = :status", { status: "doctor_active" });
+
+    if (typeof skip === 'number') query.skip(skip);
+    if (typeof take === 'number') query.take(take);
+
+    const [doctors, total] = await query.getManyAndCount();
+    return { doctors, total };
   }
 
 

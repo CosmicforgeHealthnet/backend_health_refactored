@@ -34,7 +34,6 @@ async function startServer() {
     // Try to connect to Redis (non-blocking)
     await connectRedis();
 
-    // Run migrations
     try {
       await AppDataSource.runMigrations();
       console.log("✔️  Migrations run successfully");

@@ -353,6 +353,10 @@ class AppointmentService {
     return await this.appointmentRepository.findAll(filters);
   }
 
+  async getAnalytics(filters) {
+    return await this.appointmentRepository.getAnalytics(filters);
+  }
+
   async updateAppointment(id, updateData) {
     const appointment = await this.appointmentRepository.findById(id);
     if (!appointment) {
@@ -1773,13 +1777,16 @@ class AppointmentService {
       const endOfDay = new Date(appointmentUTC);
       endOfDay.setUTCHours(23, 59, 59, 999);
 
-      const existingAppointments = await this.appointmentRepository.findAll({
+      const result = await this.appointmentRepository.findAll({
         doctorId,
         dateRange: {
           startDate: startOfDay.toISOString().split("T")[0],
           endDate: endOfDay.toISOString().split("T")[0],
         },
+        limit: 1000
       });
+
+      const existingAppointments = result.data || [];
 
       const newStartUTC = appointmentUTC.getTime();
       const newEndUTC = newStartUTC + duration * 60 * 1000;

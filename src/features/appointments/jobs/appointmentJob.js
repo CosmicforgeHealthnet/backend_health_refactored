@@ -775,9 +775,12 @@ class AppointmentCronJobs {
       console.log(`🔔 Checking reminders between ${oneHourFromNow.toISOString()} and ${twoHoursFromNow.toISOString()}`);
 
       // Get all scheduled appointments
-      const appointments = await this.appointmentRepository.findAll({
-        status: "scheduled"
+      const result = await this.appointmentRepository.findAll({
+        status: "scheduled",
+        limit: 1000
       });
+
+      const appointments = result.data || [];
 
       let remindersSent = 0;
 
@@ -950,9 +953,12 @@ class AppointmentCronJobs {
       const now = new Date();
 
       // Get all scheduled appointments that might need ending
-      const appointments = await this.appointmentRepository.findAll({
-        status: "scheduled"
+      const result = await this.appointmentRepository.findAll({
+        status: "scheduled",
+        limit: 1000
       });
+
+      const appointments = result.data || [];
 
       let meetingsEnded = 0;
 
@@ -1027,9 +1033,12 @@ class AppointmentCronJobs {
       // 1. Not approved by doctor (isDoctorApproved = false or null)
       // 2. Not cancelled
       // 3. Appointment time has passed
-      const unapprovedAppointments = await this.appointmentRepository.findAll({
-        status: "pending" // Still pending because doctor hasn't approved
+      const result = await this.appointmentRepository.findAll({
+        status: "pending", // Still pending because doctor hasn't approved
+        limit: 1000
       });
+
+      const unapprovedAppointments = result.data || [];
 
       let cancellationsProcessed = 0;
 
@@ -1263,13 +1272,16 @@ class AppointmentCronJobs {
       const fifteenMinutesFromNow = addMinutes(now, 15);
       const twentyMinutesFromNow = addMinutes(now, 20);
 
-      const appointments = await this.appointmentRepository.findAll({
+      const result = await this.appointmentRepository.findAll({
         status: "scheduled",
         dateRange: {
           startDate: format(fifteenMinutesFromNow, "yyyy-MM-dd"),
           endDate: format(twentyMinutesFromNow, "yyyy-MM-dd"),
         },
+        limit: 1000
       });
+
+      const appointments = result.data || [];
 
       let preparationsSent = 0;
 

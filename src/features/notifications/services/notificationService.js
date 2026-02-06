@@ -1,6 +1,7 @@
 // services/NotificationService.js
 const { getIO } = require("../../../config/websocket");
 const NotificationRepository = require("../repositories/notificationRepository");
+const cache = require("../../../shared/utils/cache");
 
 class NotificationService {
   constructor() {
@@ -37,16 +38,22 @@ class NotificationService {
   }
 
   async getNotificationCounts(userId) {
-    const allNotifications = await this.notificationRepository.getUserNotifications(userId, 1000);
+    return cache.getOrSet(
+      `notifications:counts:${userId}`,
+      async () => {
+        const allNotifications = await this.notificationRepository.getUserNotifications(userId, 1000);
 
-    return {
-      total: allNotifications.length,
-      unread: allNotifications.filter(n => !n.isRead).length,
-      notifications: allNotifications.filter(n => n.type === 'notification').length,
-      alerts: allNotifications.filter(n => n.type === 'alert').length,
-      unreadNotifications: allNotifications.filter(n => n.type === 'notification' && !n.isRead).length,
-      unreadAlerts: allNotifications.filter(n => n.type === 'alert' && !n.isRead).length,
-    };
+        return {
+          total: allNotifications.length,
+          unread: allNotifications.filter(n => !n.isRead).length,
+          notifications: allNotifications.filter(n => n.type === 'notification').length,
+          alerts: allNotifications.filter(n => n.type === 'alert').length,
+          unreadNotifications: allNotifications.filter(n => n.type === 'notification' && !n.isRead).length,
+          unreadAlerts: allNotifications.filter(n => n.type === 'alert' && !n.isRead).length,
+        };
+      },
+      60 // 1 minute TTL (short cache for real-time feel)
+    );
   }
 
   async createNotification(userId, type, message, metadata = null) {
@@ -66,6 +73,9 @@ class NotificationService {
       console.error("WebSocket notification failed:", socketError.message);
     }
 
+    // Invalidate cache
+    await cache.del(`notifications:counts:${userId}`);
+
     return notification;
   }
 
@@ -83,6 +93,9 @@ class NotificationService {
       console.error("WebSocket read notification failed:", socketError.message);
     }
 
+    // Invalidate cache
+    await cache.del(`notifications:counts:${userId}`);
+
     return notification;
   }
 
@@ -95,6 +108,9 @@ class NotificationService {
     } catch (socketError) {
       console.error("WebSocket mark all read failed:", socketError.message);
     }
+
+    // Invalidate cache
+    await cache.del(`notifications:counts:${userId}`);
   }
 
   async deleteNotification(notificationId, userId) {
@@ -106,6 +122,9 @@ class NotificationService {
     } catch (socketError) {
       console.error("WebSocket delete notification failed:", socketError.message);
     }
+
+    // Invalidate cache
+    await cache.del(`notifications:counts:${userId}`);
   }
 }
 

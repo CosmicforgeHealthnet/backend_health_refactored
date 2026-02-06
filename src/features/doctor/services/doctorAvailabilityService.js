@@ -6,6 +6,7 @@ const DoctorAvailabilityRepository = require("../repositories/doctorAvailability
 const AppointmentRepository = require("../../appointments/repositories/appointmentRepository");
 const TimezoneService = require("../../compliance/services/timezoneService");
 const userRepository = require("../../auth/repositories/userRepository");
+const cache = require("../../../shared/utils/cache");
 
 class DoctorAvailabilityService {
     constructor() {
@@ -78,6 +79,9 @@ class DoctorAvailabilityService {
                 results.push(result);
             }
 
+            // Invalidate availability cache for this doctor
+            await cache.invalidatePattern(`doctor:availability:${doctorId}:*`);
+
             return results;
         } catch (error) {
             throw new Error(`Failed to set availability: ${error.message}`);
@@ -89,12 +93,19 @@ class DoctorAvailabilityService {
      */
     async getAvailableSlots(doctorId, date, patientTimezone = null, req = null) {
         try {
+            // Determine target timezone first for cache key
+            const targetTimezone = patientTimezone || TimezoneService.getUserTimezone(null, req);
+            const cacheKey = `doctor:availability:${doctorId}:${date}:${targetTimezone}`;
+
+            // Try to get from cache
+            const cachedResult = await cache.get(cacheKey);
+            if (cachedResult) {
+                return cachedResult;
+            }
+
             // Get doctor's timezone
             const doctorData = await userRepository.findById(doctorId);
             const doctorTimezone = TimezoneService.getUserTimezone(doctorData, req);
-
-            // Use provided patient timezone or detect from request
-            const targetTimezone = patientTimezone || TimezoneService.getUserTimezone(null, req);
 
 
             const dayOfWeek = this.getDayOfWeek(date);
@@ -211,7 +222,7 @@ class DoctorAvailabilityService {
                 })
                 .sort();
 
-            return {
+            const result = {
                 date,
                 doctorId,
                 availableSlots,
@@ -223,6 +234,11 @@ class DoctorAvailabilityService {
                 availableCount: availableSlots.length,
                 bookedCount: bookedSlots.length,
             };
+
+            // Cache the result for 5 minutes
+            await cache.set(cacheKey, result, 300);
+
+            return result;
         } catch (error) {
             throw new Error(`Failed to get available slots: ${error.message}`);
         }
@@ -411,6 +427,9 @@ class DoctorAvailabilityService {
                 results.push(result);
             }
 
+            // Invalidate availability cache for this doctor
+            await cache.invalidatePattern(`doctor:availability:${doctorId}:*`);
+
             return results;
         } catch (error) {
             throw new Error(`Failed to replace availability: ${error.message}`);
@@ -476,10 +495,13 @@ class DoctorAvailabilityService {
     }
 
     async setUnavailability(doctorId, unavailabilityData) {
-        return await this.availabilityRepository.createUnavailability({
+        const result = await this.availabilityRepository.createUnavailability({
             doctorId,
             ...unavailabilityData,
         });
+        // Invalidate availability cache
+        await cache.invalidatePattern(`doctor:availability:${doctorId}:*`);
+        return result;
     }
 
     async findUnavailabilityByDoctor(doctorId, startDate, endDate) {
@@ -517,6 +539,9 @@ class DoctorAvailabilityService {
                 }
             );
 
+            // Invalidate availability cache
+            await cache.invalidatePattern(`doctor:availability:${doctorId}:*`);
+
             return updatedAvailability;
         } catch (error) {
             throw new Error(`Failed to update availability: ${error.message}`);
@@ -536,6 +561,9 @@ class DoctorAvailabilityService {
                     "Availability record not found or does not belong to this doctor"
                 );
             }
+
+            // Invalidate availability cache
+            await cache.invalidatePattern(`doctor:availability:${doctorId}:*`);
 
             return await this.availabilityRepository.delete(availabilityId);
         } catch (error) {
@@ -565,6 +593,9 @@ class DoctorAvailabilityService {
                     }
                 );
 
+            // Invalidate availability cache
+            await cache.invalidatePattern(`doctor:availability:${doctorId}:*`);
+
             return await this.availabilityRepository.unavailabilityRepository.findOne(
                 {
                     where: { id: unavailabilityId },
@@ -587,6 +618,9 @@ class DoctorAvailabilityService {
                     "Unavailability record not found or does not belong to this doctor"
                 );
             }
+
+            // Invalidate availability cache
+            await cache.invalidatePattern(`doctor:availability:${doctorId}:*`);
 
             return await this.availabilityRepository.unavailabilityRepository.update(
                 unavailabilityId,

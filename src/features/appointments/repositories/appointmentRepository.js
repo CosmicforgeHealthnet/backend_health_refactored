@@ -110,9 +110,15 @@ class AppointmentRepository {
             );
         }
 
-        const appointments = await this.repository.find({
+        const page = filters.page || 1;
+        const limit = filters.limit || 10;
+        const skip = (page - 1) * limit;
+
+        const [appointments, total] = await this.repository.findAndCount({
             where: whereClause,
             order: { appointmentDate: "DESC", appointmentTime: "DESC" },
+            skip,
+            take: limit,
             relations: [
                 "patient",
                 "doctor",
@@ -136,7 +142,15 @@ class AppointmentRepository {
             ],
         });
 
-        return sanitizeAppointments(appointments);
+        return {
+            data: sanitizeAppointments(appointments),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     }
 
 
@@ -292,6 +306,46 @@ class AppointmentRepository {
             },
             order: { appointmentTime: "ASC" },
         });
+    }
+
+    async getAnalytics(filters = {}) {
+        const whereClause = {};
+
+        if (filters.patientId) whereClause.patient = { id: filters.patientId };
+        if (filters.doctorId) whereClause.doctor = { id: filters.doctorId };
+        if (filters.startDate && filters.endDate) {
+            whereClause.appointmentDate = Between(filters.startDate, filters.endDate);
+        }
+
+        // Get total count
+        const total = await this.repository.count({ where: whereClause });
+
+        // Get count by status
+        const statusCounts = await this.repository
+            .createQueryBuilder("appointment")
+            .select("appointment.status", "status")
+            .addSelect("COUNT(appointment.id)", "count")
+            .where(whereClause)
+            .groupBy("appointment.status")
+            .getRawMany();
+
+        // Get revenue (if applicable, assuming consultationFee handling)
+        // For now, simple aggregation
+        const revenue = await this.repository
+            .createQueryBuilder("appointment")
+            .select("SUM(appointment.consultationFee)", "totalRevenue")
+            .where({ ...whereClause, paymentStatus: "completed" })
+            .getRawOne();
+
+
+        return {
+            totalAppointments: total,
+            statusBreakdown: statusCounts.reduce((acc, curr) => {
+                acc[curr.status] = parseInt(curr.count);
+                return acc;
+            }, {}),
+            totalRevenue: parseFloat(revenue?.totalRevenue || 0)
+        };
     }
 }
 
