@@ -8,11 +8,8 @@ const RateLimiterMiddleware = require('../../../shared/middlewares/rateLimiter')
 const SanitizerMiddleware = require('../../../shared/middlewares/sanitizer');
 const crypto = require('crypto');
 
-// ================================
-// WEBHOOK MIDDLEWARE
-// ================================
-
-// Middleware to capture raw body for signature verification
+// Webhook logic moved to ./webhooks.js
+const captureRawBody = require('../../../shared/middlewares/captureRawBody');
 // Middleware to capture raw body for signature verification
 // const captureRawBody = (req, res, next) => {
 //   let data = '';
@@ -64,84 +61,7 @@ const captureRawBody = (req, res, next) => {
   });
 };
 
-// Flutterwave webhook signature verification - SIMPLIFIED
-const verifyFlutterwaveSignature = (req, res, next) => {
-  try {
-    const signature = req.headers['verif-hash'];
-    const secretHash = process.env.FLUTTERWAVE_SECRET_HASH;
-
-    console.log('🔍 Flutterwave webhook verification:');
-    console.log('- Received signature:', signature);
-    console.log('- Expected hash exists:', !!secretHash);
-
-    // For testing, you can temporarily disable signature verification
-    // Remove this in production!
-    if (!secretHash) {
-      console.log('⚠️ FLUTTERWAVE_SECRET_HASH not set - ALLOWING ALL (DEV ONLY)');
-      req.params.provider = 'flutterwave';
-      return next();
-    }
-
-    if (!signature) {
-      console.log('❌ Missing signature for Flutterwave');
-      return res.status(401).json({ error: 'Unauthorized - Missing signature' });
-    }
-
-    if (signature !== secretHash) {
-      console.log('❌ Invalid Flutterwave signature');
-      return res.status(401).json({ error: 'Invalid signature' });
-    }
-
-    console.log('✅ Flutterwave signature verified');
-    req.params.provider = 'flutterwave';
-    next();
-  } catch (error) {
-    console.error('❌ Flutterwave signature verification error:', error);
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-};
-
-// Paystack webhook signature verification - SIMPLIFIED
-const verifyPaystackSignature = (req, res, next) => {
-  try {
-    const signature = req.headers['x-paystack-signature'];
-    const secret = process.env.PAYSTACK_SECRET_KEY;
-
-    console.log('🔍 Paystack webhook verification:');
-    console.log('- Received signature:', signature);
-    console.log('- Secret key exists:', !!secret);
-
-    if (!secret) {
-      console.log('⚠️ PAYSTACK_SECRET_KEY not set - ALLOWING ALL (DEV ONLY)');
-      req.params.provider = 'paystack';
-      return next();
-    }
-
-    if (!signature) {
-      console.log('❌ Missing signature for Paystack');
-      return res.status(401).json({ error: 'Unauthorized - Missing signature' });
-    }
-
-    const hash = crypto
-      .createHmac('sha512', secret)
-      .update(req.rawBody, 'utf8')
-      .digest('hex');
-
-    if (hash !== signature) {
-      console.log('❌ Invalid Paystack signature');
-      console.log('- Expected:', hash);
-      console.log('- Received:', signature);
-      return res.status(401).json({ error: 'Invalid signature' });
-    }
-
-    console.log('✅ Paystack signature verified');
-    req.params.provider = 'paystack';
-    next();
-  } catch (error) {
-    console.error('❌ Paystack signature verification error:', error);
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-};
+// Token verification logic moved to services/middleware (if needed)
 
 // ================================
 // PUBLIC ROUTES
@@ -180,16 +100,8 @@ const verifyPaystackSignature = (req, res, next) => {
 //  }
 // }, PaymentController.handleWebhook);
 
-// SIMPLE WEBHOOK ROUTE - NO CAPTURE RAW BODY
-router.post('/webhooks/:provider', express.json(), (req, res, next) => {
-  console.log('🎯 WEBHOOK HIT:', req.params.provider);
-  console.log('🎯 TIME:', new Date().toISOString());
-  console.log('🎯 BODY:', JSON.stringify(req.body, null, 2));
-  console.log('🎯 HEADERS:', req.headers);
-
-  // Skip signature verification for now
-  next();
-}, PaymentController.handleWebhook);
+// WEBHOOK ROUTES MOVED TO separate webhook router
+// See src/features/payments/routes/webhooks.js
 
 // PAYMENT CALLBACK ROUTE (PUBLIC - for provider redirects)
 router.get('/callback', PaymentController.handlePaymentCallback);

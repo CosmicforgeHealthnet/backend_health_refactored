@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const nodemailer = require("nodemailer");
 const Handlebars = require("handlebars");
+const config = require("../../config");
 
 class EmailService {
   constructor() {
@@ -320,7 +321,8 @@ class EmailService {
         ...variables,
         body: templateContent,
         subject: subject,
-        currentYear: new Date().getFullYear()
+        currentYear: new Date().getFullYear(),
+        social: config.social
       };
 
       // console.log(`📋 Layout variables:`, Object.keys(layoutVariables));

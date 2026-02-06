@@ -1211,40 +1211,52 @@ class PaymentService {
       }
 
       if (result.success) {
-        // Update transaction with provider details
-        await transactionRepository.save({
-          ...transaction,
-          status: 'completed',
-          providerTransactionId: result.transactionId,
+        // Prepare update data
+        const updateData = {
+          providerTransactionId: result.transactionId || result.reference,
           providerReference: result.reference,
-          providerFee: result.fee,
-          completedAt: new Date()
-        });
+          status: 'processing', // Default to processing until webhook confirms
+          updatedAt: new Date()
+        };
 
-        // Update payment method success rate
+        // If it's a token payment (auto-billing) or provider returned immediate success status
+        // AND we have a completed status explicitly from the provider handler
+        if (useStoredMethod || (result.data && (result.data.status === 'successful' || result.data.status === 'success'))) {
+          updateData.status = 'completed';
+          updateData.providerFee = result.fee;
+          updateData.completedAt = new Date();
+
+          // Only verify funds processing for COMPLETED transactions
+          if (transaction.doctorId && transaction.serviceType === 'appointment') {
+            await this.processFundsForAppointmentPayment(transaction);
+          } else if (transaction.doctorId) {
+            await this.processFundsImmediate(transaction);
+          }
+        }
+
+        // Update transaction
+        await transactionRepository.repo.update(transaction.id, updateData);
+
+        // Update payment method usage stats if successful/processing
         if (transaction.paymentMethodId) {
-          await userPaymentMethodRepository.updateSuccessRate(
-            transaction.paymentMethodId,
-            paymentProvider,
-            true
-          );
           await userPaymentMethodRepository.updateLastUsed(
             transaction.paymentMethodId,
             paymentProvider
           );
+
+          // Only update success rate if actually completed
+          if (updateData.status === 'completed') {
+            await userPaymentMethodRepository.updateSuccessRate(
+              transaction.paymentMethodId,
+              paymentProvider,
+              true
+            );
+          }
         }
 
-        // Save payment token if new payment and token available
-        if (!useStoredMethod && result.data) {
+        // Save payment token if new payment and token available AND completed
+        if (!useStoredMethod && result.data && updateData.status === 'completed') {
           await this.savePaymentToken(transaction, result.data, paymentProvider);
-        }
-
-        // ENHANCED: Handle funds based on service type and appointment logic
-        if (transaction.doctorId && transaction.serviceType === 'appointment') {
-          await this.processFundsForAppointmentPayment(transaction);
-        } else if (transaction.doctorId) {
-          // Non-appointment payments - immediate processing
-          await this.processFundsImmediate(transaction);
         }
 
         return { success: true, transaction: await transactionRepository.findById(transactionId) };

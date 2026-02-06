@@ -50,9 +50,7 @@ class DisputeService {
     const savedDispute = await disputeRepository.save(dispute);
 
     // Mark transaction as disputed
-    await transactionRepository.updateStatus(transactionId, 'disputed', {
-      disputeRaisedAt: new Date()
-    });
+    await transactionRepository.updateStatus(transactionId, 'disputed');
 
     return savedDispute;
   }

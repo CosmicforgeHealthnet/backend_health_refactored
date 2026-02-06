@@ -260,6 +260,7 @@ app.use("/api/chatbot", authenticateJWT, chatFeature.chatbotRouter);
 app.use("/api/notifications", authenticateJWT, notificationFeature.router);
 app.use("/api/subscription", authenticateJWT, subscriptionFeature.router);
 app.use("/api/payments", authenticateJWT, paymentFeature.router);
+app.use("/api/webhooks/payments", paymentFeature.webhookRouter); // Public webhook route
 app.use("/api/transactions", authenticateJWT, transactionFeature.router);
 app.use("/api/support", authenticateJWT, supportFeature.router);
 

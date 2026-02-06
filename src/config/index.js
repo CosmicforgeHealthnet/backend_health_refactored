@@ -30,5 +30,12 @@ module.exports = {
     : ['http://localhost:3000', 'http://localhost:5173', '*', 'https://admin-cosmicforge-healthnet.vercel.app'],
   nodeEnv: process.env.NODE_ENV || 'development',
   backendUrl: process.env.BACKEND_URL,
-  flaskBackendUrl: process.env.FLASK_BACKEND_URL || 'http://localhost:8000'
+  flaskBackendUrl: process.env.FLASK_BACKEND_URL || 'http://localhost:8000',
+  social: {
+    facebook: process.env.SOCIAL_FACEBOOK_URL || 'https://facebook.com/cosmicforgehealthnet',
+    linkedin: process.env.SOCIAL_LINKEDIN_URL || 'https://linkedin.com/CosmicForgehealthnetlimited',
+    twitter: process.env.SOCIAL_TWITTER_URL || 'https://x.com/cf_healthnet?s=21',
+    instagram: process.env.SOCIAL_INSTAGRAM_URL || 'https://instagram.com/cf_healthnet',
+    tiktok: process.env.SOCIAL_TIKTOK_URL || 'https://tiktok.com/@cf_healthnet1'
+  }
 };
