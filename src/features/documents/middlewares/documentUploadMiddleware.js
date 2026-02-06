@@ -44,7 +44,8 @@ const upload = multer({
 class DocumentUploadMiddleware {
 
   static uploadDocuments() {
-    return upload.array('files', config.FILE_LIMITS.MAX_FILES_PER_REQUEST);
+    // Allow any field name for better compatibility
+    return upload.any();
   }
 
   /**

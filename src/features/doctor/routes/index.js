@@ -13,7 +13,7 @@ const doctorVerificationController = require("../controllers/doctorVerificationC
 const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
 
 // Import document upload middleware
-const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
+// const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
 
 // Import pricing and availability controllers
 const DoctorPricingController = require("../controllers/doctorPricingController");
