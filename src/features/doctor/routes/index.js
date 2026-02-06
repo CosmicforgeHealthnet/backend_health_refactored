@@ -10,6 +10,7 @@ const profileController = require("../controllers/profileController");
 
 // Import verification controller from existing location
 const doctorVerificationController = require("../controllers/doctorVerificationController");
+const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
 
 // Import pricing and availability controllers
 const DoctorPricingController = require("../controllers/doctorPricingController");
@@ -130,6 +131,45 @@ router.get("/list/online", profileController.getDoctorsByOnlineStatus);
  *       **Legacy route**: `POST /doctor/verification/submit` (deprecated)
  */
 router.post("/verification/submit", authenticateJWT, doctorVerificationController.submitVerification);
+
+/**
+ * @swagger
+ * /api/doctor/verification/{id}/documents:
+ *   post:
+ *     summary: Upload verification documents
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Verification request ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *     description: |
+ *       Upload documents for an existing verification request.
+ *       Supports multiple files (PDF, JPG, PNG, DOC, DOCX).
+ */
+router.post(
+    "/verification/:id/documents",
+    authenticateJWT,
+    DocumentUploadMiddleware.uploadDocuments(),
+    DocumentUploadMiddleware.processUploadedFiles,
+    doctorVerificationController.uploadDocuments
+);
 
 /**
  * @swagger

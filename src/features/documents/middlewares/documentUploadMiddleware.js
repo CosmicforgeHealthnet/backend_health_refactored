@@ -276,7 +276,7 @@ class DocumentUploadMiddleware {
     }
 
     // Check file extension
-    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.tiff', '.tif'];
+    const allowedExtensions = config.FILE_LIMITS.ALLOWED_EXTENSIONS;
     const fileExtension = path.extname(file.originalname).toLowerCase();
 
     if (!allowedExtensions.includes(fileExtension)) {

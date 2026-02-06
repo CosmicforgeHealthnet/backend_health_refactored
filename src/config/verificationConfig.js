@@ -27,12 +27,14 @@ module.exports = {
     MAX_FILES_PER_REQUEST: 10,
     ALLOWED_MIME_TYPES: [
       'image/jpeg',
-      'image/png', 
+      'image/png',
       'image/gif',
       'application/pdf',
-      'image/tiff'
+      'image/tiff',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ],
-    ALLOWED_EXTENSIONS: ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.tiff', '.tif']
+    ALLOWED_EXTENSIONS: ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.tiff', '.tif', '.doc', '.docx']
   },
 
   // API rate limits (requests per hour)
@@ -50,15 +52,15 @@ module.exports = {
   QUEUE_PRIORITY_RULES: {
     // Higher tier = higher priority
     tier_1: 'high',
-    tier_2: 'normal', 
+    tier_2: 'normal',
     tier_3: 'low',
-    
+
     // Urgent for premium users
     premium_user: 'urgent',
-    
+
     // High priority for resubmissions
     resubmission: 'high',
-    
+
     // Default priority
     default: 'normal'
   },
@@ -124,7 +126,7 @@ module.exports = {
       hasApi: true,
       requiresManualReview: false
     },
-    
+
     // Tier 2: Medium confidence, hybrid approach
     tier_2: {
       countries: ['NG', 'GH', 'TZ', 'UG'], // Nigeria, Ghana, Tanzania, Uganda
@@ -133,7 +135,7 @@ module.exports = {
       hasApi: false,
       requiresManualReview: true
     },
-    
+
     // Tier 3: Lower confidence, manual only
     tier_3: {
       countries: ['ET', 'ZM', 'ZW'], // Ethiopia, Zambia, Zimbabwe
