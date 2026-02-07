@@ -1,6 +1,6 @@
 // src/repositories/doctorWalletRepository.js
 const AppDataSource = require('../../../config/database');
-const DoctorWallet = require('../../doctor/entities/DoctorWallet');
+const DoctorWallet = require('../entities/DoctorWallet');
 const { MoreThan } = require('typeorm'); // ADD this import at top
 
 class DoctorWalletRepository {
