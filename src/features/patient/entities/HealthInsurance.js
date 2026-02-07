@@ -6,9 +6,9 @@ module.exports = new EntitySchema({
   tableName: "health_insurances",
   columns: {
     id: { primary: true, type: "uuid", generated: "uuid" },
-    providerName: { type: "varchar" },
-    validityDate: { type: "date" },
-    policyNo: { type: "varchar" },
+    providerName: { type: "varchar", nullable: true },
+    validityDate: { type: "date", nullable: true },
+    policyNo: { type: "varchar", nullable: true },
     healthCardUrl: { type: "varchar", nullable: true },
     createdAt: { type: "timestamp", createDate: true },
   },
