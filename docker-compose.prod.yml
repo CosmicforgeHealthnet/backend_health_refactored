@@ -3,6 +3,7 @@ services:
   backend:
     build: .
     container_name: cosmic_backend
+    restart: unless-stopped
     ports:
       - "5000:5000"
     volumes:
@@ -16,7 +17,6 @@ services:
       - REDIS_DEV_HOST=redis
       - FILE_SERVER_URL=https://api.cosmicforge-healthnet.com
       - URL_SIGNING_SECRET=570396e1d4000a1ee59ea8903ff3b8b491a202d441b068ca132a5ae035fe1013
-      # Add other DB credentials here or use .env file
     env_file:
       - .env.production
     depends_on:
@@ -24,11 +24,13 @@ services:
       - redis
     networks:
       - cosmic_network
+      - shared_network
 
   # 2. The Brain (Python AI Service)
   ai_service:
     build: ./ai_service
     container_name: cosmic_brain
+    restart: unless-stopped
     ports:
       - "8001:8001"
     volumes:
@@ -36,32 +38,17 @@ services:
     networks:
       - cosmic_network
 
-  # 4. The Memory (Redis)
+  # 3. The Memory (Redis)
   redis:
     image: redis:alpine
     container_name: cosmic_redis
-    # ports:
-    #   - "6379:6379"  <-- Host port disabled to avoid conflict
-    networks:
-      - cosmic_network
-
-  # 3. The Gateway (Nginx)
-  nginx:
-    image: nginx:alpine
-    container_name: cosmic_gateway
-    ports:
-      - "8080:80"
-      - "443:443"
-    volumes:
-      - ./deployment/nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - ./uploads:/app/uploads:ro
-    depends_on:
-      - backend
-      - ai_service
+    restart: unless-stopped
     networks:
       - cosmic_network
 
 networks:
   cosmic_network:
     driver: bridge
+  shared_network:
+    external: true
+    name: refactored_backend_healthcare-network

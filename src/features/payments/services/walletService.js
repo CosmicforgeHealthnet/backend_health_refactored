@@ -1460,7 +1460,7 @@ class WalletService {
       console.log(`✅ Wallet password reset successfully for doctor ${wallet.doctorId}`);
 
       // Send confirmation email
-      const emailService = require('../../services/emailHelpers');
+      const emailService = require('../../../shared/services/email/emailHelpers');
       await emailService.sendWalletPasswordResetConfirmationEmail({
         to: wallet.doctor.email,
         doctorName: wallet.doctor.firstName + ' ' + wallet.doctor.lastName
