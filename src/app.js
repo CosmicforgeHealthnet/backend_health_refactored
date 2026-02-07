@@ -319,7 +319,7 @@ app.use("/search", search);
 const uploadsPath = process.env.UPLOAD_DIRECTORY
     ? path.join(process.env.UPLOAD_DIRECTORY, 'images')
     : process.env.NODE_ENV === 'production'
-        ? '/opt/render/project/uploads/images'
+        ? '/app/uploads/images'
         : path.join(__dirname, '../uploads/images');
 // Force absolute path resolution if ENV is relative
 const finalUploadsPath = (process.env.UPLOAD_DIRECTORY && !path.isAbsolute(process.env.UPLOAD_DIRECTORY))
