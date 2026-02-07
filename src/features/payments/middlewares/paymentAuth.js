@@ -65,17 +65,23 @@ class PaymentAuthMiddleware {
   /**
    * Verify doctor can receive payments
    */
-  static requireVerifiedDoctor(req, res, next) {
-    if (req.user.role !== 'doctor') {
-      return res.status(403).json({ error: 'Only doctors can access wallet features' });
-    }
+  // Use fullUser if available (populated by verifyPaymentAuth), otherwise user from token
+  const userRole = req.fullUser ? req.fullUser.role : req.user.role;
+  const userStatus = req.fullUser ? req.fullUser.status : req.user.status;
 
-    if (req.user.status !== 'doctor_active') {
-      return res.status(403).json({ error: 'Doctor account must be verified to access wallet' });
-    }
+  if(userRole !== 'doctor') {
+  return res.status(403).json({ error: 'Only doctors can access wallet features' });
+}
 
-    next();
-  }
+// Allow both 'doctor_active' and 'active' as valid verified statuses
+if (!['doctor_active', 'active'].includes(userStatus)) {
+  return res.status(403).json({
+    error: 'Doctor account must be verified to access wallet',
+    currentStatus: userStatus
+  });
+}
+
+next();
 }
 
 module.exports = PaymentAuthMiddleware;

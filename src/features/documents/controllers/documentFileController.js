@@ -143,8 +143,14 @@ class DocumentFileController {
         return res.status(404).json({ error: 'Image not found' });
       }
 
-      // Read and serve image file
-      const imagePath = path.join(process.cwd(), image.filePath);
+      // Get upload directory from env or default
+      const uploadDir = process.env.UPLOAD_DIRECTORY || 'uploads';
+
+      // Construct full path - image.filePath already contains 'images/filename.ext'
+      // If image.filePath is absolute, use it directly, otherwise join with uploadDir
+      const imagePath = path.isAbsolute(image.filePath)
+        ? image.filePath
+        : path.join(uploadDir, image.filePath);
 
       try {
         let imageBuffer = await fs.readFile(imagePath);
@@ -197,8 +203,12 @@ class DocumentFileController {
       }
 
       // For now, serve the same image (you can add thumbnail generation later)
-      // In the future, you could generate/serve actual thumbnails here
-      const imagePath = path.join(process.cwd(), image.filePath);
+      // Get upload directory from env or default
+      const uploadDir = process.env.UPLOAD_DIRECTORY || 'uploads';
+
+      const imagePath = path.isAbsolute(image.filePath)
+        ? image.filePath
+        : path.join(uploadDir, image.filePath);
 
       try {
         let imageBuffer = await fs.readFile(imagePath);
@@ -345,7 +355,8 @@ class DocumentFileController {
         fileSize: image.fileSize,
         mimeType: image.mimeType,
         documentType: image.documentType,
-        // Permanent URL without tokens - publicly accessible
+        // Permanent URL without tokens - publicly accessible via static serve
+        // file.storedFileName includes extension
         url: `${baseUrl}/images/${image.storedFileName}`,
         // Thumbnail URL (if you implement thumbnails)
         thumbnailUrl: `${baseUrl}/documents/images/${image.id}/thumbnail`,
