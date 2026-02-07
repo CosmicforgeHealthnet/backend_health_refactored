@@ -95,8 +95,8 @@ const patientProfileSchema = Joi.object({
   sleepDuration: Joi.number().positive().optional().messages({
     'number.positive': 'sleepDuration must be a positive number',
   }),
-  profileType: Joi.string().valid('individual', 'group').insensitive().default('individual').optional().messages({
-    'any.only': 'profileType must be one of individual or group (case-insensitive)',
+  profileType: Joi.string().valid('individual', 'family').insensitive().default('individual').optional().messages({
+    'any.only': 'profileType must be one of individual or family (case-insensitive)',
   }),
   medicalConditions: Joi.array().items(
     Joi.object({
@@ -117,10 +117,10 @@ const patientProfileSchema = Joi.object({
       name: Joi.string().trim().max(100).required().messages({
         'string.empty': 'name is required for surgeries',
       }),
-      date: Joi.date().iso().optional().messages({
+      date: Joi.date().iso().allow('', null).optional().default(null).messages({
         'date.base': 'date must be a valid date (YYYY-MM-DD)',
-      }),
-      location: Joi.string().trim().max(100).optional().messages({
+      }).custom((value) => value === '' ? null : value),
+      location: Joi.string().trim().allow('').optional().messages({
         'string.max': 'location must not exceed 100 characters',
       }),
     })
@@ -170,21 +170,21 @@ const patientProfileSchema = Joi.object({
       certificateUrl: Joi.string().uri().allow('').optional().messages({
         'string.uri': 'certificateUrl must be a valid URL',
       }),
-      date: Joi.date().iso().optional().messages({
+      date: Joi.date().iso().allow('', null).optional().default(null).messages({
         'date.base': 'date must be a valid date (YYYY-MM-DD)',
-      }),
+      }).custom((value) => value === '' ? null : value),
       dose: Joi.string().allow('').trim().max(50).optional().messages({
         'string.max': 'dose must not exceed 50 characters',
       }),
     })
   ).optional(),
   healthInsurance: Joi.object({
-    providerName: Joi.string().trim().max(100).required().messages({
+    providerName: Joi.string().trim().max(100).allow('').optional().messages({
       'string.empty': 'providerName is required for healthInsurance',
     }),
-    validityDate: Joi.date().iso().allow('').optional().messages({
+    validityDate: Joi.date().iso().allow('', null).optional().default(null).messages({
       'date.base': 'validityDate must be a valid date (YYYY-MM-DD)',
-    }),
+    }).custom((value) => value === '' ? null : value),
     policyNo: Joi.string().trim().max(50).allow('').optional().messages({
       'string.max': 'policyNo must not exceed 50 characters',
     }),
@@ -497,7 +497,7 @@ const patientProfileUpdateSchema = Joi.object({
   physicalActivityLevel: Joi.string().trim().max(50).optional(),
   dietType: Joi.string().trim().max(50).optional(),
   sleepDuration: Joi.number().positive().optional(),
-  profileType: Joi.string().valid('individual', 'group').insensitive().optional(),
+  profileType: Joi.string().valid('individual', 'family').insensitive().optional(),
 
   medicalConditions: Joi.array().items(
     Joi.object({
@@ -512,7 +512,9 @@ const patientProfileUpdateSchema = Joi.object({
     Joi.object({
       id: Joi.string().uuid().optional(),
       name: Joi.string().trim().max(100).optional(),
-      date: Joi.date().iso().optional(),
+      date: Joi.date().iso().allow('', null).optional().default(null).messages({
+        'date.base': 'date must be a valid date (YYYY-MM-DD)',
+      }).custom((value) => value === '' ? null : value),
       location: Joi.string().trim().max(100).optional(),
     })
   ).optional(),
@@ -548,14 +550,18 @@ const patientProfileUpdateSchema = Joi.object({
       id: Joi.string().uuid().optional(),
       vaccine: Joi.string().trim().max(100).optional(),
       certificateUrl: Joi.string().uri().allow('').optional(),
-      date: Joi.date().iso().optional(),
+      date: Joi.date().iso().allow('', null).optional().default(null).messages({
+        'date.base': 'date must be a valid date (YYYY-MM-DD)',
+      }).custom((value) => value === '' ? null : value),
       dose: Joi.string().allow('').trim().max(50).optional(),
     })
   ).optional(),
 
   healthInsurance: Joi.object({
     providerName: Joi.string().trim().max(100).optional(),
-    validityDate: Joi.date().iso().allow('').optional(),
+    validityDate: Joi.date().iso().allow('', null).optional().default(null).messages({
+      'date.base': 'validityDate must be a valid date (YYYY-MM-DD)',
+    }).custom((value) => value === '' ? null : value),
     policyNo: Joi.string().trim().max(50).allow('').optional(),
     healthCardUrl: Joi.string().uri().optional().allow(''),
   }).optional(),

@@ -1,0 +1,545 @@
+{
+    "info": {
+        "_postman_id": "b5a9c9f2-2b3d-4e5f-8a9d-0c1b2d3e4f5a",
+        "name": "CosmicForge - Support Features (Complete)",
+        "description": "Complete API documentation for User Support, Insurance, Reports, Disputes, and FAQs.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        },
+        {
+            "key": "accessToken",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Support Tickets",
+            "item": [
+                {
+                    "name": "Dashboard",
+                    "item": [
+                        {
+                            "name": "Get User Dashboard",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/support/user/:userId/dashboard",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "support",
+                                        "user",
+                                        ":userId",
+                                        "dashboard"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "userId",
+                                            "value": "",
+                                            "description": "User UUID"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get User Activity",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/support/user/:userId/activity",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "support",
+                                        "user",
+                                        ":userId",
+                                        "activity"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "userId",
+                                            "value": "",
+                                            "description": "User UUID"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get Ticket Details",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/support/user/:userId/:ticketType/:ticketId",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "support",
+                                        "user",
+                                        ":userId",
+                                        ":ticketType",
+                                        ":ticketId"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "userId",
+                                            "value": "",
+                                            "description": "User UUID"
+                                        },
+                                        {
+                                            "key": "ticketType",
+                                            "value": "account",
+                                            "description": "account | insurance | reports | disputes"
+                                        },
+                                        {
+                                            "key": "ticketId",
+                                            "value": "",
+                                            "description": "Ticket UUID"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Account Support",
+                    "item": [
+                        {
+                            "name": "Create Account Ticket",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"userId\": \"{{userId}}\",\n    \"issueType\": \"account_information_error\",\n    \"description\": \"I cannot update my profile picture.\",\n    \"priority\": \"medium\",\n    \"screenshotUrl\": \"https://example.com/screenshot.png\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/support/account",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "support",
+                                        "account"
+                                    ]
+                                },
+                                "description": "Required: userId, issueType. Optional: description, screenshotUrl, priority (low/medium/high/urgent), status."
+                            }
+                        },
+                        {
+                            "name": "Update Account Ticket",
+                            "request": {
+                                "method": "PUT",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"status\": \"in_progress\",\n    \"resolutionNotes\": \"Investigating the issue.\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/support/account/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "support",
+                                        "account",
+                                        ":id"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "",
+                                            "description": "Ticket ID"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get All Account Tickets",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/support/account?status=pending&page=1&limit=10",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "support",
+                                        "account"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "status",
+                                            "value": "pending"
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1"
+                                        },
+                                        {
+                                            "key": "limit",
+                                            "value": "10"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Assign Ticket",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"assignedTo\": \"agent-uuid-here\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/support/account/:id/assign",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "support",
+                                        "account",
+                                        ":id",
+                                        "assign"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Insurance Support",
+                    "item": [
+                        {
+                            "name": "Create Insurance Ticket",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"userId\": \"{{userId}}\",\n    \"issueType\": \"policy_details_incorrect\",\n    \"insuranceProviderName\": \"BlueCross\",\n    \"policyNumber\": \"BC-123456\",\n    \"serviceAffected\": \"consultation\",\n    \"description\": \"Policy number is wrong on file.\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/support/insurance",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "support",
+                                        "insurance"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Reports",
+                    "item": [
+                        {
+                            "name": "Create Report",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"userId\": \"{{userId}}\",\n    \"providerId\": \"doctor-uuid-here\",\n    \"providerType\": \"healthcare_provider\",\n    \"issueType\": \"unprofessional_behavior\",\n    \"description\": \"Doctor was rude.\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/support/reports",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "support",
+                                        "reports"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Disputes",
+                    "item": [
+                        {
+                            "name": "Create Dispute",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"userId\": \"{{userId}}\",\n    \"transactionId\": \"txn-uuid-here\",\n    \"disputeType\": \"doctor_no_show\",\n    \"description\": \"Doctor did not join call.\",\n    \"refundRequested\": true,\n    \"refundAmount\": 50.00\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/support/disputes",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "support",
+                                        "disputes"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "FAQs",
+            "item": [
+                {
+                    "name": "Public",
+                    "item": [
+                        {
+                            "name": "Get General FAQs",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/faq/general",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "faq",
+                                        "general"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Search FAQs",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/faq/search?q=payment&role=patient",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "faq",
+                                        "search"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "q",
+                                            "value": "payment"
+                                        },
+                                        {
+                                            "key": "role",
+                                            "value": "patient"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Get FAQ by Slug",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/faq/:slug",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "faq",
+                                        ":slug"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "slug",
+                                            "value": "how-to-reset-password"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Authenticated",
+                    "item": [
+                        {
+                            "name": "Vote on FAQ",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"voteType\": \"helpful\",\n    \"feedback\": \"Clear and concise.\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/faq/:id/vote",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "faq",
+                                        ":id",
+                                        "vote"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin",
+                    "item": [
+                        {
+                            "name": "Create FAQ",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"title\": \"How to book an appointment?\",\n    \"content\": \"Go to the home screen and click Book.\",\n    \"targetRole\": \"patient\",\n    \"categoryId\": \"cat-uuid\",\n    \"priority\": 1,\n    \"status\": \"published\",\n    \"searchKeywords\": [\"booking\", \"appointment\"]\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/faq/admin/faqs",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "faq",
+                                        "admin",
+                                        "faqs"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Create Category",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Appointments\",\n    \"description\": \"Questions about bookings\",\n    \"icon\": \"calendar\",\n    \"targetRole\": \"general\",\n    \"sortOrder\": 1\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/faq/admin/categories",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "faq",
+                                        "admin",
+                                        "categories"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
