@@ -150,7 +150,7 @@ class DocumentFileController {
       // If image.filePath is absolute, use it directly, otherwise join with uploadDir
       const imagePath = path.isAbsolute(image.filePath)
         ? image.filePath
-        : path.join(uploadDir, image.filePath);
+        : path.join(uploadDir, 'images', image.filePath);
 
       try {
         let imageBuffer = await fs.readFile(imagePath);
@@ -208,7 +208,7 @@ class DocumentFileController {
 
       const imagePath = path.isAbsolute(image.filePath)
         ? image.filePath
-        : path.join(uploadDir, image.filePath);
+        : path.join(uploadDir, 'images', image.filePath);
 
       try {
         let imageBuffer = await fs.readFile(imagePath);

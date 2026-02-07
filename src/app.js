@@ -329,9 +329,50 @@ const finalUploadsPath = (process.env.UPLOAD_DIRECTORY && !path.isAbsolute(proce
 console.log('Static file serving /images from:', finalUploadsPath);
 app.use('/images', express.static(finalUploadsPath));
 app.use('/images', (req, res) => {
+    // DEBUG: Enhanced 404 handler for images
+    const fs = require('node:fs');
+    const requestedPath = path.join(finalUploadsPath, req.path);
+
+    console.log(`[DEBUG] Image 404: Request for ${req.originalUrl}`);
+    console.log(`[DEBUG] Image 404: Static Root is ${finalUploadsPath}`);
+    console.log(`[DEBUG] Image 404: Looking for ${requestedPath}`);
+
+    let exists = false;
+    let dirContents = [];
+    let dirError = null;
+
+    try {
+        exists = fs.existsSync(requestedPath);
+        if (fs.existsSync(finalUploadsPath)) {
+            dirContents = fs.readdirSync(finalUploadsPath);
+        } else {
+            dirError = 'Static root directory does not exist';
+        }
+    } catch (e) {
+        dirError = e.message;
+    }
+
+    console.log(`[DEBUG] Image 404: File exists? ${exists}`);
+    if (dirContents.length > 0) {
+        console.log(`[DEBUG] Image 404: Directory has ${dirContents.length} files. First 5: ${dirContents.slice(0, 5).join(', ')}`);
+    }
+
     res.status(404).json({
         error: 'Image file not found',
-        path: req.originalUrl
+        path: req.originalUrl,
+        debug: {
+            resolvedPath: finalUploadsPath,
+            requestedFile: requestedPath,
+            fileExists: exists,
+            directoryExists: !dirError,
+            directoryError: dirError,
+            filesInDirectory: dirContents.slice(0, 10), // Show first 10 files
+            totalFiles: dirContents.length,
+            env: {
+                UPLOAD_DIRECTORY: process.env.UPLOAD_DIRECTORY,
+                NODE_ENV: process.env.NODE_ENV
+            }
+        }
     });
 });
 
