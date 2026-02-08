@@ -260,9 +260,9 @@ exports.getDoctorsByOnlineStatus = async (req, res, next) => {
  */
 exports.searchDoctors = async (req, res, next) => {
     try {
-        const { q } = req.query;
+        const q = req.query.q || req.query.search;
         if (!q) {
-            return res.status(400).json({ error: "Search query (q) is required" });
+            return res.status(400).json({ error: "Search query (q or search) is required" });
         }
         const doctors = await userService.searchDoctors(q);
         return res.json({

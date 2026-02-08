@@ -1313,7 +1313,7 @@ class PaymentService {
         },
         redirect_url: `${process.env.FRONTEND_URL}/payment/callback`,
         // 🔥 ADD THIS WEBHOOK URL - This was missing!
-        webhook_url: `${process.env.BACKEND_URL}/transactions/payments/webhooks/flutterwave`,
+        webhook_url: `${process.env.BACKEND_URL}/api/webhooks/payments/flutterwave`,
         meta: {
           transaction_id: transaction.id,
           service_type: transaction.serviceType,
@@ -1394,7 +1394,7 @@ class PaymentService {
           service_type: transaction.serviceType,
           service_id: transaction.serviceId,
           // Add webhook URL in metadata as backup
-          webhook_url: `${process.env.BACKEND_URL}/transactions/payments/webhooks/paystack`,
+          webhook_url: `${process.env.BACKEND_URL}/api/webhooks/payments/paystack`,
           custom_fields: [
             {
               display_name: "Service Type",
