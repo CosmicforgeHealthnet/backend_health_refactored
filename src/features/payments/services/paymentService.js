@@ -1684,9 +1684,12 @@ class PaymentService {
           if (ourTransaction.serviceType === 'appointment') {
             // Send appointment receipt
             const splits = await transactionSplitRepository.findByTransactionId(ourTransaction.id);
-            const AppointmentRepository = require('../appointment/appointmentService');
-            const appointmentRepo = new AppointmentRepository();
-            const appointment = await appointmentRepo.findById(ourTransaction.serviceId);
+            // Updated path to point to the correct feature location
+            const AppointmentService = require('../../appointments/services/appointmentService');
+            // Check if it's a class or instance. Assuming class based on usage 'new'.
+            // If the service exports a class directly:
+            const appointmentService = new AppointmentService();
+            const appointment = await appointmentService.findById(ourTransaction.serviceId);
 
             if (appointment && patient) {
               await sendAppointmentPaymentReceiptEmail(patient, ourTransaction, appointment, splits);
