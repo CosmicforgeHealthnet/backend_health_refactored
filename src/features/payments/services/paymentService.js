@@ -1694,7 +1694,8 @@ class PaymentService {
             }
           } else if (ourTransaction.serviceType === 'subscription' || ourTransaction.serviceType === 'subscription_upgrade') {
             // Send subscription receipt
-            const subscriptionCompatibilityService = require('../subscriptionCompatibilityService');
+            // Updated path to point to the correct feature location
+            const subscriptionCompatibilityService = require('../../subscriptions/services/subscriptionCompatibilityService');
             const subscription = await subscriptionCompatibilityService.getUserSubscription(ourTransaction.patientId);
 
             if (subscription && patient) {
