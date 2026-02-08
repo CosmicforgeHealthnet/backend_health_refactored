@@ -1162,7 +1162,7 @@ class WalletService {
         throw new Error('Doctor not found for OTP notification');
       }
 
-      const emailService = require('../../services/emailHelpers');
+      const emailService = require('../../../shared/services/email/emailHelpers');
       await emailService.sendCustomWithdrawalOtp({
         to: doctor.email,
         doctorName: doctor.firstName + ' ' + doctor.lastName,
@@ -1403,7 +1403,7 @@ class WalletService {
       await doctorWalletRepository.storeWalletPasswordResetToken(doctorId, resetToken, resetTokenExpiry);
 
       // Send reset email
-      const emailHelpers = require('../../services/emailHelpers');
+      const emailHelpers = require('../../../shared/services/email/emailHelpers');
       await emailHelpers.sendWalletPasswordResetEmail({
         to: doctor.email,
         doctorName: doctor.firstName + ' ' + doctor.lastName,
@@ -1460,7 +1460,7 @@ class WalletService {
       console.log(`✅ Wallet password reset successfully for doctor ${wallet.doctorId}`);
 
       // Send confirmation email
-      const emailService = require('../../services/emailHelpers');
+      const emailService = require('../../../shared/services/email/emailHelpers');
       await emailService.sendWalletPasswordResetConfirmationEmail({
         to: wallet.doctor.email,
         doctorName: wallet.doctor.firstName + ' ' + wallet.doctor.lastName
