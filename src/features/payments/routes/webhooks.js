@@ -97,7 +97,6 @@ const handleWebhookProvider = (req, res, next) => {
 
 // Define routes
 router.post('/:provider',
-    captureRawBody,
     handleWebhookProvider,
     PaymentController.handleWebhook
 );
