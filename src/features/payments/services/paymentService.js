@@ -889,7 +889,8 @@ class PaymentService {
  */
   async getDoctorCommissionRate(doctorId) {
     try {
-      const subscriptionCompatibilityService = require('../subscriptionCompatibilityService');
+      // Updated path to point to the correct feature location
+      const subscriptionCompatibilityService = require('../../subscriptions/services/subscriptionCompatibilityService');
       const doctorSubscription = await subscriptionCompatibilityService.getUserSubscription(doctorId);
 
       // Get commission rate from subscription, fallback to user tier, then default to 30%
