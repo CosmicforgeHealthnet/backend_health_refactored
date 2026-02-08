@@ -1408,7 +1408,7 @@ class WalletService {
         to: doctor.email,
         doctorName: doctor.firstName + ' ' + doctor.lastName,
         resetToken,
-        resetUrl: `${process.env.FRONTEND_URL}/wallet/reset-password?token=${resetToken}`,
+        resetUrl: `${process.env.FRONTEND_URL}doctors/dashboard/settings/wallet/reset-password?token=${resetToken}`,
         expiresInMinutes: 30
       });
 
