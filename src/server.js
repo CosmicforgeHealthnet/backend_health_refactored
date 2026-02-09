@@ -41,7 +41,7 @@ async function startServer() {
       console.error("❌ Migration error:", err);
     }
 
-    //runing jobs
+    //runing jobs```
     await RunJobs();
 
     // Start server

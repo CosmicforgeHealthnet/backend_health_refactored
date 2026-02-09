@@ -317,6 +317,43 @@
                         },
                         "description": "Generate Google Meet link for virtual appointment"
                     }
+                },
+                {
+                    "name": "Generate Zoom meeting link",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"topic\": \"Medical Consultation\",\n  \"duration\": 30,\n  \"agenda\": \"Virtual consultation with doctor\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/appointments/:id/meeting/zoom",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "appointments",
+                                ":id",
+                                "meeting",
+                                "zoom"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "",
+                                    "description": "Appointment UUID"
+                                }
+                            ]
+                        },
+                        "description": "Generate Zoom meeting link for virtual appointment using Server-to-Server OAuth"
+                    }
                 }
             ]
         },
