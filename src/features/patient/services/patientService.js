@@ -71,7 +71,14 @@ class PatientService {
         for (const { key, repo } of relatedEntities) {
             if (data[key] && Array.isArray(data[key])) {
                 for (const item of data[key]) {
-                    await repo.save({ ...item, patientProfile: savedProfile });
+                    // Sanitize item: convert empty strings to null
+                    const sanitizedItem = { ...item };
+                    for (const prop in sanitizedItem) {
+                        if (sanitizedItem[prop] === "") {
+                            sanitizedItem[prop] = null;
+                        }
+                    }
+                    await repo.save({ ...sanitizedItem, patientProfile: savedProfile });
                 }
             }
         }
