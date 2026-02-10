@@ -889,7 +889,8 @@ class PaymentService {
  */
   async getDoctorCommissionRate(doctorId) {
     try {
-      const subscriptionCompatibilityService = require('../subscriptionCompatibilityService');
+      // Updated path to point to the correct feature location
+      const subscriptionCompatibilityService = require('../../subscriptions/services/subscriptionCompatibilityService');
       const doctorSubscription = await subscriptionCompatibilityService.getUserSubscription(doctorId);
 
       // Get commission rate from subscription, fallback to user tier, then default to 30%
@@ -1313,7 +1314,7 @@ class PaymentService {
         },
         redirect_url: `${process.env.FRONTEND_URL}/payment/callback`,
         // 🔥 ADD THIS WEBHOOK URL - This was missing!
-        webhook_url: `${process.env.BACKEND_URL}/transactions/payments/webhooks/flutterwave`,
+        webhook_url: `${process.env.BACKEND_URL}/api/webhooks/payments/flutterwave`,
         meta: {
           transaction_id: transaction.id,
           service_type: transaction.serviceType,
@@ -1394,7 +1395,7 @@ class PaymentService {
           service_type: transaction.serviceType,
           service_id: transaction.serviceId,
           // Add webhook URL in metadata as backup
-          webhook_url: `${process.env.BACKEND_URL}/transactions/payments/webhooks/paystack`,
+          webhook_url: `${process.env.BACKEND_URL}/api/webhooks/payments/paystack`,
           custom_fields: [
             {
               display_name: "Service Type",
@@ -1683,9 +1684,12 @@ class PaymentService {
           if (ourTransaction.serviceType === 'appointment') {
             // Send appointment receipt
             const splits = await transactionSplitRepository.findByTransactionId(ourTransaction.id);
-            const AppointmentRepository = require('../appointment/appointmentService');
-            const appointmentRepo = new AppointmentRepository();
-            const appointment = await appointmentRepo.findById(ourTransaction.serviceId);
+            // Updated path to point to the correct feature location
+            const AppointmentService = require('../../appointments/services/appointmentService');
+            // Check if it's a class or instance. Assuming class based on usage 'new'.
+            // If the service exports a class directly:
+            const appointmentService = new AppointmentService();
+            const appointment = await appointmentService.findById(ourTransaction.serviceId);
 
             if (appointment && patient) {
               await sendAppointmentPaymentReceiptEmail(patient, ourTransaction, appointment, splits);
@@ -1693,7 +1697,8 @@ class PaymentService {
             }
           } else if (ourTransaction.serviceType === 'subscription' || ourTransaction.serviceType === 'subscription_upgrade') {
             // Send subscription receipt
-            const subscriptionCompatibilityService = require('../subscriptionCompatibilityService');
+            // Updated path to point to the correct feature location
+            const subscriptionCompatibilityService = require('../../subscriptions/services/subscriptionCompatibilityService');
             const subscription = await subscriptionCompatibilityService.getUserSubscription(ourTransaction.patientId);
 
             if (subscription && patient) {

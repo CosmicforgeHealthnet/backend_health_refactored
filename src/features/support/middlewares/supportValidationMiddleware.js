@@ -57,14 +57,14 @@ const validateCreateAccountTicket = [
   body()
     .custom((value, { req }) => {
       const { issueType, description } = req.body;
-      
+
       // For certain critical issues, description should be more detailed
       if (['deactivation_request', 'double_accounts_conflict'].includes(issueType)) {
         if (!description || description.trim().length < 20) {
           throw new Error('Detailed description (minimum 20 characters) is required for this issue type');
         }
       }
-      
+
       return true;
     }),
 
@@ -259,28 +259,28 @@ const validateCreateInsurance = [
   body()
     .custom((value, { req }) => {
       const { issueType, insuranceProviderName, policyNumber, serviceAffected } = req.body;
-      
+
       // If issue type requires insurance provider name
       if (['insurance_not_recognized', 'policy_details_incorrect', 'claim_status_delay', 'coverage_rejected'].includes(issueType)) {
         if (!insuranceProviderName || insuranceProviderName.trim().length === 0) {
           throw new Error('Insurance provider name is required for this issue type');
         }
       }
-      
+
       // If issue type requires policy number
       if (['policy_details_incorrect', 'claim_status_delay', 'coverage_rejected'].includes(issueType)) {
         if (!policyNumber || policyNumber.trim().length === 0) {
           throw new Error('Policy number is required for this issue type');
         }
       }
-      
+
       // If issue type requires service affected
       if (['coverage_rejected', 'wrong_billing'].includes(issueType)) {
         if (!serviceAffected) {
           throw new Error('Service affected is required for this issue type');
         }
       }
-      
+
       return true;
     }),
 
@@ -429,7 +429,7 @@ const validateCreateReport = [
   body()
     .custom((value, { req }) => {
       const { issueType, providerType } = req.body;
-      
+
       // Define valid issue types for each provider type
       const doctorIssues = [
         'unprofessional_behavior',
@@ -441,7 +441,7 @@ const validateCreateReport = [
         'prescription_error',
         'privacy_violation'
       ];
-      
+
       const labIssues = [
         'unprofessional_behavior',
         'harassment_verbal_abuse',
@@ -450,7 +450,7 @@ const validateCreateReport = [
         'lab_misconduct',
         'privacy_violation'
       ];
-      
+
       const pharmacyIssues = [
         'unprofessional_behavior',
         'harassment_verbal_abuse',
@@ -459,20 +459,20 @@ const validateCreateReport = [
         'pharmacy_misconduct',
         'privacy_violation'
       ];
-      
+
       // Validate issue type based on provider type
       if (providerType === 'healthcare_provider' && !doctorIssues.includes(issueType)) {
         throw new Error('Invalid issue type for healthcare provider');
       }
-      
+
       if (providerType === 'lab' && !labIssues.includes(issueType)) {
         throw new Error('Invalid issue type for lab');
       }
-      
+
       if (providerType === 'pharmacy' && !pharmacyIssues.includes(issueType)) {
         throw new Error('Invalid issue type for pharmacy');
       }
-      
+
       return true;
     }),
 
@@ -607,19 +607,19 @@ const validateCreateDispute = [
   body()
     .custom((value, { req }) => {
       const { disputeType, refundRequested, refundAmount, description } = req.body;
-      
+
       // If refund is requested, ensure amount is provided
       if (refundRequested && !refundAmount) {
         throw new Error('Refund amount is required when refund is requested');
       }
-      
+
       // For certain dispute types, description should be more detailed
-      if (['poor_service_quality', 'doctor_no_show'].includes(disputeType)) {
-        if (!description || description.trim().length < 20) {
-          throw new Error('Detailed description (minimum 20 characters) is required for this dispute type');
-        }
-      }
-      
+      // if (['poor_service_quality', 'doctor_no_show'].includes(disputeType)) {
+      //   if (!description || description.trim().length < 20) {
+      //     throw new Error('Detailed description (minimum 20 characters) is required for this dispute type');
+      //   }
+      // }
+
       return true;
     }),
 
@@ -977,7 +977,7 @@ const validateAccountFilters = [
     .optional()
     .isIn([
       'account_information_error',
-      'dependent_account_issue', 
+      'dependent_account_issue',
       'unable_to_update_profile',
       'deactivation_request',
       'double_accounts_conflict'
@@ -1118,14 +1118,14 @@ const validateAccountFilters = [
   query()
     .custom((value, { req }) => {
       const { startDate, endDate, createdAfter, createdBefore, resolvedAfter, resolvedBefore } = req.query;
-      
+
       // Ensure date ranges don't overlap inappropriately
       if (startDate && endDate && createdAfter && createdBefore) {
         const start = new Date(startDate);
         const end = new Date(endDate);
         const createdA = new Date(createdAfter);
         const createdB = new Date(createdBefore);
-        
+
         if (start > createdB || end < createdA) {
           throw new Error('Date range filters have conflicting values');
         }
@@ -1166,30 +1166,30 @@ module.exports = {
   // Insurance validators
   validateCreateInsurance,
   validateUpdateInsurance,
-  
+
   // Report validators
   validateCreateReport,
   validateUpdateReport,
-  
+
   // Dispute validators
   validateCreateDispute,
   validateUpdateDispute,
 
-   // Account validators
-   validateCreateAccountTicket,
-   validateUpdateAccountTicket,
-   validateAssignTicket,
-   validateResolveTicket,
-  
+  // Account validators
+  validateCreateAccountTicket,
+  validateUpdateAccountTicket,
+  validateAssignTicket,
+  validateResolveTicket,
+
   // Common validators
   validateIdParam,
   validateUserIdParam,
-  
+
   // Filter validators
   validateInsuranceFilters,
   validateReportFilters,
   validateDisputeFilters,
   validateAccountFilters,
 
- 
+
 };

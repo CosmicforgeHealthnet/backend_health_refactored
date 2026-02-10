@@ -155,7 +155,12 @@ app.use(cors({
 }));
 app.options("*", cors());
 
-app.use(express.json());
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf.toString();
+        // console.log('📝 Raw body captured:', req.rawBody.substring(0, 50) + '...');
+    }
+}));
 app.use(express.static("public"));
 app.use(getLocationFromIP);
 

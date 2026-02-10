@@ -45,9 +45,10 @@ const verifyPaystackSignature = (req, res, next) => {
         const signature = req.headers['x-paystack-signature'];
         const secret = process.env.PAYSTACK_SECRET_KEY;
 
-        console.log('🔍 Paystack webhook verification:');
-        // console.log('- Received signature:', signature);
-        console.log('- Secret key exists:', !!secret);
+        console.log('🔍 Paystack webhook verification details:');
+        console.log('- Header Signature:', signature ? `${signature.substring(0, 10)}...` : 'MISSING');
+        console.log('- Raw Body Length:', req.rawBody ? req.rawBody.length : 'UNDEFINED');
+        // console.log('- Raw Body Preview:', req.rawBody ? req.rawBody.substring(0, 100) : 'N/A');
 
         if (!secret) {
             console.log('⚠️ PAYSTACK_SECRET_KEY not set - ALLOWING ALL (DEV ONLY)');
@@ -60,13 +61,22 @@ const verifyPaystackSignature = (req, res, next) => {
             return res.status(401).json({ error: 'Unauthorized - Missing signature' });
         }
 
+        if (!req.rawBody) {
+            console.log('❌ Req.rawBody is missing! Middleware issue.');
+            return res.status(500).json({ error: 'Server configuration error - rawBody missing' });
+        }
+
         const hash = crypto
             .createHmac('sha512', secret)
             .update(req.rawBody, 'utf8')
             .digest('hex');
 
+        console.log('- Calculated Hash:', hash ? `${hash.substring(0, 10)}...` : 'ERROR');
+
         if (hash !== signature) {
-            console.log('❌ Invalid Paystack signature');
+            console.log('❌ Invalid Paystack signature mismatch');
+            console.log(`Expected: ${hash}`);
+            console.log(`Received: ${signature}`);
             return res.status(401).json({ error: 'Invalid signature' });
         }
 
@@ -97,7 +107,6 @@ const handleWebhookProvider = (req, res, next) => {
 
 // Define routes
 router.post('/:provider',
-    captureRawBody,
     handleWebhookProvider,
     PaymentController.handleWebhook
 );

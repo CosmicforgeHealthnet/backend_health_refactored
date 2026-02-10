@@ -304,6 +304,39 @@
                         },
                         "description": "Updates doctor's basic profile info (name, image, etc.)"
                     }
+                },
+                {
+                    "name": "Add rating",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"userId\": \"{{doctorId}}\",\n  \"rating\": 5,\n  \"message\": \"Excellent doctor, very professional and caring. Highly recommended!\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/doctor/rating",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "doctor",
+                                "rating"
+                            ]
+                        },
+                        "description": "Add a rating for a doctor"
+                    }
                 }
             ]
         },

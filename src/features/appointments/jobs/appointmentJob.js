@@ -1364,7 +1364,13 @@ class AppointmentCronJobs {
     }
   }
 
-
+  /**
+   * Parse appointment date and time into Date object
+   */
+  parseAppointmentDateTime(appointmentDate, appointmentTime) {
+    const dateTimeString = `${appointmentDate}T${appointmentTime}`;
+    return parseISO(dateTimeString);
+  }
 }
 
 module.exports = AppointmentCronJobs;

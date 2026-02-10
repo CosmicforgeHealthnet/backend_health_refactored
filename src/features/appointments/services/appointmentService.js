@@ -906,8 +906,8 @@ class AppointmentService {
       }
 
       // Get doctor and patient data
-      const doctorData = await userService.getDoctorProfileById(doctorId);
-      const patientData = await userService.getPatientProfileById(
+      const doctorData = await doctorService.getDoctorProfileById(doctorId);
+      const patientData = await patientService.getPatientProfileById(
         appointment.patientId
       );
 
@@ -1066,7 +1066,7 @@ class AppointmentService {
 
       console.log(appointment.patientId);
       // Get doctor and patient data
-      const doctorData = await userService.getDoctorProfileByUserId(doctorId);
+      const doctorData = await doctorService.getDoctorProfileByUserId(doctorId);
 
       // const patientData = await userService.getPatientProfileByUserId(
       //   appointment.patientId
@@ -1192,7 +1192,7 @@ class AppointmentService {
         };
       }
 
-      const doctorData = await userService.getDoctorProfileByUserId(
+      const doctorData = await doctorService.getDoctorProfileByUserId(
         appointment.doctorId
       );
 
@@ -1260,8 +1260,8 @@ class AppointmentService {
         );
       }
       // Get doctor and patient data
-      const doctorData = await userService.getDoctorProfileByUserId(doctorId);
-      const patientData = await userService.getPatientProfileByUserId(
+      const doctorData = await doctorService.getDoctorProfileByUserId(doctorId);
+      const patientData = await patientService.getPatientProfileByUserId(
         appointment.patientId
       );
 
