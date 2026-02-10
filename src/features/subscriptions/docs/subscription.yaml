@@ -1,5 +1,155 @@
 # docs/transactions/subscription.yaml
 paths:
+  # ===========================================================================
+  # PUBLIC ROUTES (No Auth Required)
+  # ===========================================================================
+
+  /api/subscription/public/plans:
+    get:
+      summary: Get all subscription plans (Public - No Auth Required)
+      description: Retrieve all available subscription plans for landing page display. No authentication required.
+      tags:
+        - Subscription Public
+      parameters:
+        - name: countryCode
+          in: query
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}$'
+            example: "NG"
+          description: "ISO 3166-1 alpha-2 country code for currency conversion (defaults to US)"
+        - name: planType
+          in: query
+          schema:
+            type: string
+            enum: [doctor, patient]
+            example: "patient"
+          description: "Filter plans by type (optional)"
+      responses:
+        '200':
+          description: Plans retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Plans retrieved successfully"
+                  data:
+                    type: object
+                    properties:
+                      countryCode:
+                        type: string
+                        example: "NG"
+                      currency:
+                        type: string
+                        example: "NGN"
+                      patientPlans:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PublicPlan'
+                      doctorPlans:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PublicPlan'
+              examples:
+                Nigerian_Plans:
+                  summary: Plans for Nigerian visitors
+                  value:
+                    success: true
+                    message: "Plans retrieved successfully"
+                    data:
+                      countryCode: "NG"
+                      currency: "NGN"
+                      patientPlans:
+                        - tier: "free"
+                          name: "Free Plan"
+                          price: 0
+                          currency: "NGN"
+                          features: ["Basic AI Chat", "Limited Consultations"]
+                        - tier: "basic"
+                          name: "Basic Plan"
+                          price: 7900
+                          originalPrice: 9900
+                          currency: "NGN"
+                          features: ["Voice Consultation", "All Specialists"]
+                        - tier: "premium"
+                          name: "Premium Plan"
+                          price: 39900
+                          originalPrice: 49900
+                          currency: "NGN"
+                          features: ["Video Consultation", "Priority Support", "Family Members"]
+                      doctorPlans:
+                        - tier: "basic"
+                          name: "Basic Plan"
+                          price: 14900
+                          currency: "NGN"
+                          commissionRate: 20
+                        - tier: "professional"
+                          name: "Professional Plan"
+                          price: 29900
+                          currency: "NGN"
+                          commissionRate: 15
+
+  /api/subscription/public/plans/{planType}/{tier}:
+    get:
+      summary: Get specific plan pricing (Public - No Auth Required)
+      description: Retrieve detailed pricing for a specific plan. No authentication required.
+      tags:
+        - Subscription Public
+      parameters:
+        - name: planType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [doctor, patient]
+          description: "Type of subscription plan"
+          example: "patient"
+        - name: tier
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [free, basic, standard, medium, premium, professional, gold_elite]
+          description: "Plan tier"
+          example: "premium"
+        - name: countryCode
+          in: query
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}$'
+            example: "NG"
+          description: "ISO 3166-1 alpha-2 country code for currency conversion"
+      responses:
+        '200':
+          description: Plan pricing retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PublicPlan'
+        '404':
+          description: Plan not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionErrorResponse'
+
+  # ===========================================================================
+  # AUTHENTICATED ROUTES
+  # ===========================================================================
+
   /api/subscription/current:
     get:
       summary: Get user's current subscription with dynamic pricing
@@ -205,175 +355,6 @@ paths:
                   value:
                     success: false
                     error: "Currency conversion failed, using fallback USD pricing"
-        '401':
-          $ref: '#/components/responses/SubscriptionUnauthorized'
-
-  /api/subscription/usage-summary:
-    get:
-      summary: Get comprehensive usage summary
-      description: Get detailed usage breakdown with percentages, limits, and health status
-      tags:
-        - Subscription Management
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Usage summary retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UsageSummaryResponse'
-              examples:
-                premium_patient:
-                  summary: Premium patient with usage
-                  value:
-                    success: true
-                    message: "Usage summary retrieved successfully"
-                    data:
-                      subscription:
-                        tier: "premium"
-                        planType: "patient"
-                        planName: "Premium Plan"
-                        status: "active"
-                        isActive: true
-                        isPremium: true
-                        daysRemaining: 15
-                      usage:
-                        aiChatbotResponses:
-                          used: 85
-                          limit: "Unlimited"
-                          remaining: "Unlimited"
-                          percentage: 0
-                          isUnlimited: true
-                          isOverLimit: false
-                          isNearLimit: false
-                          displayName: "AI Chat Messages"
-                          description: "Monthly AI chatbot interactions"
-                          icon: "💬"
-                          color: "green"
-                        aiDiagnosticRequests:
-                          used: 12
-                          limit: "Unlimited"
-                          remaining: "Unlimited"
-                          percentage: 0
-                          isUnlimited: true
-                          isOverLimit: false
-                          isNearLimit: false
-                          displayName: "AI Diagnostic Requests"
-                          description: "AI-powered diagnostic requests per month"
-                          icon: "🔬"
-                          color: "green"
-                      stats:
-                        totalLimits: 2
-                        limitsWithUsage: 2
-                        overLimitCount: 0
-                        nearLimitCount: 0
-                        unlimitedFeatures: 2
-                      status:
-                        healthy: true
-                        warnings: []
-                        errors: []
-                      lastUpdated: "2025-01-20T10:30:00Z"
-                      resetDate: "2025-02-01T00:00:00Z"
-                basic_patient_near_limit:
-                  summary: Basic patient approaching limits
-                  value:
-                    success: true
-                    message: "Usage summary retrieved successfully"
-                    data:
-                      subscription:
-                        tier: "basic"
-                        planType: "patient"
-                        planName: "Basic Plan"
-                        status: "active"
-                        isActive: true
-                        isPremium: true
-                        daysRemaining: 8
-                      usage:
-                        aiChatbotResponses:
-                          used: 27
-                          limit: 30
-                          remaining: 3
-                          percentage: 90
-                          isUnlimited: false
-                          isOverLimit: false
-                          isNearLimit: true
-                          isWarning: true
-                          displayName: "AI Chat Messages"
-                          description: "Monthly AI chatbot interactions"
-                          icon: "💬"
-                          color: "orange"
-                        aiDiagnosticRequests:
-                          used: 15
-                          limit: 20
-                          remaining: 5
-                          percentage: 75
-                          isUnlimited: false
-                          isOverLimit: false
-                          isNearLimit: false
-                          displayName: "AI Diagnostic Requests"
-                          description: "AI-powered diagnostic requests per month"
-                          icon: "🔬"
-                          color: "yellow"
-                      stats:
-                        totalLimits: 2
-                        limitsWithUsage: 2
-                        overLimitCount: 0
-                        nearLimitCount: 1
-                        unlimitedFeatures: 0
-                      status:
-                        healthy: true
-                        warnings: ["AI Chat Messages: 90% used"]
-                        errors: []
-                      lastUpdated: "2025-01-20T10:30:00Z"
-                      resetDate: "2025-02-01T00:00:00Z"
-        '401':
-          $ref: '#/components/responses/SubscriptionUnauthorized'
-
-  /api/subscription/usage-status:
-    get:
-      summary: Get quick usage status
-      description: Get lightweight usage status with counts and health indicators
-      tags:
-        - Subscription Management
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Usage status retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UsageStatusResponse'
-              examples:
-                healthy_status:
-                  summary: Healthy usage status
-                  value:
-                    success: true
-                    message: "Usage status retrieved successfully"
-                    data:
-                      tier: "premium"
-                      planType: "patient"
-                      status: "active"
-                      overLimit: 0
-                      nearLimit: 0
-                      totalLimits: 2
-                      healthy: true
-                      needsAttention: false
-                needs_attention:
-                  summary: Status needing attention
-                  value:
-                    success: true
-                    message: "Usage status retrieved successfully"
-                    data:
-                      tier: "basic"
-                      planType: "patient"
-                      status: "active"
-                      overLimit: 1
-                      nearLimit: 1
-                      totalLimits: 2
-                      healthy: false
-                      needsAttention: true
         '401':
           $ref: '#/components/responses/SubscriptionUnauthorized'
 
@@ -821,18 +802,266 @@ paths:
 
   /api/subscription/usage:
     get:
-      summary: Get usage limits and current usage
+      summary: Get comprehensive usage summary
+      description: |
+        Returns complete subscription usage data including:
+        - Subscription info (tier, status, dates)
+        - Usage limits with progress (used/limit/remaining/percentage)
+        - Feature access (enabled/disabled features)
+        - Family plan details
+        - Commission rate (for doctors)
+        - Health status and warnings
+        - Reset date information
       tags:
         - Subscription Management
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Usage information retrieved successfully
+          description: Usage summary retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UsageInfoResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Usage summary retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/ComprehensiveUsageSummary'
+              examples:
+                premium_patient:
+                  summary: Premium patient with unlimited features
+                  value:
+                    success: true
+                    message: "Usage summary retrieved successfully"
+                    data:
+                      subscription:
+                        id: "sub_123"
+                        tier: "premium"
+                        tierDisplay: "Premium Plan"
+                        planType: "patient"
+                        status: "active"
+                        isActive: true
+                        isPremium: true
+                        startDate: "2026-01-01T00:00:00Z"
+                        endDate: "2026-02-01T00:00:00Z"
+                        daysRemaining: 15
+                        autoRenew: true
+                      usageLimits:
+                        aiChatbotResponses:
+                          displayName: "AI Chatbot Messages"
+                          description: "Monthly AI chatbot interactions"
+                          icon: "chat"
+                          category: "ai"
+                          used: 85
+                          limit: -1
+                          limitDisplay: "Unlimited"
+                          remaining: "Unlimited"
+                          percentage: 0
+                          isUnlimited: true
+                          isBlocked: false
+                          status: "ok"
+                        aiDiagnosticRequests:
+                          displayName: "AI Diagnostic Requests"
+                          description: "AI-powered health diagnostic requests per month"
+                          icon: "diagnostic"
+                          category: "ai"
+                          used: 12
+                          limit: -1
+                          limitDisplay: "Unlimited"
+                          remaining: "Unlimited"
+                          percentage: 0
+                          isUnlimited: true
+                          isBlocked: false
+                          status: "ok"
+                      featureAccess:
+                        voiceConsultation:
+                          displayName: "Voice Consultations"
+                          description: "Voice call consultations with doctors"
+                          icon: "phone"
+                          category: "consultations"
+                          enabled: true
+                        videoConsultation:
+                          displayName: "Video Consultations"
+                          description: "Video call consultations with doctors"
+                          icon: "video"
+                          category: "consultations"
+                          enabled: true
+                        allSpecialists:
+                          displayName: "All Specialists"
+                          description: "Access to all medical specialists"
+                          icon: "specialists"
+                          category: "specialists"
+                          enabled: true
+                        familyPlan:
+                          displayName: "Family Plan"
+                          description: "Add family members to your plan"
+                          icon: "family"
+                          category: "account"
+                          enabled: true
+                        prioritySupport:
+                          displayName: "Priority Support"
+                          description: "Priority customer support"
+                          icon: "priority"
+                          category: "support"
+                          enabled: true
+                      familyPlan:
+                        enabled: true
+                        currentMembers: 3
+                        maxMembers: 5
+                        description: "2 Adults + 3 Children"
+                        adults: 2
+                        children: 3
+                      commission: null
+                      stats:
+                        totalLimits: 2
+                        limitsUsed: 2
+                        limitsNearLimit: 0
+                        limitsExceeded: 0
+                        enabledFeaturesCount: 12
+                        disabledFeaturesCount: 2
+                      health:
+                        status: "healthy"
+                        message: "All usage within limits"
+                        needsAttention: false
+                      enabledFeatures:
+                        - "Voice Consultations"
+                        - "Video Consultations"
+                        - "All Specialists"
+                        - "Lab Access"
+                        - "Pharmacy Access"
+                        - "Shop Access"
+                        - "First Aid Instructions"
+                        - "Family Plan"
+                        - "Priority Support"
+                      disabledFeatures:
+                        - "Chat Only"
+                        - "General & Emergency Specialists"
+                      resetInfo:
+                        nextResetDate: "2026-02-01T00:00:00.000Z"
+                        daysUntilReset: 15
+                        resetMessage: "Usage resets in 15 days"
+                      lastUpdated: "2026-01-17T10:30:00.000Z"
+                basic_patient_near_limit:
+                  summary: Basic patient approaching limits
+                  value:
+                    success: true
+                    message: "Usage summary retrieved successfully"
+                    data:
+                      subscription:
+                        id: "sub_456"
+                        tier: "basic"
+                        tierDisplay: "Basic Plan"
+                        planType: "patient"
+                        status: "active"
+                        isActive: true
+                        isPremium: true
+                        daysRemaining: 8
+                        autoRenew: false
+                      usageLimits:
+                        aiChatbotResponses:
+                          displayName: "AI Chatbot Messages"
+                          description: "Monthly AI chatbot interactions"
+                          icon: "chat"
+                          category: "ai"
+                          used: 27
+                          limit: 30
+                          limitDisplay: 30
+                          remaining: 3
+                          percentage: 90
+                          isUnlimited: false
+                          isBlocked: false
+                          status: "warning"
+                        aiDiagnosticRequests:
+                          displayName: "AI Diagnostic Requests"
+                          description: "AI-powered health diagnostic requests per month"
+                          icon: "diagnostic"
+                          category: "ai"
+                          used: 15
+                          limit: 20
+                          limitDisplay: 20
+                          remaining: 5
+                          percentage: 75
+                          isUnlimited: false
+                          isBlocked: false
+                          status: "ok"
+                      familyPlan:
+                        enabled: false
+                        currentMembers: 1
+                        maxMembers: 1
+                        description: "Individual only"
+                      health:
+                        status: "warning"
+                        message: "1 limit(s) approaching capacity"
+                        needsAttention: true
+                      resetInfo:
+                        nextResetDate: "2026-02-01T00:00:00.000Z"
+                        daysUntilReset: 8
+                        resetMessage: "Usage resets in 8 days"
+                doctor_professional:
+                  summary: Professional doctor with commission
+                  value:
+                    success: true
+                    message: "Usage summary retrieved successfully"
+                    data:
+                      subscription:
+                        id: "sub_789"
+                        tier: "professional"
+                        tierDisplay: "Professional Plan"
+                        planType: "doctor"
+                        status: "active"
+                        isActive: true
+                        isPremium: true
+                        daysRemaining: 20
+                        autoRenew: true
+                      usageLimits:
+                        maxPatients:
+                          displayName: "Patient Consultations"
+                          description: "Maximum patients you can consult per month"
+                          icon: "patients"
+                          category: "consultations"
+                          used: 45
+                          limit: 100
+                          limitDisplay: 100
+                          remaining: 55
+                          percentage: 45
+                          isUnlimited: false
+                          isBlocked: false
+                          status: "ok"
+                        aiResponses:
+                          displayName: "AI Responses"
+                          description: "AI-assisted responses for consultations"
+                          icon: "ai"
+                          category: "ai"
+                          used: 120
+                          limit: 400
+                          limitDisplay: 400
+                          remaining: 280
+                          percentage: 30
+                          isUnlimited: false
+                          isBlocked: false
+                          status: "ok"
+                      featureAccess:
+                        videoConsultation:
+                          displayName: "Video Consultations"
+                          enabled: true
+                        topProfileListing:
+                          displayName: "Top Profile Listing"
+                          enabled: true
+                        prioritySupport:
+                          displayName: "Priority Support"
+                          enabled: true
+                      commission:
+                        rate: 15
+                        description: "15% per consultation"
+                      health:
+                        status: "healthy"
+                        message: "All usage within limits"
+                        needsAttention: false
         '401':
           $ref: '#/components/responses/SubscriptionUnauthorized'
 

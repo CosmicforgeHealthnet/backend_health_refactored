@@ -1,6 +1,260 @@
 # docs/transactions/subscriptionComponents.yaml
 components:
   schemas:
+    # Comprehensive Usage Summary Schema
+    ComprehensiveUsageSummary:
+      type: object
+      description: "Complete subscription usage data with all features, limits, and status"
+      properties:
+        subscription:
+          type: object
+          description: "Current subscription information"
+          properties:
+            id:
+              type: string
+              example: "sub_123"
+            tier:
+              type: string
+              enum: [free, basic, standard, medium, premium, professional, gold_elite]
+            tierDisplay:
+              type: string
+              example: "Premium Plan"
+            planType:
+              type: string
+              enum: [doctor, patient]
+            status:
+              type: string
+              enum: [active, pending, expired, canceled, paused]
+            isActive:
+              type: boolean
+            isPremium:
+              type: boolean
+            startDate:
+              type: string
+              format: date-time
+            endDate:
+              type: string
+              format: date-time
+            daysRemaining:
+              type: integer
+            autoRenew:
+              type: boolean
+        usageLimits:
+          type: object
+          description: "Usage limits with progress tracking"
+          additionalProperties:
+            type: object
+            properties:
+              displayName:
+                type: string
+                description: "Human-readable feature name"
+              description:
+                type: string
+                description: "Feature description"
+              icon:
+                type: string
+                description: "Icon identifier"
+              category:
+                type: string
+                description: "Feature category (ai, consultations, services, etc.)"
+              used:
+                type: integer
+                description: "Current usage count"
+              limit:
+                type: integer
+                description: "Maximum allowed (-1 for unlimited)"
+              limitDisplay:
+                oneOf:
+                  - type: integer
+                  - type: string
+                description: "Display-friendly limit (number or 'Unlimited')"
+              remaining:
+                oneOf:
+                  - type: integer
+                  - type: string
+                description: "Remaining usage (number or 'Unlimited')"
+              percentage:
+                type: integer
+                description: "Usage percentage (0-100)"
+              isUnlimited:
+                type: boolean
+              isBlocked:
+                type: boolean
+                description: "True if limit is 0 (feature not available)"
+              status:
+                type: string
+                enum: [ok, warning, exceeded]
+                description: "ok=normal, warning=>=80%, exceeded=>=100%"
+        featureAccess:
+          type: object
+          description: "Boolean feature access"
+          additionalProperties:
+            type: object
+            properties:
+              displayName:
+                type: string
+              description:
+                type: string
+              icon:
+                type: string
+              category:
+                type: string
+              enabled:
+                type: boolean
+        familyPlan:
+          type: object
+          description: "Family plan configuration"
+          properties:
+            enabled:
+              type: boolean
+            currentMembers:
+              type: integer
+            maxMembers:
+              oneOf:
+                - type: integer
+                - type: string
+              description: "Max members (number or 'Unlimited')"
+            description:
+              type: string
+              example: "2 Adults + 3 Children"
+            adults:
+              type: integer
+            children:
+              type: integer
+        commission:
+          type: object
+          nullable: true
+          description: "Commission info (doctors only, null for patients)"
+          properties:
+            rate:
+              type: number
+              description: "Commission percentage"
+            description:
+              type: string
+              example: "15% per consultation"
+        stats:
+          type: object
+          description: "Summary statistics"
+          properties:
+            totalLimits:
+              type: integer
+            limitsUsed:
+              type: integer
+            limitsNearLimit:
+              type: integer
+            limitsExceeded:
+              type: integer
+            enabledFeaturesCount:
+              type: integer
+            disabledFeaturesCount:
+              type: integer
+        health:
+          type: object
+          description: "Overall subscription health"
+          properties:
+            status:
+              type: string
+              enum: [healthy, warning, critical]
+            message:
+              type: string
+            needsAttention:
+              type: boolean
+        enabledFeatures:
+          type: array
+          items:
+            type: string
+          description: "List of enabled feature display names"
+        disabledFeatures:
+          type: array
+          items:
+            type: string
+          description: "List of disabled feature display names"
+        resetInfo:
+          type: object
+          description: "Usage reset information"
+          properties:
+            nextResetDate:
+              type: string
+              format: date-time
+            daysUntilReset:
+              type: integer
+            resetMessage:
+              type: string
+              example: "Usage resets in 15 days"
+        lastUpdated:
+          type: string
+          format: date-time
+        cachedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # Public Plan Schema (No Auth Required)
+    PublicPlan:
+      type: object
+      properties:
+        tier:
+          type: string
+          enum: [free, basic, standard, medium, premium, professional, gold_elite]
+          example: "premium"
+        planType:
+          type: string
+          enum: [doctor, patient]
+          example: "patient"
+        name:
+          type: string
+          example: "Premium Plan"
+        price:
+          type: number
+          format: decimal
+          example: 39900.00
+        originalPrice:
+          type: number
+          format: decimal
+          description: "Original price before discount"
+          example: 49900.00
+        currency:
+          type: string
+          example: "NGN"
+        countryCode:
+          type: string
+          example: "NG"
+        discountPercentage:
+          type: number
+          example: 20
+        isPredefined:
+          type: boolean
+          description: "Whether pricing is predefined for this country"
+          example: true
+        isFallback:
+          type: boolean
+          description: "Whether fallback USD pricing was used"
+          example: false
+        conversionRate:
+          type: number
+          description: "Exchange rate used for conversion (if applicable)"
+          example: null
+        features:
+          type: array
+          items:
+            type: string
+          example: ["Voice Consultation", "Video Consultation", "Priority Support"]
+        monthlyLimits:
+          type: object
+          properties:
+            aiChatbotResponses:
+              type: integer
+              description: "-1 means unlimited"
+            aiDiagnosticRequests:
+              type: integer
+        familyMembers:
+          type: integer
+          example: 5
+        commissionRate:
+          type: number
+          description: "Commission rate for doctor plans (percentage)"
+          example: 15
+
     # Core Subscription Schemas
     Subscription:
       type: object

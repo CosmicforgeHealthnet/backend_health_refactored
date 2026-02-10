@@ -30,7 +30,7 @@ function authenticateJWT(req, res, next) {
 
 /**
  * Restrict to one or more roles
- * @param  {...string} allowedRoles 
+ * @param  {...string} allowedRoles
  */
 function authorizeRoles(...allowedRoles) {
     return (req, res, next) => {
@@ -44,4 +44,33 @@ function authorizeRoles(...allowedRoles) {
     };
 }
 
-module.exports = { authenticateJWT, authorizeRoles };
+/**
+ * Optional authentication - works with or without token
+ * If token is present and valid, attaches user to req.user
+ * If no token or invalid token, continues without req.user
+ * Useful for public routes that behave differently for authenticated users
+ */
+function optionalAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+
+    // No auth header - continue without user
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        req.user = null;
+        return next();
+    }
+
+    const token = authHeader.slice(7);
+
+    jwt.verify(token, JWT_SECRET, (err, payload) => {
+        if (err) {
+            // Invalid token - continue without user
+            req.user = null;
+        } else {
+            // Valid token - attach user
+            req.user = payload;
+        }
+        next();
+    });
+}
+
+module.exports = { authenticateJWT, authorizeRoles, optionalAuth };

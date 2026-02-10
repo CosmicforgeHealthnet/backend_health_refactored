@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e:*)",
+      "Bash(node --check:*)",
+      "Bash(npm run dev:*)",
+      "Bash(cd:*)",
+      "Bash(npm run build:main-swagger:*)"
+    ]
+  }
+}

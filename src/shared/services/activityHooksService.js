@@ -1,32 +1,50 @@
 // src/services/activityHooksService.js
+/**
+ * =============================================================================
+ * ACTIVITY HOOKS SERVICE
+ * =============================================================================
+ *
+ * PURPOSE:
+ * Provides hooks to manually track usage in controllers and services.
+ * For routes, prefer using requireUsage middleware instead.
+ *
+ * WHEN TO USE:
+ * - In controllers where you need manual tracking
+ * - In services that process background jobs
+ * - When you can't use middleware (e.g., WebSocket handlers)
+ *
+ * USAGE TYPES:
+ * - Patient: aiChatbotResponses, aiDiagnosticRequests
+ * - Doctor: maxPatients, aiResponses
+ *
+ * EXAMPLE:
+ *   // Track after successful AI response
+ *   await ActivityHooksService.onAIChatResponse(userId);
+ *
+ *   // Check before action
+ *   const canUse = await ActivityHooksService.checkBeforeActivity(userId, 'aiChatbotResponses');
+ *   if (!canUse.allowed) return res.status(429).json({ error: 'Limit exceeded' });
+ *
+ * =============================================================================
+ */
 
-const UsageTrackingMiddleware = require("../../features/subscriptions/middlewares/usageTrackingMiddleware");
-
-const UsageSummaryService = require("../../features/subscriptions/services/usageSummaryService");
+const usageService = require("../../features/subscriptions/services/usageService");
 
 class ActivityHooksService {
   /**
    * Hook for AI Chatbot interactions
    * Call this after successful AI chat response
+   *
+   * @param {string} userId - User ID
+   * @param {number} messageCount - Number of messages (default: 1)
+   * @returns {Promise<Object>} Tracking result with usage info
    */
   static async onAIChatResponse(userId, messageCount = 1) {
     try {
-      console.log(
-        `🤖 AI Chat activity: user ${userId}, messages: ${messageCount}`
-      );
-
-      const result = await UsageTrackingMiddleware.trackUsage(
-        userId,
-        "aiChatbotResponses",
-        messageCount
-      );
-
-      // Clear usage summary cache so next request gets fresh data
-      await UsageSummaryService.clearUsageSummaryCache(userId);
-
-      return result;
+      console.log(`AI Chat: user ${userId}, messages: ${messageCount}`);
+      return await usageService.consume(userId, "aiChatbotResponses", messageCount);
     } catch (error) {
-      console.error("❌ Error tracking AI chat activity:", error);
+      console.error("Error tracking AI chat activity:", error);
       return { success: false, error: error.message };
     }
   }
@@ -34,24 +52,16 @@ class ActivityHooksService {
   /**
    * Hook for AI Diagnostic requests
    * Call this after successful diagnostic analysis
+   *
+   * @param {string} userId - User ID
+   * @param {number} requestCount - Number of requests (default: 1)
    */
   static async onAIDiagnosticRequest(userId, requestCount = 1) {
     try {
-      console.log(
-        `🔬 AI Diagnostic activity: user ${userId}, requests: ${requestCount}`
-      );
-
-      const result = await UsageTrackingMiddleware.trackUsage(
-        userId,
-        "aiDiagnosticRequests",
-        requestCount
-      );
-
-      await UsageSummaryService.clearUsageSummaryCache(userId);
-
-      return result;
+      console.log(`AI Diagnostic: user ${userId}, requests: ${requestCount}`);
+      return await usageService.consume(userId, "aiDiagnosticRequests", requestCount);
     } catch (error) {
-      console.error("❌ Error tracking AI diagnostic activity:", error);
+      console.error("Error tracking AI diagnostic activity:", error);
       return { success: false, error: error.message };
     }
   }
@@ -59,24 +69,16 @@ class ActivityHooksService {
   /**
    * Hook for Video/Voice consultations
    * Call this after consultation is completed
+   *
+   * @param {string} userId - User ID
+   * @param {string} consultationType - Type of consultation (video/voice)
    */
   static async onConsultationCompleted(userId, consultationType = "video") {
     try {
-      console.log(
-        `📹 Consultation activity: user ${userId}, type: ${consultationType}`
-      );
-
-      const result = await UsageTrackingMiddleware.trackUsage(
-        userId,
-        "consultations",
-        1
-      );
-
-      await UsageSummaryService.clearUsageSummaryCache(userId);
-
-      return result;
+      console.log(`Consultation: user ${userId}, type: ${consultationType}`);
+      return await usageService.consume(userId, "consultations", 1);
     } catch (error) {
-      console.error("❌ Error tracking consultation activity:", error);
+      console.error("Error tracking consultation activity:", error);
       return { success: false, error: error.message };
     }
   }
@@ -84,24 +86,16 @@ class ActivityHooksService {
   /**
    * Hook for Doctor AI responses (for doctors helping patients)
    * Call this when doctor uses AI assistance
+   *
+   * @param {string} doctorId - Doctor's user ID
+   * @param {number} responseCount - Number of AI responses (default: 1)
    */
   static async onDoctorAIResponse(doctorId, responseCount = 1) {
     try {
-      console.log(
-        `👨‍⚕️ Doctor AI activity: doctor ${doctorId}, responses: ${responseCount}`
-      );
-
-      const result = await UsageTrackingMiddleware.trackUsage(
-        doctorId,
-        "aiResponses",
-        responseCount
-      );
-
-      await UsageSummaryService.clearUsageSummaryCache(doctorId);
-
-      return result;
+      console.log(`Doctor AI: doctor ${doctorId}, responses: ${responseCount}`);
+      return await usageService.consume(doctorId, "aiResponses", responseCount);
     } catch (error) {
-      console.error("❌ Error tracking doctor AI activity:", error);
+      console.error("Error tracking doctor AI activity:", error);
       return { success: false, error: error.message };
     }
   }
@@ -109,24 +103,15 @@ class ActivityHooksService {
   /**
    * Hook for when doctor adds a new patient
    * Call this when doctor accepts/adds a new patient
+   *
+   * @param {string} doctorId - Doctor's user ID
    */
   static async onDoctorAddPatient(doctorId) {
     try {
-      console.log(
-        `👥 Doctor patient activity: doctor ${doctorId} added patient`
-      );
-
-      const result = await UsageTrackingMiddleware.trackUsage(
-        doctorId,
-        "maxPatients",
-        1
-      );
-
-      await UsageSummaryService.clearUsageSummaryCache(doctorId);
-
-      return result;
+      console.log(`Doctor patient: doctor ${doctorId} added patient`);
+      return await usageService.consume(doctorId, "maxPatients", 1);
     } catch (error) {
-      console.error("❌ Error tracking doctor patient activity:", error);
+      console.error("Error tracking doctor patient activity:", error);
       return { success: false, error: error.message };
     }
   }
@@ -134,27 +119,26 @@ class ActivityHooksService {
   /**
    * Universal activity hook - handles any activity type
    * Use this for custom activities not covered above
+   *
+   * @param {string} userId - User ID
+   * @param {string} activityType - The usage type to track
+   * @param {number} count - Amount to consume (default: 1)
+   * @param {Object} metadata - Optional metadata for analytics
    */
   static async onUserActivity(userId, activityType, count = 1, metadata = {}) {
     try {
-      console.log(
-        `📊 User activity: ${userId} performed ${activityType} x${count}`
-      );
+      console.log(`User activity: ${userId} performed ${activityType} x${count}`);
 
-      const result = await UsageTrackingMiddleware.trackUsage(
-        userId,
-        activityType,
-        count
-      );
+      const result = await usageService.consume(userId, activityType, count);
 
-      await UsageSummaryService.clearUsageSummaryCache(userId);
-
-      // Log activity for analytics (optional)
-      this.logActivityForAnalytics(userId, activityType, count, metadata);
+      // Log for analytics if metadata provided
+      if (Object.keys(metadata).length > 0) {
+        this.logActivityForAnalytics(userId, activityType, count, metadata);
+      }
 
       return result;
     } catch (error) {
-      console.error("❌ Error tracking user activity:", error);
+      console.error("Error tracking user activity:", error);
       return { success: false, error: error.message };
     }
   }
@@ -162,26 +146,16 @@ class ActivityHooksService {
   /**
    * Batch activity hook - track multiple activities at once
    * Useful when one user action triggers multiple usage types
+   *
+   * @param {string} userId - User ID
+   * @param {Object} activities - Map of activityType -> count
    */
   static async onBatchActivity(userId, activities) {
     try {
-      console.log(`📊 Batch activity for user ${userId}:`, activities);
-
-      const results = {};
-
-      for (const [activityType, count] of Object.entries(activities)) {
-        results[activityType] = await UsageTrackingMiddleware.trackUsage(
-          userId,
-          activityType,
-          count
-        );
-      }
-
-      await UsageSummaryService.clearUsageSummaryCache(userId);
-
-      return { success: true, results };
+      console.log(`Batch activity for user ${userId}:`, activities);
+      return await usageService.consumeMultiple(userId, activities);
     } catch (error) {
-      console.error("❌ Error tracking batch activity:", error);
+      console.error("Error tracking batch activity:", error);
       return { success: false, error: error.message };
     }
   }
@@ -189,22 +163,18 @@ class ActivityHooksService {
   /**
    * Pre-activity check - verify user can perform action before doing it
    * Call this BEFORE performing the actual action
+   *
+   * @param {string} userId - User ID
+   * @param {string} activityType - The usage type to check
+   * @param {number} requestedCount - Amount to check (default: 1)
+   * @returns {Promise<Object>} Object with allowed:boolean and usage details
    */
   static async checkBeforeActivity(userId, activityType, requestedCount = 1) {
     try {
-      console.log(
-        `🔍 Pre-check: user ${userId} wants to perform ${activityType} x${requestedCount}`
-      );
-
-      const canPerform = await UsageTrackingMiddleware.canPerformAction(
-        userId,
-        activityType,
-        requestedCount
-      );
-
-      return canPerform;
+      console.log(`Pre-check: user ${userId} for ${activityType} x${requestedCount}`);
+      return await usageService.canConsumeDetailed(userId, activityType, requestedCount);
     } catch (error) {
-      console.error("❌ Error checking before activity:", error);
+      console.error("Error checking before activity:", error);
       return { allowed: false, error: error.message };
     }
   }

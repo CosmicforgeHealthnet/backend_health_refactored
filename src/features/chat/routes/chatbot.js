@@ -1,4 +1,13 @@
 // src/routes/chatbotRoutes.js
+/**
+ * Chatbot Routes - AI-powered medical chat endpoints
+ *
+ * USAGE TRACKING:
+ * - Patient chat: Tracks 'aiChatbotResponses' against monthly limit
+ * - Doctor chat: Tracks 'aiResponses' against doctor's monthly limit
+ *
+ * Pattern: requireUsage checks before, trackAfterSuccess records after.
+ */
 const express = require('express');
 const router = express.Router();
 const ChatbotController = require('../controllers/chatbotController');
@@ -10,9 +19,8 @@ const {
 } = require('../middlewares/chatbotValidation');
 const RateLimiterMiddleware = require('../../../shared/middlewares/rateLimiter');
 
-// Import usage tracking middleware and activity hooks
-const UsageTrackingMiddleware = require("../../subscriptions/middlewares/usageTrackingMiddleware");
-const ActivityHooksService = require('../../../shared/services/activityHooksService');
+// Usage tracking middleware
+const requireUsage = require("../../subscriptions/middlewares/requireUsage");
 
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -25,32 +33,31 @@ router.use(authenticateJWT);
  * @route   POST /chatbot/chat
  * @desc    AI-Doctor endpoint for patient consultations
  * @access  Private (All authenticated users)
- * @usage   Tracks 'aiChatbotResponses' usage
+ * @usage   Checks 'aiChatbotResponses' limit, tracks after success
  */
 router.post('/chat',
-  UsageTrackingMiddleware.usageMiddleware('aiChatbotResponses'),
+  requireUsage('aiChatbotResponses'),
   RateLimiterMiddleware?.general ? RateLimiterMiddleware.general() : (req, res, next) => next(),
-  // accept optional files + message
   upload.array('files', 10),
   validateChatMessage,
   chatbotController.chat.bind(chatbotController),
-  ActivityHooksService.trackActivityAfterSuccess
+  requireUsage.trackAfterSuccess
 );
 
 /**
  * @route   POST /chatbot/doctorchat
  * @desc    Medical Assistant endpoint for healthcare professionals
  * @access  Private (Doctors only)
- * @usage   Tracks 'aiResponses' usage for doctors
+ * @usage   Checks 'aiResponses' limit, tracks after success
  */
 router.post('/doctorchat',
   authorizeRoles('doctor'),
-  UsageTrackingMiddleware.usageMiddleware('aiResponses'),
+  requireUsage('aiResponses'),
   RateLimiterMiddleware?.general ? RateLimiterMiddleware.general() : (req, res, next) => next(),
   upload.array('files', 10),
   validateChatMessage,
   chatbotController.doctorChat.bind(chatbotController),
-  ActivityHooksService.trackActivityAfterSuccess
+  requireUsage.trackAfterSuccess
 );
 
 /**

@@ -1,174 +1,110 @@
-// src/routes/subscriptionRoutes.js
-const express = require('express');
+// src/features/subscriptions/routes/index.js
+/**
+ * Subscription Routes
+ *
+ * PUBLIC (no auth):
+ *   GET /public/plans              - Get all plans for landing page
+ *   GET /public/plans/:type/:tier  - Get specific plan pricing
+ *
+ * AUTHENTICATED:
+ *   GET /current                   - Get user's current subscription
+ *   GET /plans                     - Get plans for user's role
+ *   GET /plans/:type/:tier/pricing - Get specific plan pricing
+ *   POST /create-payment           - Create payment for upgrade
+ *   POST /process-upgrade-after-payment - Process after payment
+ *   POST /upgrade                  - Direct upgrade
+ *   POST /cancel                   - Cancel subscription
+ *   GET /usage                     - Get comprehensive usage summary
+ *   GET /features/:name            - Check feature access
+ *   GET /auto-billing              - Get auto-billing settings
+ *   POST /auto-billing/enable      - Enable auto-billing
+ *   POST /auto-billing/disable     - Disable auto-billing
+ *   GET /analytics                 - Admin analytics
+ */
+
+const express = require("express");
 const router = express.Router();
-const { authenticateJWT, authorizeRoles } = require('../../auth/middlewares/authMiddleware');
-const RateLimiterMiddleware = require('../../../shared/middlewares/rateLimiter');
-const SanitizerMiddleware = require('../../../shared/middlewares/sanitizer');
+const { authenticateJWT, optionalAuth, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
+const RateLimiterMiddleware = require("../../../shared/middlewares/rateLimiter");
+const SanitizerMiddleware = require("../../../shared/middlewares/sanitizer");
 
 const {
+  // Public
+  getPublicPlans,
+  getPublicPlanPricing,
+  // Subscription info
   getCurrentSubscription,
   getAvailablePlans,
   getPlanPricing,
+  // Management
+  createSubscriptionPayment,
+  processUpgradeAfterPayment,
   upgradeSubscription,
   cancelSubscription,
+  // Usage (consolidated to single endpoint)
+  getUsageSummary,
+  // Features
   checkFeatureAccess,
-  getUsageInfo,
-  getSubscriptionAnalytics,
+  // Auto-billing
   getAutoBillingSettings,
   enableAutoBilling,
   disableAutoBilling,
-  // NEW METHODS:
-  createSubscriptionPayment,
-  upgradeWithSavedMethod,
-  processUpgradeAfterPayment,
-  testSubscriptionUpgrade,
-  getUsageSummary,
-  getUsageStatus
-} = require('../controllers/subscriptionController');
+  // Admin
+  getSubscriptionAnalytics,
+  // Dev
+  testSubscriptionUpgrade
+} = require("../controllers/subscriptionController");
 
-// Apply common middlewares
+// ===========================================================================
+// PUBLIC ROUTES (No Auth Required)
+// ===========================================================================
+
+// Get all plans (landing page) - works for doctor and patient
+router.get("/public/plans",
+  SanitizerMiddleware.sanitizeInput,
+  optionalAuth,
+  getPublicPlans
+);
+
+// Get specific plan pricing (public)
+router.get("/public/plans/:planType/:tier",
+  SanitizerMiddleware.sanitizeInput,
+  getPublicPlanPricing
+);
+
+// ===========================================================================
+// AUTHENTICATED ROUTES
+// ===========================================================================
+
 router.use(authenticateJWT);
 router.use(SanitizerMiddleware.sanitizeInput);
 
-/**
- * @route   GET /api/subscription/current
- * @desc    Get user's current subscription
- * @access  Private
- */
-router.get('/current', getCurrentSubscription);
+// --- Subscription Info ---
+router.get("/current", getCurrentSubscription);
+router.get("/plans", getAvailablePlans);
+router.get("/plans/:planType/:tier/pricing", getPlanPricing);
 
-/**
- * @route   GET /api/subscription/plans
- * @desc    Get available plans for user type
- * @access  Private
- */
-router.get('/plans', getAvailablePlans);
+// --- Subscription Management ---
+router.post("/create-payment", RateLimiterMiddleware.payments(), createSubscriptionPayment);
+router.post("/process-upgrade-after-payment", processUpgradeAfterPayment);
+router.post("/upgrade", upgradeSubscription);
+router.post("/cancel", RateLimiterMiddleware.sensitive(), cancelSubscription);
 
-/**
- * @route   GET /api/subscription/plans/:planType/:tier/pricing
- * @desc    Get pricing for specific plan
- * @access  Private
- */
-router.get('/plans/:planType/:tier/pricing', getPlanPricing);
+// --- Usage (Single comprehensive endpoint) ---
+router.get("/usage", getUsageSummary);
 
-/**
- * @route   POST /api/subscription/create-payment
- * @desc    Create subscription payment (payment-first upgrade)
- * @access  Private
- */
-router.post('/create-payment',
-  RateLimiterMiddleware.payments(),
-  createSubscriptionPayment
-);
+// --- Features ---
+router.get("/features/:featureName", checkFeatureAccess);
 
-// Add this route to your subscription routes
-router.post('/test-upgrade/:transactionId',
-  authenticateJWT,
-  testSubscriptionUpgrade
-);
+// --- Auto-billing ---
+router.get("/auto-billing", getAutoBillingSettings);
+router.post("/auto-billing/enable", RateLimiterMiddleware.sensitive(), enableAutoBilling);
+router.post("/auto-billing/disable", disableAutoBilling);
 
-/**
- * @route   POST /api/subscription/upgrade-with-saved-method
- * @desc    Upgrade subscription using saved payment method
- * @access  Private
- */
-router.post('/upgrade-with-saved-method',
-  RateLimiterMiddleware.payments(),
-  upgradeWithSavedMethod
-);
+// --- Admin ---
+router.get("/analytics", authorizeRoles("admin", "super_admin"), getSubscriptionAnalytics);
 
-/**
- * @route   POST /api/subscription/process-upgrade-after-payment
- * @desc    Process subscription upgrade after successful payment (webhook/callback)
- * @access  Private (Internal use)
- */
-router.post('/process-upgrade-after-payment',
-  processUpgradeAfterPayment
-);
-
-/**
- * @route   POST /api/subscription/upgrade
- * @desc    Upgrade/change subscription plan
- * @access  Private
- */
-router.post('/upgrade',
-  RateLimiterMiddleware.sensitive(),
-  upgradeSubscription
-);
-
-/**
- * @route   POST /api/subscription/cancel
- * @desc    Cancel subscription
- * @access  Private
- */
-router.post('/cancel',
-  RateLimiterMiddleware.sensitive(),
-  cancelSubscription
-);
-
-/**
- * @route   GET /api/subscription/features/:featureName
- * @desc    Check if user has access to specific feature
- * @access  Private
- */
-router.get('/features/:featureName', checkFeatureAccess);
-
-/**
- * @route   GET /api/subscription/usage
- * @desc    Get usage limits and current usage
- * @access  Private
- */
-router.get('/usage', getUsageInfo);
-
-/**
- * @route   GET /api/subscription/analytics
- * @desc    Get subscription analytics
- * @access  Private (Admin only)
- */
-router.get('/analytics',
-  authorizeRoles('admin', 'super_admin'),
-  getSubscriptionAnalytics
-);
-
-/**
- * @route   GET /api/subscription/auto-billing
- * @desc    Get auto-billing settings
- * @access  Private
- */
-router.get('/auto-billing', getAutoBillingSettings);
-
-/**
- * @route   POST /api/subscription/auto-billing/enable
- * @desc    Enable auto-billing
- * @access  Private
- */
-router.post('/auto-billing/enable',
-  RateLimiterMiddleware.sensitive(),
-  enableAutoBilling
-);
-
-/**
- * @route   POST /api/subscription/auto-billing/disable
- * @desc    Disable auto-billing
- * @access  Private
- */
-router.post('/auto-billing/disable',
-  RateLimiterMiddleware.sensitive(),
-  disableAutoBilling
-);
-
-/**
- * @route   GET /api/subscription/usage-summary
- * @desc    Get comprehensive usage summary
- * @access  Private
- */
-router.get('/usage-summary', getUsageSummary);
-
-/**
- * @route   GET /api/subscription/usage-status
- * @desc    Get quick usage status
- * @access  Private
- */
-router.get('/usage-status', getUsageStatus);
+// --- Dev/Test ---
+router.post("/test-upgrade/:transactionId", testSubscriptionUpgrade);
 
 module.exports = router;

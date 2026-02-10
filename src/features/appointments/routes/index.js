@@ -1,20 +1,23 @@
 // ===================================
 // src/routes/AppointmentRoutes.js
 // ===================================
+/**
+ * Appointment Routes - Handles booking, management, and meeting generation
+ *
+ * USAGE TRACKING (commented out but available):
+ * - maxPatients: Track when doctor approves new patients
+ * - consultations: Track when consultations are completed
+ *
+ * Use requireUsage middleware for usage-limited actions.
+ */
 const express = require("express");
 const AppointmentController = require("../controllers/appointmentController");
 const AppointmentValidationMiddleware = require("../middlewares/appointmentValidationMiddleware");
 const DoctorGoogleAuthService = require("../services/googleMeet/doctorAuthService");
-const UsageTrackingMiddleware = require("../../subscriptions/middlewares/usageTrackingMiddleware");
-// const {
-//   usageMiddleware,
-// } = UsageTrackingMiddleware;
-// const ActivityHooksService = require("../services/activityHooksService");
-// const {
-//   checkDoctorSpecializationAccess,
-// } = require("../middlewares/subscription/doctorSpecializationAccessMiddleware");
-// const DoctorSpecializationAccessMiddleware = require("../middlewares/subscription/doctorSpecializationAccessMiddleware");
 const TimezoneMiddleware = require("../../../shared/middlewares/timezoneMiddleware");
+
+// Usage tracking middleware (use when needed)
+// const requireUsage = require("../../subscriptions/middlewares/requireUsage");
 
 const router = express.Router();
 const appointmentController = new AppointmentController();
@@ -77,20 +80,22 @@ router.post(
 );
 
 // Custom middleware to conditionally track usage only on approvals
+// Uses the consolidated usageService for tracking
 const trackApprovalUsage = async (req, res, next) => {
   try {
     if (req.shouldTrackUsage && req.usageTracking) {
       const { userId, usageType, increment } = req.usageTracking;
+      const usageService = require("../../subscriptions/services/usageService");
 
-      // Track the usage (don't await to avoid slowing response)
-      UsageTrackingMiddleware.trackUsage(userId, usageType, increment).catch((error) => {
-        console.error("❌ Post-approval usage tracking failed:", error);
+      // Track the usage asynchronously (don't block response)
+      usageService.consume(userId, usageType, increment).catch((error) => {
+        console.error("Post-approval usage tracking failed:", error);
       });
     }
 
     next();
   } catch (error) {
-    console.error("❌ Approval tracking middleware error:", error);
+    console.error("Approval tracking middleware error:", error);
     next(); // Don't fail the request for tracking issues
   }
 };
