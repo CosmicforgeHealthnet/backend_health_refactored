@@ -12669,6 +12669,7 @@ paths:
       description: Retrieve all available subscription plans for landing page display. No authentication required.
       tags:
         - Subscription Public
+      security: []
       parameters:
         - name: countryCode
           in: query
@@ -12768,6 +12769,7 @@ paths:
       description: Retrieve detailed pricing for a specific plan. No authentication required.
       tags:
         - Subscription Public
+      security: []
       parameters:
         - name: planType
           in: path

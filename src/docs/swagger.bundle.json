@@ -18815,6 +18815,7 @@
         "tags": [
           "Subscription Public"
         ],
+        "security": [],
         "parameters": [
           {
             "name": "countryCode",
@@ -18960,6 +18961,7 @@
         "tags": [
           "Subscription Public"
         ],
+        "security": [],
         "parameters": [
           {
             "name": "planType",

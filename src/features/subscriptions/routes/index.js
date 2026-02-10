@@ -24,7 +24,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { authenticateJWT, optionalAuth, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
+const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
 const RateLimiterMiddleware = require("../../../shared/middlewares/rateLimiter");
 const SanitizerMiddleware = require("../../../shared/middlewares/sanitizer");
 
@@ -62,7 +62,6 @@ const {
 // Get all plans (landing page) - works for doctor and patient
 router.get("/public/plans",
   SanitizerMiddleware.sanitizeInput,
-  optionalAuth,
   getPublicPlans
 );
 
