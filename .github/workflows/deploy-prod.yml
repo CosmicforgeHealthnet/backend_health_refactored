@@ -1,0 +1,137 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  BACKEND_IMAGE: cosmicforge/cosmicforge-backend
+  AI_IMAGE: cosmicforge/cosmicforge-ai
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:prod-${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache,mode=max
+
+      - name: Build and push AI service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ai_service
+          file: ./ai_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.AI_IMAGE }}:latest
+            ${{ env.AI_IMAGE }}:prod-${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.AI_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.AI_IMAGE }}:buildcache,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy to Production VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            # Ensure directory exists
+            mkdir -p /var/www/cosmic-production
+            cd /var/www/cosmic-production || exit 1
+
+            echo "📦 Synchronizing infrastructure code..."
+            # Using git to fetch nginx conf and other utils
+            git fetch origin
+            git reset --hard origin/main
+
+            echo "📝 Configuring environment..."
+            # Create .env.production from GitHub Secrets
+            echo "${{ secrets.PROD_ENV_FILE }}" > .env.production
+
+            echo "🐳 Pulling latest images..."
+            docker pull cosmicforge/cosmicforge-backend:latest
+            docker pull cosmicforge/cosmicforge-ai:latest
+            docker pull redis:alpine
+            docker pull nginx:alpine
+
+            echo "🛑 Removing old containers..."
+            # Force remove to ensure we can recreate them
+            docker rm -f cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod || true
+
+            echo "🌐 Setting up Network..."
+            docker network create cosmic_network_prod || true
+
+            echo "🚀 Starting Redis..."
+            docker run -d \
+              --name cosmic_redis_prod \
+              --network cosmic_network_prod \
+              --restart unless-stopped \
+              redis:alpine
+
+            echo "🚀 Starting AI Service..."
+            docker run -d \
+              --name cosmic_brain_prod \
+              --network cosmic_network_prod \
+              --restart unless-stopped \
+              cosmicforge/cosmicforge-ai:latest
+              
+            echo "🚀 Starting Backend Service..."
+            docker run -d \
+              --name cosmic_backend_prod \
+              --network cosmic_network_prod \
+              --restart unless-stopped \
+              --env-file .env.production \
+              -e REDIS_URL=redis://cosmic_redis_prod:6379 \
+              -e REDIS_DEV_HOST=cosmic_redis_prod \
+              -e AI_SERVICE_URL=http://cosmic_brain_prod:8001/api/v1 \
+              -v $(pwd)/uploads:/app/uploads \
+              cosmicforge/cosmicforge-backend:latest
+              
+            echo "🚀 Starting Nginx Gateway..."
+            docker run -d \
+              --name cosmic_gateway_prod \
+              --network cosmic_network_prod \
+              --restart unless-stopped \
+              -p 80:80 -p 443:443 \
+              -v $(pwd)/deployment/nginx.production.conf:/etc/nginx/nginx.conf:ro \
+              -v $(pwd)/uploads:/app/uploads:ro \
+              -v /etc/letsencrypt:/etc/letsencrypt:ro \
+              -v /var/www/certbot:/var/www/certbot:ro \
+              nginx:alpine
+
+            echo "🧹 Cleaning up..."
+            docker image prune -f
+
+            echo "✅ Deployment Successful!"
+            docker ps --filter "name=cosmic_*_prod" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
