@@ -7,8 +7,8 @@ on:
     workflow_dispatch:
 
 env:
-    BACKEND_IMAGE: cosmicforge/cosmicforge-backend
-    AI_IMAGE: cosmicforge/cosmicforge-ai
+    BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend
+    AI_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai
 
 jobs:
     build-and-push:
@@ -83,9 +83,9 @@ jobs:
                       # Create .env.dev from GitHub Secrets
                       echo "${{ secrets.DEV_ENV_FILE }}" > .env.dev
 
-                      echo "🐳 Pulling latest images..."
-                      docker pull cosmicforge/cosmicforge-backend:dev-latest
-                      docker pull cosmicforge/cosmicforge-ai:dev-latest
+                      echo "🐳 Pulling latest images from Registry..."
+                      docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest
+                      docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:dev-latest
                       docker pull redis:alpine
                       docker pull nginx:alpine
 
@@ -111,8 +111,8 @@ jobs:
                         --network cosmic_network_dev \
                         --restart unless-stopped \
                         -p 8002:8001 \
-                        cosmicforge/cosmicforge-ai:dev-latest
-                        
+                        ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:dev-latest
+
                       echo "🚀 Starting Backend Service..."
                       # Backend on dev port 5001:5000
                       docker run -d \
@@ -125,8 +125,8 @@ jobs:
                         -e AI_SERVICE_URL=http://cosmic_brain_dev:8001/api/v1 \
                         -p 5001:5000 \
                         -v $(pwd)/uploads:/app/uploads \
-                        cosmicforge/cosmicforge-backend:dev-latest
-                        
+                        ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest
+
                       echo "🚀 Starting Nginx Gateway..."
                       # Nginx on dev port 8081:80
                       docker run -d \
