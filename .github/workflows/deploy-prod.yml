@@ -66,9 +66,9 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            # Ensure directory exists
-            mkdir -p /var/www/cosmic-production
-            cd /var/www/cosmic-production || exit 1
+            # Ensure directory exists (using /root instead of /var/www due to Docker snap AppArmor restrictions)
+            mkdir -p /root/cosmic-production
+            cd /root/cosmic-production || exit 1
 
             echo "Synchronizing infrastructure code..."
             # Using git to fetch nginx conf and other utils
