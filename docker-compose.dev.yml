@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  backend:
+    image: cosmicforge/cosmicforge-backend:dev-latest
+    container_name: cosmic_backend_dev
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./uploads:/app/uploads
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - UPLOAD_DIRECTORY=/app/uploads
+      - AI_SERVICE_URL=http://cosmic_brain_dev:8001/api/v1
+      - REDIS_URL=redis://redis_dev:6379
+      - REDIS_DEV_HOST=redis_dev
+      - FILE_SERVER_URL=https://dev.cosmicforge-healthnet.com
+    env_file:
+      - .env.dev
+    depends_on:
+      - ai_service
+      - redis
+    networks:
+      - cosmic_network_dev
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  ai_service:
+    image: cosmicforge/cosmicforge-ai:dev-latest
+    container_name: cosmic_brain_dev
+    restart: unless-stopped
+    ports:
+      - "8002:8001"
+    networks:
+      - cosmic_network_dev
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  redis:
+    image: redis:alpine
+    container_name: cosmic_redis_dev
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    networks:
+      - cosmic_network_dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    container_name: cosmic_gateway_dev
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    volumes:
+      - ./deployment/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./uploads:/app/uploads:ro  # Mount uploads for static file serving
+    depends_on:
+      - backend
+      - ai_service
+    networks:
+      - cosmic_network_dev
+
+networks:
+  cosmic_network_dev:
+    driver: bridge
