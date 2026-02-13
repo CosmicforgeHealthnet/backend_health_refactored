@@ -70,43 +70,43 @@ jobs:
             mkdir -p /var/www/cosmic-production
             cd /var/www/cosmic-production || exit 1
 
-            echo "📦 Synchronizing infrastructure code..."
+            echo "Synchronizing infrastructure code..."
             # Using git to fetch nginx conf and other utils
             git fetch origin
             git reset --hard origin/main
 
-            echo "📝 Configuring environment..."
+            echo "Configuring environment..."
             # Create .env.production from GitHub Secrets
             echo "${{ secrets.PROD_ENV_FILE }}" > .env.production
 
-            echo "🐳 Pulling latest images..."
+            echo "Pulling latest images..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:latest
             docker pull redis:alpine
             docker pull nginx:alpine
 
-            echo "🛑 Removing old containers..."
+            echo "Removing old containers..."
             # Force remove to ensure we can recreate them
             docker rm -f cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod || true
 
-            echo "🌐 Setting up Network..."
+            echo "Setting up Network..."
             docker network create cosmic_network_prod || true
 
-            echo "🚀 Starting Redis..."
+            echo "Starting Redis..."
             docker run -d \
               --name cosmic_redis_prod \
               --network cosmic_network_prod \
               --restart unless-stopped \
               redis:alpine
 
-            echo "🚀 Starting AI Service..."
+            echo "Starting AI Service..."
             docker run -d \
               --name cosmic_brain_prod \
               --network cosmic_network_prod \
               --restart unless-stopped \
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:latest
               
-            echo "🚀 Starting Backend Service..."
+            echo "Starting Backend Service..."
             docker run -d \
               --name cosmic_backend_prod \
               --network cosmic_network_prod \
@@ -118,7 +118,7 @@ jobs:
               -v $(pwd)/uploads:/app/uploads \
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
               
-            echo "🚀 Starting Nginx Gateway..."
+            echo "Starting Nginx Gateway..."
             docker run -d \
               --name cosmic_gateway_prod \
               --network cosmic_network_prod \
@@ -130,8 +130,8 @@ jobs:
               -v /var/www/certbot:/var/www/certbot:ro \
               nginx:alpine
 
-            echo "🧹 Cleaning up..."
+            echo "Cleaning up..."
             docker image prune -f
 
-            echo "✅ Deployment Successful!"
+            echo "Deployment Successful!"
             docker ps --filter "name=cosmic_*_prod" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
