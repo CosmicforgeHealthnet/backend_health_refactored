@@ -616,7 +616,7 @@ chmod +x ~/scripts/deploy.sh
 **Add more apps on same VPS:**
 
 ```
-~/apps/
+~/apps/EMV 
 ├── app-1/          Port 3001 → myapp1.com
 ├── app-2/          Port 3002 → myapp2.com
 ├── app-3/          Port 3003 → myapp3.com
