@@ -117,7 +117,6 @@ jobs:
               -e REDIS_URL=redis://cosmic_redis_prod:6379 \
               -e REDIS_DEV_HOST=cosmic_redis_prod \
               -e AI_SERVICE_URL=http://cosmic_brain_prod:8001/api/v1 \
-              -e FILE_SERVER_URL=https://api.cosmicforge-healthnet.com \
               -v $(pwd)/uploads:/app/uploads \
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
               
