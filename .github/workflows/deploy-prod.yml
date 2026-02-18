@@ -66,9 +66,9 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            # Ensure directory exists
-            mkdir -p /var/www/cosmic-production
-            cd /var/www/cosmic-production || exit 1
+            # Ensure directory exists (using /root instead of /var/www due to Docker snap AppArmor restrictions)
+            mkdir -p /root/cosmic-production
+            cd /root/cosmic-production || exit 1
 
             echo "Synchronizing infrastructure code..."
             # Using git to fetch nginx conf and other utils
@@ -85,9 +85,11 @@ jobs:
             docker pull redis:alpine
             docker pull nginx:alpine
 
+            echo "Stopping old containers..."
+            docker stop cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod 2>/dev/null || true
+
             echo "Removing old containers..."
-            # Force remove to ensure we can recreate them
-            docker rm -f cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod || true
+            docker rm cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod 2>/dev/null || true
 
             echo "Setting up Network..."
             docker network create cosmic_network_prod || true
