@@ -69,6 +69,7 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           envs: DEV_ENV_FILE
           script: |
+            set -e
             # Ensure directory exists
             mkdir -p /root/cosmic-dev
             cd /root/cosmic-dev || exit 1
@@ -78,6 +79,7 @@ jobs:
               git init
               git remote add origin https://github.com/${{ github.repository }}.git
             fi
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             git fetch origin
             git reset --hard origin/dev
 

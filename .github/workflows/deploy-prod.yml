@@ -76,6 +76,7 @@ jobs:
             cd /root/cosmic-production || exit 1
 
             echo "Synchronizing infrastructure code..."
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             git fetch origin
             git reset --hard origin/main
 
