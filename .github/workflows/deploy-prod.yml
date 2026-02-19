@@ -153,6 +153,9 @@ jobs:
               -v $DEPLOY_PATH/certbot:/var/www/certbot:ro \
               nginx:alpine
 
+            # Connect to dev network so we can proxy to dev containers
+            docker network connect cosmic_network_dev cosmic_gateway_prod 2>/dev/null || true
+
             echo "Cleaning images..."
             docker image prune -f
 
