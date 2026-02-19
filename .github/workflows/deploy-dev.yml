@@ -93,11 +93,19 @@ jobs:
             docker pull redis:alpine
             docker pull nginx:alpine
 
-            echo "Stopping and cleaning old containers..."
-            docker rm -f cosmic_gateway_dev 2>/dev/null || true
-            docker rm -f cosmic_backend_dev 2>/dev/null || true
-            docker rm -f cosmic_brain_dev 2>/dev/null || true
-            docker rm -f cosmic_redis_dev 2>/dev/null || true
+            echo "Aggressively cleaning up old containers..."
+            for container in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
+                echo "Processing $container..."
+                docker stop $container || true
+                if docker inspect $container >/dev/null 2>&1; then
+                    PID=$(docker inspect --format '{{.State.Pid}}' $container)
+                    if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
+                        echo "Killing $container (PID: $PID) at host level..."
+                        kill -9 $PID || true
+                    fi
+                fi
+                docker rm -f $container || true
+            done
 
             echo "Setting up Network..."
             docker network create cosmic_network_dev 2>/dev/null || true

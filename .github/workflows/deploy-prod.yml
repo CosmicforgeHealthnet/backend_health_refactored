@@ -93,10 +93,14 @@ jobs:
             for container in cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod; do
                 echo "Processing $container..."
                 docker stop $container || true
-                PID=$(docker inspect --format '{{.State.Pid}}' $container 2>/dev/null || echo "0")
-                if [ "$PID" != "0" ] && [ -n "$PID" ]; then
-                    echo "Killing $container (PID: $PID) at host level..."
-                    kill -9 $PID || true
+                
+                # Check if container exists and has a valid PID > 0
+                if docker inspect $container >/dev/null 2>&1; then
+                    PID=$(docker inspect --format '{{.State.Pid}}' $container)
+                    if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
+                        echo "Killing $container (PID: $PID) at host level..."
+                        kill -9 $PID || true
+                    fi
                 fi
                 docker rm -f $container || true
             done
