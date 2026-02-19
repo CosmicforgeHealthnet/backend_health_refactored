@@ -1,7 +1,7 @@
 // src/job/autoBillingJob.js
 const SubscriptionService = require("../../subscriptions/services/subscriptionService");
 const userPaymentMethodRepository = require("../repositories/userPaymentMethodRepository");
-const emailService = require("../../../services/email/emailService");
+const emailService = require("../../../shared/services/email/emailService");
 
 class AutoBillingJob {
 
