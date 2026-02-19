@@ -60,11 +60,14 @@ jobs:
     steps:
       - name: Deploy to Production VPS
         uses: appleboy/ssh-action@master
+        env:
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          envs: PROD_ENV_FILE
           script: |
             # Ensure directory exists (using /root instead of /var/www due to Docker snap AppArmor restrictions)
             mkdir -p /root/cosmic-production
@@ -76,8 +79,8 @@ jobs:
             git reset --hard origin/main
 
             echo "Configuring environment..."
-            # Create .env.production from GitHub Secrets
-            echo "${{ secrets.PROD_ENV_FILE }}" > .env.production
+            # Create .env.production from environment variable for reliability
+            echo "$PROD_ENV_FILE" > .env.production
 
             echo "Pulling latest images..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest

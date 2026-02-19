@@ -60,28 +60,30 @@ jobs:
     steps:
       - name: Deploy to Development VPS
         uses: appleboy/ssh-action@master
+        env:
+          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          envs: DEV_ENV_FILE
           script: |
-            # Ensure the directory exists
-            mkdir -p /var/www/cosmic-dev
-            cd /var/www/cosmic-dev || exit 1
+            # Ensure directory exists
+            mkdir -p /root/cosmic-dev
+            cd /root/cosmic-dev || exit 1
 
             echo "Synchronizing infrastructure code..."
             if [ ! -d ".git" ]; then
               git init
               git remote add origin https://github.com/${{ github.repository }}.git
             fi
-
             git fetch origin
             git reset --hard origin/dev
 
             echo "Configuring environment..."
-            # Create .env.dev from GitHub Secrets
-            echo "${{ secrets.DEV_ENV_FILE }}" > .env.dev
+            # Create .env.dev from environment variable for reliability
+            echo "$DEV_ENV_FILE" > .env.dev
 
             echo "Pulling latest images from Registry..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest
