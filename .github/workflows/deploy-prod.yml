@@ -89,11 +89,25 @@ jobs:
             docker pull redis:alpine
             docker pull nginx:alpine
 
-            echo "Stopping and cleaning old containers..."
-            docker rm -f cosmic_gateway_prod 2>/dev/null || true
-            docker rm -f cosmic_backend_prod 2>/dev/null || true
-            docker rm -f cosmic_brain_prod 2>/dev/null || true
-            docker rm -f cosmic_redis_prod 2>/dev/null || true
+            echo "Aggressively cleaning up old containers..."
+            # Try to stop and remove each container individually without hiding errors
+            docker stop cosmic_gateway_prod || true
+            docker rm -f cosmic_gateway_prod || true
+
+            docker stop cosmic_backend_prod || true
+            docker rm -f cosmic_backend_prod || true
+
+            docker stop cosmic_brain_prod || true
+            docker rm -f cosmic_brain_prod || true
+
+            docker stop cosmic_redis_prod || true
+            docker rm -f cosmic_redis_prod || true
+
+            echo "Ensuring no zombie containers remain..."
+            if [ $(docker ps -a -q -f name=cosmic_redis_prod) ]; then
+                echo "CRITICAL: cosmic_redis_prod still exists. Attempting hard remove..."
+                docker rm -f $(docker ps -a -q -f name=cosmic_redis_prod)
+            fi
 
             echo "Setting up Network..."
             docker network create cosmic_network_prod 2>/dev/null || true
