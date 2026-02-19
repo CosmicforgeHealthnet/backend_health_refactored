@@ -8,6 +8,7 @@ const cors = require("cors");
 const path = require('node:path');
 const archiver = require('archiver');
 const swaggerUi = require("swagger-ui-express");
+const morgan = require("morgan");
 
 // ============================================
 // SHARED IMPORTS
@@ -147,6 +148,7 @@ const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundl
 // ============================================
 // GLOBAL MIDDLEWARE
 // ============================================
+app.use(morgan("dev"));
 app.use(cors({
     origin: config.corsOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
