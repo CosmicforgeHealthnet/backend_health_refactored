@@ -98,24 +98,19 @@ jobs:
             fuser -k 80/tcp 2>/dev/null || true
             fuser -k 443/tcp 2>/dev/null || true
 
-            # 3. Nuclear Docker Clear: Kill ANY container using port 80 or 443
-            echo "Removing any Docker containers already on Port 80/443..."
-            docker rm -f $(docker ps -q --filter "publish=80") 2>/dev/null || true
-            docker rm -f $(docker ps -q --filter "publish=443") 2>/dev/null || true
-
-            for container in cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod; do
-                echo "Processing $container..."
-                docker stop $container || true
-                
-                # Check if container exists and has a valid PID > 0
-                if docker inspect $container >/dev/null 2>&1; then
-                    PID=$(docker inspect --format '{{.State.Pid}}' $container)
+            # 3. Destroy ANY container matching our names by ID (Fixes Ghost Containers)
+            echo "Identifying and destroying cosmic containers by ID..."
+            for name in cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod; do
+                IDs=$(docker ps -a -q --filter "name=$name")
+                for ID in $IDs; do
+                    echo "Destroying $name (ID: $ID)..."
+                    PID=$(docker inspect --format '{{.State.Pid}}' $ID 2>/dev/null || echo "0")
                     if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
-                        echo "Killing $container (PID: $PID) at host level..."
+                        echo "Killing process $PID..."
                         kill -9 $PID || true
                     fi
-                fi
-                docker rm -f $container || true
+                    docker rm -f $ID || true
+                done
             done
 
             echo "Setting up Network..."
