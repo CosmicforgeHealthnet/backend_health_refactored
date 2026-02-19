@@ -136,6 +136,7 @@ jobs:
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
               
             echo "Starting Nginx Gateway..."
+            mkdir -p certbot
             docker run -d \
               --name cosmic_gateway_prod \
               --network cosmic_network_prod \
@@ -144,7 +145,7 @@ jobs:
               -v $(pwd)/deployment/nginx.production.conf:/etc/nginx/nginx.conf:ro \
               -v $(pwd)/uploads:/app/uploads:ro \
               -v /etc/letsencrypt:/etc/letsencrypt:ro \
-              -v /var/www/certbot:/var/www/certbot:ro \
+              -v $(pwd)/certbot:/var/www/certbot:ro \
               nginx:alpine
 
             echo "Cleaning up..."
