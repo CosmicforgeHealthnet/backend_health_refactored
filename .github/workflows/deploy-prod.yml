@@ -69,69 +69,48 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           envs: PROD_ENV_FILE
           script: |
-            set -e # Exit immediately if any command fails
+            set -e
 
-            # Ensure directory exists
-            mkdir -p /root/cosmic-production
-            cd /root/cosmic-production || exit 1
+            # Ensure working directory
+            DEPLOY_PATH="/root/cosmic-production"
+            mkdir -p $DEPLOY_PATH
+            cd $DEPLOY_PATH || exit 1
 
-            echo "Synchronizing infrastructure code..."
+            echo "Syncing code..."
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             git fetch origin
             git reset --hard origin/main
 
-            echo "Configuring environment..."
+            echo "Setting environment..."
             echo "$PROD_ENV_FILE" > .env.production
 
-            echo "Pulling latest images..."
+            echo "Pulling images..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:latest
             docker pull redis:alpine
             docker pull nginx:alpine
 
-            echo "Aggressively cleaning up old containers..."
-            # 1. Stop host-level web servers
+            echo "Cleanup phase started..."
             systemctl stop nginx apache2 2>/dev/null || true
-
-            # 2. Clear Port 80 and 443
-            echo "Clearing Port 80 and 443..."
             fuser -k 80/tcp 2>/dev/null || true
             fuser -k 443/tcp 2>/dev/null || true
 
-            # 2.5 Docker-level Port Clear (Targets ANY container on Port 80/443)
-            echo "Removing ANY Docker containers on Port 80/443..."
-            # Combine IDs from both port filters
-            IDS_PORTS=$(docker ps -a -q --filter "publish=80" && docker ps -a -q --filter "publish=443")
-            for ID in $(echo "$IDS_PORTS" | sort -u); do
-                echo "Clearing port-blocking container (ID: $ID)..."
-                PID=$(docker inspect --format '{{.State.Pid}}' $ID 2>/dev/null || echo "0")
-                if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
-                    echo "Killing process $PID at host level..."
-                    kill -9 $PID || true
-                fi
-                docker rm -f $ID || true
-            done
+            # Identify all containers mentioning cosmic or holding ports
+            ALL_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep -E "cosmic|gateway|backend|brain|redis" | awk '{print $1}')
+            PORT_IDS=$(docker ps -a -q --filter "publish=80" --filter "publish=443")
 
-            # 3. Destroy ANY container matching our names by ID (Fixes Ghost Containers)
-            echo "Identifying and destroying cosmic containers by ID..."
-            for name in cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod; do
-                IDs=$(docker ps -a -q --filter "name=$name")
-                for ID in $IDs; do
-                    echo "Destroying $name (ID: $ID)..."
+            for ID in $(echo "$ALL_IDS $PORT_IDS" | tr ' ' '\n' | sort -u); do
+                if [ -n "$ID" ]; then
+                    echo "Destroying container ID $ID..."
                     PID=$(docker inspect --format '{{.State.Pid}}' $ID 2>/dev/null || echo "0")
                     if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
-                        echo "Killing process $PID..."
                         kill -9 $PID || true
                     fi
                     docker rm -f $ID || true
-                done
+                fi
             done
 
-            # 4. Final Port Check
-            echo "Checking if Port 80 is free..."
-            netstat -tulpn | grep :80 || echo "Port 80 is FREE"
-
-            echo "Setting up Network..."
+            echo "Starting network..."
             docker network create cosmic_network_prod 2>/dev/null || true
 
             echo "Starting Redis..."
@@ -141,14 +120,14 @@ jobs:
               --restart unless-stopped \
               redis:alpine
 
-            echo "Starting AI Service..."
+            echo "Starting AI..."
             docker run -d \
               --name cosmic_brain_prod \
               --network cosmic_network_prod \
               --restart unless-stopped \
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:latest
               
-            echo "Starting Backend Service..."
+            echo "Starting Backend..."
             docker run -d \
               --name cosmic_backend_prod \
               --network cosmic_network_prod \
@@ -158,27 +137,24 @@ jobs:
               -e REDIS_DEV_HOST=cosmic_redis_prod \
               -e AI_SERVICE_URL=http://cosmic_brain_prod:8001/api/v1 \
               -e FILE_SERVER_URL=https://api.cosmicforge-healthnet.com \
-              -v $(pwd)/uploads:/app/uploads \
+              -v $DEPLOY_PATH/uploads:/app/uploads \
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
               
-            echo "Starting Nginx Gateway..."
-            mkdir -p certbot
+            echo "Starting Gateway..."
+            mkdir -p $DEPLOY_PATH/certbot
             docker run -d \
               --name cosmic_gateway_prod \
               --network cosmic_network_prod \
               --restart unless-stopped \
               -p 80:80 -p 443:443 \
-              -v $(pwd)/deployment/nginx.production.conf:/etc/nginx/nginx.conf:ro \
-              -v $(pwd)/uploads:/app/uploads:ro \
+              -v $DEPLOY_PATH/deployment/nginx.production.conf:/etc/nginx/nginx.conf:ro \
+              -v $DEPLOY_PATH/uploads:/app/uploads:ro \
               -v /etc/letsencrypt:/etc/letsencrypt:ro \
-              -v $(pwd)/certbot:/var/www/certbot:ro \
+              -v $DEPLOY_PATH/certbot:/var/www/certbot:ro \
               nginx:alpine
 
-            echo "Cleaning up..."
+            echo "Cleaning images..."
             docker image prune -f
 
-            echo "Verifying containers..."
-            sleep 5
+            echo "Deployment finished."
             docker ps --filter "name=cosmic_*_prod"
-
-            echo "Deployment Complete!"
