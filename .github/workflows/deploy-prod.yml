@@ -90,10 +90,10 @@ jobs:
             docker pull nginx:alpine
 
             echo "Stopping and cleaning old containers..."
-            for container in cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod; do
-              docker stop $container 2>/dev/null || true
-              docker rm $container 2>/dev/null || true
-            done
+            docker rm -f cosmic_gateway_prod 2>/dev/null || true
+            docker rm -f cosmic_backend_prod 2>/dev/null || true
+            docker rm -f cosmic_brain_prod 2>/dev/null || true
+            docker rm -f cosmic_redis_prod 2>/dev/null || true
 
             echo "Setting up Network..."
             docker network create cosmic_network_prod 2>/dev/null || true
