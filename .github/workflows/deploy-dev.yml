@@ -94,6 +94,9 @@ jobs:
             docker pull nginx:alpine
 
             echo "Aggressively cleaning up old containers..."
+            # Stop host-level web servers that might be hogging ports
+            systemctl stop nginx apache2 2>/dev/null || true
+
             for container in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
                 echo "Processing $container..."
                 docker stop $container || true
