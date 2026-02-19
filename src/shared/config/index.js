@@ -27,14 +27,14 @@ module.exports = {
     cors: {
         origin: process.env.CORS_ORIGIN
             ? process.env.CORS_ORIGIN.replace(/['"]+/g, '').split(',').map(item => item.trim())
-            : ['http://localhost:3000', 'http://localhost:5173', '*', 'https://admin-cosmicforge-healthnet.vercel.app'],
+            : ['http://localhost:3000', 'http://localhost:5173', '*', 'https://admin-cosmicforge-healthnet.vercel.app', 'https://staging.cosmicforge-healthnet.com'],
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true
     },
     corsOrigins: process.env.CORS_ORIGIN
         ? process.env.CORS_ORIGIN.replace(/['"]+/g, '').split(',').map(item => item.trim())
-        : ['http://localhost:3000', 'http://localhost:5173', '*', 'https://admin-cosmicforge-healthnet.vercel.app'],
+        : ['http://localhost:3000', 'http://localhost:5173', '*', 'https://admin-cosmicforge-healthnet.vercel.app', 'https://staging.cosmicforge-healthnet.com'],
     nodeEnv: process.env.NODE_ENV || 'development',
     backendUrl: process.env.BACKEND_URL,
     flaskBackendUrl: process.env.FLASK_BACKEND_URL || 'http://localhost:8000'
