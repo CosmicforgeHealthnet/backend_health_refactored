@@ -69,17 +69,17 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           envs: PROD_ENV_FILE
           script: |
-            # Ensure directory exists (using /root instead of /var/www due to Docker snap AppArmor restrictions)
+            set -e # Exit immediately if any command fails
+
+            # Ensure directory exists
             mkdir -p /root/cosmic-production
             cd /root/cosmic-production || exit 1
 
             echo "Synchronizing infrastructure code..."
-            # Using git to fetch nginx conf and other utils
             git fetch origin
             git reset --hard origin/main
 
             echo "Configuring environment..."
-            # Create .env.production from environment variable for reliability
             echo "$PROD_ENV_FILE" > .env.production
 
             echo "Pulling latest images..."
@@ -88,14 +88,12 @@ jobs:
             docker pull redis:alpine
             docker pull nginx:alpine
 
-            echo "Stopping old containers..."
+            echo "Stopping and cleaning old containers..."
             docker stop cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod 2>/dev/null || true
-
-            echo "Removing old containers..."
             docker rm cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod 2>/dev/null || true
 
             echo "Setting up Network..."
-            docker network create cosmic_network_prod || true
+            docker network create cosmic_network_prod 2>/dev/null || true
 
             echo "Starting Redis..."
             docker run -d \
@@ -139,5 +137,8 @@ jobs:
             echo "Cleaning up..."
             docker image prune -f
 
-            echo "Deployment Successful!"
-            docker ps --filter "name=cosmic_*_prod" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            echo "Verifying containers..."
+            sleep 5
+            docker ps --filter "name=cosmic_*_prod"
+
+            echo "Deployment Complete!"
