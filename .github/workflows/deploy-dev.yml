@@ -93,8 +93,11 @@ jobs:
             docker pull redis:alpine
             docker pull nginx:alpine
 
-            echo "Removing old containers..."
-            docker rm -f cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev || true
+            echo "Stopping and cleaning old containers..."
+            for container in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
+              docker stop $container 2>/dev/null || true
+              docker rm $container 2>/dev/null || true
+            done
 
             echo "Setting up Network..."
             docker network create cosmic_network_dev || true
