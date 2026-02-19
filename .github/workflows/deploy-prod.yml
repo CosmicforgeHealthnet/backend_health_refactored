@@ -93,10 +93,15 @@ jobs:
             # 1. Stop host-level web servers
             systemctl stop nginx apache2 2>/dev/null || true
 
-            # 2. Clear Port 80 and 443 (The Nuclear Option)
+            # 2. Clear Port 80 and 443
             echo "Clearing Port 80 and 443..."
             fuser -k 80/tcp 2>/dev/null || true
             fuser -k 443/tcp 2>/dev/null || true
+
+            # 3. Nuclear Docker Clear: Kill ANY container using port 80 or 443
+            echo "Removing any Docker containers already on Port 80/443..."
+            docker rm -f $(docker ps -q --filter "publish=80") 2>/dev/null || true
+            docker rm -f $(docker ps -q --filter "publish=443") 2>/dev/null || true
 
             for container in cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod; do
                 echo "Processing $container..."
