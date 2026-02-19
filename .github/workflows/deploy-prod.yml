@@ -100,10 +100,17 @@ jobs:
 
             # 2.5 Docker-level Port Clear (Targets ANY container on Port 80/443)
             echo "Removing ANY Docker containers on Port 80/443..."
-            IDS_80=$(docker ps -a -q --filter "publish=80")
-            if [ -n "$IDS_80" ]; then docker rm -f $IDS_80 || true; fi
-            IDS_443=$(docker ps -a -q --filter "publish=443")
-            if [ -n "$IDS_443" ]; then docker rm -f $IDS_443 || true; fi
+            # Combine IDs from both port filters
+            IDS_PORTS=$(docker ps -a -q --filter "publish=80" && docker ps -a -q --filter "publish=443")
+            for ID in $(echo "$IDS_PORTS" | sort -u); do
+                echo "Clearing port-blocking container (ID: $ID)..."
+                PID=$(docker inspect --format '{{.State.Pid}}' $ID 2>/dev/null || echo "0")
+                if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
+                    echo "Killing process $PID at host level..."
+                    kill -9 $PID || true
+                fi
+                docker rm -f $ID || true
+            done
 
             # 3. Destroy ANY container matching our names by ID (Fixes Ghost Containers)
             echo "Identifying and destroying cosmic containers by ID..."
