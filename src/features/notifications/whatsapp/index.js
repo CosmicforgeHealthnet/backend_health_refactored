@@ -18,10 +18,8 @@ const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
 // Validate environment variables
 if (!ACCESS_TOKEN || !PHONE_NUMBER_ID) {
-  console.error("❌ Missing required environment variables:");
-  console.error("   WHATSAPP_ACCESS_TOKEN");
-  console.error("   WHATSAPP_PHONE_NUMBER_ID");
-  process.exit(1);
+  console.error("⚠️ Warning: Missing WhatsApp environment variables (WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID).");
+  console.error("   WhatsApp features will not work until these are configured.");
 }
 
 // WhatsApp Business API Service Class
@@ -42,14 +40,14 @@ class WhatsAppBusinessAPI {
           recipient_type: "individual",
           to: to,
           type: "text",
-        // type: "template",
-        // template: {
-        //   "name": "hello_world",
-        //   "language": {
-        //     "code": "en_US"
-        //   }
-        // },
-    
+          // type: "template",
+          // template: {
+          //   "name": "hello_world",
+          //   "language": {
+          //     "code": "en_US"
+          //   }
+          // },
+
           text: { body: text },
         },
         {
