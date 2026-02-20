@@ -23,16 +23,21 @@ const {
   transformMultipartData
 } = require("../../middlewares/stepValidationMiddleware");
 
+// Subscription middlewares
+const requireFeature = require("../../../subscriptions/middlewares/requireFeature");
+
 /**
  * @route GET /api/firstaid/steps/condition/:conditionId
- * @desc Get steps by condition ID (public)
- * @access Public
+ * @desc Get steps by condition ID
+ * @access Requires firstAidInstructions feature
  * @param {number} conditionId - Condition ID
  * @query {string} [categoryType] - Optional category type filter
  * @returns {Object} Success response with steps array
  */
 router.get(
   "/condition/:conditionId",
+  authenticateJWT,
+  requireFeature("firstAidInstructions"),
   validateConditionId,
   emergencyStepController.getStepsByCondition
 );

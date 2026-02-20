@@ -19,6 +19,9 @@ const {
   validatePersonnelAssignment,
 } = require("../validators/index");
 
+// Subscription middlewares
+const requireFeature = require("../../subscriptions/middlewares/requireFeature");
+
 
 // ==================== PUBLIC FACILITY ROUTES ====================
 
@@ -233,11 +236,13 @@ router.post("/personnel/register", labPersonnelController.completeRegistration);
 
 /**
  * Create a new lab order (Patient only)
+ * Requires labAccess feature from subscription
  */
 router.post(
   "/orders",
   authenticateJWT,
   authorizeRoles(USER_ROLES.PATIENT, USER_ROLES.SUPER_ADMIN),
+  requireFeature("labAccess"),
   validateOrderCreation,
   labOrderController.createOrder
 );
