@@ -69,6 +69,14 @@ const mfaRoutes = require("./mfa");
  *                 description: Medical specialty for doctors
  */
 router.post("/signup", authController.signup);
+router.get("/signup", (req, res) => {
+    res.status(405).json({
+        error: "Method Not Allowed",
+        message: "Signup must be a POST request. The server received a GET request. This usually happens due to a redirect (e.g., http to https) or a frontend bug.",
+        receivedMethod: req.method,
+        receivedUrl: req.originalUrl
+    });
+});
 
 /**
  * @swagger

@@ -60,28 +60,32 @@ jobs:
     steps:
       - name: Deploy to Development VPS
         uses: appleboy/ssh-action@master
+        env:
+          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          envs: DEV_ENV_FILE
           script: |
-            # Ensure the directory exists
-            mkdir -p /var/www/cosmic-dev
-            cd /var/www/cosmic-dev || exit 1
+            set -e
+            # Ensure directory exists
+            mkdir -p /root/cosmic-dev
+            cd /root/cosmic-dev || exit 1
 
             echo "Synchronizing infrastructure code..."
             if [ ! -d ".git" ]; then
               git init
               git remote add origin https://github.com/${{ github.repository }}.git
             fi
-
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             git fetch origin
             git reset --hard origin/dev
 
             echo "Configuring environment..."
-            # Create .env.dev from GitHub Secrets
-            echo "${{ secrets.DEV_ENV_FILE }}" > .env.dev
+            # Create .env.dev from environment variable for reliability
+            echo "$DEV_ENV_FILE" > .env.dev
 
             echo "Pulling latest images from Registry..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest
@@ -89,11 +93,31 @@ jobs:
             docker pull redis:alpine
             docker pull nginx:alpine
 
-            echo "Removing old containers..."
-            docker rm -f cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev || true
+            echo "Aggressively cleaning up old containers..."
+            # 1. Stop host-level web servers that might be hogging ports
+            systemctl stop nginx apache2 2>/dev/null || true
+
+            # 2. Clear Port 80 and 443 (for consistency)
+            fuser -k 80/tcp 2>/dev/null || true
+            fuser -k 443/tcp 2>/dev/null || true
+
+            # 3. Destroy ANY container matching our names by ID (Fixes Ghost Containers)
+            echo "Identifying and destroying cosmic containers by ID..."
+            for name in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
+                IDs=$(docker ps -a -q --filter "name=$name")
+                for ID in $IDs; do
+                    echo "Destroying $name (ID: $ID)..."
+                    PID=$(docker inspect --format '{{.State.Pid}}' $ID 2>/dev/null || echo "0")
+                    if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
+                        echo "Killing process $PID..."
+                        kill -9 $PID || true
+                    fi
+                    docker rm -f $ID || true
+                done
+            done
 
             echo "Setting up Network..."
-            docker network create cosmic_network_dev || true
+            docker network create cosmic_network_dev 2>/dev/null || true
 
             echo "Starting Redis..."
             # Redis on dev port 6380:6379
@@ -123,6 +147,7 @@ jobs:
               -e REDIS_URL=redis://cosmic_redis_dev:6379 \
               -e REDIS_DEV_HOST=cosmic_redis_dev \
               -e AI_SERVICE_URL=http://cosmic_brain_dev:8001/api/v1 \
+              -e FILE_SERVER_URL=http://72.61.20.94:8081 \
               -p 5001:5000 \
               -v $(pwd)/uploads:/app/uploads \
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest
