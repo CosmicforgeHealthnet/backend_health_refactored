@@ -39,12 +39,14 @@ const SUBSCRIPTION_TIERS = {
 // ===========================================================================
 // PROMOTIONAL PRICING CONFIGURATION
 // ===========================================================================
-// Set to a FUTURE date to enable discounts (e.g., "2026-12-31T23:59:59Z")
-// Set to a PAST date to disable discounts (e.g., "2024-01-01T00:00:00Z")
-const PROMO_EXPIRY = "2026-12-31T23:59:59Z"; // Active promo until end of 2026
+// Set PROMO_EXPIRY in .env file:
+// - FUTURE date to enable discounts (e.g., "2026-12-31T23:59:59Z")
+// - PAST date to disable discounts (e.g., "2024-01-01T00:00:00Z")
+// Falls back to a past date (disabled) if not set
+const PROMO_EXPIRY = process.env.PROMO_EXPIRY || "2024-01-01T00:00:00Z";
 
 // Default discount percentage for all plans (can be overridden per plan)
-const DEFAULT_DISCOUNT_PERCENTAGE = 50;
+const DEFAULT_DISCOUNT_PERCENTAGE = parseInt(process.env.PROMO_DISCOUNT_PERCENTAGE, 10) || 50;
 
 // DOCTOR SPECIALIZATION ACCESS LEVELS
 const DOCTOR_SPECIALIZATION_ACCESS = {
@@ -500,7 +502,7 @@ function getPlanPricingInfo(plan, currency = "USD") {
         hasDiscount,
         promoActive,
         promoExpiry: PROMO_EXPIRY,
-        timeLeft: getTimeUntilExpiry(),
+        timeLeft: promoActive ? getTimeUntilExpiry() : null,
         currency
     };
 }
