@@ -16,8 +16,10 @@ const AppointmentValidationMiddleware = require("../middlewares/appointmentValid
 const DoctorGoogleAuthService = require("../services/googleMeet/doctorAuthService");
 const TimezoneMiddleware = require("../../../shared/middlewares/timezoneMiddleware");
 
-// Usage tracking middleware (use when needed)
-// const requireUsage = require("../../subscriptions/middlewares/requireUsage");
+// Subscription middlewares
+const requireFeature = require("../../subscriptions/middlewares/requireFeature");
+const requireUsage = require("../../subscriptions/middlewares/requireUsage");
+const { checkDoctorSpecializationAccess } = require("../../subscriptions/middlewares/doctorSpecializationAccessMiddleware");
 
 const router = express.Router();
 const appointmentController = new AppointmentController();
@@ -73,38 +75,16 @@ router.get(
 router.post(
   "/",
   TimezoneMiddleware.validateAppointmentTimezone,
-  AppointmentValidationMiddleware.validateCreateAppointment, // Validate appointment data
-  // checkDoctorSpecializationAccess, // Check if patient can book with this doctor based on subscription
-  appointmentController.createAppointment.bind(appointmentController),
-  // ActivityHooksService.trackActivityAfterSuccess
+  AppointmentValidationMiddleware.validateCreateAppointment,
+  checkDoctorSpecializationAccess, // Check if patient can book with this doctor based on subscription
+  appointmentController.createAppointment.bind(appointmentController)
 );
-
-// Custom middleware to conditionally track usage only on approvals
-// Uses the consolidated usageService for tracking
-const trackApprovalUsage = async (req, res, next) => {
-  try {
-    if (req.shouldTrackUsage && req.usageTracking) {
-      const { userId, usageType, increment } = req.usageTracking;
-      const usageService = require("../../subscriptions/services/usageService");
-
-      // Track the usage asynchronously (don't block response)
-      usageService.consume(userId, usageType, increment).catch((error) => {
-        console.error("Post-approval usage tracking failed:", error);
-      });
-    }
-
-    next();
-  } catch (error) {
-    console.error("Approval tracking middleware error:", error);
-    next(); // Don't fail the request for tracking issues
-  }
-};
 
 router.patch(
   "/:id/doctor-approval",
-  // usageMiddleware("maxPatients"),
+  requireUsage("maxPatients"),
   appointmentController.updateDoctorApproval.bind(appointmentController),
-  // trackApprovalUsage
+  requireUsage.trackAfterSuccess
 );
 
 router.put(
@@ -150,21 +130,24 @@ router.post(
 );
 
 // Meeting link generation with validation
+// Requires videoConsultation feature from subscription
 router.post(
   "/:id/meeting/google",
-  // AppointmentValidationMiddleware.validateMeeting,
+  requireFeature("videoConsultation"),
   appointmentController.generateGoogleMeetingLink.bind(appointmentController)
 );
 
 // Zoom meeting link generation
 router.post(
   "/:id/meeting/zoom",
+  requireFeature("videoConsultation"),
   appointmentController.generateZoomMeetingLink.bind(appointmentController)
 );
 
 // Jitsi meeting link generation
 router.post(
   "/:id/meeting/jitsi",
+  requireFeature("videoConsultation"),
   appointmentController.generateJitsiMeetingLink.bind(appointmentController)
 );
 
@@ -178,7 +161,7 @@ router.get(
 router.get(
   "/check-access/:patientId/:doctorId",
   AppointmentValidationMiddleware.validatePatientDoctorParams,
-  // checkDoctorSpecializationAccess,
+  checkDoctorSpecializationAccess,
   (req, res) => {
     // If middleware passes, patient has access
     res.json({

@@ -89,57 +89,74 @@ class SubscriptionCompatibilityService {
   }
 
   // ===========================================================================
+  // PROMO STATUS CHECK
+  // ===========================================================================
+
+  /**
+   * Check if promo is currently active based on PROMO_EXPIRY
+   * This is the single source of truth for discount status
+   * @returns {boolean} true if promo is active (PROMO_EXPIRY is in the future)
+   */
+  static _isPromoActive() {
+    return new Date() < new Date(PROMO_EXPIRY);
+  }
+
+  // ===========================================================================
   // PLAN RETRIEVAL (PUBLIC - No Auth Required)
   // ===========================================================================
 
   /**
    * Get available plans for display
    * Works for landing page (no auth) and authenticated users
+   * Discount is automatically applied based on PROMO_EXPIRY
    *
    * @param {string|null} planType - 'doctor', 'patient', or null for both
    * @param {string} countryCode - Country code for currency ('US', 'NG')
-   * @param {boolean} withDiscount - true for promotional pricing, false for regular
    * @returns {Object} Available plans
    */
-  static getAvailablePlans(planType = null, countryCode = "US", withDiscount = true) {
+  static getAvailablePlans(planType = null, countryCode = "US") {
     const currency = countryCode === "NG" ? "NGN" : "USD";
+    const isPromoActive = this._isPromoActive();
 
     // Return both types if not specified
     if (!planType) {
       return {
-        doctor: this._formatPlans("doctor", currency, withDiscount),
-        patient: this._formatPlans("patient", currency, withDiscount),
+        doctor: this._formatPlans("doctor", currency),
+        patient: this._formatPlans("patient", currency),
         currency,
         countryCode,
-        withDiscount,
-        ...this._getPromoInfo()
+        withDiscount: isPromoActive,
+        // Only include promo info if promo is active
+        ...(isPromoActive ? this._getPromoInfo() : {})
       };
     }
 
     return {
-      plans: this._formatPlans(planType, currency, withDiscount),
+      plans: this._formatPlans(planType, currency),
       planType,
       currency,
       countryCode,
-      withDiscount,
-      ...this._getPromoInfo()
+      withDiscount: isPromoActive,
+      // Only include promo info if promo is active
+      ...(isPromoActive ? this._getPromoInfo() : {})
     };
   }
 
   /**
    * Get specific plan pricing
+   * Discount is automatically applied based on PROMO_EXPIRY
    *
    * @param {string} planType - 'doctor' or 'patient'
    * @param {string} tier - Plan tier (free, premium, etc.)
    * @param {string} countryCode - Country code
-   * @param {boolean} withDiscount - Include promotional discount
    * @returns {Object} Plan pricing details
    */
-  static getPlanPricing(planType, tier, countryCode = "US", withDiscount = false) {
+  static getPlanPricing(planType, tier, countryCode = "US") {
     const plan = PLAN_DEFINITIONS[planType]?.[tier];
     if (!plan) throw new Error(`Invalid plan: ${planType}/${tier}`);
 
     const currency = countryCode === "NG" ? "NGN" : "USD";
+    const isPromoActive = this._isPromoActive();
 
     return {
       planType,
@@ -148,8 +165,8 @@ class SubscriptionCompatibilityService {
       currency,
       countryCode,
 
-      // Pricing (easy to switch between discount/non-discount)
-      ...this._getPricing(plan, currency, withDiscount),
+      // Pricing - automatically applies discount if promo is active
+      ...this._getPricing(plan, currency),
 
       // Plan details
       commissionRate: plan.commissionRate,
@@ -162,49 +179,49 @@ class SubscriptionCompatibilityService {
       isFree: tier === "free",
       isPremium: tier !== "free",
 
-      // Promo info
-      ...this._getPromoInfo()
+      // Only include promo info if promo is active
+      ...(isPromoActive ? this._getPromoInfo() : {})
     };
   }
 
   // ===========================================================================
-  // PRICING HELPERS (Discount vs Non-Discount)
+  // PRICING HELPERS
   // ===========================================================================
 
   /**
-   * Get pricing object - handles both regular and promotional pricing
+   * Get pricing object - automatically handles discount based on PROMO_EXPIRY
    *
-   * Structure:
-   * - Regular price is stored in plan.price[currency]
-   * - If promo is active and plan has originalPrice/discountPercentage, apply discount
-   * - Otherwise, price = originalPrice (no discount)
+   * Logic:
+   * - If PROMO_EXPIRY is in the future AND plan has discount config → apply discount
+   * - If PROMO_EXPIRY is in the past OR no discount config → regular pricing
    *
    * @param {Object} plan - Plan definition
    * @param {string} currency - Currency code
-   * @param {boolean} withDiscount - Apply promotional discount if available
    * @returns {Object} Pricing details
    */
-  static _getPricing(plan, currency, withDiscount = true) {
+  static _getPricing(plan, currency) {
     // Get base price from plan
     const basePrice = plan.price?.[currency] || plan.price?.USD || 0;
 
-    // Check if plan has promotional pricing defined
+    // Check if promo is active based on PROMO_EXPIRY
+    const isPromoActive = this._isPromoActive();
+
+    // If promo is not active, return regular pricing immediately
+    if (!isPromoActive) {
+      return {
+        price: basePrice,
+        originalPrice: basePrice,
+        discount: 0,
+        discountPercentage: 0,
+        hasDiscount: false
+      };
+    }
+
+    // Promo is active - check if plan has promotional pricing defined
     const hasPromoConfig = plan.originalPrice && plan.discountPercentage > 0;
-    const originalPrice = hasPromoConfig
-      ? (plan.originalPrice[currency] || plan.originalPrice.USD || basePrice)
-      : basePrice;
 
-    // Check if promo is actually active
-    const hasActivePromo = new Date() < new Date(PROMO_EXPIRY);
-
-    // Only apply discount if:
-    // 1. withDiscount is requested
-    // 2. Promo is still active (not expired)
-    // 3. Plan has promotional pricing configured
-    const shouldApplyDiscount = withDiscount && hasActivePromo && hasPromoConfig;
-
-    if (shouldApplyDiscount) {
-      // Promotional pricing (with discount applied)
+    if (hasPromoConfig) {
+      const originalPrice = plan.originalPrice[currency] || plan.originalPrice.USD || basePrice;
       const discountedPrice = plan.price[currency] || plan.price.USD || 0;
       const discountAmount = originalPrice - discountedPrice;
       const discountPercentage = plan.discountPercentage || 0;
@@ -216,16 +233,16 @@ class SubscriptionCompatibilityService {
         discountPercentage,
         hasDiscount: true
       };
-    } else {
-      // Regular pricing (no discount) - price equals originalPrice
-      return {
-        price: basePrice,
-        originalPrice: basePrice,
-        discount: 0,
-        discountPercentage: 0,
-        hasDiscount: false
-      };
     }
+
+    // Promo active but plan has no discount config (e.g., free plan)
+    return {
+      price: basePrice,
+      originalPrice: basePrice,
+      discount: 0,
+      discountPercentage: 0,
+      hasDiscount: false
+    };
   }
 
   // ===========================================================================
@@ -360,8 +377,8 @@ class SubscriptionCompatibilityService {
         subscription.monthlyLimits || plan.monthlyLimits
       ),
 
-      // Promo
-      ...this._getPromoInfo()
+      // Promo - only include if promo is active
+      ...(this._isPromoActive() ? this._getPromoInfo() : {})
     };
   }
 
@@ -396,8 +413,8 @@ class SubscriptionCompatibilityService {
         subscription.monthlyLimits || plan.monthlyLimits
       ),
 
-      // Promo
-      ...this._getPromoInfo()
+      // Promo - only include if promo is active
+      ...(this._isPromoActive() ? this._getPromoInfo() : {})
     };
   }
 
@@ -483,7 +500,8 @@ class SubscriptionCompatibilityService {
       daysRemaining: 365,
       usagePercentage: {},
       metadata: { isFallback: true },
-      ...this._getPromoInfo()
+      // Promo - only include if promo is active
+      ...(this._isPromoActive() ? this._getPromoInfo() : {})
     };
   }
 
@@ -510,8 +528,9 @@ class SubscriptionCompatibilityService {
 
   /**
    * Format plans for response
+   * Pricing automatically determined by PROMO_EXPIRY
    */
-  static _formatPlans(planType, currency, withDiscount) {
+  static _formatPlans(planType, currency) {
     const plans = PLAN_DEFINITIONS[planType];
     if (!plans) return {};
 
@@ -522,7 +541,7 @@ class SubscriptionCompatibilityService {
         planType,
         name: plan.name,
         currency,
-        ...this._getPricing(plan, currency, withDiscount),
+        ...this._getPricing(plan, currency),
         commissionRate: plan.commissionRate,
         features: plan.features,
         featureList: this._formatFeatures(plan.features),
@@ -627,12 +646,13 @@ class SubscriptionCompatibilityService {
 
   /**
    * Get promo info
+   * Only called when promo is active (checked before calling this method)
    */
   static _getPromoInfo() {
     return {
       promoExpiry: PROMO_EXPIRY,
       promoTimeLeft: getTimeUntilExpiry(),
-      hasActivePromo: new Date() < new Date(PROMO_EXPIRY)
+      hasActivePromo: true
     };
   }
 

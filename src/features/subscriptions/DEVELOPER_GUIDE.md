@@ -17,10 +17,11 @@ This guide explains how to use the subscription system for usage tracking, featu
    - [SubscriptionService](#subscriptionservice)
    - [BillingService](#billingservice)
    - [SubscriptionNotificationService](#subscriptionnotificationservice)
-4. [Plan Definitions](#plan-definitions)
-5. [Common Use Cases](#common-use-cases)
-6. [Cron Jobs](#cron-jobs)
-7. [Testing](#testing)
+4. [Promotional Pricing Configuration](#promotional-pricing-configuration)
+5. [Plan Definitions](#plan-definitions)
+6. [Common Use Cases](#common-use-cases)
+7. [Cron Jobs](#cron-jobs)
+8. [Testing](#testing)
 
 ---
 
@@ -345,11 +346,13 @@ const subscription = await SubscriptionCompatibilityService.getUserSubscription(
 const basicSub = await SubscriptionCompatibilityService.getUserSubscriptionBasic(userId);
 
 // Get available plans (for landing page - no auth required)
-const plans = SubscriptionCompatibilityService.getAvailablePlans('patient', 'US', true);
-// Returns: { plans: { free: {...}, basic: {...}, premium: {...} }, currency: 'USD', ... }
+// Discount is automatically applied based on PROMO_EXPIRY env variable
+const plans = SubscriptionCompatibilityService.getAvailablePlans('patient', 'US');
+// Returns: { plans: { free: {...}, basic: {...}, premium: {...} }, currency: 'USD', withDiscount: true/false, ... }
 
 // Get specific plan pricing
-const pricing = SubscriptionCompatibilityService.getPlanPricing('patient', 'premium', 'NG', true);
+// Discount is automatically applied based on PROMO_EXPIRY env variable
+const pricing = SubscriptionCompatibilityService.getPlanPricing('patient', 'premium', 'NG');
 // Returns: { price: 24950, originalPrice: 49900, discount: 24950, currency: 'NGN', ... }
 
 // Check feature access
@@ -559,6 +562,74 @@ await notificationService.sendAutoBillingEnabled(user, '4242', nextBillingDate);
 await notificationService.sendUsageWarning(user, 'aiChatbotResponses', 85);
 await notificationService.sendUsageLimitReached(user, 'aiChatbotResponses');
 ```
+
+---
+
+## Promotional Pricing Configuration
+
+**Location:** Environment variables (`.env`)
+
+The subscription system supports promotional pricing that can be enabled/disabled via environment variables.
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PROMO_EXPIRY` | ISO date string for when promo expires | `2024-01-01T00:00:00Z` (disabled) |
+| `PROMO_DISCOUNT_PERCENTAGE` | Default discount percentage | `50` |
+
+### How It Works
+
+- **Promo Active:** If `PROMO_EXPIRY` is set to a **future date**, discounts are automatically applied
+- **Promo Disabled:** If `PROMO_EXPIRY` is set to a **past date** (or not set), no discounts are applied
+
+### Example Configuration
+
+```bash
+# .env
+
+# Enable 50% discount until end of 2026
+PROMO_EXPIRY=2026-12-31T23:59:59Z
+PROMO_DISCOUNT_PERCENTAGE=50
+
+# OR disable discounts (set to past date)
+PROMO_EXPIRY=2024-01-01T00:00:00Z
+```
+
+### API Response Behavior
+
+When promo is **active**, responses include:
+```json
+{
+  "price": 4950,
+  "originalPrice": 9900,
+  "discount": 4950,
+  "discountPercentage": 50,
+  "hasDiscount": true,
+  "withDiscount": true,
+  "promoExpiry": "2026-12-31T23:59:59Z",
+  "promoTimeLeft": "314 days left",
+  "hasActivePromo": true
+}
+```
+
+When promo is **expired/disabled**, responses show:
+```json
+{
+  "price": 9900,
+  "originalPrice": 9900,
+  "discount": 0,
+  "discountPercentage": 0,
+  "hasDiscount": false,
+  "withDiscount": false
+}
+```
+
+### Changing Promo Settings
+
+1. Update `PROMO_EXPIRY` in your `.env` file
+2. Restart the application
+3. No code changes required
 
 ---
 
