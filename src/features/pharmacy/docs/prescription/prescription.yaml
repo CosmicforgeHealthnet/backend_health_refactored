@@ -356,6 +356,103 @@ paths:
         '403':
           description: Forbidden - Not a pharmacy
 
+  /prescriptions/pharmacy/dashboard/stats:
+    get:
+      summary: Get pharmacy dashboard statistics
+      description: |
+        Retrieves real-time counts for the pharmacy dashboard:
+        - Pending requests
+        - Active orders
+        - Completed today
+      tags: [Pharmacy Dashboard]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Not a pharmacy
+
+  /prescriptions/pharmacy/dashboard/activity:
+    get:
+      summary: Get pharmacy activity feed
+      description: Retrieves a feed of recent status changes and actions for assigned prescriptions.
+      tags: [Pharmacy Dashboard]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Number of activity items to retrieve
+      responses:
+        '200':
+          description: Activity feed items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivityFeedItem'
+
+  /prescriptions/pharmacy/prescriptions/{prescriptionId}/confirm-availability:
+    post:
+      summary: Confirm medication availability
+      description: Marks a prescription as having confirmed medication stock.
+      tags: [Prescription Operations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Availability confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+
+  /prescriptions/pharmacy/prescriptions/{prescriptionId}/internal-notes:
+    post:
+      summary: Add internal pharmacy note
+      description: Allows pharmacy staff to add private notes to a prescription.
+      tags: [Prescription Operations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalNoteRequest'
+      responses:
+        '201':
+          description: Internal note added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+
   /prescriptions/{prescriptionId}/cancel:
     post:
       summary: Cancel a prescription

@@ -232,6 +232,88 @@ class PharmacyAuthController {
       next(error);
     }
   }
+
+  async updatePharmacyProfile(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const updateData = req.body;
+      const result = await pharmacyRegistrationService.updatePharmacyProfile(userId, updateData);
+      return res.json({
+        success: true,
+        message: "Profile updated successfully",
+        data: result
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async setPricing(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const pricingData = req.body;
+      const pricing = await pharmacyRegistrationService.setPricing(userId, pricingData);
+      return res.status(201).json({
+        success: true,
+        message: "Pricing set successfully",
+        data: pricing
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getPricing(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const pricing = await pharmacyRegistrationService.getPricing(userId);
+      return res.json({
+        success: true,
+        data: pricing
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async addStaff(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const staffData = req.body;
+      const staffMember = await pharmacyRegistrationService.addStaffMember(userId, staffData);
+      return res.status(201).json({
+        success: true,
+        message: "Staff member added successfully",
+        data: staffMember
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getStaff(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const staff = await pharmacyRegistrationService.getStaffMembers(userId);
+      return res.json({
+        success: true,
+        data: staff
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async removeStaff(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const { id: staffUserId } = req.params;
+      const result = await pharmacyRegistrationService.removeStaffMember(userId, staffUserId);
+      return res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new PharmacyAuthController();

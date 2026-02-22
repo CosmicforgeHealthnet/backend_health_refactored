@@ -121,6 +121,81 @@ class GoogleAuthService {
     // Return full payload + tokens
     return { jwtPayload, accessToken, refreshToken };
   }
+
+  /**
+   * Handle mobile login by verifying ID token
+   * @param {string} idToken
+   * @param {string} deviceFingerprint
+   * @param {string} userAgent
+   * @param {string} role - desired user role for new signup
+   */
+  async handleMobileLogin(idToken, deviceFingerprint, userAgent, role) {
+    // Verify ID token from Android/iOS
+    const ticket = await client.verifyIdToken({
+      idToken: idToken,
+      audience: [
+        config.google.clientId,
+        config.google.androidClientId,
+        config.google.iosClientId
+      ].filter(Boolean)
+    });
+
+    const payload = ticket.getPayload();
+    const { sub, email, email_verified, name, picture } = payload;
+
+    // Reuse the user lookup and creation logic
+    let user = await userRepository.findByProvider('google', sub);
+
+    if (!user) {
+      user = await userRepository.findByEmail(email);
+      if (user) {
+        user.provider = 'google';
+        user.providerId = sub;
+        user.profileImageUrl = picture;
+        user.status = email_verified ? 'active' : 'pending_email_verification';
+        await userRepository.save(user);
+        await referralService.createUserReferralCode(user.id);
+      } else {
+        const newRole = ['patient', 'doctor', 'pharmacy', 'lab'].includes(role) ? role : 'patient';
+        user = userRepository.create({
+          email,
+          fullName: name,
+          provider: 'google',
+          providerId: sub,
+          profileImageUrl: picture,
+          status: email_verified ? (newRole === 'doctor' ? 'pending_doctor_verification' : 'active') : 'pending_email_verification',
+          role: newRole
+        });
+        await userRepository.save(user);
+        await referralService.createUserReferralCode(user.id);
+      }
+    }
+
+    const jwtPayload = {
+      sub: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      status: user.status,
+      provider: user.provider,
+      providerId: user.providerId,
+      profileImageUrl: user.profileImageUrl,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    };
+
+    const accessToken = jwt.sign(jwtPayload, config.jwt.secret, {
+      expiresIn: config.jwt.accessExpires
+    });
+
+    const refreshToken = await refreshTokenService.issueRefreshToken(
+      user,
+      deviceFingerprint,
+      userAgent
+    );
+
+    return { jwtPayload, accessToken, refreshToken };
+  }
 }
 
 module.exports = new GoogleAuthService();

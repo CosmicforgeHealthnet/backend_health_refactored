@@ -1,0 +1,10 @@
+{
+  "meta": {
+    "database": "cosmicforge",
+    "timestamp": "2026-02-21T10:29:27.999Z"
+  },
+  "partial_read": {
+    "success": false,
+    "error": "pg_attribute catalog is missing 6 attribute(s) for relation OID 18450"
+  }
+}

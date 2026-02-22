@@ -22,6 +22,8 @@ module.exports = {
   },
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
+    androidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: process.env.GOOGLE_IOS_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     redirectUri: process.env.GOOGLE_REDIRECT_URI
   },

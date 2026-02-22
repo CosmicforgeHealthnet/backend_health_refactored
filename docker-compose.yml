@@ -17,6 +17,9 @@ services:
     depends_on:
       - ai_service
       - redis
+    volumes:
+      - .:/app
+      - /app/node_modules
     networks:
       - cosmic_network
 
@@ -46,7 +49,7 @@ services:
     container_name: cosmic_gateway
     ports:
       - "8080:80"
-      - "443:443"    
+      - "443:443"
     volumes:
       - ./deployment/nginx.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro

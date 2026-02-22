@@ -2,10 +2,10 @@ const { EntitySchema } = require('typeorm');
 
 module.exports = new EntitySchema({
   name: 'PatientProfile',
-  tableName: 'patient_profiles',
+  tableName: 'patient_profiles_new',
   columns: {
     id: { primary: true, type: 'uuid', generated: 'uuid' },
-    userId: { type: 'uuid', unique: true }, 
+    userId: { type: 'uuid', unique: true },
     profilePhoto: { type: 'varchar', nullable: true },
     gender: { type: 'varchar' },
     dateOfBirth: { type: 'date' },

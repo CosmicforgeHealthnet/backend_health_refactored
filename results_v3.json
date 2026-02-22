@@ -1,0 +1,254 @@
+{
+  "meta": {
+    "database": "cosmicforge",
+    "host": "72.61.20.94",
+    "timestamp": "2026-02-21T08:52:31.815Z"
+  },
+  "oid_18450": {
+    "class": {
+      "relname": "patient_profiles",
+      "relkind": "r",
+      "relnatts": 31,
+      "oid": 18450
+    },
+    "attributes": [
+      {
+        "attname": "tableoid",
+        "attnum": -6,
+        "attisdropped": false
+      },
+      {
+        "attname": "cmax",
+        "attnum": -5,
+        "attisdropped": false
+      },
+      {
+        "attname": "xmax",
+        "attnum": -4,
+        "attisdropped": false
+      },
+      {
+        "attname": "cmin",
+        "attnum": -3,
+        "attisdropped": false
+      },
+      {
+        "attname": "xmin",
+        "attnum": -2,
+        "attisdropped": false
+      },
+      {
+        "attname": "ctid",
+        "attnum": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "id",
+        "attnum": 1,
+        "attisdropped": false
+      },
+      {
+        "attname": "genotype",
+        "attnum": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodGroup",
+        "attnum": 5,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactFullName",
+        "attnum": 10,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactMobile",
+        "attnum": 11,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactRelationship",
+        "attnum": 12,
+        "attisdropped": false
+      },
+      {
+        "attname": "height",
+        "attnum": 13,
+        "attisdropped": false
+      },
+      {
+        "attname": "weight",
+        "attnum": 14,
+        "attisdropped": false
+      },
+      {
+        "attname": "bmi",
+        "attnum": 15,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodPressure",
+        "attnum": 16,
+        "attisdropped": false
+      },
+      {
+        "attname": "heartRate",
+        "attnum": 17,
+        "attisdropped": false
+      },
+      {
+        "attname": "respiratoryRate",
+        "attnum": 18,
+        "attisdropped": false
+      },
+      {
+        "attname": "temperature",
+        "attnum": 19,
+        "attisdropped": false
+      },
+      {
+        "attname": "spO2",
+        "attnum": 20,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodGlucose",
+        "attnum": 21,
+        "attisdropped": false
+      },
+      {
+        "attname": "smokes",
+        "attnum": 22,
+        "attisdropped": false
+      },
+      {
+        "attname": "drinksAlcohol",
+        "attnum": 23,
+        "attisdropped": false
+      },
+      {
+        "attname": "physicalActivityLevel",
+        "attnum": 24,
+        "attisdropped": false
+      },
+      {
+        "attname": "dietType",
+        "attnum": 25,
+        "attisdropped": false
+      },
+      {
+        "attname": "sleepDuration",
+        "attnum": 26,
+        "attisdropped": false
+      },
+      {
+        "attname": "profileType",
+        "attnum": 27,
+        "attisdropped": false
+      },
+      {
+        "attname": "createdAt",
+        "attnum": 28,
+        "attisdropped": false
+      },
+      {
+        "attname": "updatedAt",
+        "attnum": 29,
+        "attisdropped": false
+      },
+      {
+        "attname": "userId",
+        "attnum": 30,
+        "attisdropped": false
+      },
+      {
+        "attname": "profilePhoto",
+        "attnum": 31,
+        "attisdropped": false
+      }
+    ]
+  },
+  "last_migrations": [
+    {
+      "name": "CreatePatientRiskAssessment1760000000000",
+      "timestamp": "1760000000000"
+    },
+    {
+      "name": "AdditionofLocationforPatient1758796045366",
+      "timestamp": "1758796045366"
+    },
+    {
+      "name": "FixePENDINGDOCUMENTS1758636570064",
+      "timestamp": "1758636570064"
+    },
+    {
+      "name": "DepartmentSepcilityForDoctors1758207960728",
+      "timestamp": "1758207960728"
+    },
+    {
+      "name": "PhoneNUmberForDoctors1758131286123",
+      "timestamp": "1758131286123"
+    },
+    {
+      "name": "FastSubscriptionSync1758000000002",
+      "timestamp": "1758000000002"
+    },
+    {
+      "name": "UpdateUserTierEnum1758000000000",
+      "timestamp": "1758000000000"
+    },
+    {
+      "name": "AuditOnHistory1757678527028",
+      "timestamp": "1757678527028"
+    },
+    {
+      "name": "ResourceAccessLogStuff1757676148716",
+      "timestamp": "1757676148716"
+    },
+    {
+      "name": "PatientLodSIght1757675572478",
+      "timestamp": "1757675572478"
+    },
+    {
+      "name": "FhirComplieneceSchema1757631123427",
+      "timestamp": "1757631123427"
+    },
+    {
+      "name": "CreateEmergencyModule1757301090000",
+      "timestamp": "1757301090000"
+    },
+    {
+      "name": "CreateConditionsAndEmergencySteps1756721828770",
+      "timestamp": "1756721828770"
+    },
+    {
+      "name": "CreatePharmacySystem1755613203864",
+      "timestamp": "1755613203864"
+    },
+    {
+      "name": "CreateChatbotTables1755029218188",
+      "timestamp": "1755029218188"
+    },
+    {
+      "name": "Walletsysfunctionality1753817195834",
+      "timestamp": "1753817195834"
+    },
+    {
+      "name": "WalletsysytemAddOn1753464882250",
+      "timestamp": "1753464882250"
+    },
+    {
+      "name": "Walletsysytem1753443836162",
+      "timestamp": "1753443836162"
+    },
+    {
+      "name": "FileUpgrade1751967102373",
+      "timestamp": "1751967102373"
+    },
+    {
+      "name": "Faqs1751653518201",
+      "timestamp": "1751653518201"
+    }
+  ]
+}

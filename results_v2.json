@@ -1,0 +1,181 @@
+{
+  "meta": {
+    "database": "cosmicforge",
+    "host": "72.61.20.94",
+    "timestamp": "2026-02-21T08:51:45.704Z"
+  },
+  "oid_18450": {
+    "class": {
+      "relname": "patient_profiles",
+      "relkind": "r",
+      "relnatts": 31,
+      "oid": 18450
+    },
+    "attributes": [
+      {
+        "attname": "tableoid",
+        "attnum": -6,
+        "attisdropped": false
+      },
+      {
+        "attname": "cmax",
+        "attnum": -5,
+        "attisdropped": false
+      },
+      {
+        "attname": "xmax",
+        "attnum": -4,
+        "attisdropped": false
+      },
+      {
+        "attname": "cmin",
+        "attnum": -3,
+        "attisdropped": false
+      },
+      {
+        "attname": "xmin",
+        "attnum": -2,
+        "attisdropped": false
+      },
+      {
+        "attname": "ctid",
+        "attnum": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "id",
+        "attnum": 1,
+        "attisdropped": false
+      },
+      {
+        "attname": "genotype",
+        "attnum": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodGroup",
+        "attnum": 5,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactFullName",
+        "attnum": 10,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactMobile",
+        "attnum": 11,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactRelationship",
+        "attnum": 12,
+        "attisdropped": false
+      },
+      {
+        "attname": "height",
+        "attnum": 13,
+        "attisdropped": false
+      },
+      {
+        "attname": "weight",
+        "attnum": 14,
+        "attisdropped": false
+      },
+      {
+        "attname": "bmi",
+        "attnum": 15,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodPressure",
+        "attnum": 16,
+        "attisdropped": false
+      },
+      {
+        "attname": "heartRate",
+        "attnum": 17,
+        "attisdropped": false
+      },
+      {
+        "attname": "respiratoryRate",
+        "attnum": 18,
+        "attisdropped": false
+      },
+      {
+        "attname": "temperature",
+        "attnum": 19,
+        "attisdropped": false
+      },
+      {
+        "attname": "spO2",
+        "attnum": 20,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodGlucose",
+        "attnum": 21,
+        "attisdropped": false
+      },
+      {
+        "attname": "smokes",
+        "attnum": 22,
+        "attisdropped": false
+      },
+      {
+        "attname": "drinksAlcohol",
+        "attnum": 23,
+        "attisdropped": false
+      },
+      {
+        "attname": "physicalActivityLevel",
+        "attnum": 24,
+        "attisdropped": false
+      },
+      {
+        "attname": "dietType",
+        "attnum": 25,
+        "attisdropped": false
+      },
+      {
+        "attname": "sleepDuration",
+        "attnum": 26,
+        "attisdropped": false
+      },
+      {
+        "attname": "profileType",
+        "attnum": 27,
+        "attisdropped": false
+      },
+      {
+        "attname": "createdAt",
+        "attnum": 28,
+        "attisdropped": false
+      },
+      {
+        "attname": "updatedAt",
+        "attnum": 29,
+        "attisdropped": false
+      },
+      {
+        "attname": "userId",
+        "attnum": 30,
+        "attisdropped": false
+      },
+      {
+        "attname": "profilePhoto",
+        "attnum": 31,
+        "attisdropped": false
+      }
+    ]
+  },
+  "appointments": [
+    {
+      "oid": 17913,
+      "relname": "appointments"
+    }
+  ],
+  "test_column_gender": {
+    "error": "pg_attribute catalog is missing 6 attribute(s) for relation OID 18450"
+  }
+}

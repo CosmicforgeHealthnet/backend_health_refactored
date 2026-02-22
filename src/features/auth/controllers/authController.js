@@ -265,6 +265,53 @@ exports.googleCallback = async (req, res, next) => {
     }
 };
 
+// Google Mobile Login/Signup
+exports.googleMobileLogin = async (req, res, next) => {
+    try {
+        const { idToken, role, deviceFingerprint } = req.body;
+        const userAgent = req.headers["user-agent"] || "";
+
+        if (!idToken || !role || !deviceFingerprint) {
+            return res.status(400).json({
+                error: "idToken, role, and deviceFingerprint are required"
+            });
+        }
+
+        // Validate role
+        if (!['patient', 'doctor'].includes(role)) {
+            return res.status(400).json({
+                error: "Invalid role. Only 'patient' or 'doctor' are allowed for mobile login."
+            });
+        }
+
+        // Country validation for Patients (reusing existing logic)
+        const countryValidation = validatePatientCountry(req, role);
+        if (!countryValidation.allowed) {
+            return res.status(403).json({
+                error: `Patient registration is currently only available in: ${countryValidation.allowedCountries.join(', ')}. Your location: ${countryValidation.country}`,
+                code: 'COUNTRY_RESTRICTED',
+                userCountry: countryValidation.country,
+                allowedCountries: countryValidation.allowedCountries
+            });
+        }
+
+        const result = await googleAuthService.handleMobileLogin(
+            idToken,
+            deviceFingerprint,
+            userAgent,
+            role
+        );
+
+        return res.json(result);
+    } catch (err) {
+        // Handle Google verification errors explicitly
+        if (err.message && err.message.includes('Wrong number of segments')) {
+            return res.status(400).json({ error: "Invalid ID Token" });
+        }
+        next(err);
+    }
+};
+
 // refresh token!!!!
 exports.refresh = async (req, res, next) => {
     try {

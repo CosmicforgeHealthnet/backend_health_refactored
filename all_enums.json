@@ -1,0 +1,1393 @@
+{
+  "account_support_issuetype_enum": {
+    "oid": 16432,
+    "labels": [
+      "account_information_error",
+      "dependent_account_issue",
+      "unable_to_update_profile",
+      "deactivation_request",
+      "double_accounts_conflict"
+    ]
+  },
+  "account_support_priority_enum": {
+    "oid": 16444,
+    "labels": [
+      "low",
+      "medium",
+      "high",
+      "urgent"
+    ]
+  },
+  "account_support_status_enum": {
+    "oid": 16454,
+    "labels": [
+      "pending",
+      "in_progress",
+      "resolved",
+      "closed"
+    ]
+  },
+  "appointment_chat_status": {
+    "oid": 16464,
+    "labels": [
+      "scheduled",
+      "active",
+      "completed",
+      "cancelled"
+    ]
+  },
+  "appointment_chats_status_enum": {
+    "oid": 16474,
+    "labels": [
+      "scheduled",
+      "active",
+      "completed",
+      "cancelled"
+    ]
+  },
+  "appointments_meetingprovider_enum": {
+    "oid": 16484,
+    "labels": [
+      "google",
+      "zoom",
+      "jitsi"
+    ]
+  },
+  "appointments_paymentstatus_enum": {
+    "oid": 16492,
+    "labels": [
+      "pending",
+      "completed",
+      "failed",
+      "refunded"
+    ]
+  },
+  "appointments_priority_enum": {
+    "oid": 16502,
+    "labels": [
+      "routine",
+      "urgent",
+      "high"
+    ]
+  },
+  "appointments_status_enum": {
+    "oid": 16510,
+    "labels": [
+      "pending",
+      "scheduled",
+      "completed",
+      "cancelled",
+      "rescheduled"
+    ]
+  },
+  "appointments_type_enum": {
+    "oid": 16522,
+    "labels": [
+      "consultation",
+      "follow-up",
+      "routine-checkup",
+      "urgent"
+    ]
+  },
+  "bulk_action_logs_action_type_enum": {
+    "oid": 20161,
+    "labels": [
+      "bulk_export",
+      "bulk_import",
+      "bulk_delete",
+      "bulk_update"
+    ]
+  },
+  "chat_message_type_enum": {
+    "oid": 16532,
+    "labels": [
+      "text",
+      "image",
+      "file",
+      "system",
+      "typing"
+    ]
+  },
+  "chat_messages_type_enum": {
+    "oid": 16544,
+    "labels": [
+      "text",
+      "image",
+      "file",
+      "system",
+      "typing"
+    ]
+  },
+  "chat_participant_role": {
+    "oid": 16556,
+    "labels": [
+      "admin",
+      "moderator",
+      "member"
+    ]
+  },
+  "chat_participants_role_enum": {
+    "oid": 16564,
+    "labels": [
+      "admin",
+      "moderator",
+      "member"
+    ]
+  },
+  "chat_rooms_type_enum": {
+    "oid": 16572,
+    "labels": [
+      "direct",
+      "group",
+      "appointment",
+      "support"
+    ]
+  },
+  "chatbot_messages_messagetype_enum": {
+    "oid": 16582,
+    "labels": [
+      "user",
+      "bot"
+    ]
+  },
+  "chatbot_sessions_sessiontype_enum": {
+    "oid": 16588,
+    "labels": [
+      "general",
+      "doctor"
+    ]
+  },
+  "chatbot_sessions_usertype_enum": {
+    "oid": 16594,
+    "labels": [
+      "patient",
+      "doctor"
+    ]
+  },
+  "chatroom_type_enum": {
+    "oid": 16600,
+    "labels": [
+      "direct",
+      "group",
+      "appointment",
+      "support"
+    ]
+  },
+  "comprehensive_audit_logs_event_type_enum": {
+    "oid": 16610,
+    "labels": [
+      "file_upload",
+      "file_download",
+      "file_view",
+      "file_delete",
+      "file_modify",
+      "fhir_resource_access",
+      "patient_data_access",
+      "fhir_search",
+      "consent_granted",
+      "consent_withdrawn",
+      "consent_modified",
+      "consent_checked",
+      "login_success",
+      "login_failure",
+      "logout",
+      "permission_denied",
+      "emergency_access",
+      "key_rotation",
+      "key_generation",
+      "encryption_event",
+      "decryption_event",
+      "compliance_report",
+      "data_export",
+      "data_retention",
+      "anonymization",
+      "consent_history_access",
+      "emergency_access_review"
+    ]
+  },
+  "comprehensive_audit_logs_severity_enum": {
+    "oid": 16666,
+    "labels": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+    ]
+  },
+  "conditions_content_type_enum": {
+    "oid": 16676,
+    "labels": [
+      "emergency",
+      "non_emergency"
+    ]
+  },
+  "conditions_severity_enum": {
+    "oid": 16682,
+    "labels": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+    ]
+  },
+  "country_verification_configs_method_enum": {
+    "oid": 16692,
+    "labels": [
+      "automated",
+      "manual",
+      "hybrid"
+    ]
+  },
+  "country_verification_configs_tier_enum": {
+    "oid": 16700,
+    "labels": [
+      "tier_1",
+      "tier_2",
+      "tier_3"
+    ]
+  },
+  "data_governance_policies_policy_status_enum": {
+    "oid": 16708,
+    "labels": [
+      "active",
+      "inactive",
+      "pending",
+      "deprecated"
+    ]
+  },
+  "data_governance_policies_policy_type_enum": {
+    "oid": 16718,
+    "labels": [
+      "retention",
+      "anonymization",
+      "access_control",
+      "data_classification",
+      "cross_border",
+      "privacy_preservation"
+    ]
+  },
+  "disputes_status_enum": {
+    "oid": 16732,
+    "labels": [
+      "pending",
+      "approved",
+      "rejected",
+      "escalated",
+      "resolved"
+    ]
+  },
+  "disputes_support_disputetype_enum": {
+    "oid": 16744,
+    "labels": [
+      "incorrect_billing",
+      "doctor_no_show",
+      "poor_service_quality",
+      "refund_request",
+      "transaction_issues"
+    ]
+  },
+  "disputes_support_status_enum": {
+    "oid": 16756,
+    "labels": [
+      "pending",
+      "under_review",
+      "resolved",
+      "closed"
+    ]
+  },
+  "disputes_type_enum": {
+    "oid": 16766,
+    "labels": [
+      "refund_request",
+      "chargeback",
+      "quality_complaint"
+    ]
+  },
+  "doctor_availability_dayofweek_enum": {
+    "oid": 16774,
+    "labels": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ]
+  },
+  "doctor_pricing_consultationtype_enum": {
+    "oid": 16790,
+    "labels": [
+      "consultation",
+      "follow-up",
+      "routine-checkup",
+      "urgent"
+    ]
+  },
+  "doctor_unavailability_type_enum": {
+    "oid": 16800,
+    "labels": [
+      "vacation",
+      "sick",
+      "meeting",
+      "personal",
+      "other"
+    ]
+  },
+  "document_files_fhir_resource_type_enum": {
+    "oid": 16812,
+    "labels": [
+      "Patient",
+      "Practitioner",
+      "Organization",
+      "Observation",
+      "DiagnosticReport",
+      "Condition",
+      "Procedure",
+      "MedicationRequest",
+      "MedicationStatement",
+      "AllergyIntolerance",
+      "Immunization",
+      "CarePlan",
+      "Encounter",
+      "DocumentReference",
+      "Consent",
+      "Other"
+    ]
+  },
+  "document_files_fhir_sensitivity_level_enum": {
+    "oid": 16846,
+    "labels": [
+      "normal",
+      "high",
+      "very_high"
+    ]
+  },
+  "document_files_security_level_enum": {
+    "oid": 16854,
+    "labels": [
+      "public",
+      "private",
+      "confidential",
+      "restricted"
+    ]
+  },
+  "document_files_status_enum": {
+    "oid": 16864,
+    "labels": [
+      "uploaded",
+      "processing",
+      "ready",
+      "corrupted",
+      "deleted"
+    ]
+  },
+  "document_folders_folder_type_enum": {
+    "oid": 16876,
+    "labels": [
+      "verification",
+      "medical_records",
+      "prescription",
+      "lab_results",
+      "profile",
+      "images",
+      "pharmacy",
+      "pharmacy_verification",
+      "other"
+    ]
+  },
+  "document_folders_status_enum": {
+    "oid": 16896,
+    "labels": [
+      "active",
+      "archived",
+      "deleted"
+    ]
+  },
+  "emergency_steps_category_type_enum": {
+    "oid": 16904,
+    "labels": [
+      "general",
+      "adults",
+      "children",
+      "infants"
+    ]
+  },
+  "encryption_keys_algorithm_enum": {
+    "oid": 16914,
+    "labels": [
+      "aes-256-gcm",
+      "aes-256-cbc",
+      "chacha20-poly1305"
+    ]
+  },
+  "encryption_keys_key_status_enum": {
+    "oid": 16922,
+    "labels": [
+      "active",
+      "rotated",
+      "revoked",
+      "expired"
+    ]
+  },
+  "encryption_keys_key_type_enum": {
+    "oid": 16932,
+    "labels": [
+      "master",
+      "patient",
+      "resource",
+      "sensitivity",
+      "purpose"
+    ]
+  },
+  "faq_analytics_eventtype_enum": {
+    "oid": 16944,
+    "labels": [
+      "view",
+      "search",
+      "vote",
+      "share"
+    ]
+  },
+  "faq_categories_targetrole_enum": {
+    "oid": 16954,
+    "labels": [
+      "patient",
+      "doctor",
+      "general",
+      "all"
+    ]
+  },
+  "faq_votes_votetype_enum": {
+    "oid": 16964,
+    "labels": [
+      "helpful",
+      "not_helpful"
+    ]
+  },
+  "faqs_status_enum": {
+    "oid": 16970,
+    "labels": [
+      "draft",
+      "published",
+      "archived"
+    ]
+  },
+  "faqs_targetrole_enum": {
+    "oid": 16978,
+    "labels": [
+      "patient",
+      "doctor",
+      "general",
+      "all"
+    ]
+  },
+  "file_access_logs_access_type_enum": {
+    "oid": 16988,
+    "labels": [
+      "view",
+      "download",
+      "upload",
+      "delete",
+      "share",
+      "modify"
+    ]
+  },
+  "folder_access_logs_access_type_enum": {
+    "oid": 17002,
+    "labels": [
+      "view",
+      "download",
+      "upload",
+      "delete",
+      "share",
+      "modify"
+    ]
+  },
+  "hospitals_type_enum": {
+    "oid": 17016,
+    "labels": [
+      "general",
+      "specialized",
+      "emergency",
+      "trauma_center"
+    ]
+  },
+  "insurance_support_issuetype_enum": {
+    "oid": 17026,
+    "labels": [
+      "insurance_not_recognized",
+      "policy_details_incorrect",
+      "claim_status_delay",
+      "coverage_rejected",
+      "upload_document_error",
+      "wrong_billing"
+    ]
+  },
+  "insurance_support_serviceaffected_enum": {
+    "oid": 17040,
+    "labels": [
+      "consultation",
+      "lab",
+      "pharmacy"
+    ]
+  },
+  "insurance_support_status_enum": {
+    "oid": 17048,
+    "labels": [
+      "pending",
+      "in_progress",
+      "resolved",
+      "closed"
+    ]
+  },
+  "lab_chat_messages_messagetype_enum": {
+    "oid": 45402,
+    "labels": [
+      "text",
+      "system",
+      "scheduling",
+      "file",
+      "status_update"
+    ]
+  },
+  "lab_chat_participants_role_enum": {
+    "oid": 45432,
+    "labels": [
+      "admin",
+      "member"
+    ]
+  },
+  "lab_chat_rooms_type_enum": {
+    "oid": 45372,
+    "labels": [
+      "order_chat",
+      "facility_internal",
+      "quality_alerts",
+      "lab_operations"
+    ]
+  },
+  "lab_facilities_facilitytype_enum": {
+    "oid": 17058,
+    "labels": [
+      "diagnostic_lab",
+      "pathology_lab",
+      "radiology_center",
+      "medical_center",
+      "hospital_lab"
+    ]
+  },
+  "lab_facilities_status_enum": {
+    "oid": 17070,
+    "labels": [
+      "draft",
+      "pending_approval",
+      "approved",
+      "rejected",
+      "suspended",
+      "active"
+    ]
+  },
+  "lab_orders_ordertype_enum": {
+    "oid": 44793,
+    "labels": [
+      "lab_test",
+      "radiology"
+    ]
+  },
+  "lab_orders_paymentstatus_enum": {
+    "oid": 44834,
+    "labels": [
+      "pending",
+      "paid",
+      "failed",
+      "refunded"
+    ]
+  },
+  "lab_orders_servicetype_enum": {
+    "oid": 44798,
+    "labels": [
+      "lab_visit",
+      "home_collection"
+    ]
+  },
+  "lab_orders_status_enum": {
+    "oid": 44804,
+    "labels": [
+      "created",
+      "pending_payment",
+      "payment_confirmed",
+      "assigned",
+      "scheduled",
+      "in_progress",
+      "sample_collected",
+      "processing",
+      "results_ready",
+      "under_review",
+      "revision_required",
+      "results_approved",
+      "completed",
+      "cancelled"
+    ]
+  },
+  "lab_personnel_role_enum": {
+    "oid": 17084,
+    "labels": [
+      "lab_manager",
+      "sample_collector",
+      "lab_technician",
+      "radiologist",
+      "result_reviewer"
+    ]
+  },
+  "lab_personnel_status_enum": {
+    "oid": 17096,
+    "labels": [
+      "pending_registration",
+      "invitation_sent",
+      "registered",
+      "active",
+      "suspended",
+      "terminated"
+    ]
+  },
+  "lab_pharm_waitlist_role_enum": {
+    "oid": 17110,
+    "labels": [
+      "lab",
+      "pharmarcy"
+    ]
+  },
+  "lab_pharm_waitlist_status_enum": {
+    "oid": 17116,
+    "labels": [
+      "pending",
+      "contacted",
+      "registered",
+      "declined"
+    ]
+  },
+  "lab_users_role_enum": {
+    "oid": 45215,
+    "labels": [
+      "patient",
+      "doctor",
+      "pharmacy",
+      "pharmacist",
+      "pharmacy_manager",
+      "pharmacy_admin",
+      "lab",
+      "admin",
+      "super_admin",
+      "marketer",
+      "lab_admin",
+      "lab_manager",
+      "sample_collector",
+      "lab_technician",
+      "radiologist",
+      "result_reviewer"
+    ]
+  },
+  "lab_users_status_enum": {
+    "oid": 45248,
+    "labels": [
+      "pending_email_verification",
+      "active",
+      "locked"
+    ]
+  },
+  "lab_waitlist_status_enum": {
+    "oid": 17126,
+    "labels": [
+      "pending",
+      "contacted",
+      "registered",
+      "declined"
+    ]
+  },
+  "lab_wallet_topups_paymentmethod_enum": {
+    "oid": 45012,
+    "labels": [
+      "credit_card",
+      "debit_card",
+      "bank_transfer",
+      "digital_wallet",
+      "paypal",
+      "stripe",
+      "wallet_balance"
+    ]
+  },
+  "lab_wallet_topups_status_enum": {
+    "oid": 45001,
+    "labels": [
+      "pending",
+      "processing",
+      "completed",
+      "failed",
+      "cancelled"
+    ]
+  },
+  "lab_wallet_transactions_paymentmethod_enum": {
+    "oid": 44958,
+    "labels": [
+      "credit_card",
+      "debit_card",
+      "bank_transfer",
+      "digital_wallet",
+      "paypal",
+      "stripe",
+      "wallet_balance"
+    ]
+  },
+  "lab_wallet_transactions_status_enum": {
+    "oid": 44944,
+    "labels": [
+      "pending",
+      "processing",
+      "completed",
+      "failed",
+      "cancelled",
+      "reversed"
+    ]
+  },
+  "lab_wallet_transactions_type_enum": {
+    "oid": 44924,
+    "labels": [
+      "credit",
+      "debit",
+      "payment",
+      "refund",
+      "topup",
+      "transfer",
+      "fee",
+      "earning",
+      "withdrawal"
+    ]
+  },
+  "lab_wallets_status_enum": {
+    "oid": 44894,
+    "labels": [
+      "active",
+      "suspended",
+      "frozen",
+      "closed"
+    ]
+  },
+  "lab_wallets_wallettype_enum": {
+    "oid": 44889,
+    "labels": [
+      "patient",
+      "facility"
+    ]
+  },
+  "patient_access_logs_access_type_enum": {
+    "oid": 17136,
+    "labels": [
+      "view",
+      "download",
+      "search",
+      "create",
+      "update",
+      "delete",
+      "view_patient_summary",
+      "view_patient_files",
+      "emergency_access"
+    ]
+  },
+  "patient_consents_consent_scope_enum": {
+    "oid": 17156,
+    "labels": [
+      "full_access",
+      "limited_access",
+      "treatment_only",
+      "emergency_only",
+      "no_access"
+    ]
+  },
+  "patient_consents_consent_status_enum": {
+    "oid": 17168,
+    "labels": [
+      "active",
+      "inactive",
+      "withdrawn",
+      "expired"
+    ]
+  },
+  "pharmacy_documents_documenttype_enum": {
+    "oid": 17178,
+    "labels": [
+      "pharmacy_license",
+      "government_id",
+      "business_registration",
+      "tax_certificate",
+      "other"
+    ]
+  },
+  "pharmacy_documents_submissionstatus_enum": {
+    "oid": 17190,
+    "labels": [
+      "pending",
+      "submitted",
+      "under_review",
+      "approved",
+      "rejected",
+      "resubmission_required"
+    ]
+  },
+  "pharmacy_profiles_verificationstatus_enum": {
+    "oid": 17204,
+    "labels": [
+      "pending",
+      "documents_required",
+      "under_review",
+      "approved",
+      "rejected",
+      "suspended"
+    ]
+  },
+  "pharmacy_verification_requests_priority_enum": {
+    "oid": 17218,
+    "labels": [
+      "low",
+      "medium",
+      "high",
+      "urgent"
+    ]
+  },
+  "pharmacy_verification_requests_requesttype_enum": {
+    "oid": 17228,
+    "labels": [
+      "initial_verification",
+      "re_verification",
+      "document_update"
+    ]
+  },
+  "pharmacy_verification_requests_status_enum": {
+    "oid": 17236,
+    "labels": [
+      "pending",
+      "in_progress",
+      "approved",
+      "rejected",
+      "requires_changes"
+    ]
+  },
+  "prescriptions_paymentmethod_enum": {
+    "oid": 17248,
+    "labels": [
+      "online",
+      "payOnPickup"
+    ]
+  },
+  "prescriptions_paymentstatus_enum": {
+    "oid": 17254,
+    "labels": [
+      "unpaid",
+      "paid",
+      "cancelled"
+    ]
+  },
+  "prescriptions_status_enum": {
+    "oid": 17262,
+    "labels": [
+      "pending",
+      "patient_uploaded",
+      "pharmacy_assigned",
+      "pharmacy_processing",
+      "ready_for_pickup",
+      "ready_for_delivery",
+      "completed",
+      "cancelled"
+    ]
+  },
+  "referral_draws_status_enum": {
+    "oid": 17280,
+    "labels": [
+      "pending",
+      "active",
+      "ended",
+      "cancelled"
+    ]
+  },
+  "report_support_issuetype_enum": {
+    "oid": 17290,
+    "labels": [
+      "unprofessional_behavior",
+      "harassment_verbal_abuse",
+      "medical_negligence",
+      "fraud_fake_profile",
+      "wrong_diagnosis",
+      "appointment_issues",
+      "prescription_error",
+      "privacy_violation",
+      "wrong_lab_result",
+      "lab_misconduct",
+      "pharmacy_misconduct"
+    ]
+  },
+  "report_support_providertype_enum": {
+    "oid": 17314,
+    "labels": [
+      "healthcare_provider",
+      "lab",
+      "pharmacy"
+    ]
+  },
+  "report_support_status_enum": {
+    "oid": 17322,
+    "labels": [
+      "pending",
+      "under_review",
+      "resolved",
+      "closed"
+    ]
+  },
+  "reports_issuetype_enum": {
+    "oid": 17332,
+    "labels": [
+      "unprofessional_behavior",
+      "harassment_verbal_abuse",
+      "medical_negligence",
+      "fraud_fake_profile",
+      "wrong_diagnosis",
+      "appointment_issues",
+      "prescription_error",
+      "privacy_violation",
+      "wrong_lab_result",
+      "lab_misconduct",
+      "pharmacy_misconduct"
+    ]
+  },
+  "reports_providertype_enum": {
+    "oid": 17356,
+    "labels": [
+      "healthcare_provider",
+      "lab",
+      "pharmacy"
+    ]
+  },
+  "reports_status_enum": {
+    "oid": 17364,
+    "labels": [
+      "pending",
+      "under_review",
+      "resolved",
+      "closed"
+    ]
+  },
+  "resource_access_logs_access_type_enum": {
+    "oid": 17374,
+    "labels": [
+      "view",
+      "search",
+      "create",
+      "update",
+      "delete",
+      "download"
+    ]
+  },
+  "search_logs_userrole_enum": {
+    "oid": 17388,
+    "labels": [
+      "patient",
+      "doctor",
+      "pharmacy",
+      "pharmacist",
+      "pharmacy_manager",
+      "pharmacy_admin",
+      "lab",
+      "admin",
+      "super_admin",
+      "marketer",
+      "lab_admin",
+      "lab_manager",
+      "sample_collector",
+      "lab_technician",
+      "radiologist",
+      "result_reviewer"
+    ]
+  },
+  "sos_events_service_requested_enum": {
+    "oid": 17422,
+    "labels": [
+      "ambulance",
+      "police",
+      "fire",
+      "all"
+    ]
+  },
+  "sos_events_status_enum": {
+    "oid": 17432,
+    "labels": [
+      "triggered",
+      "acknowledged",
+      "resolved",
+      "false_alarm"
+    ]
+  },
+  "subscriptions_billingcycle_enum": {
+    "oid": 17442,
+    "labels": [
+      "monthly",
+      "quarterly",
+      "yearly"
+    ]
+  },
+  "subscriptions_plantype_enum": {
+    "oid": 17450,
+    "labels": [
+      "doctor",
+      "patient"
+    ]
+  },
+  "subscriptions_status_enum": {
+    "oid": 17456,
+    "labels": [
+      "active",
+      "pending",
+      "expired",
+      "canceled",
+      "paused"
+    ]
+  },
+  "subscriptions_tier_enum": {
+    "oid": 17468,
+    "labels": [
+      "basic",
+      "pro",
+      "enterprise",
+      "free",
+      "premium",
+      "standard",
+      "medium",
+      "gold_elite",
+      "professional"
+    ]
+  },
+  "support_disputes_disputetype_enum": {
+    "oid": 17488,
+    "labels": [
+      "incorrect_billing",
+      "doctor_no_show",
+      "poor_service_quality",
+      "refund_request",
+      "transaction_issues"
+    ]
+  },
+  "support_disputes_status_enum": {
+    "oid": 17500,
+    "labels": [
+      "pending",
+      "under_review",
+      "resolved",
+      "closed"
+    ]
+  },
+  "support_insurance_issuetype_enum": {
+    "oid": 17510,
+    "labels": [
+      "insurance_not_recognized",
+      "policy_details_incorrect",
+      "claim_status_delay",
+      "coverage_rejected",
+      "upload_document_error",
+      "wrong_billing"
+    ]
+  },
+  "support_insurance_serviceaffected_enum": {
+    "oid": 17524,
+    "labels": [
+      "consultation",
+      "lab",
+      "pharmacy"
+    ]
+  },
+  "support_insurance_status_enum": {
+    "oid": 17532,
+    "labels": [
+      "pending",
+      "in_progress",
+      "resolved",
+      "closed"
+    ]
+  },
+  "support_report_issuetype_enum": {
+    "oid": 17542,
+    "labels": [
+      "unprofessional_behavior",
+      "harassment_verbal_abuse",
+      "medical_negligence",
+      "fraud_fake_profile",
+      "wrong_diagnosis",
+      "appointment_issues",
+      "prescription_error",
+      "privacy_violation",
+      "wrong_lab_result",
+      "lab_misconduct",
+      "pharmacy_misconduct"
+    ]
+  },
+  "support_report_providertype_enum": {
+    "oid": 17566,
+    "labels": [
+      "healthcare_provider",
+      "lab",
+      "pharmacy"
+    ]
+  },
+  "support_report_status_enum": {
+    "oid": 17574,
+    "labels": [
+      "pending",
+      "under_review",
+      "resolved",
+      "closed"
+    ]
+  },
+  "transaction_splits_recipienttype_enum": {
+    "oid": 17584,
+    "labels": [
+      "doctor_wallet",
+      "company_wallet"
+    ]
+  },
+  "transaction_splits_status_enum": {
+    "oid": 17590,
+    "labels": [
+      "pending",
+      "released",
+      "refunded",
+      "held"
+    ]
+  },
+  "transaction_splits_type_enum": {
+    "oid": 17600,
+    "labels": [
+      "appointment_fee",
+      "service_fee",
+      "vat"
+    ]
+  },
+  "transactions_billingcycle_enum": {
+    "oid": 17608,
+    "labels": [
+      "one_time",
+      "monthly",
+      "quarterly",
+      "yearly"
+    ]
+  },
+  "transactions_fundsstatus_enum": {
+    "oid": 17618,
+    "labels": [
+      "pending_appointment",
+      "pending_dispute",
+      "releasable",
+      "released"
+    ]
+  },
+  "transactions_paymentprovider_enum": {
+    "oid": 17628,
+    "labels": [
+      "flutterwave",
+      "paystack"
+    ]
+  },
+  "transactions_plantype_enum": {
+    "oid": 17634,
+    "labels": [
+      "free",
+      "basic",
+      "medium",
+      "premium",
+      "one_time"
+    ]
+  },
+  "transactions_refundstatus_enum": {
+    "oid": 17646,
+    "labels": [
+      "none",
+      "pending",
+      "partial",
+      "full",
+      "failed"
+    ]
+  },
+  "transactions_servicetype_enum": {
+    "oid": 17658,
+    "labels": [
+      "appointment",
+      "subscription",
+      "lab_test",
+      "pharmacy",
+      "document_access",
+      "verification_fee",
+      "chat_premium",
+      "other"
+    ]
+  },
+  "transactions_status_enum": {
+    "oid": 17676,
+    "labels": [
+      "pending",
+      "processing",
+      "completed",
+      "failed",
+      "disputed",
+      "refunded",
+      "cancelled"
+    ]
+  },
+  "user_payment_methods_lastsuccessfulprovider_enum": {
+    "oid": 17692,
+    "labels": [
+      "flutterwave",
+      "paystack"
+    ]
+  },
+  "user_referrals_status_enum": {
+    "oid": 17698,
+    "labels": [
+      "pending",
+      "verified",
+      "invalid"
+    ]
+  },
+  "users_provider_enum": {
+    "oid": 45584,
+    "labels": [
+      "local",
+      "google"
+    ]
+  },
+  "users_role_enum": {
+    "oid": 17712,
+    "labels": [
+      "patient",
+      "doctor",
+      "pharmacy",
+      "pharmacist",
+      "pharmacy_manager",
+      "pharmacy_admin",
+      "lab",
+      "admin",
+      "super_admin",
+      "marketer",
+      "lab_admin",
+      "lab_manager",
+      "sample_collector",
+      "lab_technician",
+      "radiologist",
+      "result_reviewer"
+    ]
+  },
+  "users_status_enum": {
+    "oid": 45615,
+    "labels": [
+      "pending_email_verification",
+      "active",
+      "pending_doctor_verification",
+      "doctor_active",
+      "pending_pharmacy_verification",
+      "pharmacy_active",
+      "locked"
+    ]
+  },
+  "users_tier_enum": {
+    "oid": 45592,
+    "labels": [
+      "free",
+      "basic",
+      "standard",
+      "medium",
+      "premium",
+      "gold_elite",
+      "professional"
+    ]
+  },
+  "verification_api_logs_provider_enum": {
+    "oid": 17778,
+    "labels": [
+      "mdcn_nigeria",
+      "hpcsa_south_africa",
+      "kmpdc_kenya",
+      "mdc_ghana",
+      "ecfmg",
+      "surepass",
+      "idfy",
+      "custom"
+    ]
+  },
+  "verification_documents_documenttype_enum": {
+    "oid": 17796,
+    "labels": [
+      "medical_license",
+      "medical_degree",
+      "board_certification",
+      "postgraduate_certificate",
+      "government_id",
+      "proof_of_practice",
+      "good_standing_certificate",
+      "other"
+    ]
+  },
+  "verification_documents_status_enum": {
+    "oid": 17814,
+    "labels": [
+      "uploaded",
+      "processing",
+      "verified",
+      "rejected",
+      "expired"
+    ]
+  },
+  "verification_requests_method_enum": {
+    "oid": 17826,
+    "labels": [
+      "automated",
+      "manual",
+      "hybrid"
+    ]
+  },
+  "verification_requests_status_enum": {
+    "oid": 17834,
+    "labels": [
+      "pending",
+      "in_progress",
+      "pending_documents",
+      "api_verification",
+      "manual_review",
+      "approved",
+      "rejected",
+      "expired"
+    ]
+  },
+  "verification_requests_tier_enum": {
+    "oid": 17852,
+    "labels": [
+      "tier_1",
+      "tier_2",
+      "tier_3"
+    ]
+  },
+  "verification_review_queue_priority_enum": {
+    "oid": 17860,
+    "labels": [
+      "low",
+      "normal",
+      "high",
+      "urgent"
+    ]
+  },
+  "wallet_withdrawals_status_enum": {
+    "oid": 17870,
+    "labels": [
+      "pending",
+      "processing",
+      "completed",
+      "failed",
+      "cancelled",
+      "pending_otp"
+    ]
+  }
+}
