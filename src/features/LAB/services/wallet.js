@@ -5,7 +5,7 @@ const walletTopUpRepository = require("../repositories/wallet/wallet_top_up");
 const userRepository = require("../../auth/repositories/userRepository");
 const labFacilityRepository = require("../repositories/lab_facility");
 const { WALLET_TYPE, WALLET_STATUS, TRANSACTION_TYPE, TRANSACTION_STATUS, PAYMENT_METHOD } = require("../utils/constants");
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const crypto = require("node:crypto");        
 
 class WalletService {

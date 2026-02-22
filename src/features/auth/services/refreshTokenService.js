@@ -1,6 +1,6 @@
 // src/services/refreshTokenService.js
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const refreshTokenRepository = require('../repositories/refreshTokenRepository');
 
@@ -67,6 +67,17 @@ class RefreshTokenService {
     const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRES });
 
     return { payload, accessToken, refreshToken: newRawToken };
+  }
+
+  /** Explicitly revoke a refresh token (for logout) */
+  async revokeToken(rawToken, deviceFingerprint) {
+    const candidates = await refreshTokenRepository.findActiveByFingerprint(deviceFingerprint);
+    const record = candidates.find(r =>
+      bcrypt.compareSync(rawToken, r.tokenHash)
+    );
+    if (record) {
+      await refreshTokenRepository.revoke(record);
+    }
   }
 }
 

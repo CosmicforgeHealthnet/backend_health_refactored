@@ -1323,7 +1323,7 @@ class WalletService {
         throw new Error('Password must be at least 4 characters long');
       }
 
-      const bcrypt = require('bcrypt');
+      const bcrypt = require('bcryptjs');
       const hashedPassword = await bcrypt.hash(password, 12);
 
       await doctorWalletRepository.setWalletPassword(doctorId, hashedPassword);
@@ -1355,7 +1355,7 @@ class WalletService {
         throw new Error('New Password must be at least 4 characters long');
       }
 
-      const bcrypt = require('bcrypt');
+      const bcrypt = require('bcryptjs');
       const hashednewPassword = await bcrypt.hash(newPassword, 12);
 
       await doctorWalletRepository.updateWalletPassword(doctorId, hashednewPassword);
@@ -1451,7 +1451,7 @@ class WalletService {
       }
 
       // Hash new password
-      const bcrypt = require('bcrypt');
+      const bcrypt = require('bcryptjs');
       const hashednewPassword = await bcrypt.hash(newPassword, 12);
 
       // Reset password and clear token
@@ -1518,7 +1518,7 @@ class WalletService {
    */
   async verifyWalletPassword(doctorId, password) {
     try {
-      const bcrypt = require('bcrypt');
+      const bcrypt = require('bcryptjs');
       const wallet = await doctorWalletRepository.findWalletPassword(doctorId);
 
       if (!wallet?.walletPassword) {

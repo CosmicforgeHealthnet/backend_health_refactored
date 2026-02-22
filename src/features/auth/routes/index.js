@@ -90,6 +90,30 @@ router.get("/signup", (req, res) => {
  *       **Legacy route**: `POST /auth/login` (deprecated)
  */
 router.post("/login", authController.login);
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout and revoke refresh token
+ *     tags: [Authentication]
+ *     description: |
+ *       Revokes the provided refresh token for the specific device.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *               - deviceFingerprint
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *               deviceFingerprint:
+ *                 type: string
+ */
+router.post("/logout", authController.logout);
 
 /**
  * @swagger
@@ -235,6 +259,16 @@ router.get("/google", authController.googleAuth);
  *       **Legacy route**: `GET /auth/google/callback` (deprecated)
  */
 router.get("/google/callback", authController.googleCallback);
+
+/**
+ * @swagger
+ * /api/auth/google/mobile-login:
+ *   post:
+ *     summary: Google login for mobile
+ *     tags: [Authentication]
+ *     description: Authenticates user via Google ID Token from mobile device.
+ */
+router.post("/google/mobile-login", authController.googleMobileLogin);
 
 router.use("/referrals", referralRoutes);
 router.use("/mfa", mfaRoutes);

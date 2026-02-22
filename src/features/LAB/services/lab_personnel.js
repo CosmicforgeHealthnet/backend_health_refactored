@@ -4,7 +4,7 @@ const labFacilityRepository = require("../repositories/lab_facility");
 const userRepository = require("../../auth/repositories/userRepository");
 const { USER_ROLES } = require("../../../shared/utils/constants");
 const crypto = require("node:crypto");
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { 
   sendLabPersonnelInvitationEmail,
   sendLabPersonnelWelcomeEmail,
