@@ -2,7 +2,7 @@
   "blocked": [],
   "all_sessions": [
     {
-      "pid": 245908,
+      "pid": 30,
       "state": null,
       "query": "",
       "wait_event_type": "Activity",
@@ -10,7 +10,7 @@
       "xact_start": null
     },
     {
-      "pid": 245909,
+      "pid": 31,
       "state": null,
       "query": "",
       "wait_event_type": "Activity",
@@ -18,31 +18,23 @@
       "xact_start": null
     },
     {
-      "pid": 334006,
+      "pid": 72,
       "state": "active",
       "query": "SELECT pid, state, query, wait_event_type, wait_event, xact_start FROM pg_stat_activity",
       "wait_event_type": null,
       "wait_event": null,
-      "xact_start": "2026-02-21T11:07:15.826Z"
+      "xact_start": "2026-02-23T21:16:54.986Z"
     },
     {
-      "pid": 317490,
-      "state": "idle",
-      "query": "SELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;",
-      "wait_event_type": "Client",
-      "wait_event": "ClientRead",
-      "xact_start": null
-    },
-    {
-      "pid": 245906,
+      "pid": 27,
       "state": null,
       "query": "",
       "wait_event_type": "Activity",
-      "wait_event": "BgWriterHibernate",
+      "wait_event": "BgWriterMain",
       "xact_start": null
     },
     {
-      "pid": 245905,
+      "pid": 26,
       "state": null,
       "query": "",
       "wait_event_type": "Activity",
@@ -50,7 +42,7 @@
       "xact_start": null
     },
     {
-      "pid": 245907,
+      "pid": 29,
       "state": null,
       "query": "",
       "wait_event_type": "Activity",

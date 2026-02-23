@@ -3,7 +3,7 @@ const { EntitySchema } = require("typeorm");
 
 module.exports = new EntitySchema({
   name: "HealthInsurance",
-  tableName: "health_insurances_new",
+  tableName: "health_insurances",
   columns: {
     id: { primary: true, type: "uuid", generated: "uuid" },
     providerName: { type: "varchar", nullable: true },

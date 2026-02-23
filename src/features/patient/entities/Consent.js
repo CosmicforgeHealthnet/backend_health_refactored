@@ -3,7 +3,7 @@ const { EntitySchema } = require("typeorm");
 
 module.exports = new EntitySchema({
   name: "Consent",
-  tableName: "consents_new",
+  tableName: "consents",
   columns: {
     id: { primary: true, type: "uuid", generated: "uuid" },
     telemedicine: { type: "boolean", default: false },
