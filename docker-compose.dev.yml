@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   backend:
@@ -18,14 +18,22 @@ services:
       - REDIS_DEV_HOST=redis_dev
       - FILE_SERVER_URL=http://localhost:8081
     env_file:
-      - .env.development
+      - .env.dev
     depends_on:
       - ai_service
       - redis
     networks:
       - cosmic_network_dev
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:5000/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -40,7 +48,13 @@ services:
     networks:
       - cosmic_network_dev
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import requests; requests.get('http://localhost:8001/health')",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -68,7 +82,7 @@ services:
       - "8081:80"
     volumes:
       - ./deployment/nginx.dev.conf:/etc/nginx/nginx.conf:ro
-      - ./uploads:/app/uploads:ro  # Mount uploads for static file serving
+      - ./uploads:/app/uploads:ro # Mount uploads for static file serving
     depends_on:
       - backend
       - ai_service
