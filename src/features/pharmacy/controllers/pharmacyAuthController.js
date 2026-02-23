@@ -2,7 +2,7 @@
 const pharmacyRegistrationService = require("../services/pharmacyRegistrationService");
 const authService = require("../../auth/services/authService");
 const userRepo = require("../../auth/repositories/userRepository");
-const bcrypt = require("bcrypt");
+const bcrypt = require('bcryptjs');
 const mfaService = require('../../auth/services/mfa/mfaService');
 
 class PharmacyAuthController {

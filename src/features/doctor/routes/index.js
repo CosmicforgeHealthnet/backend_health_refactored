@@ -12,8 +12,8 @@ const profileController = require("../controllers/profileController");
 const doctorVerificationController = require("../controllers/doctorVerificationController");
 const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
 
-// Import document upload middleware
-// const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
+// Subscription middlewares
+const requireSubscription = require("../../subscriptions/middlewares/requireSubscription");
 
 // Import pricing and availability controllers
 const DoctorPricingController = require("../controllers/doctorPricingController");
@@ -481,6 +481,7 @@ router.post("/rating", authenticateJWT, profileController.addRating);
 
 // ============================================
 // PRICING ROUTES
+// Requires doctor subscription to manage pricing
 // ============================================
 
 /**
@@ -491,9 +492,9 @@ router.post("/rating", authenticateJWT, profileController.addRating);
  *     tags: [Doctor]
  *     security:
  *       - bearerAuth: []
- *     description: Set pricing for a specific consultation type
+ *     description: Set pricing for a specific consultation type (requires subscription)
  */
-router.post("/:doctorId/pricing", authenticateJWT, pricingController.setPricing.bind(pricingController));
+router.post("/:doctorId/pricing", authenticateJWT, requireSubscription, pricingController.setPricing.bind(pricingController));
 
 /**
  * @swagger
@@ -513,9 +514,9 @@ router.get("/:doctorId/pricing", pricingController.getDoctorPricing.bind(pricing
  *     tags: [Doctor]
  *     security:
  *       - bearerAuth: []
- *     description: Update a specific pricing record
+ *     description: Update a specific pricing record (requires subscription)
  */
-router.put("/:doctorId/pricing/:pricingId", authenticateJWT, pricingController.updatePricing.bind(pricingController));
+router.put("/:doctorId/pricing/:pricingId", authenticateJWT, requireSubscription, pricingController.updatePricing.bind(pricingController));
 
 /**
  * @swagger
@@ -525,12 +526,13 @@ router.put("/:doctorId/pricing/:pricingId", authenticateJWT, pricingController.u
  *     tags: [Doctor]
  *     security:
  *       - bearerAuth: []
- *     description: Delete a specific pricing record
+ *     description: Delete a specific pricing record (requires subscription)
  */
-router.delete("/:doctorId/pricing/:pricingId", authenticateJWT, pricingController.deletePricing.bind(pricingController));
+router.delete("/:doctorId/pricing/:pricingId", authenticateJWT, requireSubscription, pricingController.deletePricing.bind(pricingController));
 
 // ============================================
 // AVAILABILITY ROUTES
+// Requires doctor subscription to manage availability
 // ============================================
 
 /**
@@ -541,9 +543,9 @@ router.delete("/:doctorId/pricing/:pricingId", authenticateJWT, pricingControlle
  *     tags: [Doctor]
  *     security:
  *       - bearerAuth: []
- *     description: Set weekly availability schedule for a doctor
+ *     description: Set weekly availability schedule for a doctor (requires subscription)
  */
-router.post("/:doctorId/availability", authenticateJWT, availabilityController.setAvailability.bind(availabilityController));
+router.post("/:doctorId/availability", authenticateJWT, requireSubscription, availabilityController.setAvailability.bind(availabilityController));
 
 /**
  * @swagger
@@ -553,9 +555,9 @@ router.post("/:doctorId/availability", authenticateJWT, availabilityController.s
  *     tags: [Doctor]
  *     security:
  *       - bearerAuth: []
- *     description: Replace existing weekly availability schedule
+ *     description: Replace existing weekly availability schedule (requires subscription)
  */
-router.put("/:doctorId/availability", authenticateJWT, availabilityController.replaceAvailability.bind(availabilityController));
+router.put("/:doctorId/availability", authenticateJWT, requireSubscription, availabilityController.replaceAvailability.bind(availabilityController));
 
 /**
  * @swagger
@@ -619,9 +621,9 @@ router.get("/:doctorId/availability/summary", availabilityController.getAvailabi
  *     tags: [Doctor]
  *     security:
  *       - bearerAuth: []
- *     description: Update a specific availability record
+ *     description: Update a specific availability record (requires subscription)
  */
-router.put("/:doctorId/availability/:availabilityId", authenticateJWT, availabilityController.updateAvailability.bind(availabilityController));
+router.put("/:doctorId/availability/:availabilityId", authenticateJWT, requireSubscription, availabilityController.updateAvailability.bind(availabilityController));
 
 /**
  * @swagger
@@ -631,12 +633,13 @@ router.put("/:doctorId/availability/:availabilityId", authenticateJWT, availabil
  *     tags: [Doctor]
  *     security:
  *       - bearerAuth: []
- *     description: Delete a specific availability record
+ *     description: Delete a specific availability record (requires subscription)
  */
-router.delete("/:doctorId/availability/:availabilityId", authenticateJWT, availabilityController.deleteAvailability.bind(availabilityController));
+router.delete("/:doctorId/availability/:availabilityId", authenticateJWT, requireSubscription, availabilityController.deleteAvailability.bind(availabilityController));
 
 // ============================================
 // UNAVAILABILITY ROUTES
+// Requires doctor subscription to manage unavailability
 // ============================================
 
 /**
@@ -647,9 +650,9 @@ router.delete("/:doctorId/availability/:availabilityId", authenticateJWT, availa
  *     tags: [Doctor]
  *     security:
  *       - bearerAuth: []
- *     description: Set a period of unavailability (vacation, sick, etc.)
+ *     description: Set a period of unavailability (vacation, sick, etc.) (requires subscription)
  */
-router.post("/:doctorId/unavailability", authenticateJWT, availabilityController.setUnavailability.bind(availabilityController));
+router.post("/:doctorId/unavailability", authenticateJWT, requireSubscription, availabilityController.setUnavailability.bind(availabilityController));
 
 /**
  * @swagger
@@ -682,9 +685,9 @@ router.get("/:doctorId/unavailability", availabilityController.getUnavailability
  *     tags: [Doctor]
  *     security:
  *       - bearerAuth: []
- *     description: Update a specific unavailability record
+ *     description: Update a specific unavailability record (requires subscription)
  */
-router.put("/:doctorId/unavailability/:unavailabilityId", authenticateJWT, availabilityController.updateUnavailability.bind(availabilityController));
+router.put("/:doctorId/unavailability/:unavailabilityId", authenticateJWT, requireSubscription, availabilityController.updateUnavailability.bind(availabilityController));
 
 /**
  * @swagger
@@ -694,8 +697,8 @@ router.put("/:doctorId/unavailability/:unavailabilityId", authenticateJWT, avail
  *     tags: [Doctor]
  *     security:
  *       - bearerAuth: []
- *     description: Delete a specific unavailability record
+ *     description: Delete a specific unavailability record (requires subscription)
  */
-router.delete("/:doctorId/unavailability/:unavailabilityId", authenticateJWT, availabilityController.deleteUnavailability.bind(availabilityController));
+router.delete("/:doctorId/unavailability/:unavailabilityId", authenticateJWT, requireSubscription, availabilityController.deleteUnavailability.bind(availabilityController));
 
 module.exports = router;

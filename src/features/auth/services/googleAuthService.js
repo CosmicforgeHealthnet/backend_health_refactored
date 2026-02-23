@@ -123,32 +123,29 @@ class GoogleAuthService {
   }
 
   /**
-   * Handle mobile login by verifying ID token
+   * Verify Google ID Token from mobile device and handle login/signup
    * @param {string} idToken
    * @param {string} deviceFingerprint
    * @param {string} userAgent
-   * @param {string} role - desired user role for new signup
+   * @param {string} role
    */
-  async handleMobileLogin(idToken, deviceFingerprint, userAgent, role) {
-    // Verify ID token from Android/iOS
+  async verifyMobileIdToken(idToken, deviceFingerprint, userAgent, role) {
+    // Verify ID token
     const ticket = await client.verifyIdToken({
-      idToken: idToken,
-      audience: [
-        config.google.clientId,
-        config.google.androidClientId,
-        config.google.iosClientId
-      ].filter(Boolean)
+      idToken,
+      audience: config.google.clientId
     });
-
     const payload = ticket.getPayload();
     const { sub, email, email_verified, name, picture } = payload;
 
-    // Reuse the user lookup and creation logic
+    // Lookup existing Google-linked user
     let user = await userRepository.findByProvider('google', sub);
 
     if (!user) {
+      // Lookup by email to link accounts
       user = await userRepository.findByEmail(email);
       if (user) {
+        // Link Google to existing local account
         user.provider = 'google';
         user.providerId = sub;
         user.profileImageUrl = picture;
@@ -156,6 +153,7 @@ class GoogleAuthService {
         await userRepository.save(user);
         await referralService.createUserReferralCode(user.id);
       } else {
+        // New user flow
         const newRole = ['patient', 'doctor', 'pharmacy', 'lab'].includes(role) ? role : 'patient';
         user = userRepository.create({
           email,
@@ -171,6 +169,7 @@ class GoogleAuthService {
       }
     }
 
+    // Build JWT payload
     const jwtPayload = {
       sub: user.id,
       email: user.email,
@@ -180,14 +179,17 @@ class GoogleAuthService {
       provider: user.provider,
       providerId: user.providerId,
       profileImageUrl: user.profileImageUrl,
+      mfaEnabled: user.mfaEnabled,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     };
 
+    // Issue access token
     const accessToken = jwt.sign(jwtPayload, config.jwt.secret, {
       expiresIn: config.jwt.accessExpires
     });
 
+    // Issue rotating refresh token
     const refreshToken = await refreshTokenService.issueRefreshToken(
       user,
       deviceFingerprint,

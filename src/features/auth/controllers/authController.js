@@ -4,7 +4,7 @@ const authService = require("../services/authService");
 const referralService = require("../services/referralService"); // Internal to auth feature now
 const emailVerRepo = require("../repositories/emailVerificationRepository");
 const userRepo = require("../repositories/userRepository");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 // Feature-internal services
 const passwordResetService = require("../services/passwordResetService");
@@ -153,13 +153,7 @@ exports.login = async (req, res, next) => {
             });
         }
 
-        // 4) Check password
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) {
-            return res
-                .status(401)
-                .json({ error: "The password you entered is incorrect." });
-        }
+        // 4) Auth (Service handles password comparison)
 
         // 5) MFA CHECK - NEW LOGIC
         if (user.mfaEnabled) {
@@ -196,20 +190,38 @@ exports.login = async (req, res, next) => {
     }
 };
 
+// logout
+exports.logout = async (req, res, next) => {
+    try {
+        const { refreshToken, deviceFingerprint } = req.body;
+        if (refreshToken && deviceFingerprint) {
+            await refreshTokenService.revokeToken(refreshToken, deviceFingerprint);
+        }
+        res.json({ message: "Logged out successfully" });
+    } catch (err) {
+        next(err);
+    }
+};
+
 // Redirect to Google consent screen
 exports.googleAuth = (req, res) => {
-    const { role, deviceFingerprint } = req.query;
+    const { role, deviceFingerprint, platform } = req.query;
     if (!role || !deviceFingerprint) {
         return res
             .status(400)
             .json({ error: "Both `role` and `deviceFingerprint` are required" });
     }
 
-    // Encode role + fingerprint into state
-    const stateObj = { role, deviceFingerprint };
+    // Encode role + fingerprint (+ platform for redirect) into state
+    const stateObj = { role, deviceFingerprint, platform };
     const state = Buffer.from(JSON.stringify(stateObj)).toString("base64");
 
     const url = googleAuthService.getAuthUrl(state);
+
+    if (platform === 'mobile') {
+        return res.redirect(url);
+    }
+
     res.json({ url });
 };
 
@@ -259,32 +271,28 @@ exports.googleCallback = async (req, res, next) => {
                 role
             );
 
+        if (stateObj.platform === 'mobile') {
+            // Redirect to mobile app deep link
+            const encodedUser = encodeURIComponent(JSON.stringify(jwtPayload));
+            const redirectUrl = `cosmicforge://auth-callback?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodedUser}`;
+            return res.redirect(redirectUrl);
+        }
+
         return res.json({ jwtPayload, accessToken, refreshToken });
     } catch (err) {
         next(err);
     }
 };
 
-// Google Mobile Login/Signup
+// Google Mobile Login (ID Token verification)
 exports.googleMobileLogin = async (req, res, next) => {
     try {
-        const { idToken, role, deviceFingerprint } = req.body;
-        const userAgent = req.headers["user-agent"] || "";
-
-        if (!idToken || !role || !deviceFingerprint) {
-            return res.status(400).json({
-                error: "idToken, role, and deviceFingerprint are required"
-            });
+        const { idToken, deviceFingerprint, role } = req.body;
+        if (!idToken || !deviceFingerprint) {
+            return res.status(400).json({ error: "idToken and deviceFingerprint are required" });
         }
 
-        // Validate role
-        if (!['patient', 'doctor'].includes(role)) {
-            return res.status(400).json({
-                error: "Invalid role. Only 'patient' or 'doctor' are allowed for mobile login."
-            });
-        }
-
-        // Country validation for Patients (reusing existing logic)
+        // ADD THIS: Country validation for patients
         const countryValidation = validatePatientCountry(req, role);
         if (!countryValidation.allowed) {
             return res.status(403).json({
@@ -295,19 +303,16 @@ exports.googleMobileLogin = async (req, res, next) => {
             });
         }
 
-        const result = await googleAuthService.handleMobileLogin(
+        const userAgent = req.headers["user-agent"] || "";
+        const result = await googleAuthService.verifyMobileIdToken(
             idToken,
             deviceFingerprint,
             userAgent,
-            role
+            role || 'patient'
         );
 
         return res.json(result);
     } catch (err) {
-        // Handle Google verification errors explicitly
-        if (err.message && err.message.includes('Wrong number of segments')) {
-            return res.status(400).json({ error: "Invalid ID Token" });
-        }
         next(err);
     }
 };

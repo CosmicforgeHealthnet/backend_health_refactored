@@ -1,6 +1,11 @@
-const bcrypt = require("bcrypt");
-const verificationService = require('../../auth/services/verificationService');
-const referralService = require('../../auth/services/referralService');
+// src/services/pharmacy/pharmacyRegistrationService.js
+const pharmacyProfileRepo = require("../repositories/pharmacyProfileRepository");
+const pharmacyDocumentRepo = require("../repositories/pharmacyDocumentRepository");
+const pharmacyVerificationRepo = require("../repositories/pharmacyVerificationRepository");
+const userRepo = require("../../auth/repositories/userRepository");
+const bcrypt = require('bcryptjs');
+const verificationService = require('../../auth/services/verificationService'); // Assuming this is still in global services or moved
+const referralService = require('../../auth/services/referralService'); // Pending refactor to auth
 
 class PharmacyRegistrationService {
   get profileRepo() { return require("../repositories/pharmacyProfileRepository"); }

@@ -1,6 +1,6 @@
 // src/services/passwordResetService.js
 const { v4: uuidv4 } = require('uuid');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const userRepository = require('../repositories/userRepository');
 const passwordResetRepository = require('../repositories/passwordResetRepository');
 const { sendPasswordResetEmail } = require('../../../shared/services/email/helper/index');
@@ -24,7 +24,9 @@ class PasswordResetService {
     const record = passwordResetRepository.create({ user, token, expiresAt });
     await passwordResetRepository.save(record);
 
-    await sendPasswordResetEmail(user, token, RESET_EXPIRES_MINUTES);
+    // Send email asynchronously to prevent blocking the request
+    sendPasswordResetEmail(user, token, RESET_EXPIRES_MINUTES)
+      .catch(err => console.error(`❌ Background email sending failed for ${email}:`, err.message));
   }
 
   /**
@@ -68,9 +70,10 @@ class PasswordResetService {
       await passwordResetRepository.save(record);
     }
 
-    // Send email with remaining TTL
+    // Send email asynchronously
     const minutesLeft = Math.ceil((record.expiresAt - now) / 60000);
-    await sendPasswordResetEmail(user, record.token, minutesLeft);
+    sendPasswordResetEmail(user, record.token, minutesLeft)
+      .catch(err => console.error(`❌ Background email resend failed for ${email}:`, err.message));
   }
 
 }

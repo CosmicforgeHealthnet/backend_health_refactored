@@ -22,6 +22,9 @@ const {
   addInternalNote,
 } = require("../controllers/prescriptionController");
 
+// Subscription middlewares
+const requireFeature = require("../../subscriptions/middlewares/requireFeature");
+
 // Apply authentication to all routes
 router.use(authenticateJWT);
 
@@ -29,9 +32,9 @@ router.use(authenticateJWT);
 router.post("/doctor/prescriptions", authorizeRoles('doctor'), createPrescription);
 router.get("/doctor/prescriptions", authorizeRoles('doctor'), getDoctorPrescriptions);
 
-// Patient-specific routes
-router.post("/patient/prescriptions/:prescriptionId/upload", authorizeRoles('patient'), uploadPrescription);
-router.post("/patient/prescriptions/:prescriptionId/assign-pharmacy", authorizeRoles('patient'), assignPharmacy);
+// Patient-specific routes - require pharmacy feature
+router.post("/patient/prescriptions/:prescriptionId/upload", authorizeRoles('patient'), requireFeature("pharmacy"), uploadPrescription);
+router.post("/patient/prescriptions/:prescriptionId/assign-pharmacy", authorizeRoles('patient'), requireFeature("pharmacy"), assignPharmacy);
 router.get("/patient/prescriptions", authorizeRoles('patient'), getPatientPrescriptions);
 
 // Pharmacy-specific routes

@@ -346,17 +346,21 @@ class EmailService {
 
       return result;
     } catch (error) {
-      // console.error("❌ Failed to send email:", error);
-      // console.error("🔍 Error details:", {
-      //   templateName,
-      //   to,
-      //   subject,
-      //   layout,
-      //   availablePartials: Object.keys(Handlebars.partials),
-      //   errorMessage: error.message,
-      //   errorStack: error.stack,
-      // });
-      // throw error;
+      console.error("❌ Failed to send email:", error.message);
+      console.error("🔍 Error details:", {
+        templateName,
+        to,
+        subject,
+        errorMessage: error.message,
+        smtpConfig: {
+          host: process.env.CPANEL_EMAIL_HOST,
+          port: process.env.CPANEL_EMAIL_PORT,
+          from: this.from,
+        }
+      });
+      // Do not re-throw if we want non-blocking behavior elsewhere, 
+      // but let's keep it re-throwing for now so caller knows if it failed
+      throw error;
     }
   }
 

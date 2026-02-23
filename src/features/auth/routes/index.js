@@ -69,6 +69,14 @@ const mfaRoutes = require("./mfa");
  *                 description: Medical specialty for doctors
  */
 router.post("/signup", authController.signup);
+router.get("/signup", (req, res) => {
+    res.status(405).json({
+        error: "Method Not Allowed",
+        message: "Signup must be a POST request. The server received a GET request. This usually happens due to a redirect (e.g., http to https) or a frontend bug.",
+        receivedMethod: req.method,
+        receivedUrl: req.originalUrl
+    });
+});
 
 /**
  * @swagger
@@ -82,6 +90,30 @@ router.post("/signup", authController.signup);
  *       **Legacy route**: `POST /auth/login` (deprecated)
  */
 router.post("/login", authController.login);
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout and revoke refresh token
+ *     tags: [Authentication]
+ *     description: |
+ *       Revokes the provided refresh token for the specific device.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *               - deviceFingerprint
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *               deviceFingerprint:
+ *                 type: string
+ */
+router.post("/logout", authController.logout);
 
 /**
  * @swagger
@@ -275,6 +307,16 @@ router.get("/google/callback", authController.googleCallback);
  *         description: Invalid input or token
  *       403:
  *         description: Geographic restriction (for patients)
+ */
+router.post("/google/mobile-login", authController.googleMobileLogin);
+
+/**
+ * @swagger
+ * /api/auth/google/mobile-login:
+ *   post:
+ *     summary: Google login for mobile
+ *     tags: [Authentication]
+ *     description: Authenticates user via Google ID Token from mobile device.
  */
 router.post("/google/mobile-login", authController.googleMobileLogin);
 
