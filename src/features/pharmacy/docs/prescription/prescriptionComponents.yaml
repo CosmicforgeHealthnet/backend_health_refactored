@@ -25,6 +25,14 @@ components:
           type: string
           example: "Take medication with food"
           description: Additional notes from the doctor
+        diagnosis:
+          type: string
+          example: "Acute Respiratory Infection"
+          description: Diagnosis from the doctor
+        doctorSignature:
+          type: string
+          example: "data:image/png;base64,..."
+          description: Base64 or URL of the doctor's signature
 
     Medication:
       type: object
@@ -34,6 +42,7 @@ components:
         - frequency
         - duration
         - quantity
+        - route
       properties:
         name:
           type: string
@@ -55,6 +64,10 @@ components:
           type: integer
           example: 14
           description: Total quantity of medication units
+        route:
+          type: string
+          example: "Oral"
+          description: Route of administration (e.g., Oral, IV, Topical)
 
     AssignPharmacyRequest:
       type: object
@@ -161,6 +174,59 @@ components:
           example: "2025-08-30T10:00:00Z"
           description: Expected delivery or pickup date (optional)
 
+    InternalNoteRequest:
+      type: object
+      required:
+        - note
+        - pharmacistId
+      properties:
+        note:
+          type: string
+          example: "Patient wants to pickup at 5 PM"
+        pharmacistId:
+          type: string
+          format: uuid
+
+    InternalNote:
+      type: object
+      properties:
+        note:
+          type: string
+        pharmacistId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+
+    DashboardStatsResponse:
+      type: object
+      properties:
+        pendingRequests:
+          type: integer
+        activeOrders:
+          type: integer
+        completedToday:
+          type: integer
+
+    ActivityFeedItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        reference:
+          type: string
+        patientName:
+          type: string
+        action:
+          type: string
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
     CancelPrescriptionRequest:
       type: object
       required:
@@ -217,6 +283,14 @@ components:
           type: string
           example: "Take medication with food"
           description: Additional notes from the doctor
+        diagnosis:
+          type: string
+          example: "Acute Respiratory Infection"
+          description: Diagnosis from the doctor
+        doctorSignature:
+          type: string
+          example: "https://example.com/signatures/doc123.png"
+          description: URL or Base64 of the doctor's signature
         status:
           type: string
           enum: ['PENDING', 'PATIENT_UPLOADED', 'PHARMACY_ASSIGNED', 'PHARMACY_PROCESSING', 'READY_FOR_DELIVERY', 'READY_FOR_PICKUP', 'COMPLETED', 'CANCELLED']
@@ -282,6 +356,29 @@ components:
           format: date-time
           example: "2025-08-26T12:30:00Z"
           description: Last update date of the prescription
+        availabilityStatus:
+          type: string
+          enum: ['pending', 'confirmed', 'unavailable', 'alternatives_proposed']
+          example: "pending"
+        internalNotes:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalNote'
+        patientComplaint:
+          type: string
+          example: "Persistent cough and mild fever for 4 days."
+        orderedTests:
+          type: array
+          items:
+            type: string
+          example: ["Chest X-ray", "Complete Blood Count"]
+        appointmentRef:
+          type: string
+          example: "A1B2C3D4"
+        appointmentDate:
+          type: string
+          format: date
+          example: "2025-08-26"
 
     FulfillmentHistory:
       type: object

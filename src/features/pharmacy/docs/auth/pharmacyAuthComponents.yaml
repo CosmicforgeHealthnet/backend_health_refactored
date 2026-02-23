@@ -133,3 +133,109 @@ components:
               type: string
             isActive:
               type: boolean
+            operatingHours:
+              type: object
+            serviceRadius:
+              type: number
+            defaultCurrency:
+              type: string
+            notificationPreferences:
+              type: object
+            pricing:
+              type: array
+              items:
+                $ref: '#/components/schemas/PharmacyPricing'
+
+    UpdatePharmacyProfile:
+      type: object
+      properties:
+        fullName:
+          type: string
+        pharmacyName:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        primaryContactPerson:
+          type: string
+        operatingHours:
+          type: object
+        description:
+          type: string
+        website:
+          type: string
+        serviceRadius:
+          type: number
+        defaultCurrency:
+          type: string
+        notificationPreferences:
+          type: object
+
+    PharmacyPricing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        feeType:
+          type: string
+          enum: ["delivery", "consultation", "handling", "processing"]
+        price:
+          type: number
+        currency:
+          type: string
+
+    StaffMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    StaffMemberRequest:
+      type: object
+      required:
+        - fullName
+        - email
+        - password
+        - role
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        role:
+          type: string
+          enum: ["pharmacist", "pharmacy_manager", "pharmacy_admin", "pharmacy_assistant", "dispatcher"]
+        isActive:
+          type: boolean
+
+    PharmacyPricingRequest:
+      type: object
+      required:
+        - feeType
+        - price
+        - currency
+      properties:
+        feeType:
+          type: string
+          enum: ["delivery", "consultation", "handling", "processing"]
+        price:
+          type: number
+        currency:
+          type: string

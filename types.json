@@ -1,0 +1,37 @@
+{
+  "standard": [
+    {
+      "typname": "text",
+      "oid": 25,
+      "typlen": -1,
+      "typbyval": false,
+      "typalign": "i",
+      "typstorage": "x"
+    },
+    {
+      "typname": "varchar",
+      "oid": 1043,
+      "typlen": -1,
+      "typbyval": false,
+      "typalign": "i",
+      "typstorage": "x"
+    },
+    {
+      "typname": "date",
+      "oid": 1082,
+      "typlen": 4,
+      "typbyval": true,
+      "typalign": "i",
+      "typstorage": "p"
+    },
+    {
+      "typname": "uuid",
+      "oid": 2950,
+      "typlen": 16,
+      "typbyval": false,
+      "typalign": "c",
+      "typstorage": "p"
+    }
+  ],
+  "enums": []
+}

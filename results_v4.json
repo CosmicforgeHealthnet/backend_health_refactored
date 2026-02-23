@@ -1,0 +1,374 @@
+{
+  "meta": {
+    "database": "cosmicforge",
+    "host": "72.61.20.94",
+    "timestamp": "2026-02-21T08:53:51.115Z"
+  },
+  "oid_18450": {
+    "class": {
+      "relname": "patient_profiles",
+      "relkind": "r",
+      "relnatts": 31,
+      "oid": 18450
+    },
+    "attributes": [
+      {
+        "attname": "tableoid",
+        "attnum": -6,
+        "attisdropped": false
+      },
+      {
+        "attname": "cmax",
+        "attnum": -5,
+        "attisdropped": false
+      },
+      {
+        "attname": "xmax",
+        "attnum": -4,
+        "attisdropped": false
+      },
+      {
+        "attname": "cmin",
+        "attnum": -3,
+        "attisdropped": false
+      },
+      {
+        "attname": "xmin",
+        "attnum": -2,
+        "attisdropped": false
+      },
+      {
+        "attname": "ctid",
+        "attnum": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "id",
+        "attnum": 1,
+        "attisdropped": false
+      },
+      {
+        "attname": "genotype",
+        "attnum": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodGroup",
+        "attnum": 5,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactFullName",
+        "attnum": 10,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactMobile",
+        "attnum": 11,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactRelationship",
+        "attnum": 12,
+        "attisdropped": false
+      },
+      {
+        "attname": "height",
+        "attnum": 13,
+        "attisdropped": false
+      },
+      {
+        "attname": "weight",
+        "attnum": 14,
+        "attisdropped": false
+      },
+      {
+        "attname": "bmi",
+        "attnum": 15,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodPressure",
+        "attnum": 16,
+        "attisdropped": false
+      },
+      {
+        "attname": "heartRate",
+        "attnum": 17,
+        "attisdropped": false
+      },
+      {
+        "attname": "respiratoryRate",
+        "attnum": 18,
+        "attisdropped": false
+      },
+      {
+        "attname": "temperature",
+        "attnum": 19,
+        "attisdropped": false
+      },
+      {
+        "attname": "spO2",
+        "attnum": 20,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodGlucose",
+        "attnum": 21,
+        "attisdropped": false
+      },
+      {
+        "attname": "smokes",
+        "attnum": 22,
+        "attisdropped": false
+      },
+      {
+        "attname": "drinksAlcohol",
+        "attnum": 23,
+        "attisdropped": false
+      },
+      {
+        "attname": "physicalActivityLevel",
+        "attnum": 24,
+        "attisdropped": false
+      },
+      {
+        "attname": "dietType",
+        "attnum": 25,
+        "attisdropped": false
+      },
+      {
+        "attname": "sleepDuration",
+        "attnum": 26,
+        "attisdropped": false
+      },
+      {
+        "attname": "profileType",
+        "attnum": 27,
+        "attisdropped": false
+      },
+      {
+        "attname": "createdAt",
+        "attnum": 28,
+        "attisdropped": false
+      },
+      {
+        "attname": "updatedAt",
+        "attnum": 29,
+        "attisdropped": false
+      },
+      {
+        "attname": "userId",
+        "attnum": 30,
+        "attisdropped": false
+      },
+      {
+        "attname": "profilePhoto",
+        "attnum": 31,
+        "attisdropped": false
+      }
+    ]
+  },
+  "first_migrations": [
+    {
+      "name": "AddMessageReactions20250611094500",
+      "timestamp": "250611094500"
+    },
+    {
+      "name": "PreloadProfileOptions1698765432101",
+      "timestamp": "1698765432101"
+    },
+    {
+      "name": "AddChatRoomLastActivity1728705600000",
+      "timestamp": "1728705600000"
+    },
+    {
+      "name": "CreateChatMessages1728705660000",
+      "timestamp": "1728705660000"
+    },
+    {
+      "name": "CreateChatRoomsCamelCase1728705660000",
+      "timestamp": "1728705660000"
+    },
+    {
+      "name": "CreateChatFileAttachments1728705720000",
+      "timestamp": "1728705720000"
+    },
+    {
+      "name": "UpdateUsersForChat1728705780000",
+      "timestamp": "1728705780000"
+    },
+    {
+      "name": "CreateAppointmentChats1728705840000",
+      "timestamp": "1728705840000"
+    },
+    {
+      "name": "CreateChatParticipants1728705900000",
+      "timestamp": "1728705900000"
+    },
+    {
+      "name": "CreateNotificationTable1748950088754",
+      "timestamp": "1748950088754"
+    },
+    {
+      "name": "UpdateMedicalLicenseNumber1748950088755",
+      "timestamp": "1748950088755"
+    },
+    {
+      "name": "UpdateCountryOfLicense1748950088756",
+      "timestamp": "1748950088756"
+    },
+    {
+      "name": "FixProfessionalLicensesNullValues1748950088757",
+      "timestamp": "1748950088757"
+    },
+    {
+      "name": "AddDepartmentSpecialty1748950088759",
+      "timestamp": "1748950088759"
+    },
+    {
+      "name": "AddUserTier1749256471791",
+      "timestamp": "1749256471791"
+    },
+    {
+      "name": "AddUserTier1749257185110",
+      "timestamp": "1749257185110"
+    },
+    {
+      "name": "UpdateSubscriptionTierEnum1749257185111",
+      "timestamp": "1749257185111"
+    },
+    {
+      "name": "CreateSubscriptionsTable1749259388341",
+      "timestamp": "1749259388341"
+    },
+    {
+      "name": "CreateProfileOptionsTable1749286260000",
+      "timestamp": "1749286260000"
+    },
+    {
+      "name": "CreateVerificationTables1749389539743",
+      "timestamp": "1749389539743"
+    },
+    {
+      "name": "SeedCountryVerificationConfigs1749401711920",
+      "timestamp": "1749401711920"
+    },
+    {
+      "name": "Files1749424255971",
+      "timestamp": "1749424255971"
+    },
+    {
+      "name": "GeneralFileSystem1749846321597",
+      "timestamp": "1749846321597"
+    },
+    {
+      "name": "PaymentANDwalletSystem1750519428619",
+      "timestamp": "1750519428619"
+    },
+    {
+      "name": "EnhancedTransactionFields1750519500000",
+      "timestamp": "1750519500000"
+    },
+    {
+      "name": "CleanupFailedMigration1750520000001",
+      "timestamp": "1750520000001"
+    },
+    {
+      "name": "SafeCompleteSubscriptionMigration1750520000010",
+      "timestamp": "1750520000010"
+    },
+    {
+      "name": "AddUserTier1750520200000",
+      "timestamp": "1750520200000"
+    },
+    {
+      "name": "AddUserIsOnline1750520300000",
+      "timestamp": "1750520300000"
+    },
+    {
+      "name": "MakeDoctorIdNullableInTransactions1750520300000",
+      "timestamp": "1750520300000"
+    },
+    {
+      "name": "AddCascadeToNotificationUserRelation1750763526320",
+      "timestamp": "1750763526320"
+    },
+    {
+      "name": "AddCascadeToSubscriptionUserRelation1750764000000",
+      "timestamp": "1750764000000"
+    },
+    {
+      "name": "AddAutoBillingToSubscriptions1750764000001",
+      "timestamp": "1750764000001"
+    },
+    {
+      "name": "AddAutoBillingToUserPaymentMethods1750764000002",
+      "timestamp": "1750764000002"
+    },
+    {
+      "name": "AddAutoBillingToTransactions1750764000003",
+      "timestamp": "1750764000003"
+    },
+    {
+      "name": "Search1751639438989",
+      "timestamp": "1751639438989"
+    },
+    {
+      "name": "Faqs1751653518201",
+      "timestamp": "1751653518201"
+    },
+    {
+      "name": "FileUpgrade1751967102373",
+      "timestamp": "1751967102373"
+    },
+    {
+      "name": "Walletsysytem1753443836162",
+      "timestamp": "1753443836162"
+    },
+    {
+      "name": "WalletsysytemAddOn1753464882250",
+      "timestamp": "1753464882250"
+    },
+    {
+      "name": "Walletsysfunctionality1753817195834",
+      "timestamp": "1753817195834"
+    },
+    {
+      "name": "CreateChatbotTables1755029218188",
+      "timestamp": "1755029218188"
+    },
+    {
+      "name": "CreatePharmacySystem1755613203864",
+      "timestamp": "1755613203864"
+    },
+    {
+      "name": "CreateConditionsAndEmergencySteps1756721828770",
+      "timestamp": "1756721828770"
+    },
+    {
+      "name": "CreateEmergencyModule1757301090000",
+      "timestamp": "1757301090000"
+    },
+    {
+      "name": "FhirComplieneceSchema1757631123427",
+      "timestamp": "1757631123427"
+    },
+    {
+      "name": "PatientLodSIght1757675572478",
+      "timestamp": "1757675572478"
+    },
+    {
+      "name": "ResourceAccessLogStuff1757676148716",
+      "timestamp": "1757676148716"
+    },
+    {
+      "name": "AuditOnHistory1757678527028",
+      "timestamp": "1757678527028"
+    },
+    {
+      "name": "UpdateUserTierEnum1758000000000",
+      "timestamp": "1758000000000"
+    }
+  ]
+}

@@ -154,6 +154,11 @@ module.exports = new EntitySchema({
       nullable: false,
       comment: 'Total number of ratings submitted',
     },
+    pharmacyId: {
+      type: "uuid",
+      nullable: true,
+      comment: "Link to pharmacy profile for staff members",
+    },
   },
   relations: {
     doctorProfile: {
@@ -268,6 +273,12 @@ module.exports = new EntitySchema({
       target: "PharmacyProfile",
       inverseSide: "user",
       cascade: true,
+    },
+    staffPharmacy: {
+      type: "many-to-one",
+      target: "PharmacyProfile",
+      joinColumn: { name: "pharmacyId" },
+      onDelete: "CASCADE",
     },
     managedPharmacyBranches: {
       type: "one-to-many",

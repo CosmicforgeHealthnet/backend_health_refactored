@@ -1,0 +1,883 @@
+{
+  "meta": {
+    "database": "cosmicforge",
+    "host": "72.61.20.94",
+    "timestamp": "2026-02-21T08:50:38.906Z"
+  },
+  "oid_18450": {
+    "class": {
+      "relname": "patient_profiles",
+      "relkind": "r",
+      "relnamespace": 2200,
+      "oid": 18450
+    },
+    "attributes": [
+      {
+        "attname": "tableoid",
+        "attnum": -6,
+        "atttypid": 26,
+        "attlen": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "cmax",
+        "attnum": -5,
+        "atttypid": 29,
+        "attlen": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "xmax",
+        "attnum": -4,
+        "atttypid": 28,
+        "attlen": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "cmin",
+        "attnum": -3,
+        "atttypid": 29,
+        "attlen": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "xmin",
+        "attnum": -2,
+        "atttypid": 28,
+        "attlen": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "ctid",
+        "attnum": -1,
+        "atttypid": 27,
+        "attlen": 6,
+        "attisdropped": false
+      },
+      {
+        "attname": "id",
+        "attnum": 1,
+        "atttypid": 2950,
+        "attlen": 16,
+        "attisdropped": false
+      },
+      {
+        "attname": "genotype",
+        "attnum": 4,
+        "atttypid": 1043,
+        "attlen": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodGroup",
+        "attnum": 5,
+        "atttypid": 1043,
+        "attlen": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactFullName",
+        "attnum": 10,
+        "atttypid": 1043,
+        "attlen": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactMobile",
+        "attnum": 11,
+        "atttypid": 1043,
+        "attlen": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "emergencyContactRelationship",
+        "attnum": 12,
+        "atttypid": 1043,
+        "attlen": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "height",
+        "attnum": 13,
+        "atttypid": 701,
+        "attlen": 8,
+        "attisdropped": false
+      },
+      {
+        "attname": "weight",
+        "attnum": 14,
+        "atttypid": 701,
+        "attlen": 8,
+        "attisdropped": false
+      },
+      {
+        "attname": "bmi",
+        "attnum": 15,
+        "atttypid": 701,
+        "attlen": 8,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodPressure",
+        "attnum": 16,
+        "atttypid": 1043,
+        "attlen": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "heartRate",
+        "attnum": 17,
+        "atttypid": 23,
+        "attlen": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "respiratoryRate",
+        "attnum": 18,
+        "atttypid": 23,
+        "attlen": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "temperature",
+        "attnum": 19,
+        "atttypid": 701,
+        "attlen": 8,
+        "attisdropped": false
+      },
+      {
+        "attname": "spO2",
+        "attnum": 20,
+        "atttypid": 23,
+        "attlen": 4,
+        "attisdropped": false
+      },
+      {
+        "attname": "bloodGlucose",
+        "attnum": 21,
+        "atttypid": 701,
+        "attlen": 8,
+        "attisdropped": false
+      },
+      {
+        "attname": "smokes",
+        "attnum": 22,
+        "atttypid": 16,
+        "attlen": 1,
+        "attisdropped": false
+      },
+      {
+        "attname": "drinksAlcohol",
+        "attnum": 23,
+        "atttypid": 16,
+        "attlen": 1,
+        "attisdropped": false
+      },
+      {
+        "attname": "physicalActivityLevel",
+        "attnum": 24,
+        "atttypid": 1043,
+        "attlen": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "dietType",
+        "attnum": 25,
+        "atttypid": 1043,
+        "attlen": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "sleepDuration",
+        "attnum": 26,
+        "atttypid": 701,
+        "attlen": 8,
+        "attisdropped": false
+      },
+      {
+        "attname": "profileType",
+        "attnum": 27,
+        "atttypid": 1043,
+        "attlen": -1,
+        "attisdropped": false
+      },
+      {
+        "attname": "createdAt",
+        "attnum": 28,
+        "atttypid": 1114,
+        "attlen": 8,
+        "attisdropped": false
+      },
+      {
+        "attname": "updatedAt",
+        "attnum": 29,
+        "atttypid": 1114,
+        "attlen": 8,
+        "attisdropped": false
+      },
+      {
+        "attname": "userId",
+        "attnum": 30,
+        "atttypid": 2950,
+        "attlen": 16,
+        "attisdropped": false
+      },
+      {
+        "attname": "profilePhoto",
+        "attnum": 31,
+        "atttypid": 1043,
+        "attlen": -1,
+        "attisdropped": false
+      }
+    ]
+  },
+  "nearby": [
+    {
+      "relname": "pg_toast_18246",
+      "oid": 18255,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18246_index",
+      "oid": 18256,
+      "relkind": "i"
+    },
+    {
+      "relname": "faq_votes",
+      "oid": 18257,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18257",
+      "oid": 18262,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18257_index",
+      "oid": 18263,
+      "relkind": "i"
+    },
+    {
+      "relname": "faqs",
+      "oid": 18264,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18264",
+      "oid": 18277,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18264_index",
+      "oid": 18278,
+      "relkind": "i"
+    },
+    {
+      "relname": "fhir_search_logs",
+      "oid": 18279,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18279",
+      "oid": 18284,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18279_index",
+      "oid": 18285,
+      "relkind": "i"
+    },
+    {
+      "relname": "file_access_logs",
+      "oid": 18286,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18286",
+      "oid": 18291,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18286_index",
+      "oid": 18292,
+      "relkind": "i"
+    },
+    {
+      "relname": "files",
+      "oid": 18293,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18293",
+      "oid": 18298,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18293_index",
+      "oid": 18299,
+      "relkind": "i"
+    },
+    {
+      "relname": "folder_access_logs",
+      "oid": 18300,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18300",
+      "oid": 18305,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18300_index",
+      "oid": 18306,
+      "relkind": "i"
+    },
+    {
+      "relname": "health_insurances",
+      "oid": 18307,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18307",
+      "oid": 18312,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18307_index",
+      "oid": 18313,
+      "relkind": "i"
+    },
+    {
+      "relname": "hospitals",
+      "oid": 18314,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18314",
+      "oid": 18322,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18314_index",
+      "oid": 18323,
+      "relkind": "i"
+    },
+    {
+      "relname": "immunizations",
+      "oid": 18324,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18324",
+      "oid": 18329,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18324_index",
+      "oid": 18330,
+      "relkind": "i"
+    },
+    {
+      "relname": "insurance_support",
+      "oid": 18331,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18331",
+      "oid": 18337,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18331_index",
+      "oid": 18338,
+      "relkind": "i"
+    },
+    {
+      "relname": "insurance_support_id_seq",
+      "oid": 18339,
+      "relkind": "S"
+    },
+    {
+      "relname": "lab_facilities",
+      "oid": 18340,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18340",
+      "oid": 18351,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18340_index",
+      "oid": 18352,
+      "relkind": "i"
+    },
+    {
+      "relname": "lab_personnel",
+      "oid": 18353,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18353",
+      "oid": 18362,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18353_index",
+      "oid": 18363,
+      "relkind": "i"
+    },
+    {
+      "relname": "lab_pharm_waitlist",
+      "oid": 18364,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18364",
+      "oid": 18373,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18364_index",
+      "oid": 18374,
+      "relkind": "i"
+    },
+    {
+      "relname": "lab_waitlist",
+      "oid": 18375,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18375",
+      "oid": 18384,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18375_index",
+      "oid": 18385,
+      "relkind": "i"
+    },
+    {
+      "relname": "magic_link_tokens",
+      "oid": 18386,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18386",
+      "oid": 18391,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18386_index",
+      "oid": 18392,
+      "relkind": "i"
+    },
+    {
+      "relname": "medical_conditions",
+      "oid": 18393,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18393",
+      "oid": 18398,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18393_index",
+      "oid": 18399,
+      "relkind": "i"
+    },
+    {
+      "relname": "medications",
+      "oid": 18400,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18400",
+      "oid": 18405,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18400_index",
+      "oid": 18406,
+      "relkind": "i"
+    },
+    {
+      "relname": "migrations",
+      "oid": 18407,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18407",
+      "oid": 18410,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18407_index",
+      "oid": 18411,
+      "relkind": "i"
+    },
+    {
+      "relname": "migrations_id_seq",
+      "oid": 18412,
+      "relkind": "S"
+    },
+    {
+      "relname": "notification",
+      "oid": 18413,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18413",
+      "oid": 18420,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18413_index",
+      "oid": 18421,
+      "relkind": "i"
+    },
+    {
+      "relname": "password_reset_tokens",
+      "oid": 18422,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18422",
+      "oid": 18427,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18422_index",
+      "oid": 18428,
+      "relkind": "i"
+    },
+    {
+      "relname": "patient_access_logs",
+      "oid": 18429,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18429",
+      "oid": 18434,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18429_index",
+      "oid": 18435,
+      "relkind": "i"
+    },
+    {
+      "relname": "patient_consents",
+      "oid": 18436,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18436",
+      "oid": 18448,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18436_index",
+      "oid": 18449,
+      "relkind": "i"
+    },
+    {
+      "relname": "patient_profiles",
+      "oid": 18450,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18450",
+      "oid": 18459,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18450_index",
+      "oid": 18460,
+      "relkind": "i"
+    },
+    {
+      "relname": "pharmacy_branches",
+      "oid": 18461,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18461",
+      "oid": 18469,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18461_index",
+      "oid": 18470,
+      "relkind": "i"
+    },
+    {
+      "relname": "pharmacy_documents",
+      "oid": 18471,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18471",
+      "oid": 18479,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18471_index",
+      "oid": 18480,
+      "relkind": "i"
+    },
+    {
+      "relname": "pharmacy_profiles",
+      "oid": 18481,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18481",
+      "oid": 18490,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18481_index",
+      "oid": 18491,
+      "relkind": "i"
+    },
+    {
+      "relname": "pharmacy_verification_requests",
+      "oid": 18492,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18492",
+      "oid": 18501,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18492_index",
+      "oid": 18502,
+      "relkind": "i"
+    },
+    {
+      "relname": "prescriptions",
+      "oid": 18503,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18503",
+      "oid": 18512,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18503_index",
+      "oid": 18513,
+      "relkind": "i"
+    },
+    {
+      "relname": "professional_certificates",
+      "oid": 18514,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18514",
+      "oid": 18520,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18514_index",
+      "oid": 18521,
+      "relkind": "i"
+    },
+    {
+      "relname": "professional_licenses",
+      "oid": 18522,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18522",
+      "oid": 18528,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18522_index",
+      "oid": 18529,
+      "relkind": "i"
+    },
+    {
+      "relname": "profile_options",
+      "oid": 18530,
+      "relkind": "r"
+    },
+    {
+      "relname": "referral_draw_stats",
+      "oid": 18536,
+      "relkind": "r"
+    },
+    {
+      "relname": "referral_draws",
+      "oid": 18544,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18544",
+      "oid": 18553,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18544_index",
+      "oid": 18554,
+      "relkind": "i"
+    },
+    {
+      "relname": "refresh_tokens",
+      "oid": 18555,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18555",
+      "oid": 18560,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18555_index",
+      "oid": 18561,
+      "relkind": "i"
+    },
+    {
+      "relname": "report_support",
+      "oid": 18562,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18562",
+      "oid": 18568,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18562_index",
+      "oid": 18569,
+      "relkind": "i"
+    },
+    {
+      "relname": "report_support_id_seq",
+      "oid": 18570,
+      "relkind": "S"
+    },
+    {
+      "relname": "reports",
+      "oid": 18571,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18571",
+      "oid": 18577,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18571_index",
+      "oid": 18578,
+      "relkind": "i"
+    },
+    {
+      "relname": "reports_id_seq",
+      "oid": 18579,
+      "relkind": "S"
+    },
+    {
+      "relname": "resource_access_logs",
+      "oid": 18580,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18580",
+      "oid": 18585,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18580_index",
+      "oid": 18586,
+      "relkind": "i"
+    },
+    {
+      "relname": "search_logs",
+      "oid": 18587,
+      "relkind": "r"
+    },
+    {
+      "relname": "sos_events",
+      "oid": 18593,
+      "relkind": "r"
+    },
+    {
+      "relname": "subscriptions",
+      "oid": 18599,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18599",
+      "oid": 18618,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18599_index",
+      "oid": 18619,
+      "relkind": "i"
+    },
+    {
+      "relname": "support_disputes",
+      "oid": 18620,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18620",
+      "oid": 18627,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18620_index",
+      "oid": 18628,
+      "relkind": "i"
+    },
+    {
+      "relname": "support_insurance",
+      "oid": 18629,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18629",
+      "oid": 18636,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18629_index",
+      "oid": 18637,
+      "relkind": "i"
+    },
+    {
+      "relname": "support_report",
+      "oid": 18638,
+      "relkind": "r"
+    },
+    {
+      "relname": "pg_toast_18638",
+      "oid": 18645,
+      "relkind": "t"
+    },
+    {
+      "relname": "pg_toast_18638_index",
+      "oid": 18646,
+      "relkind": "i"
+    },
+    {
+      "relname": "surgeries",
+      "oid": 18647,
+      "relkind": "r"
+    }
+  ],
+  "appointments": [
+    {
+      "oid": 17913,
+      "relname": "appointments"
+    }
+  ],
+  "search_path": "\"$user\", public"
+}

@@ -141,6 +141,46 @@ class PrescriptionController {
   });
 
   /**
+   * Get pharmacy dashboard statistics
+   */
+  getDashboardStats = asyncHandler(async (req, res) => {
+    const pharmacyId = req.user.id;
+    const stats = await PrescriptionService.getDashboardStats(pharmacyId);
+    res.status(200).json({ success: true, data: stats });
+  });
+
+  /**
+   * Get pharmacy activity feed
+   */
+  getActivityFeed = asyncHandler(async (req, res) => {
+    const pharmacyId = req.user.id;
+    const { limit } = req.query;
+    const feed = await PrescriptionService.getActivityFeed(pharmacyId, parseInt(limit));
+    res.status(200).json({ success: true, data: feed });
+  });
+
+  /**
+   * Confirm medication availability
+   */
+  confirmAvailability = asyncHandler(async (req, res) => {
+    const { prescriptionId } = req.params;
+    const pharmacyId = req.user.id;
+    const prescription = await PrescriptionService.confirmAvailability(prescriptionId, pharmacyId);
+    res.status(200).json({ success: true, data: prescription });
+  });
+
+  /**
+   * Add internal pharmacy note
+   */
+  addInternalNote = asyncHandler(async (req, res) => {
+    const { prescriptionId } = req.params;
+    const noteData = req.body; // {note, pharmacistId}
+    const pharmacyId = req.user.id;
+    const prescription = await PrescriptionService.addInternalNote(prescriptionId, pharmacyId, noteData);
+    res.status(200).json({ success: true, data: prescription });
+  });
+
+  /**
    * Search prescriptions
    */
   searchPrescriptions = asyncHandler(async (req, res) => {

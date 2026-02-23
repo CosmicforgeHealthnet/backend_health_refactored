@@ -2,8 +2,8 @@
 const AppDataSource = require("../../../config/database");
 
 class PharmacyProfileRepository {
-  constructor() {
-    this.repo = AppDataSource.getRepository("PharmacyProfile");
+  get repo() {
+    return AppDataSource.getRepository("PharmacyProfile");
   }
 
   async create(data) {
@@ -22,10 +22,16 @@ class PharmacyProfileRepository {
   }
 
   async findByUserId(userId) {
-    return this.repo.findOne({
-      where: { userId },
-      relations: ["user", "documents", "branches"]
-    });
+    try {
+      return await this.repo.findOne({
+        where: { userId },
+        relations: ["user", "documents", "branches"]
+      });
+    } catch (e) {
+      console.error('💥 PROFILE_REPO_ERROR:', e);
+      if (e.stack) console.error('PROFILE_REPO_STACK:', e.stack);
+      throw e;
+    }
   }
 
   async findByUsername(username) {

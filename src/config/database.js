@@ -12,8 +12,7 @@ const AppDataSource = new DataSource({
   password: config.db.password,
   database: config.db.database,
   ssl: config.db.ssl ? { rejectUnauthorized: false } : false,
-  // synchronize: process.env.NODE_ENV === 'development',
-  synchronize: true,
+  synchronize: false,
   logging: false,
   entities,
   migrations: [

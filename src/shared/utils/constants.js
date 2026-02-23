@@ -8,6 +8,8 @@ const USER_ROLES = {
     PHARMACIST: "pharmacist",
     PHARMACY_MANAGER: "pharmacy_manager",
     PHARMACY_ADMIN: "pharmacy_admin",
+    PHARMACY_ASSISTANT: "pharmacy_assistant",
+    DISPATCHER: "dispatcher",
     LAB: "lab",
     ADMIN: "admin",
     SUPER_ADMIN: "super_admin",

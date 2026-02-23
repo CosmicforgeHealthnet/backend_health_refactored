@@ -1,0 +1,90 @@
+[
+  {
+    "table": "patient_profiles",
+    "status": "CORRUPT",
+    "details": "Catalog missing 6 attributes",
+    "oid": 18450,
+    "expected_atts": 31,
+    "actual_atts": 25
+  },
+  {
+    "table": "medical_conditions",
+    "status": "OK",
+    "details": "",
+    "oid": 18393,
+    "expected_atts": 6,
+    "actual_atts": 6
+  },
+  {
+    "table": "surgeries",
+    "status": "OK",
+    "details": "",
+    "oid": 18647,
+    "expected_atts": 6,
+    "actual_atts": 6
+  },
+  {
+    "table": "allergies",
+    "status": "OK",
+    "details": "",
+    "oid": 17894,
+    "expected_atts": 6,
+    "actual_atts": 6
+  },
+  {
+    "table": "family_histories",
+    "status": "OK",
+    "details": "",
+    "oid": 18232,
+    "expected_atts": 5,
+    "actual_atts": 5
+  },
+  {
+    "table": "medications",
+    "status": "OK",
+    "details": "",
+    "oid": 18400,
+    "expected_atts": 6,
+    "actual_atts": 6
+  },
+  {
+    "table": "immunizations",
+    "status": "OK",
+    "details": "",
+    "oid": 18324,
+    "expected_atts": 7,
+    "actual_atts": 7
+  },
+  {
+    "table": "health_insurances",
+    "status": "CORRUPT",
+    "details": "Catalog missing 3 attributes",
+    "oid": 18307,
+    "expected_atts": 7,
+    "actual_atts": 4
+  },
+  {
+    "table": "disabilities",
+    "status": "OK",
+    "details": "",
+    "oid": 18090,
+    "expected_atts": 8,
+    "actual_atts": 8
+  },
+  {
+    "table": "consents",
+    "status": "CORRUPT",
+    "details": "Catalog missing 2 attributes",
+    "oid": 18038,
+    "expected_atts": 16,
+    "actual_atts": 14
+  },
+  {
+    "table": "appointments",
+    "status": "OK",
+    "details": "",
+    "oid": 17913,
+    "expected_atts": 54,
+    "actual_atts": 54
+  }
+]

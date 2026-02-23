@@ -259,6 +259,56 @@ router.get("/google", authController.googleAuth);
  *       **Legacy route**: `GET /auth/google/callback` (deprecated)
  */
 router.get("/google/callback", authController.googleCallback);
+/**
+ * @swagger
+ * /api/auth/google/mobile-login:
+ *   post:
+ *     summary: Google Mobile Login/Signup
+ *     tags: [Authentication]
+ *     description: |
+ *       Authenticates a user via Google ID Token sent from a mobile app (Android/iOS).
+ *       If the user doesn't exist, a new account will be created with the specified role.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - idToken
+ *               - role
+ *               - deviceFingerprint
+ *             properties:
+ *               idToken:
+ *                 type: string
+ *                 description: Identity token received from Google Sign-In on the mobile device
+ *               role:
+ *                 type: string
+ *                 enum: [patient, doctor]
+ *                 description: The role to assign to the user if they are signing up
+ *               deviceFingerprint:
+ *                 type: string
+ *                 description: Unique identifier for the device
+ *     responses:
+ *       200:
+ *         description: Authentication successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 jwtPayload:
+ *                   type: object
+ *                 accessToken:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *       400:
+ *         description: Invalid input or token
+ *       403:
+ *         description: Geographic restriction (for patients)
+ */
+router.post("/google/mobile-login", authController.googleMobileLogin);
 
 /**
  * @swagger
