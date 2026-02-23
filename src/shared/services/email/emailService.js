@@ -299,22 +299,10 @@ class EmailService {
    */
   async send(templateName, to, subject, variables = {}, layout = "main") {
     try {
-      // console.log(`📧 Preparing to send email: ${templateName} to ${to}`);
-      // console.log(`📋 Variables:`, JSON.stringify(variables, null, 2));
-      // console.log(`🎨 Using layout: ${layout}`);
-
-      // List current partials before sending
+   
       const currentPartials = Object.keys(Handlebars.partials);
-      // console.log(`🧩 Available partials: [${currentPartials.join(", ")}]`);
-
-      // 1. Compile the template content
-      // console.log(`1️⃣ Compiling template: ${templateName}`);
       const template = this.loadTemplate(templateName);
       const templateContent = template(variables);
-      // console.log(`✅ Template compiled successfully`);
-
-      // 2. Compile the layout with template content injected
-      // console.log(`2️⃣ Compiling layout: ${layout}`);
       const layoutTemplate = this.loadLayout(layout);
 
       const layoutVariables = {
@@ -325,12 +313,8 @@ class EmailService {
         social: config.social
       };
 
-      // console.log(`📋 Layout variables:`, Object.keys(layoutVariables));
-
       const htmlContent = layoutTemplate(layoutVariables);
-      // console.log(`✅ Layout compiled successfully`);
-
-      // 3. Prepare mail options
+   
       const mailOptions = {
         from: this.from,
         to: to,
