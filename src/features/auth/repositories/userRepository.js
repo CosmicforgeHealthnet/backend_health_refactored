@@ -4,13 +4,24 @@ const { USER_ROLES } = require("../../../shared/utils/constants");
 const UserRating = require("../../doctor/entities/UserRatings");
 
 class UserRepository {
-  constructor() {
-    this.repo = AppDataSource.getRepository(User);
-    this.ratingRepo = AppDataSource.getRepository(UserRating);
+  get repo() {
+    return AppDataSource.getRepository(User);
   }
 
-  findByEmail(email) {
-    return this.repo.findOne({ where: { email } });
+  get ratingRepo() {
+    return AppDataSource.getRepository(UserRating);
+  }
+
+  async findByEmail(email) {
+    console.log('🔍 DEBUG - UserRepository.findByEmail called with:', email);
+    try {
+      const result = await this.repo.findOne({ where: { email } });
+      console.log('🔍 DEBUG - UserRepository.findByEmail success. Found:', result ? 'Yes' : 'No');
+      return result;
+    } catch (err) {
+      console.error('💥 DEBUG - UserRepository.findByEmail error:', err);
+      throw err;
+    }
   }
 
   create(data) {

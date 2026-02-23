@@ -16,6 +16,10 @@ const {
   getPatientPrescriptions,
   getPharmacyPrescriptions,
   searchPrescriptions,
+  getDashboardStats,
+  getActivityFeed,
+  confirmAvailability,
+  addInternalNote,
 } = require("../controllers/prescriptionController");
 
 // Subscription middlewares
@@ -39,6 +43,10 @@ router.post("/pharmacy/prescriptions/:prescriptionId/provide-costs", authorizeRo
 router.post("/pharmacy/prescriptions/:prescriptionId/mark-ready", authorizeRoles('pharmacy'), markReady);
 router.post("/pharmacy/prescriptions/:prescriptionId/complete", authorizeRoles('pharmacy'), completePrescription);
 router.get("/pharmacy/prescriptions", authorizeRoles('pharmacy'), getPharmacyPrescriptions);
+router.get("/pharmacy/dashboard/stats", authorizeRoles('pharmacy'), getDashboardStats);
+router.get("/pharmacy/dashboard/activity", authorizeRoles('pharmacy'), getActivityFeed);
+router.post("/pharmacy/prescriptions/:prescriptionId/confirm-availability", authorizeRoles('pharmacy'), confirmAvailability);
+router.post("/pharmacy/prescriptions/:prescriptionId/internal-notes", authorizeRoles('pharmacy'), addInternalNote);
 
 // Shared routes accessible by multiple roles
 router.post("/:prescriptionId/cancel", authorizeRoles('doctor', 'patient', 'pharmacy'), cancelPrescription);

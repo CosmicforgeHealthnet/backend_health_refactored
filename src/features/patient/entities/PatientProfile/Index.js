@@ -5,7 +5,7 @@ module.exports = new EntitySchema({
   tableName: 'patient_profiles',
   columns: {
     id: { primary: true, type: 'uuid', generated: 'uuid' },
-    userId: { type: 'uuid', unique: true }, 
+    userId: { type: 'uuid', unique: true },
     profilePhoto: { type: 'varchar', nullable: true },
     gender: { type: 'varchar' },
     dateOfBirth: { type: 'date' },

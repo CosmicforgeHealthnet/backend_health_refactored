@@ -1,0 +1,158 @@
+[
+  {
+    "column_name": "attrelid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "oid"
+  },
+  {
+    "column_name": "attname",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "name"
+  },
+  {
+    "column_name": "atttypid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "oid"
+  },
+  {
+    "column_name": "attlen",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "smallint"
+  },
+  {
+    "column_name": "attnum",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "smallint"
+  },
+  {
+    "column_name": "attcacheoff",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "integer"
+  },
+  {
+    "column_name": "atttypmod",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "integer"
+  },
+  {
+    "column_name": "attndims",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "smallint"
+  },
+  {
+    "column_name": "attbyval",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "boolean"
+  },
+  {
+    "column_name": "attalign",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "\"char\""
+  },
+  {
+    "column_name": "attstorage",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "\"char\""
+  },
+  {
+    "column_name": "attcompression",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "\"char\""
+  },
+  {
+    "column_name": "attnotnull",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "boolean"
+  },
+  {
+    "column_name": "atthasdef",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "boolean"
+  },
+  {
+    "column_name": "atthasmissing",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "boolean"
+  },
+  {
+    "column_name": "attidentity",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "\"char\""
+  },
+  {
+    "column_name": "attgenerated",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "\"char\""
+  },
+  {
+    "column_name": "attisdropped",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "boolean"
+  },
+  {
+    "column_name": "attislocal",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "boolean"
+  },
+  {
+    "column_name": "attinhcount",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "smallint"
+  },
+  {
+    "column_name": "attstattarget",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "smallint"
+  },
+  {
+    "column_name": "attcollation",
+    "is_nullable": "NO",
+    "column_default": null,
+    "data_type": "oid"
+  },
+  {
+    "column_name": "attacl",
+    "is_nullable": "YES",
+    "column_default": null,
+    "data_type": "ARRAY"
+  },
+  {
+    "column_name": "attoptions",
+    "is_nullable": "YES",
+    "column_default": null,
+    "data_type": "ARRAY"
+  },
+  {
+    "column_name": "attfdwoptions",
+    "is_nullable": "YES",
+    "column_default": null,
+    "data_type": "ARRAY"
+  },
+  {
+    "column_name": "attmissingval",
+    "is_nullable": "YES",
+    "column_default": null,
+    "data_type": "anyarray"
+  }
+]

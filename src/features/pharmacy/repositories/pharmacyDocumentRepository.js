@@ -2,8 +2,8 @@
 const AppDataSource = require("../../../config/database");
 
 class PharmacyDocumentRepository {
-  constructor() {
-    this.repo = AppDataSource.getRepository("PharmacyDocument");
+  get repo() {
+    return AppDataSource.getRepository("PharmacyDocument");
   }
 
   async create(data) {

@@ -3,18 +3,18 @@ const { EntitySchema } = require("typeorm");
 
 const PrescriptionStatus = {
   PENDING: "pending",
-  PATIENT_UPLOADED: "patient_uploaded", 
+  PATIENT_UPLOADED: "patient_uploaded",
   PHARMACY_ASSIGNED: "pharmacy_assigned",
   PHARMACY_PROCESSING: "pharmacy_processing",
   READY_FOR_PICKUP: "ready_for_pickup",
-  READY_FOR_DELIVERY: "ready_for_delivery", 
+  READY_FOR_DELIVERY: "ready_for_delivery",
   COMPLETED: "completed",
   CANCELLED: "cancelled"
 };
 
 const PaymentStatus = {
   UNPAID: "unpaid",
-  PAID: "paid", 
+  PAID: "paid",
   CANCELLED: "cancelled"
 };
 
@@ -28,26 +28,42 @@ module.exports = new EntitySchema({
   tableName: "prescriptions",
   columns: {
     id: { primary: true, type: "uuid", generated: "uuid" },
-    reference: { 
-      type: "varchar", 
-      unique: true, 
+    reference: {
+      type: "varchar",
+      unique: true,
       nullable: false,
       comment: "Prescription reference code (e.g., RX-20250821-001)"
     },
-    
+
     // Foreign Keys
     doctorId: { type: "uuid", nullable: false },
     patientId: { type: "uuid", nullable: false },
     pharmacyId: { type: "uuid", nullable: true }, // Set when patient selects pharmacy
     consultationId: { type: "uuid", nullable: true }, // Link to consultation if applicable
-    
+
     // Prescription Content
-    medications: { 
-      type: "json", 
+    medications: {
+      type: "json",
       nullable: false,
-      comment: "Array of prescribed medications with dosage, frequency, duration, notes, quantity"
+      comment: "Array of prescribed medications with dosage, frequency, duration, route, notes, quantity"
     },
-    
+    diagnosis: { type: "text", nullable: true },
+    doctorSignature: { type: "text", nullable: true, comment: "Base64 or URL of doctor's signature" },
+
+    // Pharmacy Operations
+    internalNotes: {
+      type: "json",
+      nullable: true,
+      default: [],
+      comment: "Array of internal notes for pharmacy staff: {note, pharmacistId, timestamp}"
+    },
+    availabilityStatus: {
+      type: "enum",
+      enum: ["pending", "confirmed", "unavailable", "alternatives_proposed"],
+      default: "pending",
+      nullable: false
+    },
+
     // Status Tracking
     status: {
       type: "enum",
@@ -55,7 +71,7 @@ module.exports = new EntitySchema({
       default: PrescriptionStatus.PENDING,
       nullable: false
     },
-    
+
     // Pharmacy Fulfillment Info  
     assignedPharmacistId: { type: "uuid", nullable: true },
     fulfillmentHistory: {
@@ -63,13 +79,14 @@ module.exports = new EntitySchema({
       nullable: true,
       comment: "Array of status changes with timestamps"
     },
-    
+
     // Invoice & Payment
     invoiceItems: {
-      type: "json", 
+      type: "json",
       nullable: true,
       comment: "Array of medication costs calculated by pharmacy"
     },
+    currency: { type: "varchar", length: 3, nullable: true, comment: "Currency code (3 chars) used for this prescription" },
     deliveryFee: { type: "decimal", precision: 10, scale: 2, nullable: true, default: 0 },
     totalDue: { type: "decimal", precision: 10, scale: 2, nullable: true },
     paymentMethod: {
@@ -78,35 +95,35 @@ module.exports = new EntitySchema({
       nullable: true
     },
     paymentStatus: {
-      type: "enum", 
+      type: "enum",
       enum: Object.values(PaymentStatus),
       default: PaymentStatus.UNPAID,
       nullable: false
     },
-    
+
     // Communication
     chatMessages: {
       type: "json",
       nullable: true,
       comment: "Chat messages between patient and pharmacy"
     },
-    
+
     // Additional Notes
     doctorNotes: { type: "text", nullable: true },
     pharmacyNotes: { type: "text", nullable: true },
     patientNotes: { type: "text", nullable: true },
-    
+
     // Timestamps
     createdAt: { type: "timestamp", createDate: true },
     updatedAt: { type: "timestamp", updateDate: true },
-    
+
     // Delivery/Pickup Details
     deliveryAddress: { type: "text", nullable: true },
     deliveryInstructions: { type: "text", nullable: true },
     expectedDeliveryDate: { type: "timestamp", nullable: true },
     actualDeliveryDate: { type: "timestamp", nullable: true }
   },
-  
+
   relations: {
     doctor: {
       type: "many-to-one",
@@ -115,14 +132,14 @@ module.exports = new EntitySchema({
       onDelete: "CASCADE"
     },
     patient: {
-      type: "many-to-one", 
+      type: "many-to-one",
       target: "User",
       joinColumn: { name: "patientId" },
       onDelete: "CASCADE"
     },
     pharmacy: {
       type: "many-to-one",
-      target: "PharmacyProfile", 
+      target: "PharmacyProfile",
       joinColumn: { name: "pharmacyId" },
       onDelete: "SET NULL"
     },
@@ -133,10 +150,10 @@ module.exports = new EntitySchema({
       onDelete: "SET NULL"
     }
   },
-  
+
   indices: [
     { columns: ["doctorId"] },
-    { columns: ["patientId"] }, 
+    { columns: ["patientId"] },
     { columns: ["pharmacyId"] },
     { columns: ["reference"] },
     { columns: ["status"] },

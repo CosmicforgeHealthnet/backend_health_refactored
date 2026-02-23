@@ -2,7 +2,11 @@
 const prescriptionRepo = require("../repositories/prescriptionRepository");
 const userRepo = require("../../auth/repositories/userRepository");
 const pharmacyProfileRepo = require("../repositories/pharmacyProfileRepository");
+const AppointmentRepository = require("../../appointments/repositories/appointmentRepository");
+const labOrderRepo = require("../../lab/repositories/lab_order");
 const { PrescriptionStatus, PaymentStatus } = require("../entities/Prescription");
+
+const appointmentRepo = new AppointmentRepository();
 
 class PrescriptionService {
 
@@ -12,7 +16,7 @@ class PrescriptionService {
    * @param {string} doctorId - Authenticated doctor's ID
    */
   async createPrescription(prescriptionData, doctorId) {
-    const { patientId, medications, consultationId, doctorNotes } = prescriptionData;
+    const { patientId, medications, consultationId, doctorNotes, diagnosis, doctorSignature } = prescriptionData;
 
     // Validation
     if (!patientId || !medications || !Array.isArray(medications) || medications.length === 0) {
@@ -33,8 +37,8 @@ class PrescriptionService {
 
     // Validate medications structure
     for (const med of medications) {
-      if (!med.name || !med.dosage || !med.frequency || !med.duration || !med.quantity) {
-        throw new Error("Each medication must have name, dosage, frequency, duration, and quantity");
+      if (!med.name || !med.dosage || !med.frequency || !med.duration || !med.quantity || !med.route) {
+        throw new Error("Each medication must have name, dosage, frequency, duration, route, and quantity");
       }
     }
 
@@ -48,6 +52,8 @@ class PrescriptionService {
       patientId,
       consultationId,
       medications,
+      diagnosis,
+      doctorSignature,
       doctorNotes,
       status: PrescriptionStatus.PENDING,
       paymentStatus: PaymentStatus.UNPAID,
@@ -384,7 +390,130 @@ class PrescriptionService {
    * Get prescription by ID with all relations
    */
   async getPrescriptionById(id) {
-    return prescriptionRepo.findById(id);
+    const prescription = await prescriptionRepo.findById(id);
+    if (!prescription) return null;
+
+    // Enrich with appointment data (Patient Complaint)
+    if (prescription.consultationId) {
+      try {
+        const appointment = await appointmentRepo.findById(prescription.consultationId);
+        if (appointment) {
+          prescription.patientComplaint = appointment.reason || appointment.notes;
+          prescription.appointmentRef = appointment.id.slice(0, 8).toUpperCase();
+          prescription.appointmentDate = appointment.appointmentDate;
+        }
+      } catch (err) {
+        console.error("Failed to fetch appointment data for prescription:", err);
+      }
+    }
+
+    // Enrich with lab orders (Ordered Tests)
+    try {
+      // Find lab orders for this patient around the same time or specifically for this consultation
+      // For now, search by patientId and limit to recent
+      const labOrders = await labOrderRepo.findByPatientId(prescription.patientId, 5);
+      // Filter orders created near this prescription
+      prescription.orderedTests = labOrders
+        .filter(order => Math.abs(new Date(order.createdAt) - new Date(prescription.createdAt)) < 24 * 60 * 60 * 1000)
+        .flatMap(order => order.testNames || []);
+    } catch (err) {
+      console.error("Failed to fetch lab orders for prescription:", err);
+    }
+
+    return prescription;
+  }
+
+  /**
+   * Get dashboard statistics for a pharmacy
+   */
+  async getDashboardStats(pharmacyId) {
+    const prescriptions = await prescriptionRepo.findByPharmacyId(pharmacyId);
+
+    return {
+      pendingRequests: prescriptions.filter(p => p.status === PrescriptionStatus.PHARMACY_ASSIGNED).length,
+      activeOrders: prescriptions.filter(p => [
+        PrescriptionStatus.PHARMACY_PROCESSING,
+        PrescriptionStatus.READY_FOR_PICKUP,
+        PrescriptionStatus.READY_FOR_DELIVERY
+      ].includes(p.status)).length,
+      completedToday: prescriptions.filter(p =>
+        p.status === PrescriptionStatus.COMPLETED &&
+        new Date(p.updatedAt).toDateString() === new Date().toDateString()
+      ).length
+    };
+  }
+
+  /**
+   * Get recent activity feed for a pharmacy
+   */
+  async getActivityFeed(pharmacyId, limit = 10) {
+    const prescriptions = await prescriptionRepo.findByPharmacyId(pharmacyId, { limit });
+
+    // Flatten fulfillment history into a feed
+    const feed = prescriptions.flatMap(p =>
+      (p.fulfillmentHistory || []).map(h => ({
+        id: p.id,
+        reference: p.reference,
+        patientName: p.patient?.fullName,
+        action: h.note,
+        status: h.status,
+        timestamp: h.timestamp
+      }))
+    );
+
+    return feed
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, limit);
+  }
+
+  /**
+   * Pharmacy confirms availability of medications
+   */
+  async confirmAvailability(prescriptionId, pharmacyId) {
+    const prescription = await prescriptionRepo.findById(prescriptionId);
+    if (!prescription || prescription.pharmacyId !== pharmacyId) {
+      throw new Error("Prescription not found or unauthorized");
+    }
+
+    await prescriptionRepo.save({
+      ...prescription,
+      availabilityStatus: "confirmed",
+      updatedAt: new Date()
+    });
+
+    await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
+      status: prescription.status,
+      note: "Medication availability confirmed"
+    });
+
+    return this.getPrescriptionById(prescriptionId);
+  }
+
+  /**
+   * Pharmacy adds an internal note
+   */
+  async addInternalNote(prescriptionId, pharmacyId, noteData) {
+    const { note, pharmacistId } = noteData;
+    const prescription = await prescriptionRepo.findById(prescriptionId);
+
+    if (!prescription || prescription.pharmacyId !== pharmacyId) {
+      throw new Error("Prescription not found or unauthorized");
+    }
+
+    const internalNotes = prescription.internalNotes || [];
+    internalNotes.push({
+      note,
+      pharmacistId,
+      timestamp: new Date().toISOString()
+    });
+
+    await prescriptionRepo.save({
+      ...prescription,
+      internalNotes,
+      updatedAt: new Date()
+    });
+
+    return this.getPrescriptionById(prescriptionId);
   }
 
   /**

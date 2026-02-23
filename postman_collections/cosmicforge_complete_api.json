@@ -324,6 +324,34 @@
                                     ]
                                 }
                             }
+                        },
+                        {
+                            "name": "Google Mobile Login",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"idToken\": \"{{googleIdToken}}\",\n  \"role\": \"patient\",\n  \"deviceFingerprint\": \"device_unique_id\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/google/mobile-login",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "google",
+                                        "mobile-login"
+                                    ]
+                                }
+                            }
                         }
                     ]
                 },

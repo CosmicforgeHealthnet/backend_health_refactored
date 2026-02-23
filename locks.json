@@ -1,0 +1,53 @@
+{
+  "blocked": [],
+  "all_sessions": [
+    {
+      "pid": 30,
+      "state": null,
+      "query": "",
+      "wait_event_type": "Activity",
+      "wait_event": "AutoVacuumMain",
+      "xact_start": null
+    },
+    {
+      "pid": 31,
+      "state": null,
+      "query": "",
+      "wait_event_type": "Activity",
+      "wait_event": "LogicalLauncherMain",
+      "xact_start": null
+    },
+    {
+      "pid": 72,
+      "state": "active",
+      "query": "SELECT pid, state, query, wait_event_type, wait_event, xact_start FROM pg_stat_activity",
+      "wait_event_type": null,
+      "wait_event": null,
+      "xact_start": "2026-02-23T21:16:54.986Z"
+    },
+    {
+      "pid": 27,
+      "state": null,
+      "query": "",
+      "wait_event_type": "Activity",
+      "wait_event": "BgWriterMain",
+      "xact_start": null
+    },
+    {
+      "pid": 26,
+      "state": null,
+      "query": "",
+      "wait_event_type": "Activity",
+      "wait_event": "CheckpointerMain",
+      "xact_start": null
+    },
+    {
+      "pid": 29,
+      "state": null,
+      "query": "",
+      "wait_event_type": "Activity",
+      "wait_event": "WalWriterMain",
+      "xact_start": null
+    }
+  ]
+}

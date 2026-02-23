@@ -37,7 +37,7 @@ const documentsFeature = require("./features/documents");
 const firstaidFeature = require("./features/firstaid");
 
 // Legacy feature locations (to be moved)
-const labRoutes = require("./features/LAB/routes");
+const labRoutes = require("./features/lab/routes");
 // const pharmacyRoutes = require("./routes/pharmacy/index");
 // const firstaidRoutes = require('./routes/firstaid/index');
 // const sosRoutes = require('./routes/firstaid/content/sosRoutes');

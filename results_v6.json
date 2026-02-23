@@ -1,0 +1,142 @@
+{
+  "meta": {
+    "database": "cosmicforge",
+    "host": "72.61.20.94",
+    "timestamp": "2026-02-21T08:57:02.947Z"
+  },
+  "corruption_details": {
+    "attribute_sequence": [
+      {
+        "attnum": 1,
+        "attname": "id",
+        "attisdropped": false
+      },
+      {
+        "attnum": 4,
+        "attname": "genotype",
+        "attisdropped": false
+      },
+      {
+        "attnum": 5,
+        "attname": "bloodGroup",
+        "attisdropped": false
+      },
+      {
+        "attnum": 10,
+        "attname": "emergencyContactFullName",
+        "attisdropped": false
+      },
+      {
+        "attnum": 11,
+        "attname": "emergencyContactMobile",
+        "attisdropped": false
+      },
+      {
+        "attnum": 12,
+        "attname": "emergencyContactRelationship",
+        "attisdropped": false
+      },
+      {
+        "attnum": 13,
+        "attname": "height",
+        "attisdropped": false
+      },
+      {
+        "attnum": 14,
+        "attname": "weight",
+        "attisdropped": false
+      },
+      {
+        "attnum": 15,
+        "attname": "bmi",
+        "attisdropped": false
+      },
+      {
+        "attnum": 16,
+        "attname": "bloodPressure",
+        "attisdropped": false
+      },
+      {
+        "attnum": 17,
+        "attname": "heartRate",
+        "attisdropped": false
+      },
+      {
+        "attnum": 18,
+        "attname": "respiratoryRate",
+        "attisdropped": false
+      },
+      {
+        "attnum": 19,
+        "attname": "temperature",
+        "attisdropped": false
+      },
+      {
+        "attnum": 20,
+        "attname": "spO2",
+        "attisdropped": false
+      },
+      {
+        "attnum": 21,
+        "attname": "bloodGlucose",
+        "attisdropped": false
+      },
+      {
+        "attnum": 22,
+        "attname": "smokes",
+        "attisdropped": false
+      },
+      {
+        "attnum": 23,
+        "attname": "drinksAlcohol",
+        "attisdropped": false
+      },
+      {
+        "attnum": 24,
+        "attname": "physicalActivityLevel",
+        "attisdropped": false
+      },
+      {
+        "attnum": 25,
+        "attname": "dietType",
+        "attisdropped": false
+      },
+      {
+        "attnum": 26,
+        "attname": "sleepDuration",
+        "attisdropped": false
+      },
+      {
+        "attnum": 27,
+        "attname": "profileType",
+        "attisdropped": false
+      },
+      {
+        "attnum": 28,
+        "attname": "createdAt",
+        "attisdropped": false
+      },
+      {
+        "attnum": 29,
+        "attname": "updatedAt",
+        "attisdropped": false
+      },
+      {
+        "attnum": 30,
+        "attname": "userId",
+        "attisdropped": false
+      },
+      {
+        "attnum": 31,
+        "attname": "profilePhoto",
+        "attisdropped": false
+      }
+    ],
+    "dependencies_count": 22,
+    "dropped_attributes_count": 0,
+    "pg_class_relnatts": 31
+  },
+  "error": {
+    "message": "pg_attribute catalog is missing 6 attribute(s) for relation OID 18450"
+  }
+}
