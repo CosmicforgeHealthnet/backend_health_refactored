@@ -23,6 +23,7 @@
     "test": "jest",
     "start:cron": "node src/cron.js",
     "lint": "eslint .",
+    "lint:case": "node scripts/check-case.js",
     "generate-postman": "node src/docs/generatePostman.js",
     "docker:dev": "docker-compose -f docker-compose.yml up --build",
     "docker:prod": "docker-compose -f docker-compose.prod.yml up -d --build",
