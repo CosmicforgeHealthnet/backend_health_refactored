@@ -166,5 +166,18 @@ jobs:
             echo "Cleaning up..."
             docker image prune -f
 
-            echo "Development deployment completed!"
-            docker ps --filter "name=cosmic_*_dev" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            echo "Development deployment completed! Waiting for backend to become healthy..."
+            for i in {1..12}; do
+              if curl -s -k https://dev-api.cosmicforge-healthnet.com/health | grep -q "version"; then
+                echo "✅ Dev Backend is LIVE and healthy! The deployment is successful."
+                docker ps --filter "name=cosmic_*_dev" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+                exit 0
+              fi
+              echo "Waiting for dev backend... attempt $i/12"
+              sleep 10
+            done
+
+            echo "❌ Dev Backend failed to start or is not accessible!"
+            docker ps --filter "name=cosmic_*_dev"
+            docker logs cosmic_backend_dev --tail 50
+            exit 1
