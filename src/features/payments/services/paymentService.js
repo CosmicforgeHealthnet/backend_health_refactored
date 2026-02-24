@@ -1659,7 +1659,7 @@ class PaymentService {
         if (ourTransaction.serviceType === 'subscription' || ourTransaction.serviceType === 'subscription_upgrade') {
           console.log('🔄 Processing subscription upgrade...');
           try {
-            const SubscriptionService = require('../subscriptionService');
+            const SubscriptionService = require('../../subscriptions/services/subscriptionService');
             await SubscriptionService.processSubscriptionUpgradeAfterPayment(ourTransaction.id);
             console.log('✅ Subscription upgraded successfully');
           } catch (subscriptionError) {
@@ -1676,7 +1676,7 @@ class PaymentService {
         // 📧 NEW: Send payment receipt emails
         console.log('📧 Sending payment receipt email...');
         try {
-          // const { sendAppointmentPaymentReceiptEmail, sendSubscriptionPaymentReceiptEmail } = require('./emailHelpers');
+          // const { sendAppointmentPaymentReceiptEmail, sendSubscriptionPaymentReceiptEmail } = require('../../../shared/services/email/emailHelpers');
 
           // Get patient details
           const patient = await userRepository.findById(ourTransaction.patientId);

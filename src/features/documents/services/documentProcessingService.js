@@ -1,7 +1,7 @@
 // src/services/documentProcessingService.js
 const crypto = require('crypto');
 const fileRepository = require("../repositories/fileRepository");
-const verificationDocumentRepo = require('../repositories/verificationDocumentRepository');
+const verificationDocumentRepo = require('../../doctor/repositories/verificationDocumentRepository');
 // const { uploadToS3, deleteFromS3 } = require("../../../shared/utils/aws");
 // const { optimizeImage } = require("../../../shared/utils/imageOptimizer");
 

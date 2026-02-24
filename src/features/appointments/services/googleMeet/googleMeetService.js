@@ -548,7 +548,7 @@ INSTALLATION STEPS:
    GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 
 4. Update your main app.js to include auth routes:
-   const authRoutes = require('./routes/AuthRoutes');
+   const authRoutes = require('../../../pharmacy/routes/authRoutes');
    app.use('/auth', authRoutes);
 
 USAGE FLOW:

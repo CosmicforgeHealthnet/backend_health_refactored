@@ -386,7 +386,7 @@ class DoctorVerificationController {
       }
 
       // Check if all required documents are now uploaded and update status accordingly
-      // const verificationConfig = require('../config/verificationConfig');
+      // const verificationConfig = require('../../../config/verificationConfig');
       const allDocs = await verificationDocumentRepo.findByVerificationRequestId(verificationRequestId);
       const verification = await verificationRequestRepo.findById(verificationRequestId);
       const requiredDocs = verificationConfig.DOCUMENT_REQUIREMENTS[verification.tier] || [];

@@ -1,7 +1,7 @@
 // Alternative: Direct seeding script (if you prefer)
 // src/scripts/seedCountryConfigs.js
 const AppDataSource = require('../config/database');
-const countryConfigRepo = require('../repositories/countryVerificationConfigRepository');
+const countryConfigRepo = require('../features/doctor/repositories/countryVerificationConfigRepository');
 
 async function seedCountryConfigs() {
   try {
@@ -26,9 +26,9 @@ async function seedCountryConfigs() {
         isActive: true,
         notes: 'Most advanced verification system in Africa. Uses EPIC integration.'
       },
-      
+
       {
-        countryCode: 'KE', 
+        countryCode: 'KE',
         countryName: 'Kenya',
         regulatoryBody: 'Kenya Medical Practitioners and Dentists Council (KMPDC)',
         tier: 'tier_1',
@@ -48,7 +48,7 @@ async function seedCountryConfigs() {
       // TIER 2 - Hybrid/Manual
       {
         countryCode: 'NG',
-        countryName: 'Nigeria', 
+        countryName: 'Nigeria',
         regulatoryBody: 'Medical and Dental Council of Nigeria (MDCN)',
         tier: 'tier_2',
         method: 'hybrid',
@@ -66,7 +66,7 @@ async function seedCountryConfigs() {
       {
         countryCode: 'GH',
         countryName: 'Ghana',
-        regulatoryBody: 'Ghana Medical and Dental Council', 
+        regulatoryBody: 'Ghana Medical and Dental Council',
         tier: 'tier_2',
         method: 'manual',
         hasApi: false,
@@ -83,12 +83,12 @@ async function seedCountryConfigs() {
     ];
 
     let seededCount = 0;
-    
+
     for (const countryData of countries) {
       try {
         // Check if country already exists
         const existing = await countryConfigRepo.findByCountryCode(countryData.countryCode);
-        
+
         if (!existing) {
           await countryConfigRepo.create(countryData);
           console.log(`✅ Seeded ${countryData.countryName} (${countryData.countryCode})`);
@@ -102,16 +102,16 @@ async function seedCountryConfigs() {
     }
 
     console.log(`\n🎉 Seeding complete! Added ${seededCount} countries`);
-    
+
     // Display summary
     const allCountries = await countryConfigRepo.findAllActive();
     console.log(`\n📊 Total active countries: ${allCountries.length}`);
-    
+
     const tierCounts = allCountries.reduce((acc, country) => {
       acc[country.tier] = (acc[country.tier] || 0) + 1;
       return acc;
     }, {});
-    
+
     console.log('📈 Countries by tier:', tierCounts);
 
   } catch (error) {

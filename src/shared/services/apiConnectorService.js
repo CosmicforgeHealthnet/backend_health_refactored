@@ -1,9 +1,9 @@
 // src/services/apiConnectorService.js
 const axios = require('axios');
-const verificationApiLogRepo = require('../repositories/verificationApiLogRepository');
+const verificationApiLogRepo = require('../../features/doctor/repositories/verificationApiLogRepository');
 
 class ApiConnectorService {
-  
+
   /**
    * Main entry point for doctor verification via APIs
    */
@@ -131,7 +131,7 @@ class ApiConnectorService {
   async verifyMDCN(verificationRequest) {
     // Note: MDCN doesn't have public API yet, but this is for future integration
     const endpoint = process.env.MDCN_API_ENDPOINT;
-    
+
     if (!endpoint) {
       throw new Error('MDCN API not available - fallback to manual verification');
     }
@@ -207,7 +207,7 @@ class ApiConnectorService {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
-      timeout: 30000 
+      timeout: 30000
     });
 
     return this.parseIdfyResponse(response.data);
@@ -281,7 +281,7 @@ class ApiConnectorService {
 
   sanitizeResponseData(apiResult) {
     if (!apiResult) return null;
-    
+
     return {
       success: apiResult.success,
       verified: apiResult.verified,
@@ -304,7 +304,7 @@ class ApiConnectorService {
       };
 
       const countryConfig = { apiProvider: provider };
-      
+
       await this.verifyDoctor(testRequest, countryConfig);
       return { success: true, message: 'API connectivity test passed' };
     } catch (error) {

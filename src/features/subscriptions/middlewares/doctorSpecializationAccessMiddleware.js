@@ -321,7 +321,7 @@ module.exports.checkDoctorSpecializationAccess = DoctorSpecializationAccessMiddl
  * -------------------------------------------
  *
  * const { checkDoctorSpecializationAccess } = require('../middlewares/doctorSpecializationAccessMiddleware');
- * const { authenticateJWT } = require('../middlewares/authMiddleware');
+ * const { authenticateJWT } = require('../../../shared/middlewares/authMiddleware');
  *
  * // POST /api/appointments/book
  * router.post('/book',
@@ -373,9 +373,9 @@ module.exports.checkDoctorSpecializationAccess = DoctorSpecializationAccessMiddl
  *
  * const express = require('express');
  * const router = express.Router();
- * const { authenticateJWT } = require('../middlewares/authMiddleware');
+ * const { authenticateJWT } = require('../../../shared/middlewares/authMiddleware');
  * const { checkDoctorSpecializationAccess } = require('../middlewares/doctorSpecializationAccessMiddleware');
- * const appointmentController = require('../controllers/appointmentController');
+ * const appointmentController = require('../../appointments/controllers/appointmentController');
  *
  * // Apply authentication to all routes
  * router.use(authenticateJWT);

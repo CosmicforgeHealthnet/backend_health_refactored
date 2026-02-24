@@ -17576,7 +17576,7 @@
       "get": {
         "summary": "Get pharmacy profile",
         "tags": [
-          "PharmacyAuth"
+          "PharmacyProfile"
         ],
         "security": [
           {
@@ -17596,6 +17596,102 @@
           },
           "404": {
             "description": "Profile not found"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update pharmacy profile",
+        "tags": [
+          "PharmacyProfile"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePharmacyProfile"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PharmacyProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pharmacy/documents/upload": {
+      "post": {
+        "summary": "Upload pharmacy documents",
+        "tags": [
+          "PharmacyDocuments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentUpload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Documents uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentUploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No documents uploaded"
+          }
+        }
+      }
+    },
+    "/pharmacy/documents": {
+      "get": {
+        "summary": "Get pharmacy documents",
+        "tags": [
+          "PharmacyDocuments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documents list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentListResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -17759,69 +17855,6 @@
                       "type": "string"
                     }
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/pharmacy/documents/upload": {
-      "post": {
-        "summary": "Upload pharmacy documents",
-        "tags": [
-          "PharmacyDocuments"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentUpload"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Documents uploaded successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentUploadResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "No documents uploaded"
-          }
-        }
-      }
-    },
-    "/pharmacy/documents": {
-      "get": {
-        "summary": "Get pharmacy documents",
-        "tags": [
-          "PharmacyDocuments"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Documents list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentListResponse"
                 }
               }
             }
@@ -18369,6 +18402,162 @@
         }
       }
     },
+    "/prescriptions/pharmacy/dashboard/stats": {
+      "get": {
+        "summary": "Get pharmacy dashboard statistics",
+        "description": "Retrieves real-time counts for the pharmacy dashboard:\n- Pending requests\n- Active orders\n- Completed today\n",
+        "tags": [
+          "Pharmacy Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardStatsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Not a pharmacy"
+          }
+        }
+      }
+    },
+    "/prescriptions/pharmacy/dashboard/activity": {
+      "get": {
+        "summary": "Get pharmacy activity feed",
+        "description": "Retrieves a feed of recent status changes and actions for assigned prescriptions.",
+        "tags": [
+          "Pharmacy Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Number of activity items to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity feed items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityFeedItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prescriptions/pharmacy/prescriptions/{prescriptionId}/confirm-availability": {
+      "post": {
+        "summary": "Confirm medication availability",
+        "description": "Marks a prescription as having confirmed medication stock.",
+        "tags": [
+          "Prescription Operations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability confirmed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrescriptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prescriptions/pharmacy/prescriptions/{prescriptionId}/internal-notes": {
+      "post": {
+        "summary": "Add internal pharmacy note",
+        "description": "Allows pharmacy staff to add private notes to a prescription.",
+        "tags": [
+          "Prescription Operations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InternalNoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Internal note added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrescriptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/prescriptions/{prescriptionId}/cancel": {
       "post": {
         "summary": "Cancel a prescription",
@@ -18604,162 +18793,6 @@
         "responses": {
           "200": {
             "description": "See main auth documentation"
-          }
-        }
-      }
-    },
-    "/prescriptions/pharmacy/dashboard/stats": {
-      "get": {
-        "summary": "Get pharmacy dashboard statistics",
-        "description": "Retrieves real-time counts for the pharmacy dashboard:\n- Pending requests\n- Active orders\n- Completed today\n",
-        "tags": [
-          "Pharmacy Dashboard"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Dashboard statistics",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DashboardStatsResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - Not a pharmacy"
-          }
-        }
-      }
-    },
-    "/prescriptions/pharmacy/dashboard/activity": {
-      "get": {
-        "summary": "Get pharmacy activity feed",
-        "description": "Retrieves a feed of recent status changes and actions for assigned prescriptions.",
-        "tags": [
-          "Pharmacy Dashboard"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer",
-              "default": 10
-            },
-            "description": "Number of activity items to retrieve"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Activity feed items",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ActivityFeedItem"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/prescriptions/pharmacy/prescriptions/{prescriptionId}/confirm-availability": {
-      "post": {
-        "summary": "Confirm medication availability",
-        "description": "Marks a prescription as having confirmed medication stock.",
-        "tags": [
-          "Prescription Operations"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "prescriptionId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Availability confirmed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PrescriptionResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/prescriptions/pharmacy/prescriptions/{prescriptionId}/internal-notes": {
-      "post": {
-        "summary": "Add internal pharmacy note",
-        "description": "Allows pharmacy staff to add private notes to a prescription.",
-        "tags": [
-          "Prescription Operations"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "prescriptionId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InternalNoteRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Internal note added",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PrescriptionResponse"
-                }
-              }
-            }
           }
         }
       }
@@ -29620,8 +29653,7 @@
           "dosage",
           "frequency",
           "duration",
-          "quantity",
-          "route"
+          "quantity"
         ],
         "properties": {
           "name": {
@@ -29648,11 +29680,6 @@
             "type": "integer",
             "example": 14,
             "description": "Total quantity of medication units"
-          },
-          "route": {
-            "type": "string",
-            "example": "Oral",
-            "description": "Route of administration (e.g., Oral, IV, Topical)"
           }
         }
       },
@@ -44624,7 +44651,98 @@
               },
               "isActive": {
                 "type": "boolean"
+              },
+              "operatingHours": {
+                "type": "object"
+              },
+              "serviceRadius": {
+                "type": "number"
+              },
+              "defaultCurrency": {
+                "type": "string"
+              },
+              "notificationPreferences": {
+                "type": "object"
+              },
+              "pricing": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PharmacyPricing"
+                }
               }
+            }
+          }
+        }
+      },
+      "DocumentUpload": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "documentType_0": {
+            "type": "string",
+            "enum": [
+              "pharmacy_license",
+              "government_id",
+              "business_registration",
+              "tax_certificate",
+              "other"
+            ]
+          },
+          "documentName_0": {
+            "type": "string"
+          }
+        }
+      },
+      "DocumentUploadResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "documentType": {
+                  "type": "string"
+                },
+                "documentName": {
+                  "type": "string"
+                },
+                "submissionStatus": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "pharmacy": {
+            "type": "object",
+            "properties": {
+              "verificationStatus": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "DocumentListResponse": {
+        "type": "object",
+        "properties": {
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object"
             }
           }
         }
@@ -44775,79 +44893,6 @@
           }
         }
       },
-      "DocumentUpload": {
-        "type": "object",
-        "properties": {
-          "files": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "binary"
-            }
-          },
-          "documentType_0": {
-            "type": "string",
-            "enum": [
-              "pharmacy_license",
-              "government_id",
-              "business_registration",
-              "tax_certificate",
-              "other"
-            ]
-          },
-          "documentName_0": {
-            "type": "string"
-          }
-        }
-      },
-      "DocumentUploadResponse": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "documents": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "documentType": {
-                  "type": "string"
-                },
-                "documentName": {
-                  "type": "string"
-                },
-                "submissionStatus": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "pharmacy": {
-            "type": "object",
-            "properties": {
-              "verificationStatus": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      },
-      "DocumentListResponse": {
-        "type": "object",
-        "properties": {
-          "documents": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          }
-        }
-      },
       "CreatePrescriptionRequest": {
         "type": "object",
         "required": [
@@ -44878,16 +44923,6 @@
             "type": "string",
             "example": "Take medication with food",
             "description": "Additional notes from the doctor"
-          },
-          "diagnosis": {
-            "type": "string",
-            "example": "Acute Respiratory Infection",
-            "description": "Diagnosis from the doctor"
-          },
-          "doctorSignature": {
-            "type": "string",
-            "example": "data:image/png;base64,...",
-            "description": "Base64 or URL of the doctor's signature"
           }
         }
       },
@@ -45031,6 +45066,78 @@
           }
         }
       },
+      "InternalNoteRequest": {
+        "type": "object",
+        "required": [
+          "note",
+          "pharmacistId"
+        ],
+        "properties": {
+          "note": {
+            "type": "string",
+            "example": "Patient wants to pickup at 5 PM"
+          },
+          "pharmacistId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "InternalNote": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string"
+          },
+          "pharmacistId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DashboardStatsResponse": {
+        "type": "object",
+        "properties": {
+          "pendingRequests": {
+            "type": "integer"
+          },
+          "activeOrders": {
+            "type": "integer"
+          },
+          "completedToday": {
+            "type": "integer"
+          }
+        }
+      },
+      "ActivityFeedItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "patientName": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "CancelPrescriptionRequest": {
         "type": "object",
         "required": [
@@ -45099,16 +45206,6 @@
             "type": "string",
             "example": "Take medication with food",
             "description": "Additional notes from the doctor"
-          },
-          "diagnosis": {
-            "type": "string",
-            "example": "Acute Respiratory Infection",
-            "description": "Diagnosis from the doctor"
-          },
-          "doctorSignature": {
-            "type": "string",
-            "example": "https://example.com/signatures/doc123.png",
-            "description": "URL or Base64 of the doctor's signature"
           },
           "status": {
             "type": "string",
@@ -45204,45 +45301,6 @@
             "format": "date-time",
             "example": "2025-08-26T12:30:00Z",
             "description": "Last update date of the prescription"
-          },
-          "availabilityStatus": {
-            "type": "string",
-            "enum": [
-              "pending",
-              "confirmed",
-              "unavailable",
-              "alternatives_proposed"
-            ],
-            "example": "pending"
-          },
-          "internalNotes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InternalNote"
-            }
-          },
-          "patientComplaint": {
-            "type": "string",
-            "example": "Persistent cough and mild fever for 4 days."
-          },
-          "orderedTests": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "example": [
-              "Chest X-ray",
-              "Complete Blood Count"
-            ]
-          },
-          "appointmentRef": {
-            "type": "string",
-            "example": "A1B2C3D4"
-          },
-          "appointmentDate": {
-            "type": "string",
-            "format": "date",
-            "example": "2025-08-26"
           }
         }
       },
@@ -45305,78 +45363,6 @@
             "format": "date-time",
             "example": "2025-08-26T12:00:00Z",
             "description": "Timestamp of the message"
-          }
-        }
-      },
-      "InternalNoteRequest": {
-        "type": "object",
-        "required": [
-          "note",
-          "pharmacistId"
-        ],
-        "properties": {
-          "note": {
-            "type": "string",
-            "example": "Patient wants to pickup at 5 PM"
-          },
-          "pharmacistId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "InternalNote": {
-        "type": "object",
-        "properties": {
-          "note": {
-            "type": "string"
-          },
-          "pharmacistId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "DashboardStatsResponse": {
-        "type": "object",
-        "properties": {
-          "pendingRequests": {
-            "type": "integer"
-          },
-          "activeOrders": {
-            "type": "integer"
-          },
-          "completedToday": {
-            "type": "integer"
-          }
-        }
-      },
-      "ActivityFeedItem": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "reference": {
-            "type": "string"
-          },
-          "patientName": {
-            "type": "string"
-          },
-          "action": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },

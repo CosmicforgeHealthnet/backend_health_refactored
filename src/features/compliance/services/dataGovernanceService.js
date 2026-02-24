@@ -1554,7 +1554,7 @@ class DataGovernanceService {
     
     // Decrypt if encrypted
     if (file.isEncrypted && file.encryptionKey) {
-        const DocumentFileService = require('./documentFileService');
+        const DocumentFileService = require('../../documents/services/documentFileService');
         fileBuffer = DocumentFileService.decryptBuffer(fileBuffer, file.encryptionKey);
     }
     

@@ -1,10 +1,10 @@
 // // src/jobs/UserJob.js
 // // ===================================
 // const cron = require("node-cron");
-// const userRepository = require("../repositories/userRepository");
+// const userRepository = require("../../auth/repositories/userRepository");
 // const {
 //   sendProfileCompletionReminderEmail,
-// } = require("../services/email/helper/index");
+// } = require("../../../shared/services/email/helper/index");
 
 // class UserJob {
 //   static start() {
