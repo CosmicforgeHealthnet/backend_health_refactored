@@ -1,0 +1,176 @@
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/entities/index.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/entities/index.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/LAB/websocket/chat.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/services/googleMeet/googleMeetService.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/auth/middlewares/referralMiddleware.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/chat/controllers/chatController.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/chat/middlewares/chatValidationMiddleware.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/compliance/services/dataGovernanceService.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/doctor/controllers/doctorVerificationController.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/documents/services/documentProcessingService.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/documents/services/documentProcessingService.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/documents/services/documentProcessingService.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/firstaid/routes/content/sosRoutes.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/firstaid/services/sosService.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/index.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/notifications/routes/index.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/patient/jobs/userJob.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/patient/jobs/userJob.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/payments/jobs/autoBillingJob.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/payments/services/paymentService.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/payments/services/paymentService.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/pharmacy/controllers/pharmacyDocumentController.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/subscriptions/middlewares/doctorSpecializationAccessMiddleware.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/subscriptions/middlewares/doctorSpecializationAccessMiddleware.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/subscriptions/middlewares/doctorSpecializationAccessMiddleware.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/scripts/seedCountryConfigs.js
+--
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/shared/services/apiConnectorService.js
