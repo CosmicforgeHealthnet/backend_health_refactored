@@ -57,7 +57,7 @@ const validateRoomAccess = async (req, res, next) => {
     const { roomId } = req.params;
     const userId = req.user.sub;
 
-    const chatService = new (require('../../services/chat').ChatService)();
+    const chatService = new (require('../../LAB/websocket/chat').ChatService)();
     const room = await chatService.getRoomWithDetails(roomId);
 
     if (!room) {

@@ -1,0 +1,302 @@
+
+> cosmicforge_health_backend@1.0.0 lint:case
+> node scripts/check-case.js
+
+🔍 Running Pre-Push Validation: Checking internal imports for proper Case-Sensitivity...
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/pharmacy/index'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/firstaid/index'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/firstaid/content/sosRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/chatRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/chatbotRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/notificationRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/appointmentRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/appointmentRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/subscriptionRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/supportRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/transactions/paymentRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/transactions/paymentMethodRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/transactions/walletRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/transactions/disputeRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/dataGovernanceRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/auditRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/consentRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/complianceRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/mfa/mfaRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/referralRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/prescription/prescriptionRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/faqRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/userRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/doctorVerificationRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/app.js
+   Import: './routes/legacy/doctorVerificationRoutes.compatibility'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/entities/index.js
+   Import: '../features/transactions/entities'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/entities/index.js
+   Import: '../features/gamification/entities'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/LAB/websocket/chat.js
+   Import: '../services/chat/chatMessageService'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+   Import: '../repositories/appointment/appointmentRepository'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+   Import: '../services/appointment/zoomMeet/zoomMeetingService'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+   Import: '../services/appointment/googleMeet/googleMeetService'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+   Import: '../services/appointment/Jitsi/jitsiMeetingService'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+   Import: '../services/email/helper/index'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+   Import: '../services/notificationSocketService'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/jobs/appointmentJob.js
+   Import: '../services/appointment/AppointmentService'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/appointments/services/googleMeet/googleMeetService.js
+   Import: './routes/AuthRoutes'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/auth/middlewares/referralMiddleware.js
+   Import: '../services/referral/referralService'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/chat/controllers/chatController.js
+   Import: '../../../repositories/chat'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/chat/middlewares/chatValidationMiddleware.js
+   Import: '../../services/chat'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/compliance/services/dataGovernanceService.js
+   Import: './documentFileService'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/doctor/controllers/doctorVerificationController.js
+   Import: '../config/verificationConfig'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/documents/services/documentProcessingService.js
+   Import: '../repositories/verificationDocumentRepository'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/documents/services/documentProcessingService.js
+   Import: '../../../shared/utils/aws'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/documents/services/documentProcessingService.js
+   Import: '../../../shared/utils/imageOptimizer'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/firstaid/routes/content/sosRoutes.js
+   Import: '../../../shared/middlewares/locationMiddleware'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/firstaid/services/sosService.js
+   Import: '../../utils/sosFormatter'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/index.js
+   Import: './lab'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/notifications/routes/index.js
+   Import: '../middlewares/authMiddleware'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/patient/jobs/userJob.js
+   Import: '../repositories/userRepository'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/patient/jobs/userJob.js
+   Import: '../services/email/helper/index'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/payments/jobs/autoBillingJob.js
+   Import: '../../../services/email/emailService'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/payments/services/paymentService.js
+   Import: '../subscriptionService'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/payments/services/paymentService.js
+   Import: './emailHelpers'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/pharmacy/controllers/pharmacyDocumentController.js
+   Import: '../../middlewares/documentFolderMiddleware'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/subscriptions/middlewares/doctorSpecializationAccessMiddleware.js
+   Import: '../middlewares/authMiddleware'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/subscriptions/middlewares/doctorSpecializationAccessMiddleware.js
+   Import: '../middlewares/authMiddleware'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/features/subscriptions/middlewares/doctorSpecializationAccessMiddleware.js
+   Import: '../controllers/appointmentController'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/scripts/seedCountryConfigs.js
+   Import: '../repositories/countryVerificationConfigRepository'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ BROKEN IMPORT DETECTED
+   File: /home/ejiofor-e-kevin/Documents/Projects/CosmicsForge/backend_health_refactored/src/shared/services/apiConnectorService.js
+   Import: '../repositories/verificationApiLogRepository'
+   This relative path does not exist on disk! It is broken. 🚨
+
+❌ Pre-push check failed. Please fix the imports above to deploy safely.

@@ -1,7 +1,7 @@
 // ===================================
 // src/middlewares/referralMiddleware.js
 // ===================================
-const ReferralService = require('../services/referral/referralService');
+const ReferralService = require('../services/referralService');
 const User = require('../entities/User')
 const AppDataSource = require("../../../config/database");
 

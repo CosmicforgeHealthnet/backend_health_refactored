@@ -3,11 +3,11 @@
 // // ===================================
 
 // const cron = require("node-cron");
-// const AppointmentRepository = require("../repositories/appointment/appointmentRepository");
-// const ZoomMeetingService = require("../services/appointment/zoomMeet/zoomMeetingService");
-// const GoogleMeetService = require("../services/appointment/googleMeet/googleMeetService");
-// const JitsiMeetingService = require("../services/appointment/Jitsi/jitsiMeetingService");
-// const appointmentEmailHelpers = require("../services/email/helper/index");
+// const AppointmentRepository = require("../repositories/appointmentRepository");
+// const ZoomMeetingService = require("../services/zoomMeet/zoomMeetingService");
+// const GoogleMeetService = require("../services/googleMeet/googleMeetService");
+// const JitsiMeetingService = require("../services/Jitsi/jitsiMeetingService");
+// const appointmentEmailHelpers = require("../../../shared/services/email/helper/index");
 // const NotificationService = require('../services/notificationSocketService');
 // const {
 //   addHours,
@@ -532,7 +532,7 @@
 //     );
 
 //     // Import AppointmentService to access cancellation and refund methods
-//     const AppointmentService = require("../services/appointment/AppointmentService");
+//     const AppointmentService = require("../services/appointmentService");
 //     const appointmentService = new AppointmentService();
 
 //     // Cancel the appointment

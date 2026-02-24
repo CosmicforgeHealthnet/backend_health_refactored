@@ -42,7 +42,7 @@ const jsFiles = findJsFiles(srcDir);
 for (const file of jsFiles) {
     const content = fs.readFileSync(file, 'utf-8');
     // Simple regex to grab relative require paths: require('./...') or require('../...')
-    const requireRegex = /require\(['"](\.[^'"]+)['"]\)/g;
+    const requireRegex = /(?:require|loadSwaggerDoc)\(['"](\.[^'"]+)['"]\)/g;
     let match;
 
     while ((match = requireRegex.exec(content)) !== null) {
@@ -72,11 +72,16 @@ for (const file of jsFiles) {
             if (!checkExactCaseExists(actualExistingPath)) {
                 console.error(`\n❌ CASE SENSITIVITY ERROR DETECTED`);
                 console.error(`   File: ${file}`);
-                console.error(`   Import: require('${importStr}')`);
+                console.error(`   Import: '${importStr}'`);
                 console.error(`   The import path exists locally, but the uppercase/lowercase letters are wrong!`);
                 console.error(`   This will CRASH the production Linux server 🚨`);
                 hasError = true;
             }
+        } else {
+            console.warn(`\n⚠️  WARNING: BROKEN IMPORT DETECTED`);
+            console.warn(`   File: ${file}`);
+            console.warn(`   Import: '${importStr}'`);
+            console.warn(`   This relative path does not exist on disk! It might be dead code.`);
         }
     }
 }

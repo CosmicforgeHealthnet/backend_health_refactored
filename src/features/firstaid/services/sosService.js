@@ -1,5 +1,5 @@
 const { emergencyNumbers, countryCodeMap, emergencySafetyTips } = require('../data/repositories/emergencyNumbers');
-const { formatEmergencyMessage, formatSpecificEmergencyMessage } = require('../../utils/sosFormatter');
+const { formatEmergencyMessage, formatSpecificEmergencyMessage } = require('../utils/sosFormatter');
 
 class SOSService {
     static getEmergencyNumbers(location) {

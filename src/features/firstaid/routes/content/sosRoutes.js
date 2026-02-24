@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const SOSController = require("../../../firstaid/controllers/sosController");
-const { getLocationFromIP } = require("../../../shared/middlewares/locationMiddleware");
+const { getLocationFromIP } = require("../../../../shared/middlewares/locationMiddleware");
 
 router.use(getLocationFromIP);
 

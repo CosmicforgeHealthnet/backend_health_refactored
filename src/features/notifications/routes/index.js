@@ -1,6 +1,6 @@
 // const express = require("express");
 // const NotificationController = require("../controllers/notificationController");
-// const { authenticateJWT } = require("../middlewares/authMiddleware");
+// const { authenticateJWT } = require("../../../shared/middlewares/authMiddleware");
 
 // const router = express.Router();
 // const notificationController = new NotificationController();

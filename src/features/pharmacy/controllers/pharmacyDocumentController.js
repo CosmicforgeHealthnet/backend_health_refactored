@@ -1,6 +1,6 @@
 // src/controllers/pharmacy/pharmacyDocumentController.js
 const pharmacyRegistrationService = require("../services/pharmacyRegistrationService");
-// const DocumentFolderMiddleware = require("../../middlewares/documentFolderMiddleware");
+// const DocumentFolderMiddleware = require("../../documents/middlewares/documentFolderMiddleware");
 
 class PharmacyDocumentController {
   async uploadDocuments(req, res, next) {

@@ -523,7 +523,7 @@ class LabOrderChatSocketHandler {
         }
   
         // Send query to chat room
-        const ChatMessageService = require("../services/chat/chatMessageService");
+        const ChatMessageService = require("../../chat/services/chatMessageService");
         const messageService = new ChatMessageService();
         await messageService.sendMessage(
           socket.userId,
