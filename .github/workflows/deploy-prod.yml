@@ -95,13 +95,21 @@ jobs:
             fuser -k 80/tcp 2>/dev/null || true
             fuser -k 443/tcp 2>/dev/null || true
 
-            # Identify all containers mentioning cosmic or holding ports
-            ALL_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep -E "cosmic|gateway|backend|brain|redis" | awk '{print $1}')
+            # Identify only production containers or those explicitly holding prod ports
+            PROD_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep -E "cosmic_.*_prod" | awk '{print $1}')
+            GATEWAY_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep "cosmic_gateway_prod" | awk '{print $1}')
             PORT_IDS=$(docker ps -a -q --filter "publish=80" --filter "publish=443")
 
-            for ID in $(echo "$ALL_IDS $PORT_IDS" | tr ' ' '\n' | sort -u); do
+            for ID in $(echo "$PROD_IDS $GATEWAY_IDS $PORT_IDS" | tr ' ' '\n' | sort -u); do
                 if [ -n "$ID" ]; then
-                    echo "Destroying container ID $ID..."
+                    echo "Destroying production-related container $ID..."
+                    # Ensure we don't accidentally kill dev if IDs overlap for some reason
+                    NAME=$(docker inspect --format '{{.Name}}' $ID | sed 's/\///')
+                    if [[ "$NAME" == *_dev ]]; then
+                        echo "Skipping $NAME (Development container)"
+                        continue
+                    fi
+
                     PID=$(docker inspect --format '{{.State.Pid}}' $ID 2>/dev/null || echo "0")
                     if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
                         kill -9 $PID || true
