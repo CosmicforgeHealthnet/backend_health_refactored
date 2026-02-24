@@ -38,9 +38,9 @@ const firstaidFeature = require("./features/firstaid");
 
 // Legacy feature locations (to be moved)
 const labRoutes = require("./features/LAB/routes");
-// const pharmacyRoutes = require("./routes/pharmacy/index");
-// const firstaidRoutes = require('./routes/firstaid/index');
-// const sosRoutes = require('./routes/firstaid/content/sosRoutes');
+// const pharmacyRoutes = require("./shared/services/email/helper/index");
+// const firstaidRoutes = require('./shared/services/email/helper/index');
+// const sosRoutes = require('./features/firstaid/routes/content/sosRoutes');
 
 // Other existing routes (to be refactored in future phases)
 // const chatRoutes = require("./routes/chatRoutes");
@@ -58,13 +58,13 @@ const DocumentFileController = require("./features/documents/controllers/documen
 // const walletRoutes = require("./routes/transactions/walletRoutes");
 // const disputeRoutes = require("./routes/transactions/disputeRoutes");
 const fhirRoutes = require('./features/documents/routes/fhirRoutes');
-// const dataGovernanceRoutes = require('./routes/dataGovernanceRoutes');
-// const auditRoutes = require('./routes/auditRoutes');
-// const consentRoutes = require('./routes/consentRoutes');
-// const complianceRoutes = require('./routes/complianceRoutes');
+// const dataGovernanceRoutes = require('./features/compliance/routes/dataGovernanceRoutes');
+// const auditRoutes = require('./features/compliance/routes/auditRoutes');
+// const consentRoutes = require('./features/compliance/routes/consentRoutes');
+// const complianceRoutes = require('./features/compliance/routes/complianceRoutes');
 // const mfaRoutes = require("./routes/mfa/mfaRoutes");
 // const referralRoutes = require('./routes/referralRoutes');
-// const prescription = require('./routes/prescription/prescriptionRoutes');
+// const prescription = require('./features/pharmacy/routes/prescriptionRoutes');
 const search = require("./features/search/routes/searchRoutes");
 // const faq = require("./routes/faqRoutes");
 const marketingFeature = require('./features/marketing');
@@ -142,7 +142,7 @@ const loadSwaggerDoc = (docPath, title) => {
 
 const swaggerDoc = loadSwaggerDoc("./docs/swagger.bundle.json", "Main");
 const pharmacySwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/pharmacy-swagger.bundle.json", "Pharmacy");
-const labSwaggerDoc = loadSwaggerDoc("./features/lab/docs/lab-swagger.bundle.json", "Lab");
+const labSwaggerDoc = loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.json", "Lab");
 const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundle.json", "SOS");
 
 // ============================================
