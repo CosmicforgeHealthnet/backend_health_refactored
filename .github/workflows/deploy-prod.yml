@@ -161,24 +161,36 @@ jobs:
               -v $DEPLOY_PATH/certbot:/var/www/certbot:ro \
               nginx:alpine
 
-            # Connect to dev network so we can proxy to dev containers
-            docker network connect cosmic_network_dev cosmic_gateway_prod 2>/dev/null || true
+            # Connect to dev network so we can proxy to dev containers if it exists
+            if docker network inspect cosmic_network_dev >/dev/null 2>&1; then
+                echo "Connecting production gateway to dev network..."
+                docker network connect cosmic_network_dev cosmic_gateway_prod 2>/dev/null || true
+            else
+                echo "⚠️ Skip connecting to cosmic_network_dev (network not found)"
+            fi
 
             echo "Cleaning images..."
             docker image prune -f
 
             echo "Deployment finished. Waiting for backend to become healthy..."
             for i in {1..12}; do
-              if curl -s -k https://api.cosmicforge-healthnet.com/health | grep -q "version"; then
+              if curl -s -k --connect-timeout 5 --max-time 10 https://api.cosmicforge-healthnet.com/health | grep -q "version"; then
                 echo "✅ Backend is LIVE and healthy! The deployment is successful."
                 docker ps --filter "name=cosmic_*_prod"
                 exit 0
               fi
               echo "Waiting for backend... attempt $i/12"
+              echo "Gateway status:"
+              docker ps --filter "name=cosmic_gateway_prod"
+              echo "Production backend status:"
+              docker ps --filter "name=cosmic_backend_prod"
               sleep 10
             done
 
             echo "❌ Backend failed to start or is not accessible!"
-            docker ps --filter "name=cosmic_*_prod"
-            docker logs cosmic_backend_prod --tail 50
+            docker ps -a --filter "name=cosmic_"
+            echo "--- Gateway Logs ---"
+            docker logs cosmic_gateway_prod --tail 50
+            echo "--- Backend Logs ---"
+            docker logs cosmic_backend_prod --tail 100
             exit 1
