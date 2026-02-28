@@ -1,7 +1,7 @@
 // src/config/database.js
 require("reflect-metadata");
 const { DataSource } = require("typeorm");
-const config = require("./index"); // this must be your index.js
+const config = require("./index");
 const entities = require("../entities/index");
 
 const AppDataSource = new DataSource({
