@@ -48,8 +48,6 @@ login_to_server.sh
 # Environment files
 .env
 .env.local
-.env.development
-.env.production
 *.env
 
 # Python
