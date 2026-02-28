@@ -33,6 +33,7 @@ const compliance = require('../features/compliance/entities');
 const documents = require('../features/documents/entities');
 const firstaid = require('../features/firstaid/entities');
 const pharmacy = require('../features/pharmacy/entities');
+const serviceManagement = require('../features/service-management/entities');
 // Add gamification, marketing, search if they have entities?
 // const gamification = require('../features/gamification/entities'); // Check existence first?
 // const marketing = require('../features/marketing/entities'); // Check existence first?
@@ -56,6 +57,7 @@ module.exports = [
     ...Object.values(documents),
     ...Object.values(firstaid),
     ...Object.values(pharmacy),
+    ...Object.values(serviceManagement),
 
     // Check other features if they exist and export entities
     // ...safeImport('../features/gamification/entities'), // Merged to marketing
