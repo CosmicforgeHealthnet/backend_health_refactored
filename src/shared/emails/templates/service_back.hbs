@@ -1,0 +1,50 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <div style="text-align: center; padding: 20px 0;">
+    <div style="background-color: #D1FAE5; border-radius: 50%; width: 60px; height: 60px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+      <span style="font-size: 30px;">&#10004;</span>
+    </div>
+  </div>
+
+  <h2 style="color: #059669; text-align: center; margin-bottom: 20px;">
+    Service Restored!
+  </h2>
+
+  <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+    Hi {{userName}},
+  </p>
+
+  <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+    Great news! <strong>{{serviceName}}</strong> is now back online and fully operational.
+  </p>
+
+  {{#if serviceDescription}}
+  <p style="color: #6B7280; font-size: 14px; line-height: 1.6; font-style: italic;">
+    {{serviceDescription}}
+  </p>
+  {{/if}}
+
+  <div style="background-color: #D1FAE5; border-left: 4px solid #10B981; padding: 15px; margin: 20px 0; border-radius: 4px;">
+    <p style="color: #065F46; margin: 0; font-weight: 600;">
+      You can now access all features and functionality of this service.
+    </p>
+  </div>
+
+  <div style="text-align: center; margin: 30px 0;">
+    <a href="{{appUrl}}" style="display: inline-block; background-color: #059669; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+      Open App
+    </a>
+  </div>
+
+  <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+    Thank you for your patience while we worked to restore the service. We appreciate your understanding.
+  </p>
+
+  <div style="border-top: 1px solid #E5E7EB; margin-top: 30px; padding-top: 20px;">
+    <p style="color: #6B7280; font-size: 14px; margin: 0;">
+      If you experience any issues, please don't hesitate to contact our support team.
+    </p>
+    <p style="color: #6B7280; font-size: 14px; margin: 10px 0 0 0;">
+      - The CosmicForge HealthNet Team
+    </p>
+  </div>
+</div>

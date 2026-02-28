@@ -1,0 +1,1702 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Service Management API",
+    "version": "1.0.0",
+    "description": "API for dynamic service availability management with countdown timers, real-time status updates, and automated notifications. Allows admins to manage service downtime and users to check service availability."
+  },
+  "servers": [
+    {
+      "url": "https://api.cosmicforge.com",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Public - Service Status",
+      "description": "Public endpoints for checking service availability (no authentication required)"
+    },
+    {
+      "name": "Admin - Service Management",
+      "description": "Admin endpoints for managing service availability (requires admin authentication)"
+    },
+    {
+      "name": "Admin - Service History",
+      "description": "Admin endpoints for viewing service status history and statistics"
+    }
+  ],
+  "paths": {
+    "/api/services": {
+      "get": {
+        "tags": ["Public - Service Status"],
+        "summary": "Get all services",
+        "description": "Retrieve all enabled services with their current status. This endpoint performs lazy reactivation - if a service's countdown has expired, it will be automatically reactivated.",
+        "operationId": "getAllServices",
+        "responses": {
+          "200": {
+            "description": "Services retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServicesListResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Services retrieved successfully",
+                  "data": [
+                    {
+                      "id": "550e8400-e29b-41d4-a716-446655440000",
+                      "serviceKey": "appointments",
+                      "name": "Appointments",
+                      "description": "Book and manage medical appointments",
+                      "status": "active",
+                      "isAvailable": true,
+                      "countdownEnd": null,
+                      "downtimeMessage": null,
+                      "category": "medical",
+                      "iconUrl": "https://example.com/icons/appointments.png"
+                    },
+                    {
+                      "id": "550e8400-e29b-41d4-a716-446655440001",
+                      "serviceKey": "pharmacy",
+                      "name": "Pharmacy",
+                      "description": "Order medications and prescriptions",
+                      "status": "down",
+                      "isAvailable": false,
+                      "countdownEnd": "2026-03-01T10:00:00.000Z",
+                      "downtimeMessage": "Undergoing scheduled maintenance",
+                      "category": "pharmacy",
+                      "iconUrl": "https://example.com/icons/pharmacy.png"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/services/{serviceKey}/status": {
+      "get": {
+        "tags": ["Public - Service Status"],
+        "summary": "Get service status",
+        "description": "Get the current status of a specific service by its key. Returns availability status, countdown timer (if applicable), and any downtime message.",
+        "operationId": "getServiceStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceKeyParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceStatusResponse"
+                },
+                "examples": {
+                  "active": {
+                    "summary": "Service is active",
+                    "value": {
+                      "success": true,
+                      "message": "Service status retrieved successfully",
+                      "data": {
+                        "serviceKey": "appointments",
+                        "name": "Appointments",
+                        "status": "active",
+                        "isAvailable": true,
+                        "countdownEnd": null,
+                        "downtimeMessage": null,
+                        "showCountdown": false
+                      }
+                    }
+                  },
+                  "down_with_countdown": {
+                    "summary": "Service is down with countdown",
+                    "value": {
+                      "success": true,
+                      "message": "Service status retrieved successfully",
+                      "data": {
+                        "serviceKey": "pharmacy",
+                        "name": "Pharmacy",
+                        "status": "down",
+                        "isAvailable": false,
+                        "countdownEnd": "2026-03-01T10:00:00.000Z",
+                        "downtimeMessage": "We are performing scheduled maintenance. Service will be back soon.",
+                        "showCountdown": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/services/status/bulk": {
+      "post": {
+        "tags": ["Public - Service Status"],
+        "summary": "Check multiple service statuses",
+        "description": "Check the status of multiple services at once. Useful for frontend apps that need to check all relevant services on startup.",
+        "operationId": "getBulkServiceStatus",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkStatusRequest"
+              },
+              "example": {
+                "serviceKeys": ["appointments", "pharmacy", "lab", "chat"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service statuses retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkStatusResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Service statuses retrieved successfully",
+                  "data": {
+                    "appointments": {
+                      "serviceKey": "appointments",
+                      "name": "Appointments",
+                      "status": "active",
+                      "isAvailable": true,
+                      "countdownEnd": null,
+                      "downtimeMessage": null,
+                      "showCountdown": false
+                    },
+                    "pharmacy": {
+                      "serviceKey": "pharmacy",
+                      "name": "Pharmacy",
+                      "status": "down",
+                      "isAvailable": false,
+                      "countdownEnd": "2026-03-01T10:00:00.000Z",
+                      "downtimeMessage": "Scheduled maintenance",
+                      "showCountdown": true
+                    },
+                    "lab": {
+                      "serviceKey": "lab",
+                      "name": "Lab Services",
+                      "status": "active",
+                      "isAvailable": true,
+                      "countdownEnd": null,
+                      "downtimeMessage": null,
+                      "showCountdown": false
+                    },
+                    "chat": {
+                      "serviceKey": "chat",
+                      "name": "Chat",
+                      "status": "active",
+                      "isAvailable": true,
+                      "countdownEnd": null,
+                      "downtimeMessage": null,
+                      "showCountdown": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "serviceKeys must be a non-empty array"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/services/{serviceKey}/available": {
+      "get": {
+        "tags": ["Public - Service Status"],
+        "summary": "Check service availability",
+        "description": "Simple boolean check to determine if a service is currently available. Returns true if service is active and enabled.",
+        "operationId": "checkServiceAvailability",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceKeyParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability check completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityResponse"
+                },
+                "examples": {
+                  "available": {
+                    "summary": "Service is available",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "serviceKey": "appointments",
+                        "isAvailable": true
+                      }
+                    }
+                  },
+                  "unavailable": {
+                    "summary": "Service is unavailable",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "serviceKey": "pharmacy",
+                        "isAvailable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/services/admin/all": {
+      "get": {
+        "tags": ["Admin - Service Management"],
+        "summary": "Get all services (admin)",
+        "description": "Retrieve all services including disabled ones. Returns full service details for admin dashboard.",
+        "operationId": "adminGetAllServices",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "includeDisabled",
+            "in": "query",
+            "description": "Include disabled services in the response",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"],
+              "default": "false"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Services retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminServicesListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/services/admin": {
+      "post": {
+        "tags": ["Admin - Service Management"],
+        "summary": "Create a new service",
+        "description": "Create a new service that can be managed for availability. The service key must be unique and will be automatically converted to lowercase with underscores.",
+        "operationId": "createService",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceRequest"
+              },
+              "example": {
+                "serviceKey": "telemedicine",
+                "name": "Telemedicine",
+                "description": "Video consultations with doctors",
+                "category": "medical",
+                "iconUrl": "https://example.com/icons/telemedicine.png",
+                "displayOrder": 5,
+                "isEnabled": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Service created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "serviceKey and name are required"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "Service key already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Service with key 'telemedicine' already exists"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/services/admin/{id}": {
+      "get": {
+        "tags": ["Admin - Service Management"],
+        "summary": "Get service by ID (admin)",
+        "description": "Retrieve a single service by its ID with full details",
+        "operationId": "adminGetService",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Admin - Service Management"],
+        "summary": "Update service details",
+        "description": "Update service details (name, description, category, etc.). Does not change status - use the dedicated status endpoints for that.",
+        "operationId": "updateService",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServiceRequest"
+              },
+              "example": {
+                "name": "Telemedicine Pro",
+                "description": "Premium video consultations with specialists",
+                "category": "premium",
+                "displayOrder": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Service key already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Admin - Service Management"],
+        "summary": "Delete service",
+        "description": "Soft delete a service. The service will be marked as deleted but not removed from the database.",
+        "operationId": "deleteService",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Service deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/services/admin/{id}/down": {
+      "post": {
+        "tags": ["Admin - Service Management"],
+        "summary": "Set service to DOWN",
+        "description": "Set a service to DOWN status with optional countdown timer. Can optionally specify a countdown end time for automatic reactivation, a reason for internal tracking, and a user-facing message. Notifications are sent to all users by default.",
+        "operationId": "setServiceDown",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetServiceDownRequest"
+              },
+              "examples": {
+                "scheduled_maintenance": {
+                  "summary": "Scheduled maintenance with countdown",
+                  "value": {
+                    "countdownEnd": "2026-03-01T10:00:00.000Z",
+                    "reason": "Database migration and performance optimization",
+                    "downtimeMessage": "We are performing scheduled maintenance to improve your experience. Service will be back by 10:00 AM UTC.",
+                    "showCountdown": true,
+                    "sendNotifications": true
+                  }
+                },
+                "emergency_downtime": {
+                  "summary": "Emergency downtime (no countdown)",
+                  "value": {
+                    "reason": "Critical security patch",
+                    "downtimeMessage": "Service is temporarily unavailable. We are working to restore it as soon as possible.",
+                    "showCountdown": false,
+                    "sendNotifications": true
+                  }
+                },
+                "silent_downtime": {
+                  "summary": "Silent downtime (no notifications)",
+                  "value": {
+                    "countdownEnd": "2026-03-01T02:00:00.000Z",
+                    "reason": "Minor fix during low-traffic hours",
+                    "sendNotifications": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service set to down successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid countdown time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "countdownEnd must be in the future"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/services/admin/{id}/active": {
+      "post": {
+        "tags": ["Admin - Service Management"],
+        "summary": "Set service to ACTIVE",
+        "description": "Override the service status to ACTIVE immediately. This will clear any countdown timer and send notifications to all users that the service is back online.",
+        "operationId": "setServiceActive",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetServiceActiveRequest"
+              },
+              "example": {
+                "sendNotifications": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service set to active successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/services/admin/{id}/extend-countdown": {
+      "post": {
+        "tags": ["Admin - Service Management"],
+        "summary": "Extend countdown",
+        "description": "Extend the countdown timer for a service that is currently down. The new countdown end time must be later than the current one. Notifications are sent to inform users of the extended maintenance window.",
+        "operationId": "extendCountdown",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendCountdownRequest"
+              },
+              "example": {
+                "newCountdownEnd": "2026-03-01T14:00:00.000Z",
+                "reason": "Additional testing required for data integrity",
+                "sendNotifications": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Countdown extended successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missing_countdown": {
+                    "summary": "Missing countdown end",
+                    "value": {
+                      "success": false,
+                      "message": "newCountdownEnd is required"
+                    }
+                  },
+                  "past_countdown": {
+                    "summary": "Countdown in the past",
+                    "value": {
+                      "success": false,
+                      "message": "newCountdownEnd must be in the future"
+                    }
+                  },
+                  "not_extending": {
+                    "summary": "Not extending",
+                    "value": {
+                      "success": false,
+                      "message": "New countdown end must be later than current countdown end. Use shortenCountdown to make it earlier."
+                    }
+                  },
+                  "service_not_down": {
+                    "summary": "Service is not down",
+                    "value": {
+                      "success": false,
+                      "message": "Can only extend countdown for services that are down"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/services/admin/{id}/shorten-countdown": {
+      "post": {
+        "tags": ["Admin - Service Management"],
+        "summary": "Shorten countdown",
+        "description": "Shorten the countdown timer for a service that is currently down. The new countdown end time must be earlier than the current one. If the new time is in the past, the service will be immediately activated.",
+        "operationId": "shortenCountdown",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShortenCountdownRequest"
+              },
+              "example": {
+                "newCountdownEnd": "2026-03-01T08:00:00.000Z",
+                "reason": "Fixed the issue faster than expected",
+                "sendNotifications": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Countdown shortened successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/services/admin/{id}/history": {
+      "get": {
+        "tags": ["Admin - Service History"],
+        "summary": "Get service status history",
+        "description": "Retrieve the status change history for a specific service. Shows all status changes, countdown modifications, and who made the changes.",
+        "operationId": "getServiceHistory",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/SkipParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service history retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceHistoryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/services/admin/history/all": {
+      "get": {
+        "tags": ["Admin - Service History"],
+        "summary": "Get all status history",
+        "description": "Retrieve status change history for all services. Useful for admin dashboard to see recent activity across all services.",
+        "operationId": "getAllHistory",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/SkipParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All history retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllHistoryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/services/admin/{id}/stats": {
+      "get": {
+        "tags": ["Admin - Service History"],
+        "summary": "Get downtime statistics",
+        "description": "Retrieve downtime statistics for a specific service including total incidents, total downtime duration, and average downtime.",
+        "operationId": "getDowntimeStats",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceIdParam"
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Start date for statistics (ISO 8601 format)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2026-01-01T00:00:00.000Z"
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "End date for statistics (ISO 8601 format)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2026-12-31T23:59:59.999Z"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Downtime statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DowntimeStatsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Downtime statistics retrieved successfully",
+                  "data": {
+                    "totalIncidents": "5",
+                    "totalDowntimeMinutes": "180",
+                    "avgDowntimeMinutes": "36"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token for authentication. Required for all admin endpoints."
+      }
+    },
+    "parameters": {
+      "ServiceKeyParam": {
+        "name": "serviceKey",
+        "in": "path",
+        "description": "Unique service key identifier (e.g., 'appointments', 'pharmacy', 'lab')",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "appointments"
+      },
+      "ServiceIdParam": {
+        "name": "id",
+        "in": "path",
+        "description": "Service UUID",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "550e8400-e29b-41d4-a716-446655440000"
+      },
+      "LimitParam": {
+        "name": "limit",
+        "in": "query",
+        "description": "Maximum number of records to return",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 50
+        }
+      },
+      "SkipParam": {
+        "name": "skip",
+        "in": "query",
+        "description": "Number of records to skip for pagination",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+    "schemas": {
+      "ServiceStatus": {
+        "type": "string",
+        "enum": ["active", "down"],
+        "description": "Current status of the service"
+      },
+      "StatusChangeAction": {
+        "type": "string",
+        "enum": [
+          "manual_down",
+          "manual_active",
+          "auto_reactivated",
+          "countdown_extended",
+          "countdown_shortened",
+          "override_active",
+          "created"
+        ],
+        "description": "Type of action that triggered the status change"
+      },
+      "Service": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier"
+          },
+          "serviceKey": {
+            "type": "string",
+            "description": "Unique key for the service"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the service"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the service"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ServiceStatus"
+          },
+          "countdownEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the service will automatically reactivate"
+          },
+          "downtimeReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Internal reason for downtime"
+          },
+          "downtimeMessage": {
+            "type": "string",
+            "nullable": true,
+            "description": "User-facing message during downtime"
+          },
+          "showCountdown": {
+            "type": "boolean",
+            "description": "Whether to show countdown to users"
+          },
+          "iconUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Icon URL for the service"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Category for grouping services"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "description": "Order for displaying services"
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "description": "Whether the service is enabled"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PublicServiceStatus": {
+        "type": "object",
+        "properties": {
+          "serviceKey": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ServiceStatus"
+          },
+          "isAvailable": {
+            "type": "boolean"
+          },
+          "countdownEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "downtimeMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "showCountdown": {
+            "type": "boolean"
+          }
+        }
+      },
+      "StatusHistoryEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "previousStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "newStatus": {
+            "type": "string"
+          },
+          "action": {
+            "$ref": "#/components/schemas/StatusChangeAction"
+          },
+          "previousCountdownEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "newCountdownEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "changedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "notificationsSent": {
+            "type": "boolean"
+          },
+          "notificationCount": {
+            "type": "integer"
+          },
+          "downtimeDurationMinutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "changedByUser": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "fullName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ServicesListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "serviceKey": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "status": {
+                  "$ref": "#/components/schemas/ServiceStatus"
+                },
+                "isAvailable": {
+                  "type": "boolean"
+                },
+                "countdownEnd": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "downtimeMessage": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "category": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "iconUrl": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "AdminServicesListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Service"
+            }
+          }
+        }
+      },
+      "ServiceStatusResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PublicServiceStatus"
+          }
+        }
+      },
+      "ServiceResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Service"
+          }
+        }
+      },
+      "BulkStatusRequest": {
+        "type": "object",
+        "required": ["serviceKeys"],
+        "properties": {
+          "serviceKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Array of service keys to check"
+          }
+        }
+      },
+      "BulkStatusResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PublicServiceStatus"
+            }
+          }
+        }
+      },
+      "AvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "serviceKey": {
+                "type": "string"
+              },
+              "isAvailable": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "CreateServiceRequest": {
+        "type": "object",
+        "required": ["serviceKey", "name"],
+        "properties": {
+          "serviceKey": {
+            "type": "string",
+            "description": "Unique identifier for the service (auto-converted to lowercase with underscores)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name for the service"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the service"
+          },
+          "category": {
+            "type": "string",
+            "description": "Category for grouping (e.g., 'medical', 'pharmacy', 'admin')"
+          },
+          "iconUrl": {
+            "type": "string",
+            "description": "URL for service icon"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "default": 0,
+            "description": "Order for displaying services"
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether the service is enabled"
+          }
+        }
+      },
+      "UpdateServiceRequest": {
+        "type": "object",
+        "properties": {
+          "serviceKey": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "type": "integer"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SetServiceDownRequest": {
+        "type": "object",
+        "properties": {
+          "countdownEnd": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the service should automatically reactivate (ISO 8601)"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Internal reason for downtime (for admin records)"
+          },
+          "downtimeMessage": {
+            "type": "string",
+            "description": "User-facing message to display during downtime"
+          },
+          "showCountdown": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show countdown timer to users"
+          },
+          "sendNotifications": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to send email and in-app notifications to users"
+          }
+        }
+      },
+      "SetServiceActiveRequest": {
+        "type": "object",
+        "properties": {
+          "sendNotifications": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to send 'service is back' notifications to users"
+          }
+        }
+      },
+      "ExtendCountdownRequest": {
+        "type": "object",
+        "required": ["newCountdownEnd"],
+        "properties": {
+          "newCountdownEnd": {
+            "type": "string",
+            "format": "date-time",
+            "description": "New countdown end time (must be later than current)"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for extending the countdown"
+          },
+          "sendNotifications": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to notify users about the extension"
+          }
+        }
+      },
+      "ShortenCountdownRequest": {
+        "type": "object",
+        "required": ["newCountdownEnd"],
+        "properties": {
+          "newCountdownEnd": {
+            "type": "string",
+            "format": "date-time",
+            "description": "New countdown end time (must be earlier than current)"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for shortening the countdown"
+          },
+          "sendNotifications": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to notify users about the change"
+          }
+        }
+      },
+      "ServiceHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusHistoryEntry"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer"
+              },
+              "skip": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "AllHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/StatusHistoryEntry"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "service": {
+                      "$ref": "#/components/schemas/Service"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer"
+              },
+              "skip": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "DowntimeStatsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "totalIncidents": {
+                "type": "string",
+                "description": "Total number of downtime incidents"
+              },
+              "totalDowntimeMinutes": {
+                "type": "string",
+                "description": "Total downtime in minutes"
+              },
+              "avgDowntimeMinutes": {
+                "type": "string",
+                "description": "Average downtime per incident in minutes"
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Authorization header missing or malformed"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Insufficient permissions (admin role required)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Insufficient permissions"
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Service not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "success": false,
+              "message": "Service not found"
+            }
+          }
+        }
+      }
+    }
+  }
+}

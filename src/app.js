@@ -68,6 +68,7 @@ const fhirRoutes = require('./features/documents/routes/fhirRoutes');
 const search = require("./features/search/routes/searchRoutes");
 // const faq = require("./routes/faqRoutes");
 const marketingFeature = require('./features/marketing');
+const serviceManagementFeature = require('./features/service-management');
 const waitlistRoute = require("./features/marketing/routes/waitlistRoutes"); // Keep independent for legacy /lab_pharm
 const whatsappRoutesNotification = require("./features/notifications/whatsapp/routes");
 const adminVerificationRoutes = require("./features/auth/routes/adminVerificationRoutes");
@@ -144,6 +145,7 @@ const swaggerDoc = loadSwaggerDoc("./docs/swagger.bundle.json", "Main");
 const pharmacySwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/pharmacy-swagger.bundle.json", "Pharmacy");
 const labSwaggerDoc = loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.json", "Lab");
 const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundle.json", "SOS");
+const serviceManagementSwaggerDoc = loadSwaggerDoc("./features/service-management/docs/service-management-swagger.json", "Service Management");
 
 // ============================================
 // GLOBAL MIDDLEWARE
@@ -209,6 +211,12 @@ app.use('/sos-docs', swaggerUi.serveFiles(sosSwaggerDoc, {}), swaggerUi.setup(so
     customSiteTitle: "CosmicForge SOS Emergency API"
 }));
 
+app.use('/service-docs', swaggerUi.serveFiles(serviceManagementSwaggerDoc, {}), swaggerUi.setup(serviceManagementSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Service Management API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
 // ============================================
 // HEALTH CHECK
 // ============================================
@@ -234,7 +242,8 @@ app.get("/", (req, res) => {
             main: "/api-docs",
             pharmacy: "/pharmacy-docs",
             lab: "/lab-docs",
-            sos: "/sos-docs"
+            sos: "/sos-docs",
+            serviceManagement: "/service-docs"
         },
         routes: {
             new: {
@@ -290,6 +299,7 @@ app.use("/api/compliance", complianceFeature.complianceRouter);
 app.use("/api", documentsFeature.documentsRouter);
 app.use("/api/firstaid", firstaidFeature.router);
 app.use("/api/marketing", marketingFeature.router);
+app.use("/api/services", serviceManagementFeature.router);
 app.use("/api/admin/verification", adminVerificationRoutes);
 
 

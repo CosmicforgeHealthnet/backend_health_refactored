@@ -20,6 +20,7 @@ const subscriptions = require('./subscriptions');
 // const support = require('./support');
 const compliance = require('./compliance');
 const documents = require('./documents');
+const serviceManagement = require('./service-management');
 
 module.exports = {
     auth,
@@ -33,6 +34,7 @@ module.exports = {
     support,
     compliance,
     documents,
+    serviceManagement,
 
     // All feature entities combined for TypeORM
     getAllEntities() {
@@ -50,6 +52,7 @@ module.exports = {
             ...Object.values(documents.entities),
             ...Object.values(firstaid.entities),
             ...Object.values(pharmacy.entities),
+            ...Object.values(serviceManagement.entities),
             // Add other feature entities here as they are refactored
         ];
     }
