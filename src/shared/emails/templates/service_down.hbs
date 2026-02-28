@@ -1,0 +1,59 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <div style="text-align: center; padding: 20px 0;">
+    <div style="background-color: #FEF3C7; border-radius: 50%; width: 60px; height: 60px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+      <span style="font-size: 30px;">&#9888;</span>
+    </div>
+  </div>
+
+  <h2 style="color: #B45309; text-align: center; margin-bottom: 20px;">
+    Service Temporarily Unavailable
+  </h2>
+
+  <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+    Hi {{userName}},
+  </p>
+
+  <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+    We wanted to let you know that <strong>{{serviceName}}</strong> is currently undergoing maintenance and is temporarily unavailable.
+  </p>
+
+  {{#if serviceDescription}}
+  <p style="color: #6B7280; font-size: 14px; line-height: 1.6; font-style: italic;">
+    {{serviceDescription}}
+  </p>
+  {{/if}}
+
+  <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0; border-radius: 4px;">
+    <p style="color: #92400E; margin: 0; font-weight: 600;">
+      {{downtimeMessage}}
+    </p>
+  </div>
+
+  {{#if hasCountdown}}
+  <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+    <p style="color: #6B7280; margin: 0 0 10px 0; font-size: 14px;">
+      Expected to be back by:
+    </p>
+    <p style="color: #1F2937; margin: 0; font-size: 18px; font-weight: 600;">
+      {{countdownEnd}}
+    </p>
+  </div>
+  {{/if}}
+
+  <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+    We apologize for any inconvenience this may cause. Our team is working diligently to restore the service as quickly as possible.
+  </p>
+
+  <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+    We'll notify you as soon as the service is back online.
+  </p>
+
+  <div style="border-top: 1px solid #E5E7EB; margin-top: 30px; padding-top: 20px;">
+    <p style="color: #6B7280; font-size: 14px; margin: 0;">
+      Thank you for your patience and understanding.
+    </p>
+    <p style="color: #6B7280; font-size: 14px; margin: 10px 0 0 0;">
+      - The CosmicForge HealthNet Team
+    </p>
+  </div>
+</div>
