@@ -85,7 +85,19 @@ jobs:
 
             echo "Configuring environment..."
             # Create .env.dev from environment variable for reliability
-            echo "$DEV_ENV_FILE" > .env.dev
+            echo "# Updated at: $(date)" > .env.dev
+            echo "$DEV_ENV_FILE" >> .env.dev
+            cp .env.dev .env
+
+            echo "--- Environment File Verification (Dev) ---"
+            echo "Deployment path: $(pwd)"
+            echo "Files in directory:"
+            ls -la .env*
+            echo "First line of .env:"
+            head -n 1 .env
+            echo "MD5 of .env (for verification):"
+            md5sum .env
+            echo "------------------------------------------"
 
             echo "Pulling latest images from Registry..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest
@@ -135,6 +147,7 @@ jobs:
               --name cosmic_brain_dev \
               --network cosmic_network_dev \
               --restart unless-stopped \
+              --env-file .env.dev \
               -p 8002:8001 \
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:dev-latest
 
