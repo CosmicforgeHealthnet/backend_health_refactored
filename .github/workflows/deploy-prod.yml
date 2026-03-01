@@ -83,6 +83,7 @@ jobs:
 
             echo "Setting environment..."
             echo "$PROD_ENV_FILE" > .env.production
+            cp .env.production .env
 
             echo "Pulling images..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
@@ -96,20 +97,19 @@ jobs:
             fuser -k 443/tcp 2>/dev/null || true
 
             # Identify only production containers or those explicitly holding prod ports
-            PROD_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep -E "cosmic_.*_pro" | awk '{print $1}')
-            GATEWAY_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep "cosmic_gateway_pro" | awk '{print $1}')
+            PROD_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep -E "cosmic_.*_prod" | awk '{print $1}')
+            GATEWAY_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep "cosmic_gateway_prod" | awk '{print $1}')
             PORT_IDS=$(docker ps -a -q --filter "publish=80" --filter "publish=443")
 
             for ID in $(echo "$PROD_IDS $GATEWAY_IDS $PORT_IDS" | tr ' ' '\n' | sort -u); do
                 if [ -n "$ID" ]; then
-                    echo "Destroying production-related container $ID..."
-                    # Ensure we don't accidentally kill dev if IDs overlap for some reason
                     NAME=$(docker inspect --format '{{.Name}}' $ID | sed 's/\///')
                     if [[ "$NAME" == *_dev ]]; then
                         echo "Skipping $NAME (Development container)"
                         continue
                     fi
 
+                    echo "Destroying production-related container $NAME ($ID)..."
                     PID=$(docker inspect --format '{{.State.Pid}}' $ID 2>/dev/null || echo "0")
                     if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
                         kill -9 $PID || true
@@ -134,6 +134,7 @@ jobs:
               --name cosmic_brain_prod \
               --network cosmic_network_prod \
               --restart unless-stopped \
+              --env-file .env.production \
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:latest
               
             echo "Starting Backend..."
