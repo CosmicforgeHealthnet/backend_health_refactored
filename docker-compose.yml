@@ -13,7 +13,7 @@ services:
       - REDIS_DEV_HOST=redis
       # Add other DB credentials here or use .env file
     env_file:
-      - .env.production
+      - .env
     depends_on:
       - ai_service
       - redis

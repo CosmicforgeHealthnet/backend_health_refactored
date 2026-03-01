@@ -238,7 +238,7 @@ server {
 4. **Nginx** forwards request to port 3001
 5. **App-1 container** receives request on port 3001
 6. **App-1** queries Postgres at `shared-postgres:5432`
-7. **App-1** caches data in Redis at `shared-redis:6379`
+7. **App-1** caches data in Redis at `redis:6379`
 8. **App-1** sends response back to Nginx
 9. **Nginx** sends response to user
 

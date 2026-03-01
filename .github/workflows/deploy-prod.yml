@@ -126,6 +126,7 @@ jobs:
               --name cosmic_redis_prod \
               --network cosmic_network_prod \
               --restart unless-stopped \
+              --network-alias redis \
               redis:alpine
 
             echo "Starting AI..."
