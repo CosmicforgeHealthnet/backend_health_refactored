@@ -82,8 +82,19 @@ jobs:
             git reset --hard origin/main
 
             echo "Setting environment..."
-            echo "$PROD_ENV_FILE" > .env.production
+            echo "# Updated at: $(date)" > .env.production
+            echo "$PROD_ENV_FILE" >> .env.production
             cp .env.production .env
+
+            echo "--- Environment File Verification ---"
+            echo "Deployment path: $(pwd)"
+            echo "Files in directory:"
+            ls -la .env*
+            echo "First line of .env:"
+            head -n 1 .env
+            echo "MD5 of .env (for verification):"
+            md5sum .env
+            echo "------------------------------------"
 
             echo "Pulling images..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
