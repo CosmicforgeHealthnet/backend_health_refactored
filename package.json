@@ -27,7 +27,8 @@
     "generate-postman": "node src/docs/generatePostman.js",
     "docker:dev": "docker-compose -f docker-compose.yml up --build",
     "docker:prod": "docker-compose -f docker-compose.prod.yml up -d --build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "circular": "madge --circular src"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^11.0.1",
@@ -87,6 +88,8 @@
     "globals": "^16.3.0",
     "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "lint-staged": "^16.3.0",
+    "madge": "^8.0.0",
     "nodemon": "^3.1.10",
     "yaml": "^2.8.0"
   },
@@ -99,5 +102,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "npm test -- --findRelatedTests --passWithNoTests"
+    ]
+  }
 }

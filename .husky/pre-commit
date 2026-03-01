@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Checking for circular dependencies..."
+npm run circular
+
+echo "🚀 Running lint-staged checks..."
+npx lint-staged
