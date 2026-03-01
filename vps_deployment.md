@@ -92,7 +92,7 @@ You're running:
 - `shared-nginx` (Nginx reverse proxy)
 - `cosmicforge_health_backend` (Your Node.js app)
 - `shared-postgres` (Database)
-- `shared-redis` (Caching)
+- `redis` (Caching)
 - Multiple healthcare microservices
 
 Without Docker, managing all these would be complicated.
@@ -254,7 +254,7 @@ docker ps
 shared-nginx (Nginx reverse proxy)
 cosmicforge_health_backend (Your Node.js app)
 shared-postgres (Database)
-shared-redis (Caching)
+redis (Caching)
 healthcare-* (Other microservices)
 ```
 

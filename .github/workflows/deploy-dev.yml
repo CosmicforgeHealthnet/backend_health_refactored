@@ -125,6 +125,7 @@ jobs:
               --name cosmic_redis_dev \
               --network cosmic_network_dev \
               --restart unless-stopped \
+              --network-alias redis \
               -p 6380:6379 \
               redis:alpine
 
@@ -148,7 +149,8 @@ jobs:
                -e PORT=5000 \
                -p 5001:5000 \
                -v $(pwd)/uploads:/app/uploads \
-               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest
+               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest \
+               npm run dev
 
             echo "Starting Nginx Gateway..."
             # Nginx on dev port 8081:80
