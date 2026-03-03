@@ -1,7 +1,19 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
+const { execSync } = require('node:child_process');
 
 const srcDir = path.join(__dirname, '../src');
+const repoRoot = path.resolve(__dirname, '..');
+
+// Build map: lowercase_rel_path → exact_git_rel_path
+// This gives us the ground truth about what casing git/Linux will use.
+const gitFileMap = new Map();
+try {
+    const output = execSync('git ls-files src/', { cwd: repoRoot, encoding: 'utf-8' });
+    for (const line of output.trim().split('\n')) {
+        if (line) gitFileMap.set(line.toLowerCase(), line);
+    }
+} catch (e) { /* git unavailable — will fall back to filesystem check */ }
 
 function findJsFiles(dir, fileList = []) {
     const files = fs.readdirSync(dir);
@@ -16,21 +28,78 @@ function findJsFiles(dir, fileList = []) {
     return fileList;
 }
 
-function checkExactCaseExists(filePath) {
+/**
+ * Check case-sensitivity using git as the source of truth.
+ *
+ * Only the FORWARD segments of the import string are verified — segments
+ * inherited from the importer's own directory are excluded, because those
+ * are not under the author's control at the point of writing the import.
+ *
+ * isDirectoryImport: true when the import resolved via <dir>/index.js lookup
+ * (i.e. the import string doesn't end with 'index' but the file is index.js).
+ * In that case we strip the trailing /index.js from the git path before comparing.
+ */
+function checkImportCasing(importStr, resolvedAbsPath, isDirectoryImport) {
+    if (!gitFileMap.size) {
+        return checkFilesystemCasing(resolvedAbsPath);
+    }
+
+    const rel = path.relative(repoRoot, resolvedAbsPath).replace(/\\/g, '/');
+
+    // Try to find the file in git (case-insensitive key lookup)
+    const gitPath =
+        gitFileMap.get(rel.toLowerCase()) ||
+        gitFileMap.get(rel.toLowerCase() + '.js') ||
+        gitFileMap.get(rel.toLowerCase() + '.json');
+
+    if (!gitPath) return true; // Not tracked in git — no authoritative case to check against
+
+    // Extract only the forward path segments written in the import string
+    // (filter out '..' and '.' which just navigate to a base directory)
+    const importForwardSegs = importStr.replace(/\\/g, '/').split('/')
+        .filter(s => s !== '..' && s !== '.');
+
+    if (importForwardSegs.length === 0) return true;
+
+    // For directory imports (require('./utils') → utils/index.js), the git path
+    // has an extra /index.js segment that isn't in the import string. Strip it
+    // so that segment counts align correctly.
+    let normGitPath = gitPath;
+    if (isDirectoryImport && normGitPath.endsWith('/index.js')) {
+        normGitPath = normGitPath.slice(0, -'/index.js'.length);
+    }
+    // Strip plain .js/.json extension from the final segment so we can compare
+    // 'lab_order' (import) against 'lab_order.js' (git path).
+    else {
+        normGitPath = normGitPath.replace(/\.(js|json|ts)$/, '');
+    }
+
+    const gitParts = normGitPath.split('/');
+    const N = importForwardSegs.length;
+
+    // The forward segments correspond to the LAST N parts of the git path
+    const relevantGitParts = gitParts.slice(-N);
+
+    for (let i = 0; i < N; i++) {
+        // Strip any explicit extension from both sides before comparing
+        const importSeg = importForwardSegs[i].replace(/\.(js|json|ts)$/, '');
+        const gitSeg = (relevantGitParts[i] || '').replace(/\.(js|json|ts)$/, '');
+        if (importSeg !== gitSeg) return false; // Case mismatch in an import-controlled segment
+    }
+    return true;
+}
+
+// Fallback: filesystem-based check. Accurate on Linux; unreliable on Windows
+// (case-insensitive FS makes it unable to detect wrong-case imports).
+function checkFilesystemCasing(filePath) {
     let currentPath = filePath;
     while (currentPath !== path.parse(currentPath).root) {
         const dir = path.dirname(currentPath);
         const base = path.basename(currentPath);
-
         if (!fs.existsSync(dir)) return false;
-
-        const actualContents = fs.readdirSync(dir);
-        if (!actualContents.includes(base)) {
-            return false; // Case mismatch found!
-        }
-
+        if (!fs.readdirSync(dir).includes(base)) return false;
         currentPath = dir;
-        if (currentPath === path.resolve(__dirname, '..')) break;
+        if (currentPath === repoRoot) break;
     }
     return true;
 }
@@ -41,15 +110,14 @@ const jsFiles = findJsFiles(srcDir);
 
 for (const file of jsFiles) {
     const content = fs.readFileSync(file, 'utf-8');
-    // Simple regex to grab relative require paths: require('./...') or require('../...')
     const requireRegex = /(?:require|loadSwaggerDoc)\(['"](\.[^'"]+)['"]\)/g;
     let match;
 
     while ((match = requireRegex.exec(content)) !== null) {
         const importStr = match[1];
-        let resolvedRaw = path.resolve(path.dirname(file), importStr);
+        const resolvedRaw = path.resolve(path.dirname(file), importStr);
 
-        // Possible extensions Node.js tries
+        // Possible extensions Node.js tries — order matters
         const possiblePaths = [
             resolvedRaw,
             resolvedRaw + '.js',
@@ -58,18 +126,18 @@ for (const file of jsFiles) {
         ];
 
         let actualExistingPath = null;
+        let isDirectoryImport = false;
 
-        // Find what path actually resolves physically
-        for (const p of possiblePaths) {
-            if (fs.existsSync(p)) {
-                actualExistingPath = p;
+        for (let i = 0; i < possiblePaths.length; i++) {
+            if (fs.existsSync(possiblePaths[i])) {
+                actualExistingPath = possiblePaths[i];
+                isDirectoryImport = (i === 3); // index 3 = <dir>/index.js lookup
                 break;
             }
         }
 
-        // Verify if the strict exact case matches
         if (actualExistingPath) {
-            if (!checkExactCaseExists(actualExistingPath)) {
+            if (!checkImportCasing(importStr, actualExistingPath, isDirectoryImport)) {
                 console.error(`\n❌ CASE SENSITIVITY ERROR DETECTED`);
                 console.error(`   File: ${file}`);
                 console.error(`   Import: '${importStr}'`);
