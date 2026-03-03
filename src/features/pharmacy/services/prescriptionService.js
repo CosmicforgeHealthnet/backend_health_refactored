@@ -3,7 +3,7 @@ const prescriptionRepo = require("../repositories/prescriptionRepository");
 const userRepo = require("../../auth/repositories/userRepository");
 const pharmacyProfileRepo = require("../repositories/pharmacyProfileRepository");
 const AppointmentRepository = require("../../appointments/repositories/appointmentRepository");
-const labOrderRepo = require("../../LAB/repositories/lab_order");
+const labOrderRepo = require("../../lab/repositories/lab_order");
 const { PrescriptionStatus, PaymentStatus } = require("../entities/Prescription");
 
 const appointmentRepo = new AppointmentRepository();
