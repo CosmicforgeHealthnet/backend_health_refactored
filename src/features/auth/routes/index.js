@@ -310,16 +310,6 @@ router.get("/google/callback", authController.googleCallback);
  */
 router.post("/google/mobile-login", authController.googleMobileLogin);
 
-/**
- * @swagger
- * /api/auth/google/mobile-login:
- *   post:
- *     summary: Google login for mobile
- *     tags: [Authentication]
- *     description: Authenticates user via Google ID Token from mobile device.
- */
-router.post("/google/mobile-login", authController.googleMobileLogin);
-
 router.use("/referrals", referralRoutes);
 router.use("/mfa", mfaRoutes);
 

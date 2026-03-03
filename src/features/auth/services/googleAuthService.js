@@ -130,10 +130,18 @@ class GoogleAuthService {
    * @param {string} role
    */
   async verifyMobileIdToken(idToken, deviceFingerprint, userAgent, role) {
-    // Verify ID token
+    // Accept tokens from web, Android, and iOS clients.
+    // Mobile apps sign tokens with their own platform client ID, NOT the web client ID.
+    // Passing only the web clientId causes "Wrong recipient" verification failure on mobile.
+    const validAudiences = [
+      config.google.clientId,
+      config.google.androidClientId,
+      config.google.iosClientId,
+    ].filter(Boolean);
+
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: config.google.clientId
+      audience: validAudiences
     });
     const payload = ticket.getPayload();
     const { sub, email, email_verified, name, picture } = payload;
@@ -178,7 +186,10 @@ class GoogleAuthService {
       status: user.status,
       provider: user.provider,
       providerId: user.providerId,
+      bannerUrl: user.bannerUrl,
       profileImageUrl: user.profileImageUrl,
+      phoneNumber: user.phoneNumber,
+      departmentSpecialty: user.departmentSpecialty,
       mfaEnabled: user.mfaEnabled,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt

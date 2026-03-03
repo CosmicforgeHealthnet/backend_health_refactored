@@ -364,9 +364,12 @@ class PrescriptionService {
       throw new Error("Unauthorized: Cannot cancel this prescription");
     }
 
-    // Don't allow cancellation if already completed
+    // Don't allow cancellation if already completed or cancelled
     if (prescription.status === PrescriptionStatus.COMPLETED) {
       throw new Error("Cannot cancel completed prescription");
+    }
+    if (prescription.status === PrescriptionStatus.CANCELLED) {
+      throw new Error("Prescription is already cancelled");
     }
 
     // Update status
@@ -407,17 +410,15 @@ class PrescriptionService {
       }
     }
 
-    // Enrich with lab orders (Ordered Tests)
+    // Enrich with lab orders (Ordered Tests) — silently skip if lab module not yet set up
     try {
-      // Find lab orders for this patient around the same time or specifically for this consultation
-      // For now, search by patientId and limit to recent
       const labOrders = await labOrderRepo.findByPatientId(prescription.patientId, 5);
-      // Filter orders created near this prescription
       prescription.orderedTests = labOrders
         .filter(order => Math.abs(new Date(order.createdAt) - new Date(prescription.createdAt)) < 24 * 60 * 60 * 1000)
         .flatMap(order => order.testNames || []);
     } catch (err) {
-      console.error("Failed to fetch lab orders for prescription:", err);
+      // Lab module may not be available yet — skip enrichment silently
+      prescription.orderedTests = [];
     }
 
     return prescription;

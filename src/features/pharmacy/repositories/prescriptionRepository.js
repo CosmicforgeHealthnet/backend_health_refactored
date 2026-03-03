@@ -164,14 +164,11 @@ class PrescriptionRepository {
     const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
 
-    const count = await this.repo.count({
-      where: {
-        createdAt: AppDataSource.getRepository("Prescription").createQueryBuilder()
-          .where("createdAt >= :startOfDay", { startOfDay })
-          .andWhere("createdAt < :endOfDay", { endOfDay })
-          .getQuery()
-      }
-    });
+    const count = await this.repo
+      .createQueryBuilder("p")
+      .where("p.createdAt >= :startOfDay", { startOfDay })
+      .andWhere("p.createdAt < :endOfDay", { endOfDay })
+      .getCount();
 
     const sequence = String(count + 1).padStart(3, '0');
     return `RX-${dateStr}-${sequence}`;

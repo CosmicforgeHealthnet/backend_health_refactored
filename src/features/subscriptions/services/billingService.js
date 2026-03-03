@@ -14,7 +14,7 @@
 const { PLAN_DEFINITIONS } = require("../utils/subscriptionConstants");
 const subscriptionRepository = require("../repositories/subscriptionRepository");
 const userRepository = require("../../auth/repositories/userRepository");
-const paymentService = require("../../payments/services/paymentService");
+
 const transactionRepository = require("../../payments/repositories/transactionRepository");
 const cache = require("../../../shared/utils/cache");
 
@@ -57,6 +57,8 @@ class BillingService {
     const provider = this._selectProvider(paymentProvider, pricing.currency);
 
     // Create transaction
+    const paymentServicePath = "../../payments/services/paymentService";
+    const paymentService = require(paymentServicePath);
     const transaction = await paymentService.initiatePayment({
       patientId: userId,
       serviceType: "subscription",
@@ -258,6 +260,8 @@ class BillingService {
       description: `Upgrade to ${plan.name}`
     };
 
+    const paymentServicePath = "../../payments/services/paymentService";
+    const paymentService = require(paymentServicePath);
     const result = provider === "flutterwave"
       ? await paymentService.processFlutterwavePayment(transaction, userData)
       : await paymentService.processPaystackPayment(transaction, userData);

@@ -5,7 +5,9 @@
       "Bash(node --check:*)",
       "Bash(npm run dev:*)",
       "Bash(cd:*)",
-      "Bash(npm run build:main-swagger:*)"
+      "Bash(npm run build:main-swagger:*)",
+      "Bash(grep -r \"CPANEL_EMAIL\\\\|NODEMAILER\\\\|SMTP\" c:UsershpDesktopCFbackend_health_refactored/.env*)",
+      "Bash(xargs grep -l \"entities\\\\|EntitySchema\\\\|DataSource\")"
     ]
   }
 }

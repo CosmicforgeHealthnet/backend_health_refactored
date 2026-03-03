@@ -16,7 +16,7 @@ const { USER_ROLES } = require("../../../shared/utils/constants");
 const AppointmentChatService = require("../../chat/services/appointmentChatService");
 const appointmentEmailHelpers = require("../../../shared/services/email/emailHelpers");
 const NotificationService = require("../../notifications/services/notificationService");
-const paymentService = require("../../payments/services/paymentService");
+
 const TimezoneService = require("../../compliance/services/timezoneService");
 
 class AppointmentService {
@@ -538,6 +538,8 @@ class AppointmentService {
   }
 
   async refundAppointmentPaymentToPatient(transactionId, cancellationData) {
+    const paymentServicePath = "../../payments/services/paymentService";
+    const paymentService = require(paymentServicePath);
     paymentService.cancelAppointmentPayment(transactionId, cancellationData);
   }
 
