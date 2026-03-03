@@ -37,7 +37,7 @@ const documentsFeature = require("./features/documents");
 const firstaidFeature = require("./features/firstaid");
 
 // Legacy feature locations (to be moved)
-const labRoutes = require("./features/lab/routes");
+const labRoutes = require("./features/LAB/routes");
 // const pharmacyRoutes = require("./shared/services/email/helper/index");
 // const firstaidRoutes = require('./shared/services/email/helper/index');
 // const sosRoutes = require('./features/firstaid/routes/content/sosRoutes');
@@ -143,7 +143,7 @@ const loadSwaggerDoc = (docPath, title) => {
 
 const swaggerDoc = loadSwaggerDoc("./docs/swagger.bundle.json", "Main");
 const pharmacySwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/pharmacy-swagger.bundle.json", "Pharmacy");
-const labSwaggerDoc = loadSwaggerDoc("./features/lab/docs/lab-swagger.bundle.json", "Lab");
+const labSwaggerDoc = loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.json", "Lab");
 const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundle.json", "SOS");
 const serviceManagementSwaggerDoc = loadSwaggerDoc("./features/service-management/docs/service-management-swagger.json", "Service Management");
 
