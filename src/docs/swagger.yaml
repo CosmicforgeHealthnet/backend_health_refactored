@@ -1831,6 +1831,93 @@ paths:
           description: Missing `code` or `deviceFingerprint`
         "401":
           description: Token exchange failed, email not verified, or UA/IP mismatch
+  /api/auth/google/mobile-login:
+    post:
+      summary: Google Sign-In for mobile (Android/iOS)
+      description: |
+        Authenticates a user via a Google ID Token obtained natively on a mobile device
+        (Android or iOS). The token is verified against all configured Google client IDs
+        (web, Android, iOS). On first sign-in a new account is created; on subsequent
+        sign-ins the existing account is returned.
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - idToken
+                - deviceFingerprint
+                - role
+              properties:
+                idToken:
+                  type: string
+                  description: Google ID Token from the mobile Google Sign-In SDK
+                deviceFingerprint:
+                  type: string
+                  description: Unique device fingerprint for session binding
+                role:
+                  type: string
+                  enum:
+                    - patient
+                    - doctor
+                    - pharmacy
+                    - lab
+                  description: Desired role for new sign-ups (ignored for existing accounts)
+                userAgent:
+                  type: string
+                  description: Client User-Agent string (optional)
+            example:
+              idToken: eyJhbGciOiJSUzI1NiIsImtpZCI6...
+              deviceFingerprint: abc123xyz
+              role: patient
+      responses:
+        "200":
+          description: Authentication successful — returns user payload and tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jwtPayload:
+                    type: object
+                    properties:
+                      sub:
+                        type: string
+                      email:
+                        type: string
+                      fullName:
+                        type: string
+                      role:
+                        type: string
+                      status:
+                        type: string
+                      provider:
+                        type: string
+                      bannerUrl:
+                        type: string
+                      profileImageUrl:
+                        type: string
+                      phoneNumber:
+                        type: string
+                      departmentSpecialty:
+                        type: string
+                      mfaEnabled:
+                        type: boolean
+                  accessToken:
+                    type: string
+                    description: Short-lived JWT access token
+                  refreshToken:
+                    type: string
+                    description: Rotating refresh token
+        "400":
+          description: Missing or invalid idToken, deviceFingerprint, or role
+        "401":
+          description: ID Token verification failed (expired, wrong audience, etc.)
+        "403":
+          description: Geographic restriction (patients only)
   /doctor/verification/submit:
     post:
       summary: Submit a doctor's verification request
