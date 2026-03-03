@@ -1,5 +1,17 @@
 const PrescriptionService = require("../services/prescriptionService");
 const asyncHandler = require("express-async-handler");
+const pharmacyProfileRepo = require("../repositories/pharmacyProfileRepository");
+
+/**
+ * Resolve pharmacy profile ID from the authenticated user's ID.
+ * Pharmacy routes receive a user JWT (sub = userId), but the prescription
+ * service operates on pharmacy PROFILE IDs — so we do one lookup here.
+ */
+async function resolvePharmacyId(userId) {
+  const profile = await pharmacyProfileRepo.findByUserId(userId);
+  if (!profile) throw Object.assign(new Error("Pharmacy profile not found"), { status: 404 });
+  return profile.id;
+}
 
 /**
  * Controller for handling prescription-related HTTP requests
@@ -10,7 +22,7 @@ class PrescriptionController {
    */
   createPrescription = asyncHandler(async (req, res) => {
     const prescriptionData = req.body;
-    const doctorId = req.user.sub; // Assuming authenticated user ID
+    const doctorId = req.user.sub;
     const prescription = await PrescriptionService.createPrescription(prescriptionData, doctorId);
     res.status(201).json({ success: true, data: prescription });
   });
@@ -31,7 +43,7 @@ class PrescriptionController {
   assignPharmacy = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
     const { pharmacyId, deliveryDetails } = req.body;
-    const patientId = req.user.id;
+    const patientId = req.user.sub;
     const prescription = await PrescriptionService.assignPharmacy(prescriptionId, pharmacyId, patientId, deliveryDetails);
     res.status(200).json({ success: true, data: prescription });
   });
@@ -42,7 +54,7 @@ class PrescriptionController {
   startProcessing = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
     const { pharmacistId } = req.body;
-    const pharmacyId = req.user.id; // Assuming authenticated pharmacy user
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
     const prescription = await PrescriptionService.startProcessing(prescriptionId, pharmacyId, pharmacistId);
     res.status(200).json({ success: true, data: prescription });
   });
@@ -53,7 +65,7 @@ class PrescriptionController {
   provideCosts = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
     const invoiceData = req.body;
-    const pharmacyId = req.user.id;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
     const prescription = await PrescriptionService.provideCosts(prescriptionId, pharmacyId, invoiceData);
     res.status(200).json({ success: true, data: prescription });
   });
@@ -64,7 +76,7 @@ class PrescriptionController {
   addChatMessage = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
     const messageData = req.body;
-    const senderId = req.user.id;
+    const senderId = req.user.sub;
     const prescription = await PrescriptionService.addChatMessage(prescriptionId, messageData, senderId);
     res.status(200).json({ success: true, data: prescription });
   });
@@ -75,7 +87,7 @@ class PrescriptionController {
   markReady = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
     const { readyType, expectedDate } = req.body;
-    const pharmacyId = req.user.id;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
     const prescription = await PrescriptionService.markReady(prescriptionId, pharmacyId, readyType, expectedDate);
     res.status(200).json({ success: true, data: prescription });
   });
@@ -85,7 +97,7 @@ class PrescriptionController {
    */
   completePrescription = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
-    const pharmacyId = req.user.id;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
     const prescription = await PrescriptionService.completePrescription(prescriptionId, pharmacyId);
     res.status(200).json({ success: true, data: prescription });
   });
@@ -96,7 +108,7 @@ class PrescriptionController {
   cancelPrescription = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
     const { reason } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.sub;
     const prescription = await PrescriptionService.cancelPrescription(prescriptionId, userId, reason);
     res.status(200).json({ success: true, data: prescription });
   });
@@ -134,7 +146,7 @@ class PrescriptionController {
    * Get pharmacy's prescriptions
    */
   getPharmacyPrescriptions = asyncHandler(async (req, res) => {
-    const pharmacyId = req.user.id;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
     const options = req.query;
     const prescriptions = await PrescriptionService.getPharmacyPrescriptions(pharmacyId, options);
     res.status(200).json({ success: true, data: prescriptions });
@@ -144,7 +156,7 @@ class PrescriptionController {
    * Get pharmacy dashboard statistics
    */
   getDashboardStats = asyncHandler(async (req, res) => {
-    const pharmacyId = req.user.id;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
     const stats = await PrescriptionService.getDashboardStats(pharmacyId);
     res.status(200).json({ success: true, data: stats });
   });
@@ -153,7 +165,7 @@ class PrescriptionController {
    * Get pharmacy activity feed
    */
   getActivityFeed = asyncHandler(async (req, res) => {
-    const pharmacyId = req.user.id;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
     const { limit } = req.query;
     const feed = await PrescriptionService.getActivityFeed(pharmacyId, parseInt(limit));
     res.status(200).json({ success: true, data: feed });
@@ -164,7 +176,7 @@ class PrescriptionController {
    */
   confirmAvailability = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
-    const pharmacyId = req.user.id;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
     const prescription = await PrescriptionService.confirmAvailability(prescriptionId, pharmacyId);
     res.status(200).json({ success: true, data: prescription });
   });
@@ -175,7 +187,7 @@ class PrescriptionController {
   addInternalNote = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
     const noteData = req.body; // {note, pharmacistId}
-    const pharmacyId = req.user.id;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
     const prescription = await PrescriptionService.addInternalNote(prescriptionId, pharmacyId, noteData);
     res.status(200).json({ success: true, data: prescription });
   });
