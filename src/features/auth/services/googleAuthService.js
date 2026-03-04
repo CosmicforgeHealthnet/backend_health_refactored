@@ -139,6 +139,11 @@ class GoogleAuthService {
       config.google.iosClientId,
     ].filter(Boolean);
 
+    // TEMP: log audiences for debugging — remove after fix
+    const tokenAud = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString()).aud;
+    console.log('[GoogleAuth] token aud:', tokenAud);
+    console.log('[GoogleAuth] validAudiences:', validAudiences);
+
     const ticket = await client.verifyIdToken({
       idToken,
       audience: validAudiences
