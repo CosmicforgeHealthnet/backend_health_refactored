@@ -76,7 +76,10 @@ class PrescriptionController {
   addChatMessage = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
     const messageData = req.body;
-    const senderId = req.user.sub;
+    const { senderType } = messageData;
+    const userId = req.user.sub;
+    // Patients use their user ID; pharmacy uses the pharmacy profile ID
+    const senderId = senderType === 'pharmacy' ? await resolvePharmacyId(userId) : userId;
     const prescription = await PrescriptionService.addChatMessage(prescriptionId, messageData, senderId);
     res.status(200).json({ success: true, data: prescription });
   });

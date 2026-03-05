@@ -57,6 +57,13 @@ module.exports = new EntitySchema({
       comment: "User's country detected during signup (for patient restrictions)",
     },
 
+    // STAFF FIELD
+    pharmacyId: {
+      type: "uuid",
+      nullable: true,
+      comment: "ID of the pharmacy this user belongs to if they are staff",
+    },
+
     role: {
       type: "enum",
       enum: Object.values(USER_ROLES),
@@ -268,6 +275,12 @@ module.exports = new EntitySchema({
       target: "PharmacyProfile",
       inverseSide: "user",
       cascade: true,
+    },
+    employerPharmacy: {
+      type: "many-to-one",
+      target: "PharmacyProfile",
+      joinColumn: { name: "pharmacyId" },
+      inverseSide: "staff",
     },
     managedPharmacyBranches: {
       type: "one-to-many",
