@@ -5,8 +5,9 @@
 // LEGACY ROUTES: /user/doctor-profile/*, /doctor/verification/* (backward compatible via app.js)
 
 const router = require("express").Router();
-const { authenticateJWT } = require("../../auth/middlewares/authMiddleware");
+const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
 const profileController = require("../controllers/profileController");
+const prescriptionController = require("../../pharmacy/controllers/prescriptionController");
 
 // Import verification controller from existing location
 const doctorVerificationController = require("../controllers/doctorVerificationController");
@@ -293,6 +294,34 @@ router.get("/verification/history", authenticateJWT, doctorVerificationControlle
  *           minLength: 3
  */
 router.get("/search", profileController.searchDoctors);
+
+// ============================================
+// PHARMACY & PRESCRIPTIONS (Doctor Context)
+// ============================================
+
+/**
+ * @swagger
+ * /api/doctor/prescriptions:
+ *   post:
+ *     summary: Create a prescription
+ *     tags: [Doctor, Pharmacy]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Doctor creates a new prescription
+ */
+router.post("/prescriptions", authenticateJWT, authorizeRoles('doctor'), prescriptionController.createPrescription);
+
+/**
+ * @swagger
+ * /api/doctor/prescriptions:
+ *   get:
+ *     summary: Get doctor's prescriptions
+ *     tags: [Doctor, Pharmacy]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Get all prescriptions created by the authenticated doctor
+ */
+router.get("/prescriptions", authenticateJWT, authorizeRoles('doctor'), prescriptionController.getDoctorPrescriptions);
 
 /**
  * @swagger
