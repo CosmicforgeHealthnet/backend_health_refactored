@@ -65,7 +65,7 @@ class PharmacyAuthController {
           status: result.user.status,
           provider: result.user.provider,
           profileImageUrl: result.user.profileImageUrl,
-          bannerUrl: result.bannerUrl,
+          bannerUrl: result.user.bannerUrl,
           isOnline: result.user.isOnline,
           tier: result.user.tier,
           createdAt: result.user.createdAt

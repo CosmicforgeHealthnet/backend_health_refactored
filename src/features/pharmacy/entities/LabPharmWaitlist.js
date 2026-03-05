@@ -10,7 +10,7 @@ const WAITLIST_STATUS = {
 
 const role = {
   LAB: "lab",
-  PHARMACY: "pharmarcy"
+  PHARMACY: "pharmacy"
 }
 
 module.exports = new EntitySchema({

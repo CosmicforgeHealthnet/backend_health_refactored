@@ -245,7 +245,7 @@ class PharmacyRegistrationService {
       throw new Error("Pharmacy not found");
     }
     return this.userRepo.repo.find({
-      where: { pharmacyId: pharmacy.id },
+      where: { employerPharmacy: { id: pharmacy.id } },
       select: ["id", "fullName", "email", "role", "status", "createdAt"]
     });
   }
