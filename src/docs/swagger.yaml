@@ -4545,6 +4545,57 @@ paths:
           a new reset link has been sent: null
         "400":
           description: Missing or invalid email
+  /api/auth/check-verification-status:
+    get:
+      summary: Check user verification status
+      description: |
+        Checks if a user's email has been verified.
+        Returns the user's email and verification status (true/false).
+      tags:
+        - Auth
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+          description: The email address to check verification status for
+      responses:
+        "200":
+          description: Verification status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    format: email
+                    example: user@example.com
+                  isVerified:
+                    type: boolean
+                    example: true
+        "400":
+          description: Email is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email is required
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: User not found
   /api/auth/magic-link:
     post:
       summary: Request a signup or login magic link

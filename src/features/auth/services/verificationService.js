@@ -40,6 +40,19 @@ class VerificationService {
     const expiresInMinutes = Math.ceil((record.expiresAt - now) / 60000);
     await sendVerificationEmail(user, record.token, expiresInMinutes);
   }
+
+  async checkVerificationStatus(email) {
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) {
+      return null;
+    }
+
+    const isVerified = user.status === 'active' || user.status === 'doctor_active';
+    return {
+      email: user.email,
+      isVerified
+    };
+  }
 }
 
 module.exports = new VerificationService();
