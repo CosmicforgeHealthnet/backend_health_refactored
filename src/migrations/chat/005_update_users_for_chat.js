@@ -11,19 +11,19 @@ module.exports = class UpdateUsersForChat1728705780000 {
       END $$;
     `);
 
-    // Add new camelCase columns to 'users'
+    // Add new camelCase columns to 'users' (idempotent)
     await queryRunner.query(`
       ALTER TABLE "users"
-      ADD COLUMN "chatSettings" JSONB DEFAULT '{}' NULL,
-      ADD COLUMN "isOnline" BOOLEAN DEFAULT false,
-      ADD COLUMN "lastSeenAt" TIMESTAMP NULL,
-      ADD COLUMN "chatStatus" chat_status DEFAULT 'available';
+      ADD COLUMN IF NOT EXISTS "chatSettings" JSONB DEFAULT '{}' NULL,
+      ADD COLUMN IF NOT EXISTS "isOnline" BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS "lastSeenAt" TIMESTAMP NULL,
+      ADD COLUMN IF NOT EXISTS "chatStatus" chat_status DEFAULT 'available';
     `);
 
-    // Create indexes with camelCase column names
-    await queryRunner.query(`CREATE INDEX "IDX_USER_IS_ONLINE" ON "users" ("isOnline");`);
-    await queryRunner.query(`CREATE INDEX "IDX_USER_CHAT_STATUS" ON "users" ("chatStatus");`);
-    await queryRunner.query(`CREATE INDEX "IDX_USER_LAST_SEEN_AT" ON "users" ("lastSeenAt");`);
+    // Create indexes with camelCase column names (idempotent)
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_USER_IS_ONLINE" ON "users" ("isOnline");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_USER_CHAT_STATUS" ON "users" ("chatStatus");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_USER_LAST_SEEN_AT" ON "users" ("lastSeenAt");`);
   }
 
   async down(queryRunner) {

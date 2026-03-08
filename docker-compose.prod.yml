@@ -25,7 +25,7 @@ services:
     networks:
       - cosmic_network_prod
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -40,7 +40,7 @@ services:
     networks:
       - cosmic_network_prod
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')"]
+      test: [ "CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -55,7 +55,7 @@ services:
     networks:
       - cosmic_network_prod
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -69,9 +69,9 @@ services:
       - "443:443"
     volumes:
       - ./deployment/nginx.production.conf:/etc/nginx/nginx.conf:ro
-      - ./uploads:/app/uploads:ro  # Mount uploads for static file serving
-      - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL certificates
-      - /var/www/certbot:/var/www/certbot:ro  # Let's Encrypt verification
+      - ./uploads:/app/uploads:ro # Mount uploads for static file serving
+      - /etc/letsencrypt:/etc/letsencrypt:ro # SSL certificates
+      - /var/www/certbot:/var/www/certbot:ro # Let's Encrypt verification
     depends_on:
       - backend
       - ai_service

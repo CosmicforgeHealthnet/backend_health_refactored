@@ -143,6 +143,15 @@ const loadSwaggerDoc = (docPath, title) => {
 
 const swaggerDoc = loadSwaggerDoc("./docs/swagger.bundle.json", "Main");
 const pharmacySwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/pharmacy-swagger.bundle.json", "Pharmacy");
+// Pharmacy routes are mounted under /api, so override server URL to include /api base
+pharmacySwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server"
+    }
+];
 const labSwaggerDoc = loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.json", "Lab");
 const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundle.json", "SOS");
 const serviceManagementSwaggerDoc = loadSwaggerDoc("./features/service-management/docs/service-management-swagger.json", "Service Management");

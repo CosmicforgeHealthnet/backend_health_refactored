@@ -196,11 +196,22 @@ class PrescriptionController {
   });
 
   /**
+   * Propose alternative medications
+   */
+  proposeAlternative = asyncHandler(async (req, res) => {
+    const { prescriptionId } = req.params;
+    const { alternatives, pharmacistId } = req.body;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
+    const prescription = await PrescriptionService.proposeAlternative(prescriptionId, pharmacyId, alternatives, pharmacistId);
+    res.status(200).json({ success: true, data: prescription });
+  });
+
+  /**
    * Search prescriptions
    */
   searchPrescriptions = asyncHandler(async (req, res) => {
-    const query = req.query;
-    const prescriptions = await PrescriptionService.searchPrescriptions(query);
+    const { query: searchTerm, page, limit } = req.query;
+    const prescriptions = await PrescriptionService.searchPrescriptions(searchTerm || "", { page, limit });
     res.status(200).json({ success: true, data: prescriptions });
   });
 }

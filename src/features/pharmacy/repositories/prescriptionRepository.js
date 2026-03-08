@@ -2,8 +2,8 @@
 const AppDataSource = require("../../../config/database");
 
 class PrescriptionRepository {
-  constructor() {
-    this.repo = AppDataSource.getRepository("Prescription");
+  get repo() {
+    return AppDataSource.getRepository("Prescription");
   }
 
   async create(data) {
@@ -12,6 +12,11 @@ class PrescriptionRepository {
 
   async save(prescription) {
     return this.repo.save(prescription);
+  }
+
+  // Safe partial update — uses SQL UPDATE, never cascades to related entities
+  async updateFields(id, fields) {
+    return this.repo.update(id, { ...fields, updatedAt: new Date() });
   }
 
   async findById(id) {
@@ -35,6 +40,7 @@ class PrescriptionRepository {
     const query = this.repo.createQueryBuilder("prescription")
       .leftJoinAndSelect("prescription.patient", "patient")
       .leftJoinAndSelect("prescription.pharmacy", "pharmacy")
+      .leftJoinAndSelect("pharmacy.user", "pharmacyUser")
       .where("prescription.doctorId = :doctorId", { doctorId })
       .orderBy("prescription.createdAt", "DESC")
       .limit(limit)
@@ -54,6 +60,7 @@ class PrescriptionRepository {
     const query = this.repo.createQueryBuilder("prescription")
       .leftJoinAndSelect("prescription.doctor", "doctor")
       .leftJoinAndSelect("prescription.pharmacy", "pharmacy")
+      .leftJoinAndSelect("pharmacy.user", "pharmacyUser")
       .where("prescription.patientId = :patientId", { patientId })
       .orderBy("prescription.createdAt", "DESC")
       .limit(limit)
@@ -155,23 +162,14 @@ class PrescriptionRepository {
     });
   }
 
-  // Generate unique reference number
+  // Generate unique reference number using timestamp + random component
   async generateReference() {
     const date = new Date();
     const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-
-    // Find count of prescriptions created today
-    const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
-
-    const count = await this.repo
-      .createQueryBuilder("p")
-      .where("p.createdAt >= :startOfDay", { startOfDay })
-      .andWhere("p.createdAt < :endOfDay", { endOfDay })
-      .getCount();
-
-    const sequence = String(count + 1).padStart(3, '0');
-    return `RX-${dateStr}-${sequence}`;
+    // Use base36-encoded timestamp (last 6 chars) + 2 random chars for uniqueness
+    const tsPart = Date.now().toString(36).toUpperCase().slice(-6);
+    const randPart = Math.random().toString(36).substring(2, 4).toUpperCase();
+    return `RX-${dateStr}-${tsPart}${randPart}`;
   }
 
   // Search prescriptions

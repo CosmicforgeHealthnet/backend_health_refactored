@@ -20,6 +20,7 @@ const {
   getActivityFeed,
   confirmAvailability,
   addInternalNote,
+  proposeAlternative,
 } = require("../controllers/prescriptionController");
 
 // Subscription middlewares
@@ -47,6 +48,7 @@ router.get("/pharmacy/dashboard/stats", authorizeRoles('pharmacy'), getDashboard
 router.get("/pharmacy/dashboard/activity", authorizeRoles('pharmacy'), getActivityFeed);
 router.post("/pharmacy/prescriptions/:prescriptionId/confirm-availability", authorizeRoles('pharmacy'), confirmAvailability);
 router.post("/pharmacy/prescriptions/:prescriptionId/internal-notes", authorizeRoles('pharmacy'), addInternalNote);
+router.post("/pharmacy/prescriptions/:prescriptionId/propose-alternative", authorizeRoles('pharmacy'), proposeAlternative);
 
 // Shared routes accessible by multiple roles
 router.post("/:prescriptionId/cancel", authorizeRoles('doctor', 'patient', 'pharmacy'), cancelPrescription);

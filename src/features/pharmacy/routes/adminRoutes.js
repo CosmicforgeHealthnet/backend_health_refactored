@@ -1,11 +1,15 @@
 // src/routes/pharmacy/adminRoutes.js
 const router = require("express").Router();
 const adminVerificationController = require("../controllers/adminVerificationController");
+const pharmacyAuthController = require("../controllers/pharmacyAuthController");
 const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
 
 // Admin only routes
 router.use(authenticateJWT);
 router.use(authorizeRoles("admin", "super_admin"));
+
+// List all pharmacies (with optional ?verificationStatus=&page=&limit=)
+router.get("/pharmacies", pharmacyAuthController.getAllPharmacies);
 
 // Verification management
 router.get("/verifications/pending", adminVerificationController.getPendingVerifications);

@@ -595,7 +595,7 @@
         }
       }
     },
-    "/prescriptions/doctor/prescriptions": {
+    "/pharmacy/prescriptions/doctor/prescriptions": {
       "post": {
         "summary": "Create a new prescription",
         "description": "Allows a doctor to create a new prescription during a consultation.\n- Requires patient ID, medications, and consultation details.\n- Generates a unique reference and sets initial status to PENDING.\n- Returns the created prescription with populated relations.\n",
@@ -701,7 +701,7 @@
         }
       }
     },
-    "/prescriptions/patient/prescriptions/{prescriptionId}/upload": {
+    "/pharmacy/prescriptions/patient/prescriptions/{prescriptionId}/upload": {
       "post": {
         "summary": "Upload prescription by patient",
         "description": "Allows a patient to upload a prescription to the platform.\n- Verifies the prescription belongs to the patient and is in PENDING status.\n- Updates status to PATIENT_UPLOADED.\n",
@@ -748,7 +748,7 @@
         }
       }
     },
-    "/prescriptions/patient/prescriptions/{prescriptionId}/assign-pharmacy": {
+    "/pharmacy/prescriptions/patient/prescriptions/{prescriptionId}/assign-pharmacy": {
       "post": {
         "summary": "Assign pharmacy to prescription",
         "description": "Allows a patient to assign a pharmacy to fulfill their prescription.\n- Verifies the pharmacy is active and the prescription is in a valid state (PENDING or PATIENT_UPLOADED).\n- Updates the prescription with pharmacy and delivery details.\n",
@@ -805,7 +805,7 @@
         }
       }
     },
-    "/prescriptions/patient/prescriptions": {
+    "/pharmacy/prescriptions/patient/prescriptions": {
       "get": {
         "summary": "Get patient's prescriptions",
         "description": "Retrieves a list of prescriptions for the authenticated patient.\n- Supports pagination and filtering via query parameters.\n",
@@ -861,7 +861,7 @@
         }
       }
     },
-    "/prescriptions/pharmacy/prescriptions/{prescriptionId}/start-processing": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/start-processing": {
       "post": {
         "summary": "Start processing prescription",
         "description": "Allows a pharmacy to start processing an assigned prescription.\n- Verifies the prescription is assigned to the pharmacy and in PHARMACY_ASSIGNED status.\n- Assigns a pharmacist and updates status to PHARMACY_PROCESSING.\n",
@@ -918,7 +918,7 @@
         }
       }
     },
-    "/prescriptions/pharmacy/prescriptions/{prescriptionId}/provide-costs": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/provide-costs": {
       "post": {
         "summary": "Provide medication costs",
         "description": "Allows a pharmacy to provide cost details and invoice for a prescription.\n- Calculates total cost including delivery fee and updates payment information.\n",
@@ -975,7 +975,7 @@
         }
       }
     },
-    "/prescriptions/pharmacy/prescriptions/{prescriptionId}/mark-ready": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/mark-ready": {
       "post": {
         "summary": "Mark prescription as ready",
         "description": "Allows a pharmacy to mark a prescription as ready for delivery or pickup.\n- Updates status to READY_FOR_DELIVERY or READY_FOR_PICKUP.\n",
@@ -1032,7 +1032,7 @@
         }
       }
     },
-    "/prescriptions/pharmacy/prescriptions/{prescriptionId}/complete": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/complete": {
       "post": {
         "summary": "Complete prescription fulfillment",
         "description": "Allows a pharmacy to mark a prescription as completed.\n- Updates status to COMPLETED and sets payment status to PAID.\n",
@@ -1079,7 +1079,7 @@
         }
       }
     },
-    "/prescriptions/pharmacy/prescriptions": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions": {
       "get": {
         "summary": "Get pharmacy's prescriptions",
         "description": "Retrieves a list of prescriptions assigned to the authenticated pharmacy.\n- Supports pagination and filtering via query parameters.\n",
@@ -1135,7 +1135,7 @@
         }
       }
     },
-    "/prescriptions/pharmacy/dashboard/stats": {
+    "/pharmacy/prescriptions/pharmacy/dashboard/stats": {
       "get": {
         "summary": "Get pharmacy dashboard statistics",
         "description": "Retrieves real-time counts for the pharmacy dashboard:\n- Pending requests\n- Active orders\n- Completed today\n",
@@ -1167,7 +1167,7 @@
         }
       }
     },
-    "/prescriptions/pharmacy/dashboard/activity": {
+    "/pharmacy/prescriptions/pharmacy/dashboard/activity": {
       "get": {
         "summary": "Get pharmacy activity feed",
         "description": "Retrieves a feed of recent status changes and actions for assigned prescriptions.",
@@ -1207,7 +1207,7 @@
         }
       }
     },
-    "/prescriptions/pharmacy/prescriptions/{prescriptionId}/confirm-availability": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/confirm-availability": {
       "post": {
         "summary": "Confirm medication availability",
         "description": "Marks a prescription as having confirmed medication stock.",
@@ -1244,7 +1244,7 @@
         }
       }
     },
-    "/prescriptions/pharmacy/prescriptions/{prescriptionId}/internal-notes": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/internal-notes": {
       "post": {
         "summary": "Add internal pharmacy note",
         "description": "Allows pharmacy staff to add private notes to a prescription.",
@@ -1291,7 +1291,101 @@
         }
       }
     },
-    "/prescriptions/{prescriptionId}/cancel": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/propose-alternative": {
+      "post": {
+        "summary": "Propose alternative medications",
+        "description": "Allows a pharmacy to suggest alternative medications when the prescribed ones are unavailable.\n- Updates `availabilityStatus` to `alternatives_proposed`.\n- Stores the alternatives in `internalNotes`.\n- Sends a WebSocket notification and email to the patient immediately.\n",
+        "tags": [
+          "Prescription Operations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the prescription"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "alternatives"
+                ],
+                "properties": {
+                  "alternatives": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "name"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "example": "Amoxicillin 500mg"
+                        },
+                        "dosage": {
+                          "type": "string",
+                          "example": "500mg"
+                        },
+                        "reason": {
+                          "type": "string",
+                          "example": "Original brand not in stock"
+                        }
+                      }
+                    }
+                  },
+                  "pharmacistId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Optional ID of the pharmacist proposing the alternatives"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alternatives proposed — patient notified via WebSocket and email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrescriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No alternatives provided"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden — Not assigned to this pharmacy"
+          },
+          "404": {
+            "description": "Prescription not found"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/cancel": {
       "post": {
         "summary": "Cancel a prescription",
         "description": "Allows a doctor, patient, or pharmacy to cancel a prescription.\n- Requires a cancellation reason.\n- Cannot cancel a completed prescription.\n",
@@ -1348,7 +1442,7 @@
         }
       }
     },
-    "/prescriptions/{prescriptionId}/chat": {
+    "/pharmacy/prescriptions/{prescriptionId}/chat": {
       "post": {
         "summary": "Add chat message",
         "description": "Allows a patient or pharmacy to add a chat message related to a prescription.\n- Verifies the sender's access to the prescription.\n",
@@ -1405,7 +1499,7 @@
         }
       }
     },
-    "/prescriptions/{prescriptionId}": {
+    "/pharmacy/prescriptions/{prescriptionId}": {
       "get": {
         "summary": "Get prescription by ID",
         "description": "Retrieves a specific prescription by its ID with all related details.\n- Accessible by doctors, patients, or pharmacies associated with the prescription.\n",
@@ -1452,7 +1546,7 @@
         }
       }
     },
-    "/prescriptions/search": {
+    "/pharmacy/prescriptions/search": {
       "get": {
         "summary": "Search prescriptions",
         "description": "Searches for prescriptions based on query parameters.\n- Accessible by doctors, patients, or pharmacies.\n- Supports filtering by various criteria (e.g., status, date).\n",
