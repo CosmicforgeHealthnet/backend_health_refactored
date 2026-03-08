@@ -6,6 +6,7 @@ const userRepo = require("../../auth/repositories/userRepository");
 const bcrypt = require('bcryptjs');
 const verificationService = require('../../auth/services/verificationService'); // Assuming this is still in global services or moved
 const referralService = require('../../auth/services/referralService'); // Pending refactor to auth
+const { sendPharmacyStaffWelcomeEmail } = require("../../../shared/services/email/helper/pharmacy");
 
 class PharmacyRegistrationService {
   get profileRepo() { return require("../repositories/pharmacyProfileRepository"); }
@@ -145,6 +146,12 @@ class PharmacyRegistrationService {
     return savedDocuments;
   }
 
+  async getAllPharmacies(options = {}) {
+    const { limit = 50, page = 1, verificationStatus } = options;
+    const offset = (page - 1) * limit;
+    return this.profileRepo.findAll({ limit: Number(limit), offset, verificationStatus });
+  }
+
   async getPharmacyProfile(userId) {
     const pharmacy = await this.profileRepo.findByUserId(userId);
     if (!pharmacy) {
@@ -236,6 +243,17 @@ class PharmacyRegistrationService {
       status: "active",
       pharmacyId: pharmacy.id
     });
+
+    // Send welcome email with credentials (non-blocking)
+    sendPharmacyStaffWelcomeEmail({
+      to: email.toLowerCase().trim(),
+      staffName: fullName,
+      pharmacyName: pharmacy.pharmacyName,
+      role,
+      loginEmail: email.toLowerCase().trim(),
+      password
+    }).catch(err => console.error("Staff welcome email failed:", err));
+
     return staffUser;
   }
 

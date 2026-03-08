@@ -314,6 +314,39 @@ class PharmacyAuthController {
       next(error);
     }
   }
+
+  async getAllPharmacies(req, res, next) {
+    try {
+      const { page = 1, limit = 20, verificationStatus } = req.query;
+      const pharmacies = await pharmacyRegistrationService.getAllPharmacies({ page, limit, verificationStatus });
+      return res.json({
+        success: true,
+        data: pharmacies.map(p => ({
+          id: p.id,
+          pharmacyName: p.pharmacyName,
+          registrationNumber: p.registrationNumber,
+          address: p.address,
+          phone: p.phone,
+          email: p.email,
+          username: p.preferredUsername,
+          verificationStatus: p.verificationStatus,
+          isActive: p.isActive,
+          documentsSubmitted: p.documentsSubmitted,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+          user: p.user ? {
+            id: p.user.id,
+            fullName: p.user.fullName,
+            email: p.user.email,
+            status: p.user.status,
+            createdAt: p.user.createdAt
+          } : null
+        }))
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new PharmacyAuthController();

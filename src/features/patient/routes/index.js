@@ -171,6 +171,10 @@ router.post("/health-records", profileController.manageProfileOptions);
 router.get("/profile-options", profileController.getProfileOptions);
 router.post("/profile-options", profileController.manageProfileOptions);
 
+// Prescription shortcut — patients can access their prescriptions at /api/patient/prescriptions
+const prescriptionController = require("../../pharmacy/controllers/prescriptionController");
+router.get("/prescriptions", prescriptionController.getPatientPrescriptions);
+
 // ============================================
 // AUTH INFO ROUTES
 // ============================================

@@ -102,11 +102,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "lint-staged": {
-    "*.js": [
-      "eslint --fix",
-      "npm test -- --findRelatedTests --passWithNoTests"
-    ]
-  }
+  "description": ""
 }

@@ -53,6 +53,18 @@ class PharmacyProfileRepository {
     });
   }
 
+  async findAll(options = {}) {
+    const { limit = 50, offset = 0, verificationStatus } = options;
+    const where = verificationStatus ? { verificationStatus } : {};
+    return this.repo.find({
+      where,
+      relations: ["user"],
+      order: { createdAt: "DESC" },
+      take: limit,
+      skip: offset
+    });
+  }
+
   async findPendingVerifications() {
     return this.repo.find({
       where: { verificationStatus: "pending" },

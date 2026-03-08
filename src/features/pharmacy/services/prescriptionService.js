@@ -6,7 +6,16 @@ const AppointmentRepository = require("../../appointments/repositories/appointme
 const labOrderRepo = require("../../LAB/repositories/lab_order");
 const { PrescriptionStatus, PaymentStatus } = require("../entities/Prescription");
 
+const NotificationService = require("../../notifications/services/notificationService");
+const pharmacyEmailHelper = require("../../../shared/services/email/helper/pharmacy");
+
 const appointmentRepo = new AppointmentRepository();
+const notificationService = new NotificationService();
+
+// Helper: fire-and-forget email (never throw)
+function sendEmail(fn, ...args) {
+  fn(...args).catch(err => console.error("Email send failed:", err.message));
+}
 
 class PrescriptionService {
 
@@ -65,6 +74,14 @@ class PrescriptionService {
     };
 
     const savedPrescription = await prescriptionRepo.save(newPrescription);
+
+    // Notify patient via WebSocket
+    notificationService.createNotification(
+      patientId,
+      "notification",
+      `Dr. ${doctor.fullName} has created a prescription for you (Ref: ${reference}).`,
+      { prescriptionId: savedPrescription.id, reference, type: "prescription_created" }
+    ).catch(err => console.error("Notification failed:", err.message));
 
     // Return prescription with populated relations
     return this.getPrescriptionById(savedPrescription.id);
@@ -130,6 +147,9 @@ class PrescriptionService {
       throw new Error("Prescription cannot be reassigned at this stage");
     }
 
+    // Get patient info for notification
+    const patient = await userRepo.findById(patientId);
+
     // Update prescription with pharmacy and delivery details
     const updateData = {
       pharmacyId,
@@ -146,6 +166,26 @@ class PrescriptionService {
       status: PrescriptionStatus.PHARMACY_ASSIGNED,
       note: `Prescription assigned to ${pharmacy.pharmacyName}`
     });
+
+    // Notify pharmacy via WebSocket + email
+    if (pharmacy.userId) {
+      notificationService.createNotification(
+        pharmacy.userId,
+        "notification",
+        `New prescription request from ${patient?.fullName || "a patient"} (Ref: ${prescription.reference}).`,
+        { prescriptionId, reference: prescription.reference, type: "prescription_assigned" }
+      ).catch(err => console.error("Notification failed:", err.message));
+    }
+
+    if (pharmacy.email) {
+      sendEmail(pharmacyEmailHelper.sendPrescriptionAssignedToPharmacyEmail, {
+        to: pharmacy.email,
+        pharmacyName: pharmacy.pharmacyName,
+        patientName: patient?.fullName || "Patient",
+        reference: prescription.reference,
+        prescriptionId
+      });
+    }
 
     return this.getPrescriptionById(prescriptionId);
   }
@@ -176,6 +216,9 @@ class PrescriptionService {
       throw new Error("Pharmacist not found");
     }
 
+    // Get pharmacy info for notification message
+    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+
     // Update status and assign pharmacist
     await prescriptionRepo.save({
       ...prescription,
@@ -189,6 +232,14 @@ class PrescriptionService {
       status: PrescriptionStatus.PHARMACY_PROCESSING,
       note: `Processing started by ${pharmacist.fullName}`
     });
+
+    // Notify patient via WebSocket
+    notificationService.createNotification(
+      prescription.patientId,
+      "notification",
+      `${pharmacy?.pharmacyName || "Your pharmacy"} has started processing your prescription (Ref: ${prescription.reference}).`,
+      { prescriptionId, reference: prescription.reference, type: "prescription_processing" }
+    ).catch(err => console.error("Notification failed:", err.message));
 
     return this.getPrescriptionById(prescriptionId);
   }
@@ -224,6 +275,32 @@ class PrescriptionService {
       paymentStatus: PaymentStatus.UNPAID
     });
 
+    // Get patient and pharmacy info for notifications
+    const patient = await userRepo.findById(prescription.patientId);
+    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+
+    // Notify patient via WebSocket
+    notificationService.createNotification(
+      prescription.patientId,
+      "notification",
+      `Invoice ready for your prescription (Ref: ${prescription.reference}). Total: ₦${totalDue.toLocaleString()}.`,
+      { prescriptionId, reference: prescription.reference, totalDue, type: "invoice_ready" }
+    ).catch(err => console.error("Notification failed:", err.message));
+
+    // Send email to patient
+    if (patient?.email) {
+      sendEmail(pharmacyEmailHelper.sendInvoiceReadyEmail, {
+        to: patient.email,
+        patientName: patient.fullName,
+        pharmacyName: pharmacy?.pharmacyName || "Your pharmacy",
+        reference: prescription.reference,
+        prescriptionId,
+        totalDue,
+        deliveryFee,
+        items
+      });
+    }
+
     return this.getPrescriptionById(prescriptionId);
   }
 
@@ -257,6 +334,24 @@ class PrescriptionService {
     };
 
     await prescriptionRepo.addChatMessage(prescriptionId, chatMessage);
+
+    // Notify the other party via WebSocket
+    if (senderType === 'patient' && prescription.pharmacy?.userId) {
+      notificationService.createNotification(
+        prescription.pharmacy.userId,
+        "notification",
+        `New message from patient on prescription ${prescription.reference}.`,
+        { prescriptionId, reference: prescription.reference, type: "new_chat_message" }
+      ).catch(err => console.error("Notification failed:", err.message));
+    } else if (senderType === 'pharmacy') {
+      notificationService.createNotification(
+        prescription.patientId,
+        "notification",
+        `New message from pharmacy on prescription ${prescription.reference}.`,
+        { prescriptionId, reference: prescription.reference, type: "new_chat_message" }
+      ).catch(err => console.error("Notification failed:", err.message));
+    }
+
     return this.getPrescriptionById(prescriptionId);
   }
 
@@ -302,6 +397,35 @@ class PrescriptionService {
       note: `Prescription ready for ${readyType}`
     });
 
+    // Get patient and pharmacy info
+    const patient = await userRepo.findById(prescription.patientId);
+    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+
+    const readyMsg = readyType === 'delivery'
+      ? `Your prescription (Ref: ${prescription.reference}) is out for delivery!`
+      : `Your prescription (Ref: ${prescription.reference}) is ready for pickup at ${pharmacy?.pharmacyName || "the pharmacy"}.`;
+
+    // Notify patient via WebSocket
+    notificationService.createNotification(
+      prescription.patientId,
+      "notification",
+      readyMsg,
+      { prescriptionId, reference: prescription.reference, readyType, type: "prescription_ready" }
+    ).catch(err => console.error("Notification failed:", err.message));
+
+    // Send email to patient
+    if (patient?.email) {
+      sendEmail(pharmacyEmailHelper.sendPrescriptionReadyEmail, {
+        to: patient.email,
+        patientName: patient.fullName,
+        pharmacyName: pharmacy?.pharmacyName || "Your pharmacy",
+        reference: prescription.reference,
+        prescriptionId,
+        readyType,
+        expectedDate
+      });
+    }
+
     return this.getPrescriptionById(prescriptionId);
   }
 
@@ -340,6 +464,29 @@ class PrescriptionService {
       note: "Prescription fulfilled successfully"
     });
 
+    // Get patient and pharmacy info
+    const patient = await userRepo.findById(prescription.patientId);
+    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+
+    // Notify patient via WebSocket
+    notificationService.createNotification(
+      prescription.patientId,
+      "notification",
+      `Your prescription (Ref: ${prescription.reference}) has been fulfilled successfully. Feel better soon!`,
+      { prescriptionId, reference: prescription.reference, type: "prescription_completed" }
+    ).catch(err => console.error("Notification failed:", err.message));
+
+    // Send email to patient
+    if (patient?.email) {
+      sendEmail(pharmacyEmailHelper.sendPrescriptionCompletedEmail, {
+        to: patient.email,
+        patientName: patient.fullName,
+        pharmacyName: pharmacy?.pharmacyName || "Your pharmacy",
+        reference: prescription.reference,
+        prescriptionId
+      });
+    }
+
     return this.getPrescriptionById(prescriptionId);
   }
 
@@ -372,6 +519,11 @@ class PrescriptionService {
       throw new Error("Prescription is already cancelled");
     }
 
+    // Determine who is cancelling
+    let cancelledBy = "patient";
+    if (prescription.doctorId === userId) cancelledBy = "doctor";
+    else if (prescription.pharmacyId === userId) cancelledBy = "pharmacy";
+
     // Update status
     await prescriptionRepo.save({
       ...prescription,
@@ -383,8 +535,55 @@ class PrescriptionService {
     // Add to fulfillment history
     await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
       status: PrescriptionStatus.CANCELLED,
-      note: `Cancelled: ${reason}`
+      note: `Cancelled by ${cancelledBy}: ${reason}`
     });
+
+    const cancellationMsg = `Prescription ${prescription.reference} has been cancelled by the ${cancelledBy}. Reason: ${reason || "Not specified"}.`;
+
+    // Notify patient (if not the one cancelling)
+    if (prescription.patientId !== userId) {
+      notificationService.createNotification(
+        prescription.patientId,
+        "alert",
+        cancellationMsg,
+        { prescriptionId, reference: prescription.reference, cancelledBy, type: "prescription_cancelled" }
+      ).catch(err => console.error("Notification failed:", err.message));
+
+      const patient = await userRepo.findById(prescription.patientId);
+      if (patient?.email) {
+        sendEmail(pharmacyEmailHelper.sendPrescriptionCancelledEmail, {
+          to: patient.email,
+          recipientName: patient.fullName,
+          reference: prescription.reference,
+          prescriptionId,
+          cancelledBy,
+          reason
+        });
+      }
+    }
+
+    // Notify doctor (if not the one cancelling)
+    if (prescription.doctorId && prescription.doctorId !== userId) {
+      notificationService.createNotification(
+        prescription.doctorId,
+        "alert",
+        cancellationMsg,
+        { prescriptionId, reference: prescription.reference, cancelledBy, type: "prescription_cancelled" }
+      ).catch(err => console.error("Notification failed:", err.message));
+    }
+
+    // Notify pharmacy (if assigned and not the one cancelling)
+    if (prescription.pharmacyId && prescription.pharmacyId !== userId) {
+      const pharmacy = await pharmacyProfileRepo.findById(prescription.pharmacyId);
+      if (pharmacy?.userId) {
+        notificationService.createNotification(
+          pharmacy.userId,
+          "alert",
+          cancellationMsg,
+          { prescriptionId, reference: prescription.reference, cancelledBy, type: "prescription_cancelled" }
+        ).catch(err => console.error("Notification failed:", err.message));
+      }
+    }
 
     return this.getPrescriptionById(prescriptionId);
   }
@@ -486,6 +685,93 @@ class PrescriptionService {
       status: prescription.status,
       note: "Medication availability confirmed"
     });
+
+    // Get patient and pharmacy info
+    const patient = await userRepo.findById(prescription.patientId);
+    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+
+    // Notify patient via WebSocket
+    notificationService.createNotification(
+      prescription.patientId,
+      "notification",
+      `${pharmacy?.pharmacyName || "Your pharmacy"} has confirmed your medications are available (Ref: ${prescription.reference}). An invoice will be sent shortly.`,
+      { prescriptionId, reference: prescription.reference, type: "availability_confirmed" }
+    ).catch(err => console.error("Notification failed:", err.message));
+
+    // Send email to patient
+    if (patient?.email) {
+      sendEmail(pharmacyEmailHelper.sendAvailabilityConfirmedEmail, {
+        to: patient.email,
+        patientName: patient.fullName,
+        pharmacyName: pharmacy?.pharmacyName || "Your pharmacy",
+        reference: prescription.reference,
+        prescriptionId
+      });
+    }
+
+    return this.getPrescriptionById(prescriptionId);
+  }
+
+  /**
+   * Pharmacy proposes alternative medications
+   * @param {string} prescriptionId
+   * @param {string} pharmacyId
+   * @param {Array}  alternatives - [{name, dosage, reason}]
+   * @param {string} [pharmacistId]
+   */
+  async proposeAlternative(prescriptionId, pharmacyId, alternatives, pharmacistId = null) {
+    const prescription = await prescriptionRepo.findById(prescriptionId);
+    if (!prescription || prescription.pharmacyId !== pharmacyId) {
+      throw new Error("Prescription not found or unauthorized");
+    }
+
+    if (!Array.isArray(alternatives) || alternatives.length === 0) {
+      throw new Error("At least one alternative medication must be provided");
+    }
+
+    // Store alternatives in internalNotes with a special type marker
+    const internalNotes = prescription.internalNotes || [];
+    internalNotes.push({
+      type: "alternative_proposal",
+      alternatives,
+      pharmacistId,
+      timestamp: new Date().toISOString()
+    });
+
+    // Use updateFields (SQL UPDATE) to avoid TypeORM cascade issues with loaded relations
+    await prescriptionRepo.updateFields(prescriptionId, {
+      availabilityStatus: "alternatives_proposed",
+      internalNotes
+    });
+
+    await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
+      status: prescription.status,
+      note: `Alternative medications proposed (${alternatives.length} alternative${alternatives.length > 1 ? "s" : ""})`
+    });
+
+    // Get patient and pharmacy info
+    const patient = await userRepo.findById(prescription.patientId);
+    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+
+    // Notify patient via WebSocket
+    notificationService.createNotification(
+      prescription.patientId,
+      "notification",
+      `${pharmacy?.pharmacyName || "Your pharmacy"} has suggested alternative medications for prescription ${prescription.reference}. Please review.`,
+      { prescriptionId, reference: prescription.reference, alternatives, type: "alternatives_proposed" }
+    ).catch(err => console.error("Notification failed:", err.message));
+
+    // Send email to patient
+    if (patient?.email) {
+      sendEmail(pharmacyEmailHelper.sendAlternativeSuggestedEmail, {
+        to: patient.email,
+        patientName: patient.fullName,
+        pharmacyName: pharmacy?.pharmacyName || "Your pharmacy",
+        reference: prescription.reference,
+        prescriptionId,
+        alternatives
+      });
+    }
 
     return this.getPrescriptionById(prescriptionId);
   }
