@@ -73,6 +73,76 @@ components:
         rejectionReason:
           type: string
 
+    PharmacyListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pharmacyName:
+          type: string
+        registrationNumber:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        username:
+          type: string
+        verificationStatus:
+          type: string
+          enum: [pending, approved, rejected]
+        isActive:
+          type: boolean
+        documentsSubmitted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            fullName:
+              type: string
+            email:
+              type: string
+            status:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+
+    PharmacyListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PharmacyListItem'
+
+    RequestDocumentsRequest:
+      type: object
+      required:
+        - requiredDocuments
+      properties:
+        requiredDocuments:
+          type: array
+          items:
+            type: string
+          example: ["license", "tax_certificate"]
+
     ErrorResponse:
       type: object
       properties:
