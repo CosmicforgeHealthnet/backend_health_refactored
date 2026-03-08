@@ -51,9 +51,9 @@ router.post("/pharmacy/prescriptions/:prescriptionId/internal-notes", authorizeR
 router.post("/pharmacy/prescriptions/:prescriptionId/propose-alternative", authorizeRoles('pharmacy'), proposeAlternative);
 
 // Shared routes accessible by multiple roles
+router.get("/search", authorizeRoles('doctor', 'patient', 'pharmacy'), searchPrescriptions);
 router.post("/:prescriptionId/cancel", authorizeRoles('doctor', 'patient', 'pharmacy'), cancelPrescription);
 router.post("/:prescriptionId/chat", authorizeRoles('patient', 'pharmacy'), addChatMessage);
 router.get("/:prescriptionId", authorizeRoles('doctor', 'patient', 'pharmacy'), getPrescriptionById);
-router.get("/search", authorizeRoles('doctor', 'patient', 'pharmacy'), searchPrescriptions);
 
 module.exports = router;

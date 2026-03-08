@@ -591,9 +591,27 @@ class PrescriptionService {
   /**
    * Get prescription by ID with all relations
    */
-  async getPrescriptionById(id) {
+  async getPrescriptionById(id, userId = null, role = null) {
     const prescription = await prescriptionRepo.findById(id);
     if (!prescription) return null;
+
+    // Role-based access control (skipped when called internally without a user context)
+    if (userId && role) {
+      let hasAccess = false;
+      if (role === 'doctor') {
+        hasAccess = prescription.doctorId === userId;
+      } else if (role === 'patient') {
+        hasAccess = prescription.patientId === userId;
+      } else if (role === 'pharmacy') {
+        const profile = await pharmacyProfileRepo.findByUserId(userId);
+        hasAccess = profile != null && prescription.pharmacyId === profile.id;
+      }
+      if (!hasAccess) {
+        const err = new Error('Forbidden: You do not have access to this prescription');
+        err.status = 403;
+        throw err;
+      }
+    }
 
     // Enrich with appointment data (Patient Complaint)
     if (prescription.consultationId) {
