@@ -151,15 +151,12 @@ class PrescriptionService {
     const patient = await userRepo.findById(patientId);
 
     // Update prescription with pharmacy and delivery details
-    const updateData = {
+    await prescriptionRepo.updateFields(prescriptionId, {
       pharmacyId,
       status: PrescriptionStatus.PHARMACY_ASSIGNED,
       deliveryAddress: deliveryDetails.address,
       deliveryInstructions: deliveryDetails.instructions,
-      updatedAt: new Date()
-    };
-
-    await prescriptionRepo.save({ ...prescription, ...updateData });
+    });
 
     // Add to fulfillment history
     await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
@@ -220,11 +217,9 @@ class PrescriptionService {
     const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
 
     // Update status and assign pharmacist
-    await prescriptionRepo.save({
-      ...prescription,
+    await prescriptionRepo.updateFields(prescriptionId, {
       status: PrescriptionStatus.PHARMACY_PROCESSING,
       assignedPharmacistId: pharmacistId,
-      updatedAt: new Date()
     });
 
     // Add to fulfillment history
@@ -389,7 +384,7 @@ class PrescriptionService {
       updateData.expectedDeliveryDate = expectedDate;
     }
 
-    await prescriptionRepo.save({ ...prescription, ...updateData });
+    await prescriptionRepo.updateFields(prescriptionId, updateData);
 
     // Add to fulfillment history
     await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
@@ -450,12 +445,10 @@ class PrescriptionService {
     }
 
     // Update status and completion date
-    await prescriptionRepo.save({
-      ...prescription,
+    await prescriptionRepo.updateFields(prescriptionId, {
       status: PrescriptionStatus.COMPLETED,
       actualDeliveryDate: new Date(),
       paymentStatus: PaymentStatus.PAID,
-      updatedAt: new Date()
     });
 
     // Add to fulfillment history
@@ -525,11 +518,9 @@ class PrescriptionService {
     else if (prescription.pharmacyId === userId) cancelledBy = "pharmacy";
 
     // Update status
-    await prescriptionRepo.save({
-      ...prescription,
+    await prescriptionRepo.updateFields(prescriptionId, {
       status: PrescriptionStatus.CANCELLED,
       paymentStatus: PaymentStatus.CANCELLED,
-      updatedAt: new Date()
     });
 
     // Add to fulfillment history
@@ -693,10 +684,8 @@ class PrescriptionService {
       throw new Error("Prescription not found or unauthorized");
     }
 
-    await prescriptionRepo.save({
-      ...prescription,
+    await prescriptionRepo.updateFields(prescriptionId, {
       availabilityStatus: "confirmed",
-      updatedAt: new Date()
     });
 
     await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
@@ -812,11 +801,7 @@ class PrescriptionService {
       timestamp: new Date().toISOString()
     });
 
-    await prescriptionRepo.save({
-      ...prescription,
-      internalNotes,
-      updatedAt: new Date()
-    });
+    await prescriptionRepo.updateFields(prescriptionId, { internalNotes });
 
     return this.getPrescriptionById(prescriptionId);
   }
