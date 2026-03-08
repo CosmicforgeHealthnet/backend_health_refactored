@@ -112,7 +112,14 @@ class PrescriptionController {
     const { prescriptionId } = req.params;
     const { reason } = req.body;
     const userId = req.user.sub;
-    const prescription = await PrescriptionService.cancelPrescription(prescriptionId, userId, reason);
+    const role = req.user.role;
+    // Pharmacy users are identified by profile ID in prescriptions, not their user ID
+    let cancelId = userId;
+    if (role === 'pharmacy') {
+      const profile = await pharmacyProfileRepo.findByUserId(userId);
+      if (profile) cancelId = profile.id;
+    }
+    const prescription = await PrescriptionService.cancelPrescription(prescriptionId, cancelId, reason);
     res.status(200).json({ success: true, data: prescription });
   });
 
