@@ -121,7 +121,10 @@ class PrescriptionController {
    */
   getPrescriptionById = asyncHandler(async (req, res) => {
     const { prescriptionId } = req.params;
-    const prescription = await PrescriptionService.getPrescriptionById(prescriptionId);
+    const userId = req.user.sub;
+    const role = req.user.role;
+    const prescription = await PrescriptionService.getPrescriptionById(prescriptionId, userId, role);
+    if (!prescription) return res.status(404).json({ success: false, message: 'Prescription not found' });
     res.status(200).json({ success: true, data: prescription });
   });
 
