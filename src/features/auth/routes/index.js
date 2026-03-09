@@ -196,10 +196,47 @@ router.post("/resend-password-reset", authController.resendPasswordReset);
  *     tags: [Authentication]
  *     description: |
  *       Resends email verification link.
- *       
+ *
  *       **Legacy route**: `POST /auth/resend-verification` (deprecated)
  */
 router.post("/resend-verification", authController.resendVerification);
+
+/**
+ * @swagger
+ * /api/auth/check-verification-status:
+ *   get:
+ *     summary: Check user verification status
+ *     tags: [Authentication]
+ *     description: |
+ *       Checks if a user's email has been verified.
+ *       Returns the user's email and verification status (true/false).
+ *     parameters:
+ *       - in: query
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: email
+ *         description: The email address to check verification status for
+ *     responses:
+ *       200:
+ *         description: Verification status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 email:
+ *                   type: string
+ *                   format: email
+ *                 isVerified:
+ *                   type: boolean
+ *       400:
+ *         description: Email is required
+ *       404:
+ *         description: User not found
+ */
+router.get("/check-verification-status", authController.checkVerificationStatus);
 
 // ============================================
 // MAGIC LINK ROUTES

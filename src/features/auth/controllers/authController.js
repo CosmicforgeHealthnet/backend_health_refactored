@@ -513,3 +513,27 @@ exports.consumeMagicLink = async (req, res, next) => {
             .json({ error: err.message || "Internal server error" });
     }
 };
+
+// check verification status
+exports.checkVerificationStatus = async (req, res, next) => {
+    try {
+        const { email } = req.query;
+        if (!email) {
+            return res.status(400).json({ error: "Email is required" });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: "Invalid email format" });
+        }
+
+        const result = await verificationService.checkVerificationStatus(email);
+        if (!result) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        return res.json(result);
+    } catch (err) {
+        next(err);
+    }
+};
