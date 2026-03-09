@@ -135,10 +135,12 @@ class PrescriptionService {
       throw new Error("Unauthorized: Not your prescription");
     }
 
-    // Verify pharmacy exists and is active
+    // Verify pharmacy exists and is approved (isActive is set by approval flow going forward)
     const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
-    if (!pharmacy || !pharmacy.isActive) {
-      throw new Error("Pharmacy not available");
+    if (!pharmacy || pharmacy.verificationStatus !== 'approved') {
+      const err = new Error("Pharmacy not found or not yet approved");
+      err.status = 400;
+      throw err;
     }
 
     // Check if prescription can be assigned

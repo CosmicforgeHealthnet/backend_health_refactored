@@ -75,6 +75,7 @@ class PharmacyProfileRepository {
   async updateVerificationStatus(id, status) {
     return this.repo.update(id, {
       verificationStatus: status,
+      isActive: status === "approved",
       updatedAt: new Date()
     });
   }
