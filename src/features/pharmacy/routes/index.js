@@ -14,7 +14,10 @@ router.use("/documents", documentRoutes);
 router.use("/admin", adminRoutes);
 router.use("/prescriptions", prescriptionRoutes);
 
-// List all pharmacies — accessible to any authenticated user (?page=&limit=&verificationStatus=)
-router.get("/list", authenticateJWT, pharmacyAuthController.getAllPharmacies);
+// List all pharmacies — patient-facing, defaults to approved only
+router.get("/list", authenticateJWT, (req, res, next) => {
+  if (!req.query.verificationStatus) req.query.verificationStatus = 'approved';
+  next();
+}, pharmacyAuthController.getAllPharmacies);
 
 module.exports = router;
