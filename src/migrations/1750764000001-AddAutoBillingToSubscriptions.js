@@ -2,31 +2,31 @@ module.exports = class AddAutoBillingToSubscriptions1750764000001 {
   async up(queryRunner) {
     await queryRunner.query(`
       ALTER TABLE "subscriptions"
-      ADD COLUMN "autoBillingEnabled" boolean NOT NULL DEFAULT false
+      ADD COLUMN IF NOT EXISTS "autoBillingEnabled" boolean NOT NULL DEFAULT false
     `);
 
     await queryRunner.query(`
       ALTER TABLE "subscriptions"
-      ADD COLUMN "preferredPaymentMethodId" uuid
+      ADD COLUMN IF NOT EXISTS "preferredPaymentMethodId" uuid
     `);
 
     await queryRunner.query(`
       ALTER TABLE "subscriptions"
-      ADD COLUMN "autoBillingFailureCount" integer NOT NULL DEFAULT 0
+      ADD COLUMN IF NOT EXISTS "autoBillingFailureCount" integer NOT NULL DEFAULT 0
     `);
 
     await queryRunner.query(`
       ALTER TABLE "subscriptions"
-      ADD COLUMN "lastAutoBillingAttempt" TIMESTAMP
+      ADD COLUMN IF NOT EXISTS "lastAutoBillingAttempt" TIMESTAMP
     `);
 
     await queryRunner.query(`
       ALTER TABLE "subscriptions"
-      ADD COLUMN "autoBillingGracePeriod" integer NOT NULL DEFAULT 7
+      ADD COLUMN IF NOT EXISTS "autoBillingGracePeriod" integer NOT NULL DEFAULT 7
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_subscription_auto_billing" ON "subscriptions" ("autoBillingEnabled")
+      CREATE INDEX IF NOT EXISTS "IDX_subscription_auto_billing" ON "subscriptions" ("autoBillingEnabled")
     `);
 
     await queryRunner.query(`

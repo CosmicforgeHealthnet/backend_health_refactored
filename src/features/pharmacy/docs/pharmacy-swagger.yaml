@@ -808,6 +808,112 @@ paths:
           description: Forbidden - Not assigned to this pharmacy
         "404":
           description: Prescription not found
+  /pharmacy/prescriptions/pharmacy/orders:
+    get:
+      summary: Get active pharmacy orders
+      description: >
+        Retrieves active orders currently being processed by the authenticated
+        pharmacy.
+
+        - Returns prescriptions in `pharmacy_processing`, `ready_for_delivery`,
+        or `ready_for_pickup` status.
+
+        - Supports pagination via query parameters.
+      tags:
+        - Pharmacy Dashboard
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of orders per page
+      responses:
+        "200":
+          description: List of active pharmacy orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PharmacyOrdersResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Not a pharmacy
+  /pharmacy/prescriptions/pharmacy/contacts:
+    get:
+      summary: Get pharmacy contacts
+      description: >
+        Retrieves all unique patients and doctors who have interacted with the
+        authenticated pharmacy via prescriptions.
+
+        - Returns deduplicated lists of patients and doctors.
+
+        - Useful for building contact/communication lists within the pharmacy
+        portal.
+      tags:
+        - Pharmacy Dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Unique contacts associated with the pharmacy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PharmacyContactsResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Not a pharmacy
+  /pharmacy/prescriptions/patient/invoices:
+    get:
+      summary: Get patient invoices
+      description: >
+        Retrieves all prescriptions with invoice data for the authenticated
+        patient.
+
+        - Only returns prescriptions where cost information has been provided
+        (`totalDue IS NOT NULL`).
+
+        - Supports pagination via query parameters.
+      tags:
+        - Prescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of invoices per page
+      responses:
+        "200":
+          description: List of patient invoices
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientInvoicesResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Not a patient
   /pharmacy/prescriptions/pharmacy/prescriptions:
     get:
       summary: Get pharmacy's prescriptions
@@ -2068,6 +2174,93 @@ components:
           format: date-time
           example: 2025-08-26T12:00:00Z
           description: Timestamp of the message
+    PharmacyOrdersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          description: List of active prescriptions being processed by the pharmacy
+          items:
+            $ref: "#/components/schemas/PrescriptionResponse"
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 50
+            total:
+              type: integer
+              example: 12
+    PharmacyContactsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            patients:
+              type: array
+              description: Unique patients who have sent prescriptions to this pharmacy
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  fullName:
+                    type: string
+                    example: John Doe
+                  email:
+                    type: string
+                    format: email
+                    example: patient@example.com
+            doctors:
+              type: array
+              description: Unique doctors whose prescriptions this pharmacy has fulfilled
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  fullName:
+                    type: string
+                    example: Dr. Jane Smith
+                  email:
+                    type: string
+                    format: email
+                    example: doctor@example.com
+    PatientInvoicesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          description: Prescriptions with invoice/cost data for the patient
+          items:
+            $ref: "#/components/schemas/PrescriptionResponse"
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 50
+            total:
+              type: integer
+              example: 5
     SuccessResponse:
       type: object
       properties:

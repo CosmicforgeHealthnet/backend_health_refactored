@@ -34,9 +34,9 @@ module.exports = class CreateChatRoomsCamelCase1728705660000 {
     `);
 
     // Create indexes
-    await queryRunner.query(`CREATE INDEX "IDX_CHAT_ROOM_TYPE" ON "chat_rooms"("type");`);
-    await queryRunner.query(`CREATE INDEX "IDX_CHAT_ROOM_PRIVATE" ON "chat_rooms"("isPrivate");`);
-    await queryRunner.query(`CREATE INDEX "IDX_CHAT_ROOM_CREATED_BY" ON "chat_rooms"("createdById");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_CHAT_ROOM_TYPE" ON "chat_rooms"("type");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_CHAT_ROOM_PRIVATE" ON "chat_rooms"("isPrivate");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_CHAT_ROOM_CREATED_BY" ON "chat_rooms"("createdById");`);
   }
 
   async down(queryRunner) {

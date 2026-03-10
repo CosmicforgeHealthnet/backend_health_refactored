@@ -626,7 +626,7 @@ class PrescriptionService {
       prescription.orderedTests = labOrders
         .filter(order => Math.abs(new Date(order.createdAt) - new Date(prescription.createdAt)) < 24 * 60 * 60 * 1000)
         .flatMap(order => order.testNames || []);
-    } catch (err) {
+    } catch {
       // Lab module may not be available yet — skip enrichment silently
       prescription.orderedTests = [];
     }
@@ -686,13 +686,15 @@ class PrescriptionService {
       throw new Error("Prescription not found or unauthorized");
     }
 
+    // Confirm availability and auto-start processing in one step
     await prescriptionRepo.updateFields(prescriptionId, {
       availabilityStatus: "confirmed",
+      status: PrescriptionStatus.PHARMACY_PROCESSING,
     });
 
     await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
-      status: prescription.status,
-      note: "Medication availability confirmed"
+      status: PrescriptionStatus.PHARMACY_PROCESSING,
+      note: "Medication availability confirmed — processing started"
     });
 
     // Get patient and pharmacy info
@@ -703,7 +705,7 @@ class PrescriptionService {
     notificationService.createNotification(
       prescription.patientId,
       "notification",
-      `${pharmacy?.pharmacyName || "Your pharmacy"} has confirmed your medications are available (Ref: ${prescription.reference}). An invoice will be sent shortly.`,
+      `${pharmacy?.pharmacyName || "Your pharmacy"} has confirmed your medications are available (Ref: ${prescription.reference}). Processing has started.`,
       { prescriptionId, reference: prescription.reference, type: "availability_confirmed" }
     ).catch(err => console.error("Notification failed:", err.message));
 
@@ -758,24 +760,45 @@ class PrescriptionService {
       note: `Alternative medications proposed (${alternatives.length} alternative${alternatives.length > 1 ? "s" : ""})`
     });
 
-    // Get patient and pharmacy info
-    const patient = await userRepo.findById(prescription.patientId);
-    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+    // Get patient, doctor, and pharmacy info
+    const [patient, doctor, pharmacy] = await Promise.all([
+      userRepo.findById(prescription.patientId),
+      userRepo.findById(prescription.doctorId),
+      pharmacyProfileRepo.findById(pharmacyId),
+    ]);
+
+    const pharmacyName = pharmacy?.pharmacyName || "Your pharmacy";
+    const altMsg = `${pharmacyName} has suggested alternative medications for prescription ${prescription.reference}. Please review.`;
+    const altPayload = { prescriptionId, reference: prescription.reference, alternatives, type: "alternatives_proposed" };
 
     // Notify patient via WebSocket
-    notificationService.createNotification(
-      prescription.patientId,
-      "notification",
-      `${pharmacy?.pharmacyName || "Your pharmacy"} has suggested alternative medications for prescription ${prescription.reference}. Please review.`,
-      { prescriptionId, reference: prescription.reference, alternatives, type: "alternatives_proposed" }
-    ).catch(err => console.error("Notification failed:", err.message));
+    notificationService.createNotification(prescription.patientId, "notification", altMsg, altPayload)
+      .catch(err => console.error("Notification failed:", err.message));
+
+    // Notify doctor via WebSocket
+    if (prescription.doctorId) {
+      notificationService.createNotification(prescription.doctorId, "notification", altMsg, altPayload)
+        .catch(err => console.error("Notification failed:", err.message));
+    }
 
     // Send email to patient
     if (patient?.email) {
       sendEmail(pharmacyEmailHelper.sendAlternativeSuggestedEmail, {
         to: patient.email,
         patientName: patient.fullName,
-        pharmacyName: pharmacy?.pharmacyName || "Your pharmacy",
+        pharmacyName,
+        reference: prescription.reference,
+        prescriptionId,
+        alternatives
+      });
+    }
+
+    // Send email to doctor
+    if (doctor?.email) {
+      sendEmail(pharmacyEmailHelper.sendAlternativeSuggestedEmail, {
+        to: doctor.email,
+        patientName: doctor.fullName,
+        pharmacyName,
         reference: prescription.reference,
         prescriptionId,
         alternatives
@@ -834,6 +857,27 @@ class PrescriptionService {
    */
   async searchPrescriptions(query, options = {}) {
     return prescriptionRepo.searchPrescriptions(query, options);
+  }
+
+  /**
+   * Get all unique patients and doctors tied to a pharmacy
+   */
+  async getPharmacyContacts(pharmacyId) {
+    return prescriptionRepo.findContactsByPharmacyId(pharmacyId);
+  }
+
+  /**
+   * Get active orders for a pharmacy (processing / ready stages)
+   */
+  async getPharmacyOrders(pharmacyId, options = {}) {
+    return prescriptionRepo.findActiveOrdersByPharmacyId(pharmacyId, options);
+  }
+
+  /**
+   * Get prescriptions with invoice data for a patient
+   */
+  async getPatientInvoices(patientId, options = {}) {
+    return prescriptionRepo.findInvoicesByPatientId(patientId, options);
   }
 }
 

@@ -33,9 +33,9 @@ module.exports = class CreateChatParticipants1728705900000 {
     `);
 
     // Create indexes for camelCase columns
-    await queryRunner.query(`CREATE INDEX "IDX_CHAT_PARTICIPANT_USER" ON "chat_participants" ("userId");`);
-    await queryRunner.query(`CREATE INDEX "IDX_CHAT_PARTICIPANT_ROOM" ON "chat_participants" ("roomId");`);
-    await queryRunner.query(`CREATE INDEX "IDX_CHAT_PARTICIPANT_ACTIVE" ON "chat_participants" ("isActive");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_CHAT_PARTICIPANT_USER" ON "chat_participants" ("userId");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_CHAT_PARTICIPANT_ROOM" ON "chat_participants" ("roomId");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_CHAT_PARTICIPANT_ACTIVE" ON "chat_participants" ("isActive");`);
   }
 
   async down(queryRunner) {

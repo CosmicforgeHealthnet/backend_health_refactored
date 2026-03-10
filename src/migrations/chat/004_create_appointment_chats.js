@@ -13,7 +13,7 @@ module.exports = class CreateAppointmentChats1728705840000 {
 
     // Create the appointmentChats table with camelCase columns
     await queryRunner.query(`
-      CREATE TABLE "appointment_chats" (
+      CREATE TABLE IF NOT EXISTS "appointment_chats" (
         "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "status" appointment_chat_status DEFAULT 'scheduled',
         "scheduledStartTime" TIMESTAMP NOT NULL,
@@ -38,10 +38,10 @@ module.exports = class CreateAppointmentChats1728705840000 {
     `);
 
     // Create indexes for camelCase fields
-    await queryRunner.query(`CREATE INDEX "IDX_APPOINTMENT_CHAT_STATUS" ON "appointment_chats" ("status");`);
-    await queryRunner.query(`CREATE INDEX "IDX_APPOINTMENT_CHAT_SCHEDULED_START" ON "appointment_chats" ("scheduledStartTime");`);
-    await queryRunner.query(`CREATE INDEX "IDX_APPOINTMENT_CHAT_DOCTOR" ON "appointment_chats" ("doctorId");`);
-    await queryRunner.query(`CREATE INDEX "IDX_APPOINTMENT_CHAT_PATIENT" ON "appointment_chats" ("patientId");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_APPOINTMENT_CHAT_STATUS" ON "appointment_chats" ("status");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_APPOINTMENT_CHAT_SCHEDULED_START" ON "appointment_chats" ("scheduledStartTime");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_APPOINTMENT_CHAT_DOCTOR" ON "appointment_chats" ("doctorId");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_APPOINTMENT_CHAT_PATIENT" ON "appointment_chats" ("patientId");`);
   }
 
   async down(queryRunner) {

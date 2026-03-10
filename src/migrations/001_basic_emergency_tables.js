@@ -16,7 +16,7 @@ module.exports = class CreateEmergencyModule1757301090000 {
     async up(queryRunner) {
         // Hospitals
         await queryRunner.query(`
-            CREATE TABLE "hospitals" (
+            CREATE TABLE IF NOT EXISTS "hospitals" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "name" VARCHAR NOT NULL,
                 "address" TEXT,
@@ -30,11 +30,11 @@ module.exports = class CreateEmergencyModule1757301090000 {
             )
         `);
 
-        await queryRunner.query(`CREATE INDEX "IDX_HOSPITAL_NAME" ON "hospitals" ("name")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_HOSPITAL_NAME" ON "hospitals" ("name")`);
 
         // Emergency Contacts
         await queryRunner.query(`
-            CREATE TABLE "emergency_contacts" (
+            CREATE TABLE IF NOT EXISTS "emergency_contacts" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "name" VARCHAR NOT NULL,
                 "phone" VARCHAR NOT NULL,
@@ -45,11 +45,11 @@ module.exports = class CreateEmergencyModule1757301090000 {
             )
         `);
 
-        await queryRunner.query(`CREATE INDEX "IDX_CONTACT_PHONE" ON "emergency_contacts" ("phone")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_CONTACT_PHONE" ON "emergency_contacts" ("phone")`);
 
         // SOS Events
         await queryRunner.query(`
-            CREATE TABLE "sos_events" (
+            CREATE TABLE IF NOT EXISTS "sos_events" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "user_id" uuid NOT NULL,
                 "location" VARCHAR,
@@ -60,8 +60,8 @@ module.exports = class CreateEmergencyModule1757301090000 {
             )
         `);
 
-        await queryRunner.query(`CREATE INDEX "IDX_SOS_USER" ON "sos_events" ("user_id")`);
-        await queryRunner.query(`CREATE INDEX "IDX_SOS_STATUS" ON "sos_events" ("status")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_SOS_USER" ON "sos_events" ("user_id")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_SOS_STATUS" ON "sos_events" ("status")`);
 
         // Foreign key for sos_events → users
         await queryRunner.query(`

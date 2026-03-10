@@ -21,6 +21,9 @@ const {
   confirmAvailability,
   addInternalNote,
   proposeAlternative,
+  getPharmacyContacts,
+  getPharmacyOrders,
+  getPatientInvoices,
 } = require("../controllers/prescriptionController");
 
 // Subscription middlewares
@@ -37,6 +40,7 @@ router.get("/doctor/prescriptions", authorizeRoles('doctor'), getDoctorPrescript
 router.post("/patient/prescriptions/:prescriptionId/upload", authorizeRoles('patient'), requireFeature("pharmacy"), uploadPrescription);
 router.post("/patient/prescriptions/:prescriptionId/assign-pharmacy", authorizeRoles('patient'), requireFeature("pharmacy"), assignPharmacy);
 router.get("/patient/prescriptions", authorizeRoles('patient'), getPatientPrescriptions);
+router.get("/patient/invoices", authorizeRoles('patient'), getPatientInvoices);
 
 // Pharmacy-specific routes
 router.post("/pharmacy/prescriptions/:prescriptionId/start-processing", authorizeRoles('pharmacy'), startProcessing);
@@ -44,6 +48,8 @@ router.post("/pharmacy/prescriptions/:prescriptionId/provide-costs", authorizeRo
 router.post("/pharmacy/prescriptions/:prescriptionId/mark-ready", authorizeRoles('pharmacy'), markReady);
 router.post("/pharmacy/prescriptions/:prescriptionId/complete", authorizeRoles('pharmacy'), completePrescription);
 router.get("/pharmacy/prescriptions", authorizeRoles('pharmacy'), getPharmacyPrescriptions);
+router.get("/pharmacy/orders", authorizeRoles('pharmacy'), getPharmacyOrders);
+router.get("/pharmacy/contacts", authorizeRoles('pharmacy'), getPharmacyContacts);
 router.get("/pharmacy/dashboard/stats", authorizeRoles('pharmacy'), getDashboardStats);
 router.get("/pharmacy/dashboard/activity", authorizeRoles('pharmacy'), getActivityFeed);
 router.post("/pharmacy/prescriptions/:prescriptionId/confirm-availability", authorizeRoles('pharmacy'), confirmAvailability);

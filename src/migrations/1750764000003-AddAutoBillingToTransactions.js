@@ -2,11 +2,11 @@ module.exports = class AddAutoBillingToTransactions1750764000003 {
   async up(queryRunner) {
     await queryRunner.query(`
       ALTER TABLE "transactions"
-      ADD COLUMN "isAutoBilling" boolean NOT NULL DEFAULT false
+      ADD COLUMN IF NOT EXISTS "isAutoBilling" boolean NOT NULL DEFAULT false
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_transaction_auto_billing" ON "transactions" ("isAutoBilling")
+      CREATE INDEX IF NOT EXISTS "IDX_transaction_auto_billing" ON "transactions" ("isAutoBilling")
     `);
   }
 

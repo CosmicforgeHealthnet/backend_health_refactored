@@ -10,7 +10,7 @@ module.exports = class AddDepartmentSpecialty1748950088759 {
   async up(queryRunner) {
     await queryRunner.query(`
       ALTER TABLE "users" 
-      ADD COLUMN "departmentSpecialty" varchar NULL
+      ADD COLUMN IF NOT EXISTS "departmentSpecialty" varchar NULL
     `);
   }
 

@@ -25,7 +25,7 @@ module.exports = class AddUserTier1750520200000 {
             await queryRunner.query(`ALTER TABLE "users" ADD "tier" "public"."users_tier_enum" NOT NULL DEFAULT 'free'`);
             
             // Add index for performance
-            await queryRunner.query(`CREATE INDEX "IDX_users_tier" ON "users" ("tier")`);
+            await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_users_tier" ON "users" ("tier")`);
             
             // Add comment
             await queryRunner.query(`COMMENT ON COLUMN "users"."tier" IS 'User subscription tier level'`);

@@ -29,10 +29,10 @@ module.exports = class CreateChatMessages1728705660000 {
 
     // Create essential indexes
     await queryRunner.query(`
-    CREATE INDEX "IDX_CHAT_MESSAGE_ROOM" ON "chat_messages" ("roomId");
-    CREATE INDEX "IDX_CHAT_MESSAGE_SENDER" ON "chat_messages" ("senderId");
-    CREATE INDEX "IDX_CHAT_MESSAGE_CREATED" ON "chat_messages" ("createdAt");
-    CREATE INDEX "IDX_CHAT_MESSAGE_TYPE" ON "chat_messages" ("type");
+    CREATE INDEX IF NOT EXISTS "IDX_CHAT_MESSAGE_ROOM" ON "chat_messages" ("roomId");
+    CREATE INDEX IF NOT EXISTS "IDX_CHAT_MESSAGE_SENDER" ON "chat_messages" ("senderId");
+    CREATE INDEX IF NOT EXISTS "IDX_CHAT_MESSAGE_CREATED" ON "chat_messages" ("createdAt");
+    CREATE INDEX IF NOT EXISTS "IDX_CHAT_MESSAGE_TYPE" ON "chat_messages" ("type");
     `);
 
     // Create trigger for updatedAt timestamp

@@ -26,15 +26,15 @@ module.exports = class AddMessageReactions20250611094500 {
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_REACTION_MESSAGE" ON "chat_message_reactions" ("messageId");
+      CREATE INDEX IF NOT EXISTS "IDX_REACTION_MESSAGE" ON "chat_message_reactions" ("messageId");
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_REACTION_USER" ON "chat_message_reactions" ("userId");
+      CREATE INDEX IF NOT EXISTS "IDX_REACTION_USER" ON "chat_message_reactions" ("userId");
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_REACTION_EMOJI" ON "chat_message_reactions" ("emoji");
+      CREATE INDEX IF NOT EXISTS "IDX_REACTION_EMOJI" ON "chat_message_reactions" ("emoji");
     `);
   }
 

@@ -5,7 +5,7 @@ module.exports = class CreatePatientRiskAssessment1760000000000 {
 
     async up(queryRunner) {
         await queryRunner.query(`
-            CREATE TABLE "patient_risk_assessments" (
+            CREATE TABLE IF NOT EXISTS "patient_risk_assessments" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "assessmentType" character varying NOT NULL,
                 "riskScore" double precision NOT NULL,

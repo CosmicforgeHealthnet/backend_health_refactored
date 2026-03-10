@@ -61,7 +61,7 @@ module.exports = class SafeCompleteSubscriptionMigration1750520000010 {
 
         // Create the complete table
         await queryRunner.query(`
-            CREATE TABLE "subscriptions" (
+            CREATE TABLE IF NOT EXISTS "subscriptions" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "userId" uuid NOT NULL,
                 "tier" "public"."subscriptions_tier_enum" NOT NULL DEFAULT 'free',
@@ -90,13 +90,13 @@ module.exports = class SafeCompleteSubscriptionMigration1750520000010 {
         `);
 
         // Add indexes
-        await queryRunner.query(`CREATE INDEX "IDX_subscriptions_userId" ON "subscriptions" ("userId")`);
-        await queryRunner.query(`CREATE INDEX "IDX_subscriptions_status" ON "subscriptions" ("status")`);
-        await queryRunner.query(`CREATE INDEX "IDX_subscriptions_tier" ON "subscriptions" ("tier")`);
-        await queryRunner.query(`CREATE INDEX "IDX_subscriptions_plantype" ON "subscriptions" ("planType")`);
-        await queryRunner.query(`CREATE INDEX "IDX_subscriptions_nextBillingDate" ON "subscriptions" ("nextBillingDate")`);
-        await queryRunner.query(`CREATE INDEX "IDX_subscriptions_createdAt" ON "subscriptions" ("createdAt")`);
-        await queryRunner.query(`CREATE INDEX "IDX_subscriptions_billingcycle" ON "subscriptions" ("billingCycle")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_subscriptions_userId" ON "subscriptions" ("userId")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_subscriptions_status" ON "subscriptions" ("status")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_subscriptions_tier" ON "subscriptions" ("tier")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_subscriptions_plantype" ON "subscriptions" ("planType")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_subscriptions_nextBillingDate" ON "subscriptions" ("nextBillingDate")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_subscriptions_createdAt" ON "subscriptions" ("createdAt")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_subscriptions_billingcycle" ON "subscriptions" ("billingCycle")`);
 
         // Add foreign key
         await queryRunner.query(`
@@ -150,11 +150,11 @@ module.exports = class SafeCompleteSubscriptionMigration1750520000010 {
         // Create other enums
         try {
             await queryRunner.query(`CREATE TYPE "public"."subscriptions_plantype_enum" AS ENUM('doctor', 'patient')`);
-        } catch (e) {}
-        
+        } catch { /* type may already exist */ }
+
         try {
             await queryRunner.query(`CREATE TYPE "public"."subscriptions_billingcycle_enum" AS ENUM('monthly', 'quarterly', 'yearly')`);
-        } catch (e) {}
+        } catch { /* type may already exist */ }
 
         // Add new columns
         const columnsToAdd = [
@@ -196,7 +196,7 @@ module.exports = class SafeCompleteSubscriptionMigration1750520000010 {
         for (const indexName of indexes) {
             try {
                 const columnName = indexName.split('_').pop();
-                await queryRunner.query(`CREATE INDEX "${indexName}" ON "subscriptions" ("${columnName}")`);
+                await queryRunner.query(`CREATE INDEX IF NOT EXISTS "${indexName}" ON "subscriptions" ("${columnName}")`);
             } catch (e) {
                 // Index might already exist
             }
@@ -211,7 +211,7 @@ module.exports = class SafeCompleteSubscriptionMigration1750520000010 {
         await queryRunner.query(`CREATE TYPE "public"."subscriptions_status_enum" AS ENUM('active', 'pending', 'expired', 'canceled', 'paused')`);
         
         await queryRunner.query(`
-            CREATE TABLE "subscriptions" (
+            CREATE TABLE IF NOT EXISTS "subscriptions" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "userId" uuid NOT NULL,
                 "tier" "public"."subscriptions_tier_enum" NOT NULL DEFAULT 'basic',

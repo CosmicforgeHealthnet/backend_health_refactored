@@ -56,11 +56,11 @@ module.exports = class EnhancedTransactionFields1750519500000 {
         await queryRunner.query(`COMMENT ON COLUMN "transactions"."lastRescheduledAt" IS 'When appointment was last rescheduled'`);
 
         // Add indexes for the new fields
-        await queryRunner.query(`CREATE INDEX "IDX_transactions_appointment_date" ON "transactions" ("appointmentDate")`);
-        await queryRunner.query(`CREATE INDEX "IDX_transactions_funds_status" ON "transactions" ("fundsStatus")`);
-        await queryRunner.query(`CREATE INDEX "IDX_transactions_is_cancelled" ON "transactions" ("isCancelled")`);
-        await queryRunner.query(`CREATE INDEX "IDX_transactions_refund_status" ON "transactions" ("refundStatus")`);
-        await queryRunner.query(`CREATE INDEX "IDX_transactions_dispute_window_starts_at" ON "transactions" ("disputeWindowStartsAt")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_transactions_appointment_date" ON "transactions" ("appointmentDate")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_transactions_funds_status" ON "transactions" ("fundsStatus")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_transactions_is_cancelled" ON "transactions" ("isCancelled")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_transactions_refund_status" ON "transactions" ("refundStatus")`);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_transactions_dispute_window_starts_at" ON "transactions" ("disputeWindowStartsAt")`);
 
         // Update existing completed appointment transactions with proper funds status
         // This is a data migration to set appropriate fundsStatus for existing records
