@@ -172,6 +172,56 @@ class PrescriptionRepository {
     return `RX-${dateStr}-${tsPart}${randPart}`;
   }
 
+  // Get unique patients and doctors associated with a pharmacy
+  async findContactsByPharmacyId(pharmacyId) {
+    const prescriptions = await this.repo.createQueryBuilder("prescription")
+      .leftJoinAndSelect("prescription.patient", "patient")
+      .leftJoinAndSelect("prescription.doctor", "doctor")
+      .where("prescription.pharmacyId = :pharmacyId", { pharmacyId })
+      .getMany();
+
+    const patientsMap = new Map();
+    const doctorsMap = new Map();
+    for (const p of prescriptions) {
+      if (p.patient) patientsMap.set(p.patient.id, p.patient);
+      if (p.doctor) doctorsMap.set(p.doctor.id, p.doctor);
+    }
+    return {
+      patients: Array.from(patientsMap.values()),
+      doctors: Array.from(doctorsMap.values()),
+    };
+  }
+
+  // Active orders for a pharmacy (processing / ready stages)
+  async findActiveOrdersByPharmacyId(pharmacyId, options = {}) {
+    const { limit = 50, offset = 0 } = options;
+    const activeStatuses = ["pharmacy_processing", "ready_for_delivery", "ready_for_pickup"];
+    return this.repo.createQueryBuilder("prescription")
+      .leftJoinAndSelect("prescription.patient", "patient")
+      .leftJoinAndSelect("prescription.doctor", "doctor")
+      .leftJoinAndSelect("prescription.assignedPharmacist", "assignedPharmacist")
+      .where("prescription.pharmacyId = :pharmacyId", { pharmacyId })
+      .andWhere("prescription.status IN (:...activeStatuses)", { activeStatuses })
+      .orderBy("prescription.updatedAt", "DESC")
+      .limit(limit)
+      .offset(offset)
+      .getMany();
+  }
+
+  // Prescriptions with invoice data for a patient
+  async findInvoicesByPatientId(patientId, options = {}) {
+    const { limit = 50, offset = 0 } = options;
+    return this.repo.createQueryBuilder("prescription")
+      .leftJoinAndSelect("prescription.doctor", "doctor")
+      .leftJoinAndSelect("prescription.pharmacy", "pharmacy")
+      .where("prescription.patientId = :patientId", { patientId })
+      .andWhere("prescription.totalDue IS NOT NULL")
+      .orderBy("prescription.updatedAt", "DESC")
+      .limit(limit)
+      .offset(offset)
+      .getMany();
+  }
+
   // Search prescriptions
   async searchPrescriptions(query, options = {}) {
     const { limit = 50, offset = 0 } = options;

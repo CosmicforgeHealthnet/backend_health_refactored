@@ -29,10 +29,10 @@ module.exports = class FileUpgrade1751967102373 {
         await queryRunner.query(`ALTER TABLE "document_files" ADD "purpose_of_use" jsonb`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."purpose_of_use" IS 'Intended purpose of use for access control'`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."metadata" IS 'Extended metadata including FHIR-specific information'`);
-        await queryRunner.query(`CREATE INDEX "IDX_FHIR_RESOURCE_TYPE" ON "document_files" ("fhir_resource_type") `);
-        await queryRunner.query(`CREATE INDEX "IDX_PATIENT_IDENTIFIER" ON "document_files" ("patient_identifier") `);
-        await queryRunner.query(`CREATE INDEX "IDX_FHIR_SENSITIVITY" ON "document_files" ("fhir_sensitivity_level") `);
-        await queryRunner.query(`CREATE INDEX "IDX_PATIENT_RESOURCE" ON "document_files" ("patient_identifier", "fhir_resource_type") `);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_FHIR_RESOURCE_TYPE" ON "document_files" ("fhir_resource_type") `);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_PATIENT_IDENTIFIER" ON "document_files" ("patient_identifier") `);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_FHIR_SENSITIVITY" ON "document_files" ("fhir_sensitivity_level") `);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_PATIENT_RESOURCE" ON "document_files" ("patient_identifier", "fhir_resource_type") `);
     }
 
     async down(queryRunner) {

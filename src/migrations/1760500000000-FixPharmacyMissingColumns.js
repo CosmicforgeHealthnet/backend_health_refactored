@@ -72,7 +72,7 @@ module.exports = class FixPharmacyMissingColumns1760500000000 {
           WHERE table_name = 'prescriptions' AND column_name = 'availabilityStatus'
         ) THEN
           ALTER TABLE "prescriptions"
-            ADD COLUMN "availabilityStatus"
+            ADD COLUMN IF NOT EXISTS "availabilityStatus"
               "public"."prescriptions_availabilitystatus_enum"
               NOT NULL DEFAULT 'pending';
         END IF;

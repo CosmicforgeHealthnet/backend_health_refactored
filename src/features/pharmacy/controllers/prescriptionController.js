@@ -224,6 +224,24 @@ class PrescriptionController {
     const prescriptions = await PrescriptionService.searchPrescriptions(searchTerm || "", { page, limit });
     res.status(200).json({ success: true, data: prescriptions });
   });
+
+  getPharmacyContacts = asyncHandler(async (req, res) => {
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
+    const contacts = await PrescriptionService.getPharmacyContacts(pharmacyId);
+    res.status(200).json({ success: true, data: contacts });
+  });
+
+  getPharmacyOrders = asyncHandler(async (req, res) => {
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
+    const orders = await PrescriptionService.getPharmacyOrders(pharmacyId, req.query);
+    res.status(200).json({ success: true, data: orders });
+  });
+
+  getPatientInvoices = asyncHandler(async (req, res) => {
+    const patientId = req.user.sub;
+    const invoices = await PrescriptionService.getPatientInvoices(patientId, req.query);
+    res.status(200).json({ success: true, data: invoices });
+  });
 }
 
 module.exports = new PrescriptionController();

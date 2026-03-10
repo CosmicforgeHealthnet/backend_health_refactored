@@ -25,7 +25,7 @@ module.exports = class AddUserIsOnline1750520300000 {
             await queryRunner.query(`ALTER TABLE "users" ADD "isOnline" BOOLEAN NOT NULL DEFAULT false`);
             
             // Add index for performance
-            await queryRunner.query(`CREATE INDEX "IDX_users_isOnline" ON "users" ("isOnline")`);
+            await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_users_isOnline" ON "users" ("isOnline")`);
             
             // Add comment
             await queryRunner.query(`COMMENT ON COLUMN "users"."isOnline" IS 'Tracks user online status'`);

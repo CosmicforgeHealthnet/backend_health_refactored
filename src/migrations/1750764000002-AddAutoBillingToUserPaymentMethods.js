@@ -2,31 +2,31 @@ module.exports = class AddAutoBillingToUserPaymentMethods1750764000002 {
   async up(queryRunner) {
     await queryRunner.query(`
       ALTER TABLE "user_payment_methods"
-      ADD COLUMN "canAutoCharge" boolean NOT NULL DEFAULT true
+      ADD COLUMN IF NOT EXISTS "canAutoCharge" boolean NOT NULL DEFAULT true
     `);
 
     await queryRunner.query(`
       ALTER TABLE "user_payment_methods"
-      ADD COLUMN "tokenExpiryDate" TIMESTAMP
+      ADD COLUMN IF NOT EXISTS "tokenExpiryDate" TIMESTAMP
     `);
 
     await queryRunner.query(`
       ALTER TABLE "user_payment_methods"
-      ADD COLUMN "lastAutoBillingUse" TIMESTAMP
+      ADD COLUMN IF NOT EXISTS "lastAutoBillingUse" TIMESTAMP
     `);
 
     await queryRunner.query(`
       ALTER TABLE "user_payment_methods"
-      ADD COLUMN "autoBillingSuccessCount" integer NOT NULL DEFAULT 0
+      ADD COLUMN IF NOT EXISTS "autoBillingSuccessCount" integer NOT NULL DEFAULT 0
     `);
 
     await queryRunner.query(`
       ALTER TABLE "user_payment_methods"
-      ADD COLUMN "autoBillingFailureCount" integer NOT NULL DEFAULT 0
+      ADD COLUMN IF NOT EXISTS "autoBillingFailureCount" integer NOT NULL DEFAULT 0
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_payment_method_auto_charge" ON "user_payment_methods" ("canAutoCharge")
+      CREATE INDEX IF NOT EXISTS "IDX_payment_method_auto_charge" ON "user_payment_methods" ("canAutoCharge")
     `);
   }
 

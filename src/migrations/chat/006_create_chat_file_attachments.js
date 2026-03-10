@@ -4,7 +4,7 @@ module.exports = class CreateChatFileAttachments1728705720000 {
   async up(queryRunner) {
     // Create table with camelCase column names
     await queryRunner.query(`
-      CREATE TABLE "chat_file_attachments" (
+      CREATE TABLE IF NOT EXISTS "chat_file_attachments" (
         "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "filename" VARCHAR(255) NOT NULL,
         "originalName" VARCHAR(255) NOT NULL,
@@ -23,9 +23,9 @@ module.exports = class CreateChatFileAttachments1728705720000 {
     `);
 
     // Create indexes using camelCase column names
-    await queryRunner.query(`CREATE INDEX "IDX_CHAT_FILE_MESSAGE" ON "chat_file_attachments" ("messageId");`);
-    await queryRunner.query(`CREATE INDEX "IDX_CHAT_FILE_UPLOADER" ON "chat_file_attachments" ("uploadedById");`);
-    await queryRunner.query(`CREATE INDEX "IDX_CHAT_FILE_MIME_TYPE" ON "chat_file_attachments" ("mimeType");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_CHAT_FILE_MESSAGE" ON "chat_file_attachments" ("messageId");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_CHAT_FILE_UPLOADER" ON "chat_file_attachments" ("uploadedById");`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_CHAT_FILE_MIME_TYPE" ON "chat_file_attachments" ("mimeType");`);
   }
 
   async down(queryRunner) {

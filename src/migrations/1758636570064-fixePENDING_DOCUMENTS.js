@@ -18,8 +18,8 @@ module.exports = class FixePENDINGDOCUMENTS1758636570064 {
         await queryRunner.query(`ALTER TABLE "verification_requests" ALTER COLUMN "status" TYPE "public"."verification_requests_status_enum" USING "status"::"text"::"public"."verification_requests_status_enum"`);
         await queryRunner.query(`ALTER TABLE "verification_requests" ALTER COLUMN "status" SET DEFAULT 'pending'`);
         await queryRunner.query(`DROP TYPE "public"."verification_requests_status_enum_old"`);
-        await queryRunner.query(`CREATE INDEX "idx_verification_doctor_status" ON "verification_requests" ("doctorId", "status") `);
-        await queryRunner.query(`CREATE INDEX "idx_verification_country_status" ON "verification_requests" ("countryCode", "status") `);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_verification_doctor_status" ON "verification_requests" ("doctorId", "status") `);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_verification_country_status" ON "verification_requests" ("countryCode", "status") `);
     }
 
     async down(queryRunner) {
@@ -31,7 +31,7 @@ module.exports = class FixePENDINGDOCUMENTS1758636570064 {
         await queryRunner.query(`ALTER TABLE "verification_requests" ALTER COLUMN "status" SET DEFAULT 'pending'`);
         await queryRunner.query(`DROP TYPE "public"."verification_requests_status_enum"`);
         await queryRunner.query(`ALTER TYPE "public"."verification_requests_status_enum_old" RENAME TO "verification_requests_status_enum"`);
-        await queryRunner.query(`CREATE INDEX "idx_verification_country_status" ON "verification_requests" ("countryCode", "status") `);
-        await queryRunner.query(`CREATE INDEX "idx_verification_doctor_status" ON "verification_requests" ("doctorId", "status") `);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_verification_country_status" ON "verification_requests" ("countryCode", "status") `);
+        await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_verification_doctor_status" ON "verification_requests" ("doctorId", "status") `);
     }
 }

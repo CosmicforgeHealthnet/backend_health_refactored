@@ -428,3 +428,93 @@ components:
           type: string
           example: "Invalid request data"
           description: Error message describing the issue
+
+    PharmacyOrdersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          description: List of active prescriptions being processed by the pharmacy
+          items:
+            $ref: '#/components/schemas/PrescriptionResponse'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 50
+            total:
+              type: integer
+              example: 12
+
+    PharmacyContactsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            patients:
+              type: array
+              description: Unique patients who have sent prescriptions to this pharmacy
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  fullName:
+                    type: string
+                    example: John Doe
+                  email:
+                    type: string
+                    format: email
+                    example: patient@example.com
+            doctors:
+              type: array
+              description: Unique doctors whose prescriptions this pharmacy has fulfilled
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  fullName:
+                    type: string
+                    example: Dr. Jane Smith
+                  email:
+                    type: string
+                    format: email
+                    example: doctor@example.com
+
+    PatientInvoicesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          description: Prescriptions with invoice/cost data for the patient
+          items:
+            $ref: '#/components/schemas/PrescriptionResponse'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 50
+            total:
+              type: integer
+              example: 5
