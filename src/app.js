@@ -143,6 +143,27 @@ const loadSwaggerDoc = (docPath, title) => {
 
 const swaggerDoc = loadSwaggerDoc("./docs/swagger.bundle.json", "Main");
 const pharmacySwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/pharmacy-swagger.bundle.json", "Pharmacy");
+const pharmacyPaymentSwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/pharmacy-payment-swagger.json", "Pharmacy Payment");
+
+// Merge payment doc into pharmacy doc so /pharmacy-docs shows everything
+if (pharmacyPaymentSwaggerDoc.paths) {
+    Object.assign(pharmacySwaggerDoc.paths, pharmacyPaymentSwaggerDoc.paths);
+}
+if (pharmacyPaymentSwaggerDoc.components) {
+    pharmacySwaggerDoc.components = pharmacySwaggerDoc.components || {};
+    if (pharmacyPaymentSwaggerDoc.components.schemas) {
+        pharmacySwaggerDoc.components.schemas = pharmacySwaggerDoc.components.schemas || {};
+        Object.assign(pharmacySwaggerDoc.components.schemas, pharmacyPaymentSwaggerDoc.components.schemas);
+    }
+    if (pharmacyPaymentSwaggerDoc.components.securitySchemes) {
+        pharmacySwaggerDoc.components.securitySchemes = pharmacySwaggerDoc.components.securitySchemes || {};
+        Object.assign(pharmacySwaggerDoc.components.securitySchemes, pharmacyPaymentSwaggerDoc.components.securitySchemes);
+    }
+}
+if (pharmacyPaymentSwaggerDoc.tags) {
+    pharmacySwaggerDoc.tags = [...(pharmacySwaggerDoc.tags || []), ...pharmacyPaymentSwaggerDoc.tags];
+}
+
 // Pharmacy routes are mounted under /api, so override server URL to include /api base
 pharmacySwaggerDoc.servers = [
     {
@@ -206,8 +227,10 @@ app.use('/api-docs', swaggerUi.serveFiles(swaggerDoc, {}), swaggerUi.setup(swagg
 
 app.use('/pharmacy-docs', swaggerUi.serveFiles(pharmacySwaggerDoc, {}), swaggerUi.setup(pharmacySwaggerDoc, {
     customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: "CosmicForge Pharmacy API"
+    customSiteTitle: "CosmicForge Pharmacy API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
 }));
+
 
 app.use('/lab-docs', swaggerUi.serveFiles(labSwaggerDoc, {}), swaggerUi.setup(labSwaggerDoc, {
     customCss: '.swagger-ui .topbar { display: none }',
@@ -291,6 +314,7 @@ app.get('/download-uploads', async (req, res) => {
 // ============================================
 app.use("/api/auth", authFeature.router);
 app.use("/api/patient", authenticateJWT, patientFeature.router);
+app.use("/api/patient", authenticateJWT, require("./features/pharmacy/routes/patientRoutes")); // Patient invoice & payment routes
 app.use("/api/doctor", doctorFeature.router);
 app.use("/api/appointments", authenticateJWT, appointmentFeature.router);
 app.use("/api/chat", authenticateJWT, chatFeature.router);
@@ -299,6 +323,7 @@ app.use("/api/notifications", authenticateJWT, notificationFeature.router);
 app.use("/api/subscription", subscriptionFeature.router); // Handles both public and auth routes (auth is per-route)
 app.use("/api/payments", authenticateJWT, paymentFeature.router);
 app.use("/api/webhooks/payments", paymentFeature.webhookRouter); // Public webhook route
+app.use("/api/webhooks/pharmacy", require("./features/pharmacy/routes/pharmacyWebhookRoutes")); // Pharmacy payment webhooks
 app.use("/api/transactions", authenticateJWT, transactionFeature.router);
 app.use("/api/support", authenticateJWT, supportFeature.router);
 

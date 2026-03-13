@@ -150,6 +150,30 @@ class VerificationReminderJob {
     // ENHANCED: Payment jobs (from your existing payment system)
     PaymentJobScheduler.start();
 
+    // ─── Pharmacy payment jobs ───────────────────────────────────────────────
+
+    // Daily at 1 AM: Release escrowed pharmacy funds after 3 business days
+    cron.schedule("0 1 * * *", async () => {
+      console.log("🏦 Running pharmacy escrow clearance job...");
+      try {
+        const { runClearanceJob } = require("./features/pharmacy/jobs/pharmacyClearanceJob");
+        await runClearanceJob();
+      } catch (error) {
+        console.error("❌ Pharmacy clearance job failed:", error);
+      }
+    });
+
+    // Daily at 2 AM: Mark overdue invoices and notify patients
+    cron.schedule("0 2 * * *", async () => {
+      console.log("📋 Running pharmacy invoice overdue check...");
+      try {
+        const { runOverdueJob } = require("./features/pharmacy/jobs/pharmacyOverdueJob");
+        await runOverdueJob();
+      } catch (error) {
+        console.error("❌ Pharmacy overdue job failed:", error);
+      }
+    });
+
     console.log("📅 All enhanced scheduled cron jobs initialized.");
   }
 

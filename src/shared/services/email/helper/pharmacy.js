@@ -358,6 +358,301 @@ async function sendPrescriptionCompletedEmail(p) {
   await emailService.sendRaw(p.to, `Prescription Fulfilled – ${p.reference}`, html);
 }
 
+// ─── Invoice Sent ─────────────────────────────────────────────────────────────
+
+/**
+ * Notify patient when pharmacy sends an invoice.
+ * @param {Object} p
+ * @param {string} p.to - Patient email
+ * @param {string} p.patientName
+ * @param {string} p.pharmacyName
+ * @param {string} p.reference
+ * @param {string} p.invoiceId
+ * @param {number} p.totalAmount
+ * @param {string} p.currency
+ * @param {string} [p.dueAt]
+ */
+async function sendInvoiceSentEmail(p) {
+  const html = `
+<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
+<div style="max-width:600px;margin:30px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+  <div style="background:#1a73e8;padding:24px;text-align:center;">
+    <h1 style="color:#fff;margin:0;font-size:22px;">New Invoice from ${p.pharmacyName}</h1>
+    <p style="color:#e8f0fe;margin:6px 0 0;font-size:14px;">CosmicForge Health Platform</p>
+  </div>
+  <div style="padding:32px 28px;">
+    <p style="font-size:16px;color:#333;">Hi <strong>${p.patientName}</strong>,</p>
+    <p style="color:#555;line-height:1.6;">
+      <strong>${p.pharmacyName}</strong> has sent you an invoice for your prescription. Please review and complete your payment.
+    </p>
+    <div style="background:#f0f4ff;border-left:4px solid #1a73e8;padding:16px 20px;border-radius:4px;margin:20px 0;">
+      <p style="margin:0 0 8px;color:#333;"><strong>Invoice:</strong> ${p.reference}</p>
+      <p style="margin:0 0 8px;color:#1a73e8;font-size:18px;font-weight:bold;"><strong>Amount Due: ${p.currency} ${(p.totalAmount || 0).toLocaleString()}</strong></p>
+      ${p.dueAt ? `<p style="margin:0;color:#d32f2f;font-size:13px;"><strong>Due by:</strong> ${new Date(p.dueAt).toLocaleDateString()}</p>` : ""}
+    </div>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${BASE_URL}/patient/invoices/${p.invoiceId}" style="background:#1a73e8;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">View &amp; Pay Invoice</a>
+    </div>
+  </div>
+  <div style="background:#f8f9fa;padding:16px;text-align:center;border-top:1px solid #eee;">
+    <p style="color:#999;font-size:12px;margin:0;">© ${YEAR()} CosmicForge Health. All rights reserved.</p>
+  </div>
+</div>
+</body></html>`;
+  await emailService.sendRaw(p.to, `Invoice ${p.reference} from ${p.pharmacyName} – ${p.currency} ${(p.totalAmount || 0).toLocaleString()}`, html);
+}
+
+// ─── Invoice Overdue ──────────────────────────────────────────────────────────
+
+/**
+ * Notify patient when their invoice becomes overdue.
+ * @param {Object} p
+ * @param {string} p.to - Patient email
+ * @param {string} p.patientName
+ * @param {string} p.pharmacyName
+ * @param {string} p.reference
+ * @param {string} p.invoiceId
+ * @param {number} p.totalAmount
+ * @param {string} p.currency
+ */
+async function sendInvoiceOverdueEmail(p) {
+  const html = `
+<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
+<div style="max-width:600px;margin:30px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+  <div style="background:#d32f2f;padding:24px;text-align:center;">
+    <h1 style="color:#fff;margin:0;font-size:22px;">Invoice Overdue</h1>
+    <p style="color:#ffcdd2;margin:6px 0 0;font-size:14px;">CosmicForge Health Platform</p>
+  </div>
+  <div style="padding:32px 28px;">
+    <p style="font-size:16px;color:#333;">Hi <strong>${p.patientName}</strong>,</p>
+    <p style="color:#555;line-height:1.6;">
+      Your invoice from <strong>${p.pharmacyName}</strong> is now overdue. Please make payment as soon as possible to avoid delays in receiving your medications.
+    </p>
+    <div style="background:#fff5f5;border-left:4px solid #d32f2f;padding:16px 20px;border-radius:4px;margin:20px 0;">
+      <p style="margin:0 0 8px;color:#333;"><strong>Invoice:</strong> ${p.reference}</p>
+      <p style="margin:0;color:#d32f2f;font-size:18px;font-weight:bold;"><strong>Amount Due: ${p.currency} ${(p.totalAmount || 0).toLocaleString()}</strong></p>
+    </div>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${BASE_URL}/patient/invoices/${p.invoiceId}" style="background:#d32f2f;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">Pay Now</a>
+    </div>
+  </div>
+  <div style="background:#f8f9fa;padding:16px;text-align:center;border-top:1px solid #eee;">
+    <p style="color:#999;font-size:12px;margin:0;">© ${YEAR()} CosmicForge Health. All rights reserved.</p>
+  </div>
+</div>
+</body></html>`;
+  await emailService.sendRaw(p.to, `OVERDUE: Invoice ${p.reference} – Payment Required`, html);
+}
+
+// ─── Payment Confirmed (Patient) ──────────────────────────────────────────────
+
+/**
+ * Notify patient when their payment is confirmed.
+ * @param {Object} p
+ * @param {string} p.to - Patient email
+ * @param {string} p.patientName
+ * @param {string} p.pharmacyName
+ * @param {string} p.reference
+ * @param {string} p.invoiceId
+ * @param {number} p.totalAmount
+ * @param {string} p.currency
+ */
+async function sendPaymentConfirmedPatientEmail(p) {
+  const html = `
+<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
+<div style="max-width:600px;margin:30px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+  <div style="background:#0f9d58;padding:24px;text-align:center;">
+    <h1 style="color:#fff;margin:0;font-size:22px;">Payment Confirmed ✓</h1>
+    <p style="color:#e6f4ea;margin:6px 0 0;font-size:14px;">CosmicForge Health Platform</p>
+  </div>
+  <div style="padding:32px 28px;">
+    <p style="font-size:16px;color:#333;">Hi <strong>${p.patientName}</strong>,</p>
+    <p style="color:#555;line-height:1.6;">
+      Your payment has been successfully received by <strong>${p.pharmacyName}</strong>. Your prescription is now being processed.
+    </p>
+    <div style="background:#f0faf5;border-left:4px solid #0f9d58;padding:16px 20px;border-radius:4px;margin:20px 0;">
+      <p style="margin:0 0 8px;color:#333;"><strong>Invoice:</strong> ${p.reference}</p>
+      <p style="margin:0;color:#0f9d58;font-size:18px;font-weight:bold;"><strong>Amount Paid: ${p.currency} ${(p.totalAmount || 0).toLocaleString()}</strong></p>
+    </div>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${BASE_URL}/patient/invoices/${p.invoiceId}" style="background:#0f9d58;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">View Receipt</a>
+    </div>
+  </div>
+  <div style="background:#f8f9fa;padding:16px;text-align:center;border-top:1px solid #eee;">
+    <p style="color:#999;font-size:12px;margin:0;">© ${YEAR()} CosmicForge Health. All rights reserved.</p>
+  </div>
+</div>
+</body></html>`;
+  await emailService.sendRaw(p.to, `Payment Confirmed – Invoice ${p.reference}`, html);
+}
+
+// ─── Payout Completed ─────────────────────────────────────────────────────────
+
+/**
+ * Notify pharmacy admin when their payout is completed.
+ * @param {Object} p
+ * @param {string} p.to - Pharmacy admin email
+ * @param {string} p.pharmacyName
+ * @param {string} p.reference
+ * @param {number} p.amountUsd
+ */
+async function sendPayoutCompletedEmail(p) {
+  const html = `
+<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
+<div style="max-width:600px;margin:30px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+  <div style="background:#0f9d58;padding:24px;text-align:center;">
+    <h1 style="color:#fff;margin:0;font-size:22px;">Payout Completed ✓</h1>
+    <p style="color:#e6f4ea;margin:6px 0 0;font-size:14px;">CosmicForge Health Platform</p>
+  </div>
+  <div style="padding:32px 28px;">
+    <p style="font-size:16px;color:#333;">Hi <strong>${p.pharmacyName}</strong>,</p>
+    <p style="color:#555;line-height:1.6;">Your payout has been successfully transferred to your bank account.</p>
+    <div style="background:#f0faf5;border-left:4px solid #0f9d58;padding:16px 20px;border-radius:4px;margin:20px 0;">
+      <p style="margin:0 0 8px;color:#333;"><strong>Reference:</strong> ${p.reference}</p>
+      <p style="margin:0;color:#0f9d58;font-size:18px;font-weight:bold;"><strong>Amount: $${(p.amountUsd || 0).toFixed(2)} USD</strong></p>
+    </div>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${BASE_URL}/pharmacy/wallet" style="background:#0f9d58;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">View Wallet</a>
+    </div>
+  </div>
+  <div style="background:#f8f9fa;padding:16px;text-align:center;border-top:1px solid #eee;">
+    <p style="color:#999;font-size:12px;margin:0;">© ${YEAR()} CosmicForge Health. All rights reserved.</p>
+  </div>
+</div>
+</body></html>`;
+  await emailService.sendRaw(p.to, `Payout Completed – ${p.reference}`, html);
+}
+
+// ─── Payout Failed ────────────────────────────────────────────────────────────
+
+/**
+ * Notify pharmacy admin when their payout fails.
+ * @param {Object} p
+ * @param {string} p.to - Pharmacy admin email
+ * @param {string} p.pharmacyName
+ * @param {string} p.reference
+ * @param {number} p.amountUsd
+ * @param {string} [p.reason]
+ */
+async function sendPayoutFailedEmail(p) {
+  const html = `
+<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
+<div style="max-width:600px;margin:30px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+  <div style="background:#d32f2f;padding:24px;text-align:center;">
+    <h1 style="color:#fff;margin:0;font-size:22px;">Payout Failed</h1>
+    <p style="color:#ffcdd2;margin:6px 0 0;font-size:14px;">CosmicForge Health Platform</p>
+  </div>
+  <div style="padding:32px 28px;">
+    <p style="font-size:16px;color:#333;">Hi <strong>${p.pharmacyName}</strong>,</p>
+    <p style="color:#555;line-height:1.6;">
+      Unfortunately, your payout could not be completed. The funds have been returned to your wallet.
+    </p>
+    <div style="background:#fff5f5;border-left:4px solid #d32f2f;padding:16px 20px;border-radius:4px;margin:20px 0;">
+      <p style="margin:0 0 8px;color:#333;"><strong>Reference:</strong> ${p.reference}</p>
+      <p style="margin:0 0 8px;color:#333;"><strong>Amount:</strong> $${(p.amountUsd || 0).toFixed(2)} USD</p>
+      ${p.reason ? `<p style="margin:0;color:#d32f2f;font-size:13px;"><strong>Reason:</strong> ${p.reason}</p>` : ""}
+    </div>
+    <p style="color:#555;font-size:14px;">Please verify your bank account details and try again, or contact support if the issue persists.</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${BASE_URL}/pharmacy/wallet" style="background:#d32f2f;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">View Wallet</a>
+    </div>
+  </div>
+  <div style="background:#f8f9fa;padding:16px;text-align:center;border-top:1px solid #eee;">
+    <p style="color:#999;font-size:12px;margin:0;">© ${YEAR()} CosmicForge Health. All rights reserved.</p>
+  </div>
+</div>
+</body></html>`;
+  await emailService.sendRaw(p.to, `Payout Failed – ${p.reference}`, html);
+}
+
+// ─── Dispute Raised (Pharmacy) ────────────────────────────────────────────────
+
+/**
+ * Notify pharmacy when a patient raises a dispute.
+ * @param {Object} p
+ * @param {string} p.to - Pharmacy admin email
+ * @param {string} p.pharmacyName
+ * @param {string} p.patientName
+ * @param {string} p.invoiceRef
+ * @param {string} p.disputeId
+ * @param {string} p.reason
+ */
+async function sendDisputeRaisedEmail(p) {
+  const html = `
+<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
+<div style="max-width:600px;margin:30px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+  <div style="background:#f57c00;padding:24px;text-align:center;">
+    <h1 style="color:#fff;margin:0;font-size:22px;">Dispute Raised</h1>
+    <p style="color:#fff3e0;margin:6px 0 0;font-size:14px;">CosmicForge Health Platform</p>
+  </div>
+  <div style="padding:32px 28px;">
+    <p style="font-size:16px;color:#333;">Hi <strong>${p.pharmacyName}</strong>,</p>
+    <p style="color:#555;line-height:1.6;">
+      Patient <strong>${p.patientName}</strong> has raised a dispute for invoice <strong>${p.invoiceRef}</strong>. Please respond within 48 hours.
+    </p>
+    <div style="background:#fff8f0;border-left:4px solid #f57c00;padding:16px 20px;border-radius:4px;margin:20px 0;">
+      <p style="margin:0 0 8px;color:#333;"><strong>Invoice:</strong> ${p.invoiceRef}</p>
+      <p style="margin:0;color:#333;"><strong>Reason:</strong> ${p.reason}</p>
+    </div>
+    <p style="color:#555;font-size:14px;">Log in to your dashboard to view the full dispute details and submit your response.</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${BASE_URL}/pharmacy/wallet/disputes/${p.disputeId}" style="background:#f57c00;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">Respond to Dispute</a>
+    </div>
+  </div>
+  <div style="background:#f8f9fa;padding:16px;text-align:center;border-top:1px solid #eee;">
+    <p style="color:#999;font-size:12px;margin:0;">© ${YEAR()} CosmicForge Health. All rights reserved.</p>
+  </div>
+</div>
+</body></html>`;
+  await emailService.sendRaw(p.to, `Dispute Raised – Invoice ${p.invoiceRef}`, html);
+}
+
+// ─── Dispute Resolved ─────────────────────────────────────────────────────────
+
+/**
+ * Notify a party when a dispute is resolved.
+ * @param {Object} p
+ * @param {string} p.to - Recipient email
+ * @param {string} p.recipientName
+ * @param {string} p.invoiceRef
+ * @param {string} p.disputeId
+ * @param {string} p.resolution - "pharmacy_favour" | "patient_favour" | "split"
+ */
+async function sendDisputeResolvedEmail(p) {
+  const resolutionLabel = {
+    pharmacy_favour: "Resolved in favour of the pharmacy",
+    patient_favour:  "Resolved in favour of the patient (refund initiated)",
+    split:           "Resolved with a partial settlement",
+  }[p.resolution] || p.resolution;
+
+  const html = `
+<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
+<div style="max-width:600px;margin:30px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+  <div style="background:#1a73e8;padding:24px;text-align:center;">
+    <h1 style="color:#fff;margin:0;font-size:22px;">Dispute Resolved</h1>
+    <p style="color:#e8f0fe;margin:6px 0 0;font-size:14px;">CosmicForge Health Platform</p>
+  </div>
+  <div style="padding:32px 28px;">
+    <p style="font-size:16px;color:#333;">Hi <strong>${p.recipientName}</strong>,</p>
+    <p style="color:#555;line-height:1.6;">
+      The dispute for invoice <strong>${p.invoiceRef}</strong> has been reviewed and resolved by our team.
+    </p>
+    <div style="background:#f0f4ff;border-left:4px solid #1a73e8;padding:16px 20px;border-radius:4px;margin:20px 0;">
+      <p style="margin:0 0 8px;color:#333;"><strong>Invoice:</strong> ${p.invoiceRef}</p>
+      <p style="margin:0;color:#1a73e8;font-weight:bold;"><strong>Outcome:</strong> ${resolutionLabel}</p>
+    </div>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${BASE_URL}/patient/invoices/${p.disputeId}" style="background:#1a73e8;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">View Details</a>
+    </div>
+  </div>
+  <div style="background:#f8f9fa;padding:16px;text-align:center;border-top:1px solid #eee;">
+    <p style="color:#999;font-size:12px;margin:0;">© ${YEAR()} CosmicForge Health. All rights reserved.</p>
+  </div>
+</div>
+</body></html>`;
+  await emailService.sendRaw(p.to, `Dispute Resolved – Invoice ${p.invoiceRef}`, html);
+}
+
 module.exports = {
   sendPharmacyStaffWelcomeEmail,
   sendPrescriptionAssignedToPharmacyEmail,
@@ -367,4 +662,11 @@ module.exports = {
   sendAlternativeSuggestedEmail,
   sendPrescriptionCancelledEmail,
   sendPrescriptionCompletedEmail,
+  sendInvoiceSentEmail,
+  sendInvoiceOverdueEmail,
+  sendPaymentConfirmedPatientEmail,
+  sendPayoutCompletedEmail,
+  sendPayoutFailedEmail,
+  sendDisputeRaisedEmail,
+  sendDisputeResolvedEmail,
 };
