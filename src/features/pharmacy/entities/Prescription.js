@@ -2,14 +2,18 @@
 const { EntitySchema } = require("typeorm");
 
 const PrescriptionStatus = {
-  PENDING: "pending",
-  PATIENT_UPLOADED: "patient_uploaded",
-  PHARMACY_ASSIGNED: "pharmacy_assigned",
+  PENDING:             "pending",
+  PATIENT_UPLOADED:    "patient_uploaded",
+  PHARMACY_ASSIGNED:   "pharmacy_assigned",
   PHARMACY_PROCESSING: "pharmacy_processing",
-  READY_FOR_PICKUP: "ready_for_pickup",
-  READY_FOR_DELIVERY: "ready_for_delivery",
-  COMPLETED: "completed",
-  CANCELLED: "cancelled"
+  // Payment-driven statuses added for invoice lifecycle
+  UNDER_REVIEW:        "under_review",     // Pharmacy reviewing before sending invoice
+  AWAITING_PAYMENT:    "awaiting_payment", // Invoice sent, waiting for patient payment
+  IN_PROGRESS:         "in_progress",      // Payment confirmed, being fulfilled
+  READY_FOR_PICKUP:    "ready_for_pickup",
+  READY_FOR_DELIVERY:  "ready_for_delivery",
+  COMPLETED:           "completed",
+  CANCELLED:           "cancelled",
 };
 
 const PaymentStatus = {
