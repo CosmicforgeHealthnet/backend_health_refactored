@@ -879,6 +879,147 @@ class PrescriptionService {
   async getPatientInvoices(patientId, options = {}) {
     return prescriptionRepo.findInvoicesByPatientId(patientId, options);
   }
+
+  /**
+   * Generic status update — allows pharmacy to set any valid status
+   */
+  async updatePrescriptionStatus(prescriptionId, pharmacyId, status) {
+    const prescription = await prescriptionRepo.findById(prescriptionId);
+    if (!prescription || prescription.pharmacyId !== pharmacyId) {
+      const err = new Error('Prescription not found or unauthorized');
+      err.status = 404;
+      throw err;
+    }
+    if (!Object.values(PrescriptionStatus).includes(status)) {
+      const err = new Error(`Invalid status: "${status}"`);
+      err.status = 400;
+      throw err;
+    }
+
+    await prescriptionRepo.updateFields(prescriptionId, { status });
+    await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
+      status,
+      note: `Status updated to ${status}`,
+    });
+
+    return this.getPrescriptionById(prescriptionId);
+  }
+
+  /**
+   * List dispatch items for a pharmacy — returns DispatchItem-shaped pagination.
+   * Eligible statuses: ready_for_pickup, out_for_delivery, completed
+   */
+  async getDispatchItems(pharmacyId, options = {}) {
+    const { status, page = 1, limit = 20 } = options;
+    const dispatchStatuses = [
+      PrescriptionStatus.READY_FOR_PICKUP,
+      PrescriptionStatus.OUT_FOR_DELIVERY,
+      PrescriptionStatus.COMPLETED,
+    ];
+    const filterStatus = status && dispatchStatuses.includes(status) ? status : dispatchStatuses;
+    return prescriptionRepo.findDispatchItems(pharmacyId, { status: filterStatus, page, limit });
+  }
+
+  /**
+   * Initiate dispatch — transitions ready_for_pickup → out_for_delivery
+   * Sets dispatchedAt timestamp. Returns DispatchItem-shaped response.
+   */
+  async initiateDispatch(prescriptionId, pharmacyId, { estimatedDelivery, note } = {}) {
+    const prescription = await prescriptionRepo.findById(prescriptionId);
+    if (!prescription || prescription.pharmacyId !== pharmacyId) {
+      const err = new Error('Prescription not found or unauthorized');
+      err.status = 404;
+      throw err;
+    }
+    if (prescription.status !== PrescriptionStatus.READY_FOR_PICKUP) {
+      const err = new Error('Prescription is not in ready_for_pickup status');
+      err.status = 422;
+      throw err;
+    }
+
+    const dispatchedAt = new Date();
+    await prescriptionRepo.updateFields(prescriptionId, {
+      status:      PrescriptionStatus.OUT_FOR_DELIVERY,
+      dispatchedAt,
+      ...(estimatedDelivery && { expectedDeliveryDate: new Date(estimatedDelivery) }),
+    });
+
+    await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
+      status: PrescriptionStatus.OUT_FOR_DELIVERY,
+      note:   note || 'Order dispatched for delivery',
+    });
+
+    notificationService.createNotification(
+      prescription.patientId,
+      'info',
+      'Your order is on the way',
+      { prescriptionId, reference: prescription.reference, type: 'prescription_dispatched' }
+    ).catch(err => console.error('Notification failed:', err.message));
+
+    return {
+      id:                prescriptionId,
+      reference:         prescription.reference,
+      status:            PrescriptionStatus.OUT_FOR_DELIVERY,
+      dispatchedAt:      dispatchedAt.toISOString(),
+      estimatedDelivery: estimatedDelivery || null,
+      updatedAt:         new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Mark prescription as delivered — transitions out_for_delivery → completed
+   * Notifies patient (push) and pharmacy (push, dashboard refresh).
+   */
+  async markDelivered(prescriptionId, pharmacyId) {
+    const prescription = await prescriptionRepo.findById(prescriptionId);
+    if (!prescription || prescription.pharmacyId !== pharmacyId) {
+      const err = new Error('Prescription not found or unauthorized');
+      err.status = 404;
+      throw err;
+    }
+    if (prescription.status !== PrescriptionStatus.OUT_FOR_DELIVERY) {
+      const err = new Error('Prescription is not in out_for_delivery status');
+      err.status = 422;
+      throw err;
+    }
+
+    const now = new Date();
+    await prescriptionRepo.updateFields(prescriptionId, {
+      status:             PrescriptionStatus.COMPLETED,
+      actualDeliveryDate: now,
+    });
+
+    await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
+      status: PrescriptionStatus.COMPLETED,
+      note:   'Order delivered successfully',
+    });
+
+    // Notify patient
+    notificationService.createNotification(
+      prescription.patientId,
+      'success',
+      'Your order has been delivered',
+      { prescriptionId, reference: prescription.reference, type: 'prescription_delivered' }
+    ).catch(err => console.error('Notification failed:', err.message));
+
+    // Notify pharmacy (dashboard stats refresh)
+    if (prescription.pharmacyId) {
+      notificationService.createNotification(
+        pharmacyId,
+        'info',
+        `Order ${prescription.reference} marked as delivered`,
+        { prescriptionId, reference: prescription.reference, type: 'prescription_delivered_pharmacy' }
+      ).catch(err => console.error('Pharmacy notification failed:', err.message));
+    }
+
+    return {
+      id:           prescriptionId,
+      reference:    prescription.reference,
+      status:       PrescriptionStatus.COMPLETED,
+      dispatchedAt: prescription.dispatchedAt ? prescription.dispatchedAt.toISOString() : null,
+      updatedAt:    now.toISOString(),
+    };
+  }
 }
 
 module.exports = new PrescriptionService();

@@ -1,5 +1,6 @@
 // src/controllers/pharmacy/pharmacyDocumentController.js
 const pharmacyRegistrationService = require("../services/pharmacyRegistrationService");
+const pharmacyDocumentRepo = require("../repositories/pharmacyDocumentRepository");
 // const DocumentFolderMiddleware = require("../../documents/middlewares/documentFolderMiddleware");
 
 class PharmacyDocumentController {
@@ -58,6 +59,28 @@ class PharmacyDocumentController {
       return res.json({
         documents: pharmacy.documents || []
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteDocument(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const { id } = req.params;
+
+      const pharmacy = await pharmacyRegistrationService.getPharmacyProfile(userId);
+      if (!pharmacy) {
+        return res.status(404).json({ error: "Pharmacy profile not found" });
+      }
+
+      const doc = await pharmacyDocumentRepo.findById(id);
+      if (!doc || doc.pharmacyId !== pharmacy.id) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      await pharmacyDocumentRepo.deleteById(id);
+      return res.status(200).json({ message: "Document deleted" });
     } catch (error) {
       next(error);
     }

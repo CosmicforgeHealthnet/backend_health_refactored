@@ -1,5 +1,6 @@
 const router                    = require("express").Router();
 const patientInvoiceController  = require("../controllers/patientInvoiceController");
+const patientWalletController   = require("../controllers/patientWalletController");
 
 // All routes here are mounted under /api/patient and already authenticated
 // via the global authenticateJWT applied in app.js for /api/patient
@@ -45,5 +46,28 @@ router.post("/payments/initiate", patientInvoiceController.initiatePayment);
  * @access  Patient
  */
 router.get("/payments/verify/:reference", patientInvoiceController.verifyPayment);
+
+// ─── Patient Wallet ───────────────────────────────────────────────────────────
+
+/**
+ * @route   GET /api/patient/wallet/summary
+ * @desc    Get patient wallet overview (balance, total spent, total top-ups)
+ * @access  Patient
+ */
+router.get("/wallet/summary", patientWalletController.getSummary);
+
+/**
+ * @route   GET /api/patient/wallet/transactions
+ * @desc    List wallet transactions with filters (type, category, page, limit)
+ * @access  Patient
+ */
+router.get("/wallet/transactions", patientWalletController.getTransactions);
+
+/**
+ * @route   POST /api/patient/wallet/top-up
+ * @desc    Initiate a wallet top-up — returns gateway authorization URL
+ * @access  Patient
+ */
+router.post("/wallet/top-up", patientWalletController.topUp);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 // src/controllers/pharmacy/pharmacyAuthController.js
 const pharmacyRegistrationService = require("../services/pharmacyRegistrationService");
+const pharmacyProfileRepo         = require("../repositories/pharmacyProfileRepository");
 const authService = require("../../auth/services/authService");
 const userRepo = require("../../auth/repositories/userRepository");
 const bcrypt = require('bcryptjs');
@@ -342,6 +343,28 @@ class PharmacyAuthController {
             createdAt: p.user.createdAt
           } : null
         }))
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async uploadProfileLogo(req, res, next) {
+    try {
+      const userId  = req.user.sub;
+      const savedFiles = req.savedFiles || [];
+
+      if (!savedFiles.length) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const logoUrl = savedFiles[0].fileUrl;
+      await pharmacyProfileRepo.updateLogoUrl(userId, logoUrl);
+
+      return res.status(200).json({
+        success: true,
+        message: "Logo uploaded successfully",
+        data: { logoUrl },
       });
     } catch (error) {
       next(error);

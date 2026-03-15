@@ -93,6 +93,55 @@ class PrescriptionRepository {
     return query.getMany();
   }
 
+  /**
+   * Dedicated dispatch query — returns paginated DispatchItem-shaped results.
+   * Supports filtering by a single status or an array of statuses (IN clause).
+   */
+  async findDispatchItems(pharmacyId, { status, page = 1, limit = 20 } = {}) {
+    const take   = Math.min(Number(limit) || 20, 100);
+    const skip   = (Math.max(Number(page) || 1, 1) - 1) * take;
+
+    const query = this.repo.createQueryBuilder("prescription")
+      .leftJoinAndSelect("prescription.patient", "patient")
+      .where("prescription.pharmacyId = :pharmacyId", { pharmacyId })
+      .orderBy("prescription.updatedAt", "DESC")
+      .take(take)
+      .skip(skip);
+
+    if (Array.isArray(status) && status.length) {
+      query.andWhere("prescription.status IN (:...statuses)", { statuses: status });
+    } else if (status && typeof status === "string") {
+      query.andWhere("prescription.status = :status", { status });
+    }
+
+    const [rows, total] = await query.getManyAndCount();
+
+    const items = rows.map(p => ({
+      id:                   p.id,
+      reference:            p.reference,
+      status:               p.status,
+      patient:              p.patient ? {
+        id:       p.patient.id,
+        fullName: p.patient.fullName,
+        phone:    p.patient.phone || null,
+      } : null,
+      medications: (p.medications || []).map(m => ({
+        name:     m.name,
+        dosage:   m.dosage,
+        quantity: m.quantity,
+      })),
+      deliveryAddress:      p.deliveryAddress      || null,
+      deliveryInstructions: p.deliveryInstructions || null,
+      deliveryFee:          p.deliveryFee          ? Number(p.deliveryFee) : null,
+      dispatchedAt:         p.dispatchedAt         || null,
+      estimatedDelivery:    p.expectedDeliveryDate || null,
+      createdAt:            p.createdAt,
+      updatedAt:            p.updatedAt,
+    }));
+
+    return { items, total, page: Math.max(Number(page) || 1, 1), limit: take };
+  }
+
   // Update prescription status
   async updateStatus(id, status) {
     return this.repo.update(id, {

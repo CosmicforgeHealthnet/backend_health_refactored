@@ -44,6 +44,10 @@ class PharmacyDocumentRepository {
       updatedAt: new Date()
     });
   }
+
+  async deleteById(id) {
+    return this.repo.delete(id);
+  }
 }
 
 module.exports = new PharmacyDocumentRepository();

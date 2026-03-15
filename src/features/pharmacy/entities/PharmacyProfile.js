@@ -17,6 +17,9 @@ module.exports = new EntitySchema({
     email: { type: "varchar", nullable: false },
     preferredUsername: { type: "varchar", unique: true, nullable: false },
 
+    // Branding
+    logoUrl: { type: "varchar", nullable: true },
+
     // Additional fields
     licenseNumber: { type: "varchar", unique: true, nullable: true },
     licenseExpiryDate: { type: "date", nullable: true },

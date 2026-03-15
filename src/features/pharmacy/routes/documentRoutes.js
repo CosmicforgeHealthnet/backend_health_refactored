@@ -18,4 +18,6 @@ router.post("/upload",
 
 router.get("/", authenticateJWT, pharmacyDocumentController.getDocuments);
 
+router.delete("/:id", authenticateJWT, pharmacyDocumentController.deleteDocument);
+
 module.exports = router;

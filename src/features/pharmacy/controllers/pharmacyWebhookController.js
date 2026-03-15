@@ -1,5 +1,6 @@
 const pharmacyPaymentService = require("../services/pharmacyPaymentService");
 const pharmacyPaymentRepo    = require("../repositories/pharmacyPaymentRepository");
+const patientWalletService   = require("../services/patientWalletService");
 
 /**
  * POST /api/webhooks/pharmacy/:provider
@@ -36,8 +37,19 @@ const pharmacyWebhookController = {
         const reference = data?.reference;
         const metadata  = data?.metadata;
 
-        if (!reference || !metadata?.invoiceId) {
-          console.warn("[PharmacyWebhook] charge.success: missing reference or invoiceId in metadata");
+        if (!reference) {
+          console.warn("[PharmacyWebhook] charge.success: missing reference");
+          return;
+        }
+
+        // Route to patient wallet top-up handler if applicable
+        if (metadata?.type === "wallet_topup") {
+          await patientWalletService.handleTopUpSuccess(reference);
+          break;
+        }
+
+        if (!metadata?.invoiceId) {
+          console.warn("[PharmacyWebhook] charge.success: missing invoiceId in metadata");
           return;
         }
 
@@ -80,8 +92,19 @@ const pharmacyWebhookController = {
         const reference = data?.tx_ref;
         const meta      = data?.meta;
 
-        if (!reference || !meta?.invoiceId) {
-          console.warn("[PharmacyWebhook] charge.completed: missing tx_ref or invoiceId in meta");
+        if (!reference) {
+          console.warn("[PharmacyWebhook] charge.completed: missing tx_ref");
+          return;
+        }
+
+        // Route to patient wallet top-up handler if applicable
+        if (meta?.type === "wallet_topup") {
+          await patientWalletService.handleTopUpSuccess(reference);
+          break;
+        }
+
+        if (!meta?.invoiceId) {
+          console.warn("[PharmacyWebhook] charge.completed: missing invoiceId in meta");
           return;
         }
 

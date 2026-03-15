@@ -16,4 +16,8 @@ module.exports = {
     PharmacyPayoutRequest:     require('./PharmacyPayoutRequest'),
     PharmacyPayment:           require('./PharmacyPayment'),
     PharmacyDispute:           require('./PharmacyDispute'),
+
+    // Patient wallet system
+    PatientWallet:            require('./PatientWallet'),
+    PatientWalletTransaction: require('./PatientWalletTransaction'),
 };

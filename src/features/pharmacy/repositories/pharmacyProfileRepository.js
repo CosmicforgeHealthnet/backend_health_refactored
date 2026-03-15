@@ -79,6 +79,12 @@ class PharmacyProfileRepository {
       updatedAt: new Date()
     });
   }
+
+  async updateLogoUrl(userId, logoUrl) {
+    const profile = await this.repo.findOne({ where: { userId } });
+    if (!profile) throw Object.assign(new Error("Pharmacy profile not found"), { status: 404 });
+    return this.repo.update(profile.id, { logoUrl, updatedAt: new Date() });
+  }
 }
 
 module.exports = new PharmacyProfileRepository();

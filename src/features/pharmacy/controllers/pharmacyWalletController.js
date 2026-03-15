@@ -24,6 +24,12 @@ class PharmacyWalletController {
     res.status(200).json({ success: true, ...data });
   });
 
+  getTransactionReceipt = asyncHandler(async (req, res) => {
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
+    const data       = await pharmacyWalletService.getTransactionReceipt(pharmacyId, req.params.id);
+    res.status(200).json({ success: true, data });
+  });
+
   getEarnings = asyncHandler(async (req, res) => {
     const pharmacyId = await resolvePharmacyId(req.user.sub);
     const data       = await pharmacyWalletService.getEarnings(pharmacyId, req.query);

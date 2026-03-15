@@ -6,12 +6,34 @@
     "description": "Invoice management, pharmacy wallet, patient payment, escrow, and dispute resolution for Cosmic Pharmacy.\n\n**Currency:** All amounts stored internally in USD. Returned to clients in their local currency based on location. Falls back to USD for unsupported currencies.\n\n**Escrow:** Online payments are held in escrow (pendingClearance) for 1–3 business days before moving to availableBalance. Cash/POS payments credited immediately."
   },
   "tags": [
-    { "name": "Pharmacy Invoices", "description": "Invoice lifecycle managed by pharmacy staff" },
-    { "name": "Pharmacy Wallet", "description": "Wallet summary, transactions, and earnings" },
-    { "name": "Pharmacy Payouts", "description": "Payout requests and bank account management" },
-    { "name": "Pharmacy Disputes", "description": "Dispute viewing and response" },
-    { "name": "Patient Invoices", "description": "Patient-facing invoice and payment endpoints" },
-    { "name": "Webhooks", "description": "Payment gateway webhook handlers (internal)" }
+    {
+      "name": "Pharmacy Invoices",
+      "description": "Invoice lifecycle managed by pharmacy staff"
+    },
+    {
+      "name": "Pharmacy Wallet",
+      "description": "Wallet summary, transactions, and earnings"
+    },
+    {
+      "name": "Pharmacy Payouts",
+      "description": "Payout requests and bank account management"
+    },
+    {
+      "name": "Pharmacy Disputes",
+      "description": "Dispute viewing and response"
+    },
+    {
+      "name": "Patient Invoices",
+      "description": "Patient-facing invoice and payment endpoints"
+    },
+    {
+      "name": "Webhooks",
+      "description": "Payment gateway webhook handlers (internal)"
+    },
+    {
+      "name": "Patient Wallet",
+      "description": "Patient wallet balance, transactions, and top-up"
+    }
   ],
   "components": {
     "securitySchemes": {
@@ -24,22 +46,48 @@
     "schemas": {
       "InvoiceLineItemInput": {
         "type": "object",
-        "required": ["medicationName", "quantity", "unitPrice"],
+        "required": [
+          "medicationName",
+          "quantity",
+          "unitPrice"
+        ],
         "properties": {
-          "medicationName": { "type": "string", "example": "Amoxicillin 500mg" },
-          "dosage":         { "type": "string",  "example": "500mg" },
-          "quantity":       { "type": "integer", "minimum": 1, "example": 2 },
-          "unitPrice":      { "type": "number",  "description": "In pharmacy display currency (e.g. NGN)", "example": 3500 }
+          "medicationName": {
+            "type": "string",
+            "example": "Amoxicillin 500mg"
+          },
+          "dosage": {
+            "type": "string",
+            "example": "500mg"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 2
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "In pharmacy display currency (e.g. NGN)",
+            "example": 3500
+          }
         }
       },
       "InvoiceLineItem": {
         "allOf": [
-          { "$ref": "#/components/schemas/InvoiceLineItemInput" },
+          {
+            "$ref": "#/components/schemas/InvoiceLineItemInput"
+          },
           {
             "type": "object",
             "properties": {
-              "id":      { "type": "string", "format": "uuid" },
-              "subtotal":{ "type": "number", "description": "quantity × unitPrice in display currency" }
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "subtotal": {
+                "type": "number",
+                "description": "quantity × unitPrice in display currency"
+              }
             }
           }
         ]
@@ -47,130 +95,421 @@
       "Invoice": {
         "type": "object",
         "properties": {
-          "id":              { "type": "string", "format": "uuid" },
-          "reference":       { "type": "string", "example": "#000042" },
-          "prescriptionId":  { "type": "string", "format": "uuid" },
-          "prescriptionRef": { "type": "string", "example": "RX-20250821-001" },
-          "pharmacyId":      { "type": "string", "format": "uuid" },
-          "pharmacyName":    { "type": "string", "description": "Populated in patient-facing responses" },
-          "patientId":       { "type": "string", "format": "uuid" },
-          "patientName":     { "type": "string", "example": "John Doe" },
-          "patientEmail":    { "type": "string", "format": "email" },
-          "lineItems":       { "type": "array", "items": { "$ref": "#/components/schemas/InvoiceLineItem" } },
-          "subtotal":        { "type": "number", "description": "Sum of line item subtotals in display currency" },
-          "deliveryFee":     { "type": "number" },
-          "totalAmount":     { "type": "number", "description": "subtotal + deliveryFee" },
-          "currency":        { "type": "string", "example": "NGN", "description": "Display currency" },
-          "paymentMethod":   { "type": "string", "enum": ["online", "pay_on_pickup"] },
-          "status":          { "type": "string", "enum": ["draft","sent","viewed","awaiting_payment","paid","overdue","cancelled"] },
-          "paidAt":          { "type": "string", "format": "date-time", "nullable": true },
-          "dueAt":           { "type": "string", "format": "date-time", "nullable": true },
-          "notes":           { "type": "string", "nullable": true },
-          "createdAt":       { "type": "string", "format": "date-time" },
-          "updatedAt":       { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reference": {
+            "type": "string",
+            "example": "#000042"
+          },
+          "prescriptionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "prescriptionRef": {
+            "type": "string",
+            "example": "RX-20250821-001"
+          },
+          "pharmacyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pharmacyName": {
+            "type": "string",
+            "description": "Populated in patient-facing responses"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientName": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "patientEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineItem"
+            }
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Sum of line item subtotals in display currency"
+          },
+          "deliveryFee": {
+            "type": "number"
+          },
+          "totalAmount": {
+            "type": "number",
+            "description": "subtotal + deliveryFee"
+          },
+          "currency": {
+            "type": "string",
+            "example": "NGN",
+            "description": "Display currency"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "online",
+              "pay_on_pickup"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "sent",
+              "viewed",
+              "awaiting_payment",
+              "paid",
+              "overdue",
+              "cancelled"
+            ]
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "WalletSummary": {
         "type": "object",
         "properties": {
-          "availableBalance":   { "type": "number", "description": "Cleared funds ready for payout" },
-          "pendingClearance":   { "type": "number", "description": "Funds in 1-3 day escrow" },
-          "totalEarnings":      { "type": "number", "description": "All-time gross earnings" },
-          "thisMonthEarnings":  { "type": "number" },
-          "lastPayoutAmount":   { "type": "number", "nullable": true },
-          "lastPayoutDate":     { "type": "string", "format": "date-time", "nullable": true },
-          "currency":           { "type": "string", "example": "NGN" }
+          "availableBalance": {
+            "type": "number",
+            "description": "Cleared funds ready for payout"
+          },
+          "pendingClearance": {
+            "type": "number",
+            "description": "Funds in 1-3 day escrow"
+          },
+          "totalEarnings": {
+            "type": "number",
+            "description": "All-time gross earnings"
+          },
+          "thisMonthEarnings": {
+            "type": "number"
+          },
+          "lastPayoutAmount": {
+            "type": "number",
+            "nullable": true
+          },
+          "lastPayoutDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "example": "NGN"
+          }
         }
       },
       "WalletTransaction": {
         "type": "object",
         "properties": {
-          "id":           { "type": "string", "format": "uuid" },
-          "type":         { "type": "string", "enum": ["credit","debit"] },
-          "status":       { "type": "string", "enum": ["completed","pending","processing","failed","reversed"] },
-          "category":     { "type": "string", "enum": ["invoice_payment","payout","refund","dispute_reversal","adjustment"] },
-          "amount":       { "type": "number" },
-          "balanceAfter": { "type": "number" },
-          "description":  { "type": "string" },
-          "reference":    { "type": "string" },
-          "invoiceId":    { "type": "string", "format": "uuid", "nullable": true },
-          "invoiceRef":   { "type": "string", "nullable": true },
-          "currency":     { "type": "string" },
-          "settledAt":    { "type": "string", "format": "date-time", "nullable": true },
-          "createdAt":    { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "credit",
+              "debit"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "pending",
+              "processing",
+              "failed",
+              "reversed"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "invoice_payment",
+              "payout",
+              "refund",
+              "dispute_reversal",
+              "adjustment"
+            ]
+          },
+          "amount": {
+            "type": "number"
+          },
+          "balanceAfter": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "invoiceRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "settledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "BankAccount": {
         "type": "object",
         "properties": {
-          "id":            { "type": "string", "format": "uuid" },
-          "bankName":      { "type": "string", "example": "Guaranty Trust Bank" },
-          "accountNumber": { "type": "string", "example": "0123456789" },
-          "accountName":   { "type": "string", "example": "Cosmic Pharmacy Ltd" },
-          "bankCode":      { "type": "string", "example": "058" },
-          "isDefault":     { "type": "boolean" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankName": {
+            "type": "string",
+            "example": "Guaranty Trust Bank"
+          },
+          "accountNumber": {
+            "type": "string",
+            "example": "0123456789"
+          },
+          "accountName": {
+            "type": "string",
+            "example": "Cosmic Pharmacy Ltd"
+          },
+          "bankCode": {
+            "type": "string",
+            "example": "058"
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
         }
       },
       "PayoutRequest": {
         "type": "object",
         "properties": {
-          "id":            { "type": "string", "format": "uuid" },
-          "amount":        { "type": "number" },
-          "currency":      { "type": "string" },
-          "status":        { "type": "string", "enum": ["pending","processing","completed","failed","cancelled"] },
-          "bankAccount":   { "$ref": "#/components/schemas/BankAccount" },
-          "reference":     { "type": "string" },
-          "note":          { "type": "string", "nullable": true },
-          "failureReason": { "type": "string", "nullable": true },
-          "requestedAt":   { "type": "string", "format": "date-time" },
-          "processedAt":   { "type": "string", "format": "date-time", "nullable": true }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "bankAccount": {
+            "$ref": "#/components/schemas/BankAccount"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "processedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
         }
       },
       "Dispute": {
         "type": "object",
         "properties": {
-          "id":                 { "type": "string", "format": "uuid" },
-          "invoiceId":          { "type": "string", "format": "uuid" },
-          "invoiceRef":         { "type": "string" },
-          "amount":             { "type": "number" },
-          "status":             { "type": "string", "enum": ["open","under_review","resolved","escalated","closed"] },
-          "resolution":         { "type": "string", "enum": ["pharmacy_favour","patient_favour","split","pending"], "nullable": true },
-          "reason":             { "type": "string" },
-          "description":        { "type": "string" },
-          "raisedBy":           { "type": "string", "enum": ["patient","pharmacy"] },
-          "pharmacyResponse":   { "type": "string", "nullable": true },
-          "pharmacyResponseAt": { "type": "string", "format": "date-time", "nullable": true },
-          "createdAt":          { "type": "string", "format": "date-time" },
-          "resolvedAt":         { "type": "string", "format": "date-time", "nullable": true }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoiceRef": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "under_review",
+              "resolved",
+              "escalated",
+              "closed"
+            ]
+          },
+          "resolution": {
+            "type": "string",
+            "enum": [
+              "pharmacy_favour",
+              "patient_favour",
+              "split",
+              "pending"
+            ],
+            "nullable": true
+          },
+          "reason": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "raisedBy": {
+            "type": "string",
+            "enum": [
+              "patient",
+              "pharmacy"
+            ]
+          },
+          "pharmacyResponse": {
+            "type": "string",
+            "nullable": true
+          },
+          "pharmacyResponseAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
         }
       },
       "PaymentResponse": {
         "type": "object",
         "properties": {
-          "paymentId":        { "type": "string", "format": "uuid" },
-          "invoiceId":        { "type": "string", "format": "uuid" },
-          "amount":           { "type": "number" },
-          "currency":         { "type": "string" },
-          "status":           { "type": "string", "enum": ["pending","success","failed"] },
-          "authorizationUrl": { "type": "string", "nullable": true, "description": "Gateway redirect URL for online payments" },
-          "reference":        { "type": "string", "example": "COSMIC-PAY-1710000000000-ABC123" }
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "success",
+              "failed"
+            ]
+          },
+          "authorizationUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Gateway redirect URL for online payments"
+          },
+          "reference": {
+            "type": "string",
+            "example": "COSMIC-PAY-1710000000000-ABC123"
+          }
         }
       },
       "Error": {
         "type": "object",
         "properties": {
-          "statusCode": { "type": "integer" },
-          "error":      { "type": "string" },
-          "message":    { "type": "string" }
+          "statusCode": {
+            "type": "integer"
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
         }
       },
       "PaginatedResponse": {
         "type": "object",
         "properties": {
-          "success": { "type": "boolean", "example": true },
-          "total":   { "type": "integer" },
-          "page":    { "type": "integer" },
-          "limit":   { "type": "integer" }
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          }
         }
       }
     }
@@ -178,48 +517,168 @@
   "paths": {
     "/pharmacy/invoices": {
       "post": {
-        "tags": ["Pharmacy Invoices"],
+        "tags": [
+          "Pharmacy Invoices"
+        ],
         "summary": "Create a draft invoice",
         "description": "Creates a draft invoice for a prescription. Amounts submitted in pharmacy's local currency (e.g. NGN). Draft invoices do NOT change prescription status.",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["prescriptionId", "lineItems", "paymentMethod"],
+                "required": [
+                  "prescriptionId",
+                  "lineItems",
+                  "paymentMethod"
+                ],
                 "properties": {
-                  "prescriptionId": { "type": "string", "format": "uuid" },
-                  "lineItems":      { "type": "array", "minItems": 1, "items": { "$ref": "#/components/schemas/InvoiceLineItemInput" } },
-                  "deliveryFee":    { "type": "number", "default": 0, "description": "In pharmacy display currency (e.g. NGN)" },
-                  "paymentMethod":  { "type": "string", "enum": ["online","pay_on_pickup"] },
-                  "notes":          { "type": "string" },
-                  "dueAt":          { "type": "string", "format": "date-time" }
+                  "prescriptionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "lineItems": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "$ref": "#/components/schemas/InvoiceLineItemInput"
+                    }
+                  },
+                  "deliveryFee": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "In pharmacy display currency (e.g. NGN)"
+                  },
+                  "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                      "online",
+                      "pay_on_pickup"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "dueAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Invoice created", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/Invoice" } } } } } },
-          "400": { "description": "Validation error" },
-          "403": { "description": "Prescription does not belong to this pharmacy" },
-          "404": { "description": "Prescription not found" }
+          "201": {
+            "description": "Invoice created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Invoice"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "403": {
+            "description": "Prescription does not belong to this pharmacy"
+          },
+          "404": {
+            "description": "Prescription not found"
+          }
         }
       },
       "get": {
-        "tags": ["Pharmacy Invoices"],
+        "tags": [
+          "Pharmacy Invoices"
+        ],
         "summary": "List all invoices for the pharmacy",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
-          { "in": "query", "name": "page",           "schema": { "type": "integer", "default": 1 } },
-          { "in": "query", "name": "limit",          "schema": { "type": "integer", "default": 20, "maximum": 100 } },
-          { "in": "query", "name": "status",         "schema": { "type": "string", "enum": ["draft","sent","viewed","awaiting_payment","paid","overdue","cancelled"] } },
-          { "in": "query", "name": "search",         "schema": { "type": "string" }, "description": "Search patient name, invoice ref, or prescription ref" },
-          { "in": "query", "name": "prescriptionId", "schema": { "type": "string", "format": "uuid" } },
-          { "in": "query", "name": "dateFrom",       "schema": { "type": "string", "format": "date-time" } },
-          { "in": "query", "name": "dateTo",         "schema": { "type": "string", "format": "date-time" } }
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "sent",
+                "viewed",
+                "awaiting_payment",
+                "paid",
+                "overdue",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search patient name, invoice ref, or prescription ref"
+          },
+          {
+            "in": "query",
+            "name": "prescriptionId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dateFrom",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dateTo",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -228,8 +687,20 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/PaginatedResponse" },
-                    { "type": "object", "properties": { "invoices": { "type": "array", "items": { "$ref": "#/components/schemas/Invoice" } } } }
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "invoices": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Invoice"
+                          }
+                        }
+                      }
+                    }
                   ]
                 }
               }
@@ -240,105 +711,324 @@
     },
     "/pharmacy/invoices/{id}": {
       "get": {
-        "tags": ["Pharmacy Invoices"],
+        "tags": [
+          "Pharmacy Invoices"
+        ],
         "summary": "Get a single invoice",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "Invoice details", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/Invoice" } } } } } },
-          "404": { "description": "Invoice not found" }
+          "200": {
+            "description": "Invoice details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Invoice"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
         }
       },
       "patch": {
-        "tags": ["Pharmacy Invoices"],
+        "tags": [
+          "Pharmacy Invoices"
+        ],
         "summary": "Update a draft invoice",
         "description": "Only allowed when status is 'draft'. Returns 422 if already sent or paid.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "lineItems":   { "type": "array", "items": { "$ref": "#/components/schemas/InvoiceLineItemInput" } },
-                  "deliveryFee": { "type": "number" },
-                  "notes":       { "type": "string" },
-                  "dueAt":       { "type": "string", "format": "date-time" }
+                  "lineItems": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/InvoiceLineItemInput"
+                    }
+                  },
+                  "deliveryFee": {
+                    "type": "number"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "dueAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Updated invoice" },
-          "422": { "description": "Invoice is not in draft status" }
+          "200": {
+            "description": "Updated invoice"
+          },
+          "422": {
+            "description": "Invoice is not in draft status"
+          }
         }
       }
     },
     "/pharmacy/invoices/{id}/send": {
       "post": {
-        "tags": ["Pharmacy Invoices"],
+        "tags": [
+          "Pharmacy Invoices"
+        ],
         "summary": "Send invoice to patient",
         "description": "Changes status from draft → sent. Notifies patient. Sets prescription → awaiting_payment. Sets dueAt to 7 days from now if not already set.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "Invoice sent" },
-          "422": { "description": "Invoice is not in draft status" }
+          "200": {
+            "description": "Invoice sent"
+          },
+          "422": {
+            "description": "Invoice is not in draft status"
+          }
         }
       }
     },
     "/pharmacy/invoices/{id}/cancel": {
       "patch": {
-        "tags": ["Pharmacy Invoices"],
+        "tags": [
+          "Pharmacy Invoices"
+        ],
         "summary": "Cancel an invoice",
         "description": "Cannot cancel a paid invoice. If prescription was awaiting_payment, reverts to under_review.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "Invoice cancelled" },
-          "422": { "description": "Cannot cancel a paid invoice" }
+          "200": {
+            "description": "Invoice cancelled"
+          },
+          "422": {
+            "description": "Cannot cancel a paid invoice"
+          }
         }
       }
     },
     "/pharmacy/invoices/{id}/mark-paid": {
       "patch": {
-        "tags": ["Pharmacy Invoices"],
+        "tags": [
+          "Pharmacy Invoices"
+        ],
         "summary": "Mark a pay_on_pickup invoice as paid",
         "description": "Manually confirms cash/POS payment. Credits pharmacy wallet immediately (no escrow hold). Sets prescription → in_progress.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "Invoice marked as paid" },
-          "422": { "description": "Not a pay_on_pickup invoice, or already paid/cancelled" }
+          "200": {
+            "description": "Invoice marked as paid"
+          },
+          "422": {
+            "description": "Not a pay_on_pickup invoice, or already paid/cancelled"
+          }
         }
       }
     },
     "/pharmacy/wallet/summary": {
       "get": {
-        "tags": ["Pharmacy Wallet"],
+        "tags": [
+          "Pharmacy Wallet"
+        ],
         "summary": "Get wallet overview",
         "description": "Returns balances, earnings, and last payout info in the pharmacy's display currency.",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "Wallet summary", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/WalletSummary" } } } } } }
+          "200": {
+            "description": "Wallet summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/WalletSummary"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
     "/pharmacy/wallet/transactions": {
       "get": {
-        "tags": ["Pharmacy Wallet"],
+        "tags": [
+          "Pharmacy Wallet"
+        ],
         "summary": "List wallet transactions",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
-          { "in": "query", "name": "page",     "schema": { "type": "integer", "default": 1 } },
-          { "in": "query", "name": "limit",    "schema": { "type": "integer", "default": 20, "maximum": 100 } },
-          { "in": "query", "name": "type",     "schema": { "type": "string", "enum": ["credit","debit"] } },
-          { "in": "query", "name": "status",   "schema": { "type": "string", "enum": ["completed","pending","processing","failed","reversed"] } },
-          { "in": "query", "name": "category", "schema": { "type": "string", "enum": ["invoice_payment","payout","refund","dispute_reversal","adjustment"] } },
-          { "in": "query", "name": "dateFrom", "schema": { "type": "string", "format": "date-time" } },
-          { "in": "query", "name": "dateTo",   "schema": { "type": "string", "format": "date-time" } }
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credit",
+                "debit"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "completed",
+                "pending",
+                "processing",
+                "failed",
+                "reversed"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "invoice_payment",
+                "payout",
+                "refund",
+                "dispute_reversal",
+                "adjustment"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "dateFrom",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dateTo",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -347,8 +1037,20 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/PaginatedResponse" },
-                    { "type": "object", "properties": { "transactions": { "type": "array", "items": { "$ref": "#/components/schemas/WalletTransaction" } } } }
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "transactions": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/WalletTransaction"
+                          }
+                        }
+                      }
+                    }
                   ]
                 }
               }
@@ -359,275 +1061,1174 @@
     },
     "/pharmacy/wallet/earnings": {
       "get": {
-        "tags": ["Pharmacy Wallet"],
-        "summary": "Get earnings summary and period breakdown",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "in": "query", "name": "period",   "schema": { "type": "string", "enum": ["weekly","monthly","yearly"], "default": "monthly" } },
-          { "in": "query", "name": "dateFrom", "schema": { "type": "string", "format": "date-time" } },
-          { "in": "query", "name": "dateTo",   "schema": { "type": "string", "format": "date-time" } }
+        "tags": [
+          "Pharmacy Wallet"
         ],
-        "responses": { "200": { "description": "Earnings summary" } }
+        "summary": "Get earnings summary and period breakdown",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "weekly",
+                "monthly",
+                "yearly"
+              ],
+              "default": "monthly"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dateFrom",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dateTo",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Earnings summary"
+          }
+        }
       }
     },
     "/pharmacy/wallet/payouts": {
       "get": {
-        "tags": ["Pharmacy Payouts"],
-        "summary": "List payout requests",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "in": "query", "name": "page",   "schema": { "type": "integer", "default": 1 } },
-          { "in": "query", "name": "limit",  "schema": { "type": "integer", "default": 20 } },
-          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["pending","processing","completed","failed","cancelled"] } }
+        "tags": [
+          "Pharmacy Payouts"
         ],
-        "responses": { "200": { "description": "Paginated payout list" } }
+        "summary": "List payout requests",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "processing",
+                "completed",
+                "failed",
+                "cancelled"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated payout list"
+          }
+        }
       },
       "post": {
-        "tags": ["Pharmacy Payouts"],
+        "tags": [
+          "Pharmacy Payouts"
+        ],
         "summary": "Request a payout",
         "description": "Minimum payout: USD 5 equivalent. Amount ≤ availableBalance. Only one active payout at a time.",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["amount", "bankAccountId"],
+                "required": [
+                  "amount",
+                  "bankAccountId"
+                ],
                 "properties": {
-                  "amount":        { "type": "number", "description": "In pharmacy display currency" },
-                  "bankAccountId": { "type": "string", "format": "uuid" },
-                  "note":          { "type": "string" }
+                  "amount": {
+                    "type": "number",
+                    "description": "In pharmacy display currency"
+                  },
+                  "bankAccountId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Payout requested", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/PayoutRequest" } } } } } },
-          "400": { "description": "Below minimum payout amount" },
-          "422": { "description": "Insufficient balance or active payout already exists" }
+          "201": {
+            "description": "Payout requested",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PayoutRequest"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Below minimum payout amount"
+          },
+          "422": {
+            "description": "Insufficient balance or active payout already exists"
+          }
         }
       }
     },
     "/pharmacy/wallet/payouts/{payoutId}/cancel": {
       "patch": {
-        "tags": ["Pharmacy Payouts"],
+        "tags": [
+          "Pharmacy Payouts"
+        ],
         "summary": "Cancel a pending payout",
         "description": "Only works when status is 'pending'. Restores amount to availableBalance.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "payoutId", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payoutId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "Payout cancelled" },
-          "422": { "description": "Payout is not in pending status" }
+          "200": {
+            "description": "Payout cancelled"
+          },
+          "422": {
+            "description": "Payout is not in pending status"
+          }
         }
       }
     },
     "/pharmacy/wallet/bank-accounts": {
       "get": {
-        "tags": ["Pharmacy Payouts"],
+        "tags": [
+          "Pharmacy Payouts"
+        ],
         "summary": "List saved bank accounts",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "Array of bank accounts", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/BankAccount" } } } } } } } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of bank accounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BankAccount"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["Pharmacy Payouts"],
+        "tags": [
+          "Pharmacy Payouts"
+        ],
         "summary": "Add a bank account",
         "description": "Verifies account via Paystack Resolve API and creates a transfer recipient. First account is automatically set as default.",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["bankName", "accountNumber", "accountName", "bankCode"],
+                "required": [
+                  "bankName",
+                  "accountNumber",
+                  "accountName",
+                  "bankCode"
+                ],
                 "properties": {
-                  "bankName":      { "type": "string" },
-                  "accountNumber": { "type": "string" },
-                  "accountName":   { "type": "string" },
-                  "bankCode":      { "type": "string" }
+                  "bankName": {
+                    "type": "string"
+                  },
+                  "accountNumber": {
+                    "type": "string"
+                  },
+                  "accountName": {
+                    "type": "string"
+                  },
+                  "bankCode": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Bank account added", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/BankAccount" } } } } } }
+          "201": {
+            "description": "Bank account added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BankAccount"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
     "/pharmacy/wallet/bank-accounts/{accountId}/set-default": {
       "patch": {
-        "tags": ["Pharmacy Payouts"],
+        "tags": [
+          "Pharmacy Payouts"
+        ],
         "summary": "Set a bank account as default",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "accountId", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-        "responses": { "200": { "description": "Account set as default" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account set as default"
+          }
+        }
       }
     },
     "/pharmacy/wallet/bank-accounts/{accountId}": {
       "delete": {
-        "tags": ["Pharmacy Payouts"],
+        "tags": [
+          "Pharmacy Payouts"
+        ],
         "summary": "Delete a bank account",
         "description": "Cannot delete default account if others exist. Cannot delete if a payout to this account is pending/processing.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "accountId", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
-          "204": { "description": "Deleted" },
-          "422": { "description": "Cannot delete default account or account with active payout" }
+          "204": {
+            "description": "Deleted"
+          },
+          "422": {
+            "description": "Cannot delete default account or account with active payout"
+          }
         }
       }
     },
     "/pharmacy/wallet/disputes": {
       "get": {
-        "tags": ["Pharmacy Disputes"],
-        "summary": "List disputes for this pharmacy",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "in": "query", "name": "page",   "schema": { "type": "integer", "default": 1 } },
-          { "in": "query", "name": "limit",  "schema": { "type": "integer", "default": 20 } },
-          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["open","under_review","resolved","escalated","closed"] } }
+        "tags": [
+          "Pharmacy Disputes"
         ],
-        "responses": { "200": { "description": "Paginated dispute list" } }
+        "summary": "List disputes for this pharmacy",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "under_review",
+                "resolved",
+                "escalated",
+                "closed"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated dispute list"
+          }
+        }
       }
     },
     "/pharmacy/wallet/disputes/{disputeId}/respond": {
       "post": {
-        "tags": ["Pharmacy Disputes"],
+        "tags": [
+          "Pharmacy Disputes"
+        ],
         "summary": "Submit response to an open dispute",
         "description": "Only when dispute status is 'open' or 'under_review'. Automatically advances status from open → under_review.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "disputeId", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["message"],
-                "properties": { "message": { "type": "string" } }
-              }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "disputeId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
           }
-        },
-        "responses": {
-          "200": { "description": "Response submitted", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/Dispute" } } } } } },
-          "422": { "description": "Dispute is not open or under_review" }
-        }
-      }
-    },
-    "/patient/invoices": {
-      "get": {
-        "tags": ["Patient Invoices"],
-        "summary": "List invoices for the authenticated patient",
-        "description": "Returns invoices including pharmacyName and pharmacyLogo. Amounts in patient's local currency.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "in": "query", "name": "page",   "schema": { "type": "integer", "default": 1 } },
-          { "in": "query", "name": "limit",  "schema": { "type": "integer", "default": 20 } },
-          { "in": "query", "name": "status", "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "Paginated invoice list" } }
-      }
-    },
-    "/patient/invoices/{id}": {
-      "get": {
-        "tags": ["Patient Invoices"],
-        "summary": "Get a single invoice (patient view)",
-        "description": "Includes pharmacyName, pharmacyAddress, pharmacyPhone, paidAt, dueAt, all line items.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-        "responses": { "200": { "description": "Invoice details" } }
-      }
-    },
-    "/patient/invoices/{id}/viewed": {
-      "patch": {
-        "tags": ["Patient Invoices"],
-        "summary": "Mark invoice as viewed",
-        "description": "Call when patient opens the invoice detail screen. Advances status from sent → viewed.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-        "responses": { "200": { "description": "Invoice marked as viewed" } }
-      }
-    },
-    "/patient/invoices/{id}/dispute": {
-      "post": {
-        "tags": ["Patient Invoices"],
-        "summary": "Raise a dispute on a paid invoice",
-        "description": "Only allowed on paid invoices within 7 days of payment.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["reason", "description"],
+                "required": [
+                  "message"
+                ],
                 "properties": {
-                  "reason":      { "type": "string" },
-                  "description": { "type": "string" }
+                  "message": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Dispute raised" },
-          "422": { "description": "Invoice not paid or dispute window closed" }
+          "200": {
+            "description": "Response submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Dispute"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dispute is not open or under_review"
+          }
         }
       }
     },
-    "/patient/payments/initiate": {
+    "/patient/invoices": {
+      "get": {
+        "tags": [
+          "Patient Invoices"
+        ],
+        "summary": "List invoices for the authenticated patient",
+        "description": "Returns invoices including pharmacyName and pharmacyLogo. Amounts in patient's local currency.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated invoice list"
+          }
+        }
+      }
+    },
+    "/patient/invoices/{id}": {
+      "get": {
+        "tags": [
+          "Patient Invoices"
+        ],
+        "summary": "Get a single invoice (patient view)",
+        "description": "Includes pharmacyName, pharmacyAddress, pharmacyPhone, paidAt, dueAt, all line items.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice details"
+          }
+        }
+      }
+    },
+    "/patient/invoices/{id}/viewed": {
+      "patch": {
+        "tags": [
+          "Patient Invoices"
+        ],
+        "summary": "Mark invoice as viewed",
+        "description": "Call when patient opens the invoice detail screen. Advances status from sent → viewed.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice marked as viewed"
+          }
+        }
+      }
+    },
+    "/patient/invoices/{id}/dispute": {
       "post": {
-        "tags": ["Patient Invoices"],
-        "summary": "Initiate payment for an invoice",
-        "description": "Returns a gateway redirect URL. Idempotent — if a pending payment exists for the invoice, returns it. Rate limited: max 5 attempts per invoice per hour. Currency is resolved from patient's location (USD fallback for unsupported currencies).",
-        "security": [{ "bearerAuth": [] }],
+        "tags": [
+          "Patient Invoices"
+        ],
+        "summary": "Raise a dispute on a paid invoice",
+        "description": "Only allowed on paid invoices within 7 days of payment.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["invoiceId"],
-                "properties": { "invoiceId": { "type": "string", "format": "uuid" } }
+                "required": [
+                  "reason",
+                  "description"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Payment session created", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/PaymentResponse" } } } } } },
-          "409": { "description": "Invoice already paid" },
-          "422": { "description": "Invoice not in a payable status" },
-          "429": { "description": "Too many payment attempts" }
+          "201": {
+            "description": "Dispute raised"
+          },
+          "422": {
+            "description": "Invoice not paid or dispute window closed"
+          }
+        }
+      }
+    },
+    "/patient/payments/initiate": {
+      "post": {
+        "tags": [
+          "Patient Invoices"
+        ],
+        "summary": "Initiate payment for an invoice",
+        "description": "Returns a gateway redirect URL. Idempotent — if a pending payment exists for the invoice, returns it. Rate limited: max 5 attempts per invoice per hour. Currency is resolved from patient's location (USD fallback for unsupported currencies).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "invoiceId"
+                ],
+                "properties": {
+                  "invoiceId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment session created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaymentResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Invoice already paid"
+          },
+          "422": {
+            "description": "Invoice not in a payable status"
+          },
+          "429": {
+            "description": "Too many payment attempts"
+          }
         }
       }
     },
     "/patient/payments/verify/{reference}": {
       "get": {
-        "tags": ["Patient Invoices"],
+        "tags": [
+          "Patient Invoices"
+        ],
         "summary": "Verify payment after returning from gateway",
         "description": "Fallback for when the webhook is delayed. The webhook remains the primary confirmation mechanism. If the gateway confirms success and the invoice is not yet marked paid, this endpoint processes the payment atomically.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "in": "path", "name": "reference", "required": true, "schema": { "type": "string" }, "description": "Payment reference (e.g. COSMIC-PAY-...)" }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reference",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment reference (e.g. COSMIC-PAY-...)"
+          }
+        ],
         "responses": {
-          "200": { "description": "Payment verification result", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/PaymentResponse" } } } } } }
+          "200": {
+            "description": "Payment verification result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaymentResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
     "/webhooks/pharmacy/{provider}": {
       "post": {
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "summary": "Receive payment gateway webhook",
         "description": "Internal endpoint — called by Paystack or Flutterwave, not by the frontend. Signature is validated before processing.\n\n**Events handled:**\n- `charge.success` → invoice paid, prescription in_progress, wallet credited (escrow)\n- `transfer.success` → payout completed\n- `transfer.failed` / `transfer.reversed` → payout failed, funds restored\n",
         "parameters": [
-          { "in": "path", "name": "provider", "required": true, "schema": { "type": "string", "enum": ["paystack","flutterwave"] } }
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "paystack",
+                "flutterwave"
+              ]
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Acknowledged (processing happens async)" },
-          "401": { "description": "Invalid signature" }
+          "200": {
+            "description": "Acknowledged (processing happens async)"
+          },
+          "401": {
+            "description": "Invalid signature"
+          }
+        }
+      }
+    },
+    "/pharmacy/wallet/transactions/{id}/receipt": {
+      "get": {
+        "tags": [
+          "Pharmacy Wallet"
+        ],
+        "summary": "Get transaction receipt",
+        "description": "Returns transaction details suitable for a receipt. Amount returned in pharmacy display currency.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Transaction ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction receipt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "reference": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "credit",
+                            "debit"
+                          ]
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "category": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "number"
+                        },
+                        "currency": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "invoiceRef": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "settledAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found"
+          }
+        }
+      }
+    },
+    "/patient/wallet/summary": {
+      "get": {
+        "tags": [
+          "Patient Wallet"
+        ],
+        "summary": "Get patient wallet summary",
+        "description": "Returns balance, total spent, and total top-ups in the patient local display currency.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "countryCode",
+            "schema": {
+              "type": "string",
+              "default": "US"
+            },
+            "description": "ISO country code for display currency (fallback if not auto-detected)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wallet summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "balanceUsd": {
+                          "type": "number",
+                          "description": "Raw USD balance (internal)"
+                        },
+                        "balance": {
+                          "type": "number",
+                          "description": "Balance in display currency"
+                        },
+                        "totalSpent": {
+                          "type": "number",
+                          "description": "Lifetime spend in display currency"
+                        },
+                        "totalTopUps": {
+                          "type": "number",
+                          "description": "Lifetime top-ups in display currency"
+                        },
+                        "displayCurrency": {
+                          "type": "string",
+                          "description": "ISO currency code (e.g. NGN, GHS, USD)"
+                        },
+                        "isActive": {
+                          "type": "boolean"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/patient/wallet/transactions": {
+      "get": {
+        "tags": [
+          "Patient Wallet"
+        ],
+        "summary": "List patient wallet transactions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credit",
+                "debit"
+              ]
+            },
+            "description": "Filter by transaction type"
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "payment",
+                "top_up",
+                "refund",
+                "adjustment"
+              ]
+            },
+            "description": "Filter by category"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "countryCode",
+            "schema": {
+              "type": "string",
+              "default": "US"
+            },
+            "description": "ISO country code for display currency"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated transaction list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "transactions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "credit",
+                              "debit"
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "completed",
+                              "failed"
+                            ]
+                          },
+                          "category": {
+                            "type": "string",
+                            "enum": [
+                              "payment",
+                              "top_up",
+                              "refund",
+                              "adjustment"
+                            ]
+                          },
+                          "amount": {
+                            "type": "number",
+                            "description": "Amount in display currency"
+                          },
+                          "currency": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "reference": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/patient/wallet/top-up": {
+      "post": {
+        "tags": [
+          "Patient Wallet"
+        ],
+        "summary": "Initiate wallet top-up",
+        "description": "Creates a pending top-up transaction and returns a payment gateway authorization URL. Wallet is credited automatically via webhook on successful payment.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "amount"
+                ],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "description": "Top-up amount in local display currency"
+                  },
+                  "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                      "paystack",
+                      "flutterwave"
+                    ],
+                    "default": "paystack",
+                    "description": "Payment gateway to use"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "default": "US",
+                    "description": "ISO country code — determines display currency and gateway selection"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Top-up initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "reference": {
+                          "type": "string",
+                          "description": "Unique transaction reference"
+                        },
+                        "authorizationUrl": {
+                          "type": "string",
+                          "description": "Gateway redirect URL for payment"
+                        },
+                        "amount": {
+                          "type": "number",
+                          "description": "Amount charged in display currency"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "description": "Display currency code"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid amount or missing fields"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
         }
       }
     }
