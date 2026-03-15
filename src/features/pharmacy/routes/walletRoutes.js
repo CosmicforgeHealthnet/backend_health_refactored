@@ -19,6 +19,13 @@ router.get("/summary", authenticateJWT, pharmacyWalletController.getSummary);
 router.get("/transactions", authenticateJWT, pharmacyWalletController.getTransactions);
 
 /**
+ * @route   GET /api/pharmacy/wallet/transactions/:id/receipt
+ * @desc    Download transaction receipt details
+ * @access  Pharmacy staff
+ */
+router.get("/transactions/:id/receipt", authenticateJWT, pharmacyWalletController.getTransactionReceipt);
+
+/**
  * @route   GET /api/pharmacy/wallet/earnings
  * @desc    Get earnings summary and period breakdown
  * @access  Pharmacy staff

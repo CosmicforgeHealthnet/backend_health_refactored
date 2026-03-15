@@ -10,10 +10,10 @@ const PrescriptionStatus = {
   UNDER_REVIEW:        "under_review",     // Pharmacy reviewing before sending invoice
   AWAITING_PAYMENT:    "awaiting_payment", // Invoice sent, waiting for patient payment
   IN_PROGRESS:         "in_progress",      // Payment confirmed, being fulfilled
-  READY_FOR_PICKUP:    "ready_for_pickup",
-  READY_FOR_DELIVERY:  "ready_for_delivery",
-  COMPLETED:           "completed",
-  CANCELLED:           "cancelled",
+  READY_FOR_PICKUP: "ready_for_pickup",
+  OUT_FOR_DELIVERY: "out_for_delivery",   // was ready_for_delivery — renamed per dispatch spec
+  COMPLETED:        "completed",
+  CANCELLED:        "cancelled",
 };
 
 const PaymentStatus = {
@@ -125,7 +125,8 @@ module.exports = new EntitySchema({
     deliveryAddress: { type: "text", nullable: true },
     deliveryInstructions: { type: "text", nullable: true },
     expectedDeliveryDate: { type: "timestamp", nullable: true },
-    actualDeliveryDate: { type: "timestamp", nullable: true }
+    actualDeliveryDate: { type: "timestamp", nullable: true },
+    dispatchedAt: { type: "timestamp", nullable: true, comment: "Set when status transitions to out_for_delivery. Never overwritten." }
   },
 
   relations: {

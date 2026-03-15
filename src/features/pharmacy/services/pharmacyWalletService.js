@@ -145,6 +145,36 @@ const pharmacyWalletService = {
   },
 
   /**
+   * GET /pharmacy/wallet/transactions/:id/receipt
+   */
+  async getTransactionReceipt(pharmacyId, transactionId) {
+    const wallet = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
+    if (!wallet) throw Object.assign(new Error('Wallet not found'), { status: 404 });
+
+    const txn = await walletTxnRepo.findById(transactionId);
+    if (!txn || txn.walletId !== wallet.id) {
+      throw Object.assign(new Error('Transaction not found'), { status: 404 });
+    }
+
+    const { displayCurrency, rate } = await CurrencyService.getCurrencyForCountry(null);
+    const conv = (usd) => parseFloat((usd * rate).toFixed(2));
+
+    return {
+      id:           txn.id,
+      reference:    txn.reference,
+      type:         txn.type,
+      status:       txn.status,
+      category:     txn.category,
+      amount:       conv(txn.amountUsd),
+      currency:     displayCurrency,
+      description:  txn.description,
+      invoiceRef:   txn.invoiceRef,
+      settledAt:    txn.settledAt,
+      createdAt:    txn.createdAt,
+    };
+  },
+
+  /**
    * GET /pharmacy/wallet/earnings
    */
   async getEarnings(pharmacyId, query) {

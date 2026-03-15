@@ -242,6 +242,34 @@ class PrescriptionController {
     const invoices = await PrescriptionService.getPatientInvoices(patientId, req.query);
     res.status(200).json({ success: true, data: invoices });
   });
+
+  updatePrescriptionStatus = asyncHandler(async (req, res) => {
+    const { prescriptionId } = req.params;
+    const { status } = req.body;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
+    const prescription = await PrescriptionService.updatePrescriptionStatus(prescriptionId, pharmacyId, status);
+    res.status(200).json({ success: true, data: prescription });
+  });
+
+  getDispatchItems = asyncHandler(async (req, res) => {
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
+    const { items, total, page, limit } = await PrescriptionService.getDispatchItems(pharmacyId, req.query);
+    res.status(200).json({ items, total, page, limit });
+  });
+
+  initiateDispatch = asyncHandler(async (req, res) => {
+    const { prescriptionId } = req.params;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
+    const data = await PrescriptionService.initiateDispatch(prescriptionId, pharmacyId, req.body);
+    res.status(200).json(data);
+  });
+
+  markDelivered = asyncHandler(async (req, res) => {
+    const { prescriptionId } = req.params;
+    const pharmacyId = await resolvePharmacyId(req.user.sub);
+    const data = await PrescriptionService.markDelivered(prescriptionId, pharmacyId);
+    res.status(200).json(data);
+  });
 }
 
 module.exports = new PrescriptionController();
