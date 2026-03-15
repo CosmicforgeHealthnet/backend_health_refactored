@@ -1,4 +1,4 @@
-const { AppDataSource } = require("../../../config/database");
+const AppDataSource = require("../../../config/database");
 const InvoiceSchema = require("../entities/Invoice");
 
 const repo = () => AppDataSource.getRepository(InvoiceSchema);

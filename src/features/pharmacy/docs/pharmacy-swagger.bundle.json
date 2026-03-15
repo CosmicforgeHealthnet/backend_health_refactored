@@ -1042,7 +1042,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/{prescriptionId}/start-processing": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/start-processing": {
       "post": {
         "summary": "Start processing prescription",
         "description": "Allows a pharmacy to start processing an assigned prescription.\n- Verifies the prescription is assigned to the pharmacy and in PHARMACY_ASSIGNED status.\n- Assigns a pharmacist and updates status to PHARMACY_PROCESSING.\n",
@@ -1099,7 +1099,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/{prescriptionId}/provide-costs": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/provide-costs": {
       "post": {
         "summary": "Provide medication costs",
         "description": "Allows a pharmacy to provide cost details and invoice for a prescription.\n- Calculates total cost including delivery fee and updates payment information.\n",
@@ -1156,7 +1156,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/{prescriptionId}/mark-ready": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/mark-ready": {
       "post": {
         "summary": "Mark prescription as ready",
         "description": "Allows a pharmacy to mark a prescription as ready for delivery or pickup.\n- Updates status to READY_FOR_DELIVERY or READY_FOR_PICKUP.\n",
@@ -1213,7 +1213,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/{prescriptionId}/complete": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/complete": {
       "post": {
         "summary": "Complete prescription fulfillment",
         "description": "Allows a pharmacy to mark a prescription as completed.\n- Updates status to COMPLETED and sets payment status to PAID.\n",
@@ -1260,7 +1260,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/active": {
+    "/pharmacy/prescriptions/pharmacy/orders": {
       "get": {
         "summary": "Get active pharmacy orders",
         "description": "Retrieves active orders currently being processed by the authenticated pharmacy.\n- Returns prescriptions in `pharmacy_processing`, `ready_for_delivery`, or `ready_for_pickup` status.\n- Supports pagination via query parameters.\n",
@@ -1313,7 +1313,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/contacts": {
+    "/pharmacy/prescriptions/pharmacy/contacts": {
       "get": {
         "summary": "Get pharmacy contacts",
         "description": "Retrieves all unique patients and doctors who have interacted with the authenticated pharmacy via prescriptions.\n- Returns deduplicated lists of patients and doctors.\n- Useful for building contact/communication lists within the pharmacy portal.\n",
@@ -1398,7 +1398,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions": {
       "get": {
         "summary": "Get pharmacy's prescriptions",
         "description": "Retrieves a list of prescriptions assigned to the authenticated pharmacy.\n- Supports pagination and filtering via query parameters.\n",
@@ -1454,7 +1454,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/dashboard/stats": {
+    "/pharmacy/prescriptions/pharmacy/dashboard/stats": {
       "get": {
         "summary": "Get pharmacy dashboard statistics",
         "description": "Retrieves real-time counts for the pharmacy dashboard:\n- Pending requests\n- Active orders\n- Completed today\n",
@@ -1486,7 +1486,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/dashboard/activity": {
+    "/pharmacy/prescriptions/pharmacy/dashboard/activity": {
       "get": {
         "summary": "Get pharmacy activity feed",
         "description": "Retrieves a feed of recent status changes and actions for assigned prescriptions.",
@@ -1526,7 +1526,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/{prescriptionId}/confirm-availability": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/confirm-availability": {
       "post": {
         "summary": "Confirm medication availability",
         "description": "Marks a prescription as having confirmed medication stock.",
@@ -1563,7 +1563,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/{prescriptionId}/internal-notes": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/internal-notes": {
       "post": {
         "summary": "Add internal pharmacy note",
         "description": "Allows pharmacy staff to add private notes to a prescription.",
@@ -1610,7 +1610,7 @@
         }
       }
     },
-    "/pharmacy/prescriptions/{prescriptionId}/propose-alternative": {
+    "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/propose-alternative": {
       "post": {
         "summary": "Propose alternative medications",
         "description": "Allows a pharmacy to suggest alternative medications when the prescribed ones are unavailable.\n- Updates `availabilityStatus` to `alternatives_proposed`.\n- Stores the alternatives in `internalNotes`.\n- Sends a WebSocket notification and email to the patient immediately.\n",
@@ -1953,454 +1953,6 @@
         "responses": {
           "200": {
             "description": "See main auth documentation"
-          }
-        }
-      }
-    },
-    "/pharmacy/prescriptions/dispatch": {
-      "get": {
-        "tags": [
-          "Dispatch"
-        ],
-        "summary": "List dispatch items",
-        "description": "Returns prescriptions in dispatch-relevant statuses (ready_for_pickup, out_for_delivery, completed). Returns DispatchItem shape — not the full prescription object.",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "status",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ready_for_pickup",
-                "out_for_delivery",
-                "completed"
-              ]
-            },
-            "description": "Filter by dispatch status"
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer",
-              "default": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "maximum": 100
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Paginated dispatch item list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "reference": {
-                            "type": "string"
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "ready_for_pickup",
-                              "out_for_delivery",
-                              "completed"
-                            ]
-                          },
-                          "patient": {
-                            "type": "object",
-                            "nullable": true,
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "fullName": {
-                                "type": "string"
-                              },
-                              "phone": {
-                                "type": "string",
-                                "nullable": true
-                              }
-                            }
-                          },
-                          "medications": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "dosage": {
-                                  "type": "string"
-                                },
-                                "quantity": {
-                                  "type": "number"
-                                }
-                              }
-                            }
-                          },
-                          "deliveryAddress": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "deliveryInstructions": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "deliveryFee": {
-                            "type": "number",
-                            "nullable": true
-                          },
-                          "dispatchedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "nullable": true
-                          },
-                          "estimatedDelivery": {
-                            "type": "string",
-                            "format": "date-time",
-                            "nullable": true
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        }
-                      }
-                    },
-                    "total": {
-                      "type": "integer"
-                    },
-                    "page": {
-                      "type": "integer"
-                    },
-                    "limit": {
-                      "type": "integer"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden — not a pharmacy account"
-          }
-        }
-      }
-    },
-    "/pharmacy/prescriptions/{prescriptionId}/dispatch": {
-      "post": {
-        "tags": [
-          "Dispatch"
-        ],
-        "summary": "Initiate dispatch (ready_for_pickup → out_for_delivery)",
-        "description": "Sets dispatchedAt timestamp. Sends push notification to patient: 'Your order is on the way'.",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "prescriptionId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Prescription ID"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "estimatedDelivery": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Expected delivery ISO 8601"
-                  },
-                  "note": {
-                    "type": "string",
-                    "description": "Internal dispatch note (e.g. driver info)"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Prescription dispatched",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "reference": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "out_for_delivery"
-                      ]
-                    },
-                    "dispatchedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "estimatedDelivery": {
-                      "type": "string",
-                      "format": "date-time",
-                      "nullable": true
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Prescription not found"
-          },
-          "422": {
-            "description": "Prescription is not in ready_for_pickup status"
-          }
-        }
-      }
-    },
-    "/pharmacy/prescriptions/{prescriptionId}/delivered": {
-      "post": {
-        "tags": [
-          "Dispatch"
-        ],
-        "summary": "Mark as delivered (out_for_delivery → completed)",
-        "description": "Notifies patient (push) and pharmacy (push, dashboard refresh).",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "prescriptionId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Prescription ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Prescription marked as delivered",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "reference": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "completed"
-                      ]
-                    },
-                    "dispatchedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "nullable": true
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Prescription not found"
-          },
-          "422": {
-            "description": "Prescription is not in out_for_delivery status"
-          }
-        }
-      }
-    },
-    "/pharmacy/prescriptions/{prescriptionId}/status": {
-      "patch": {
-        "tags": [
-          "Prescription"
-        ],
-        "summary": "Update prescription status (generic)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "prescriptionId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Prescription ID"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "status"
-                ],
-                "properties": {
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "pending",
-                      "patient_uploaded",
-                      "pharmacy_assigned",
-                      "pharmacy_processing",
-                      "under_review",
-                      "awaiting_payment",
-                      "in_progress",
-                      "ready_for_pickup",
-                      "out_for_delivery",
-                      "completed",
-                      "cancelled"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Status updated"
-          },
-          "400": {
-            "description": "Invalid status value"
-          },
-          "404": {
-            "description": "Prescription not found"
-          }
-        }
-      }
-    },
-    "/pharmacy/auth/profile/logo": {
-      "post": {
-        "tags": [
-          "Pharmacy Auth"
-        ],
-        "summary": "Upload pharmacy profile logo",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Logo uploaded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "logoUrl": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "No file uploaded"
           }
         }
       }
@@ -3779,35 +3331,5 @@
         "bearerFormat": "JWT"
       }
     }
-  },
-  "tags": [
-    {
-      "name": "Pharmacy Auth",
-      "description": "Registration, login, profile, staff management"
-    },
-    {
-      "name": "Pharmacy Admin",
-      "description": "Admin review and approval of pharmacies"
-    },
-    {
-      "name": "Pharmacy Documents",
-      "description": "Document upload and management"
-    },
-    {
-      "name": "Prescription",
-      "description": "Prescription lifecycle management"
-    },
-    {
-      "name": "Dispatch",
-      "description": "Dispatch and delivery management"
-    },
-    {
-      "name": "Doctor Prescriptions",
-      "description": "Doctor-facing prescription endpoints"
-    },
-    {
-      "name": "Patient Prescriptions",
-      "description": "Patient-facing prescription endpoints"
-    }
-  ]
+  }
 }
