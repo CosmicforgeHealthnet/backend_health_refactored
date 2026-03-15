@@ -3783,11 +3783,11 @@
   "tags": [
     {
       "name": "Pharmacy Auth",
-      "description": "Pharmacy registration, login, profile, and staff management"
+      "description": "Registration, login, profile, staff management"
     },
     {
       "name": "Pharmacy Admin",
-      "description": "Admin endpoints for reviewing and approving pharmacies"
+      "description": "Admin review and approval of pharmacies"
     },
     {
       "name": "Pharmacy Documents",
@@ -3799,7 +3799,7 @@
     },
     {
       "name": "Dispatch",
-      "description": "Prescription dispatch and delivery management"
+      "description": "Dispatch and delivery management"
     },
     {
       "name": "Doctor Prescriptions",
