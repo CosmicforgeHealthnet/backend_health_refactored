@@ -1,4 +1,4 @@
-const { AppDataSource } = require("../../../config/database");
+const AppDataSource = require("../../../config/database");
 const PatientWalletTransactionSchema = require("../entities/PatientWalletTransaction");
 
 const repo = () => AppDataSource.getRepository(PatientWalletTransactionSchema);

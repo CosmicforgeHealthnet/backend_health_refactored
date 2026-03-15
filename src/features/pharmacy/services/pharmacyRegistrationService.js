@@ -230,6 +230,14 @@ class PharmacyRegistrationService {
       throw new Error("Pharmacy not found");
     }
     const { fullName, email, password, role } = staffData;
+
+    const ALLOWED_STAFF_ROLES = ["pharmacist", "assistant", "dispatcher", "pharmacy"];
+    if (!role || !ALLOWED_STAFF_ROLES.includes(role)) {
+      const err = new Error(`Invalid staff role "${role}". Allowed: ${ALLOWED_STAFF_ROLES.join(", ")}`);
+      err.status = 400;
+      throw err;
+    }
+
     const existingUser = await this.userRepo.findByEmail(email.toLowerCase().trim());
     if (existingUser) {
       throw new Error("Email already in use");

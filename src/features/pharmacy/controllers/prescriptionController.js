@@ -180,7 +180,7 @@ class PrescriptionController {
   getActivityFeed = asyncHandler(async (req, res) => {
     const pharmacyId = await resolvePharmacyId(req.user.sub);
     const { limit } = req.query;
-    const feed = await PrescriptionService.getActivityFeed(pharmacyId, parseInt(limit));
+    const feed = await PrescriptionService.getActivityFeed(pharmacyId, parseInt(limit) || 10);
     res.status(200).json({ success: true, data: feed });
   });
 
