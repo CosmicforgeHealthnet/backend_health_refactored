@@ -22,9 +22,9 @@ class PharmacyAuthController {
       } = req.body;
 
       // Validation
-      if (!fullName || !email || !password || !pharmacyName || !registrationNumber || !preferredUsername) {
+      if (!fullName || !email || !password || !pharmacyName || !registrationNumber || !preferredUsername || !phone || !address || !primaryContactPerson) {
         return res.status(400).json({
-          error: "All required fields must be provided"
+          error: "All required fields must be provided: fullName, email, password, pharmacyName, registrationNumber, preferredUsername, phone, address, primaryContactPerson"
         });
       }
 

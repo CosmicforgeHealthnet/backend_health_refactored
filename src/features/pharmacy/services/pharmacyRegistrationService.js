@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const verificationService = require('../../auth/services/verificationService'); // Assuming this is still in global services or moved
 const referralService = require('../../auth/services/referralService'); // Pending refactor to auth
 const { sendPharmacyStaffWelcomeEmail } = require("../../../shared/services/email/helper/pharmacy");
+const AppDataSource = require('../../../config/database');
 
 class PharmacyRegistrationService {
   get profileRepo() { return require("../repositories/pharmacyProfileRepository"); }
@@ -28,76 +29,73 @@ class PharmacyRegistrationService {
       preferredUsername
     } = registrationData;
 
-
-    console.log('🔍 DEBUG - Raw email from request:', email);
-    console.log('🔍 DEBUG - Email type:', typeof email);
-    console.log('🔍 DEBUG - Email length:', email?.length);
-
     const normalizedEmail = email.toLowerCase().trim();
-    console.log('🔍 DEBUG - Normalized email:', normalizedEmail);
 
-    // Check if user email exists
-    console.log('🔍 DEBUG - About to call userRepo.findByEmail...');
+    // Run all uniqueness checks before opening a transaction
     const existingUser = await this.userRepo.findByEmail(normalizedEmail);
-    console.log('🔍 DEBUG - userRepo.findByEmail result:', existingUser);
+    if (existingUser) throw new Error("Email already in use");
 
-    if (existingUser) {
-      console.log('🔍 DEBUG - Found user details:', {
-        id: existingUser.id,
-        email: existingUser.email,
-        createdAt: existingUser.createdAt
-      });
-      throw new Error("Email already in use");
-    }
-
-    // Check if username exists
     const existingUsername = await this.profileRepo.findByUsername(preferredUsername);
-    if (existingUsername) {
-      throw new Error("Username already taken");
-    }
+    if (existingUsername) throw new Error("Username already taken");
 
-    // Check if registration number exists
     const existingRegistration = await this.profileRepo.findByRegistrationNumber(registrationNumber);
-    if (existingRegistration) {
-      throw new Error("Registration number already exists");
+    if (existingRegistration) throw new Error("Registration number already exists");
+
+    // Hash password before transaction (CPU work, no DB needed)
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    // Wrap all DB writes in a transaction — if anything fails, everything rolls back
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    let savedUser, savedPharmacy;
+
+    try {
+      savedUser = await queryRunner.manager.save("User", {
+        fullName,
+        email: normalizedEmail,
+        passwordHash,
+        role: "pharmacy",
+        status: "pending_email_verification"
+      });
+
+      savedPharmacy = await queryRunner.manager.save("PharmacyProfile", {
+        userId: savedUser.id,
+        pharmacyName,
+        registrationNumber,
+        address,
+        phone,
+        primaryContactPerson,
+        email: normalizedEmail,
+        preferredUsername,
+        verificationStatus: "pending",
+        documentsSubmitted: false
+      });
+
+      await queryRunner.manager.save("PharmacyVerificationRequest", {
+        pharmacyId: savedPharmacy.id,
+        requestType: "initial_verification",
+        status: "pending",
+        priority: "medium",
+        requestNotes: "Initial pharmacy registration"
+      });
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      // Re-map unique constraint DB errors to friendly messages
+      if (err.code === '23505') {
+        if (err.detail?.includes('email')) throw new Error("Email already in use");
+        if (err.detail?.includes('preferredUsername')) throw new Error("Username already taken");
+        if (err.detail?.includes('registrationNumber')) throw new Error("Registration number already exists");
+      }
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
 
-    // Create and save user
-    const passwordHash = await bcrypt.hash(password, 12);
-    const savedUser = await this.userRepo.save({
-      fullName,
-      email: normalizedEmail,
-      passwordHash,
-      role: "pharmacy",
-      status: "pending_email_verification"
-    });
-
-    // Create pharmacy profile
-    const savedPharmacy = await this.profileRepo.save({
-      userId: savedUser.id,
-      pharmacyName,
-      registrationNumber,
-      address,
-      phone,
-      primaryContactPerson,
-      email: normalizedEmail,
-      preferredUsername,
-      verificationStatus: "pending",
-      documentsSubmitted: false
-    });
-
-    // Create initial verification request
-    await this.verificationRepo.save({
-      pharmacyId: savedPharmacy.id,
-      requestType: "initial_verification",
-      status: "pending",
-      priority: "medium",
-      requestNotes: "Initial pharmacy registration"
-    });
-
-
-
-    // Send verification email (non-blocking)
+    // Send verification email (non-blocking — outside transaction on purpose)
     let emailSent = true;
     try {
       await verificationService.sendEmailVerification(savedUser);
@@ -106,7 +104,7 @@ class PharmacyRegistrationService {
       emailSent = false;
     }
 
-    // Create referral code
+    // Create referral code (non-blocking — outside transaction on purpose)
     try {
       await referralService.createUserReferralCode(savedUser.id);
     } catch (referralErr) {
