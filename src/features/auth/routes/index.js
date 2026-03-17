@@ -69,6 +69,7 @@ const mfaRoutes = require("./mfa");
  *                 description: Medical specialty for doctors
  */
 router.post("/signup", authController.signup);
+router.post("/signup-otp", authController.signupOtp);
 router.get("/signup", (req, res) => {
     res.status(405).json({
         error: "Method Not Allowed",
@@ -127,6 +128,8 @@ router.post("/logout", authController.logout);
  *       **Legacy route**: `GET /auth/verify-email` (deprecated)
  */
 router.get("/verify-email", authController.verifyEmail);
+router.post("/verify-email-otp", authController.verifyEmailOtp);
+router.get("/check-verification-status", authController.checkVerificationStatus);
 
 /**
  * @swagger
@@ -157,6 +160,8 @@ router.post("/refresh", authController.refresh);
  *       **Legacy route**: `POST /auth/password-reset-request` (deprecated)
  */
 router.post("/password-reset-request", authController.requestPasswordReset);
+router.post("/password-reset-otp-request", authController.requestPasswordResetOtp);
+router.post("/verify-password-reset-otp", authController.verifyPasswordResetOtp);
 
 /**
  * @swagger

@@ -1,4 +1,5 @@
-const { sendVerificationEmail } = require('../../../shared/services/email/helper/index');
+const { sendVerificationEmail, sendVerificationOtpEmail } = require('../../../shared/services/email/helper/index');
+const otpService = require('./otpService');
 const { v4: uuidv4 } = require('uuid');
 
 class VerificationService {
@@ -12,6 +13,16 @@ class VerificationService {
     const record = this.emailVerRepo.create({ user, token, expiresAt });
     await this.emailVerRepo.save(record);
     await sendVerificationEmail(user, token, 60);
+  }
+
+  async sendEmailVerificationOtp(user) {
+    const token = uuidv4();
+    const otp = otpService.generateOTP();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // OTP expires in 15 mins
+
+    const record = this.emailVerRepo.create({ user, token, otp, expiresAt });
+    await this.emailVerRepo.save(record);
+    await sendVerificationOtpEmail(user, otp, 15);
   }
 
   async resendVerificationEmail(email) {
@@ -38,7 +49,12 @@ class VerificationService {
 
     // send with remaining TTL
     const expiresInMinutes = Math.ceil((record.expiresAt - now) / 60000);
-    await sendVerificationEmail(user, record.token, expiresInMinutes);
+    
+    if (record.otp) {
+      await sendVerificationOtpEmail(user, record.otp, expiresInMinutes);
+    } else {
+      await sendVerificationEmail(user, record.token, expiresInMinutes);
+    }
   }
 
   async checkVerificationStatus(email) {

@@ -4,7 +4,7 @@ const authService = require("../services/authService");
 const referralService = require("../services/referralService"); // Internal to auth feature now
 const emailVerRepo = require("../repositories/emailVerificationRepository");
 const userRepo = require("../repositories/userRepository");
-const bcrypt = require("bcryptjs");
+const passwordResetRepository = require("../repositories/passwordResetRepository");
 
 // Feature-internal services
 const passwordResetService = require("../services/passwordResetService");
@@ -107,6 +107,81 @@ exports.signup = async (req, res, next) => {
             message: emailSent
                 ? "Account created successfully; check your email for a verification link."
                 : "Account created, but we couldn't send a verification email. Please retry from your profile.",
+            user: {
+                id: user.id,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+                status: user.status
+            },
+        });
+    } catch (err) {
+        if (err.message == "Email already in use") {
+            return res.status(400).json({ error: err.message });
+        }
+        next(err);
+    }
+};
+
+// signup-otp (for mobile)
+exports.signupOtp = async (req, res, next) => {
+    try {
+        const { fullName, email, password, role, phoneNumber, departmentSpecialty } = req.body;
+        if (!fullName || !email || !password) {
+            return res
+                .status(400)
+                .json({ error: "fullName, email and password are required" });
+        }
+
+        const countryValidation = validatePatientCountry(req, role);
+        if (!countryValidation.allowed) {
+            return res.status(403).json({
+                error: `Patient registration is currently only available in: ${countryValidation.allowedCountries.join(', ')}. Your location: ${countryValidation.country}`,
+                code: 'COUNTRY_RESTRICTED',
+                userCountry: countryValidation.country,
+                allowedCountries: countryValidation.allowedCountries
+            });
+        }
+
+        if (role === 'doctor' && phoneNumber) {
+            const phoneRegex = /^\+[1-9]\d{0,3}\d{4,11}$/;
+            if (!phoneRegex.test(phoneNumber)) {
+                return res.status(400).json({
+                    error: "Invalid phone number format. Use +countrycode followed by digits (max 15 digits total)"
+                });
+            }
+        }
+
+        const user = await authService.register({
+            fullName,
+            email,
+            password,
+            phoneNumber,
+            departmentSpecialty,
+            role,
+            country: countryValidation.country,
+        });
+
+        let emailSent = true;
+        try {
+            await verificationService.sendEmailVerificationOtp(user);
+        } catch (mailErr) {
+            console.error("💥 OTP Email send failed:", mailErr);
+            emailSent = false;
+        }
+
+        await referralService.createUserReferralCode(user.id);
+        const { ref } = req.query;
+        if (ref) {
+            const referral = await referralService.processReferral(user.id, ref);
+            if (referral)
+                await referralService.verifyReferral(referral.referredUserId);
+        }
+
+        return res.status(201).json({
+            message: emailSent
+                ? "Account created successfully; check your email for a 6-digit verification code."
+                : "Account created, but we couldn't send the verification code. Please retry from your profile.",
             user: {
                 id: user.id,
                 fullName: user.fullName,
@@ -318,7 +393,7 @@ exports.googleMobileLogin = async (req, res, next) => {
 };
 
 // refresh token!!!!
-exports.refresh = async (req, res, next) => {
+exports.refresh = async (req, res) => {
     try {
         const { refreshToken, deviceFingerprint } = req.body;
         if (!refreshToken || !deviceFingerprint) {
@@ -392,13 +467,12 @@ exports.resendVerification = async (req, res, next) => {
     }
 };
 
-// request password reset
+// request password reset (always link-based)
 exports.requestPasswordReset = async (req, res, next) => {
     try {
         const { email } = req.body;
         if (!email) return res.status(400).json({ error: "Email is required" });
 
-        // Note: passwordResetService is now local
         await passwordResetService.requestReset(email);
 
         // Always return 200 to avoid user enumeration
@@ -439,8 +513,97 @@ exports.resendPasswordReset = async (req, res, next) => {
     }
 };
 
+// --- OTP ENDPOINTS ---
+
+exports.verifyEmailOtp = async (req, res, next) => {
+    try {
+        const { email, otp } = req.body;
+        if (!email || !otp) {
+            return res.status(400).json({ error: "Email and OTP are required" });
+        }
+
+        const user = await userRepo.findByEmail(email);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const ev = await emailVerRepo.findByOtp(otp, user.id);
+        if (!ev) {
+            return res.status(400).json({ error: "Invalid OTP" });
+        }
+
+        if (ev.expiresAt < new Date()) {
+            return res.status(400).json({ error: "OTP has expired" });
+        }
+
+        if (ev.usedAt) {
+            return res.status(400).json({ error: "OTP has already been used" });
+        }
+
+        // Mark OTP used and activate user
+        ev.usedAt = new Date();
+        await emailVerRepo.save(ev);
+
+        user.status = user.role === "doctor" ? "pending_doctor_verification" : "active";
+        await userRepo.save(user);
+
+        res.json({ message: "Email verified successfully!" });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.checkVerificationStatus = async (req, res, next) => {
+    try {
+        const { email } = req.query;
+        if (!email) return res.status(400).json({ error: "Email is required" });
+
+        const user = await userRepo.findByEmail(email);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        const isVerified = user.status === "active" || user.status === "doctor_active" || user.status === "pending_doctor_verification";
+        res.json({ verified: isVerified, status: user.status });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.requestPasswordResetOtp = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: "Email is required" });
+
+        await passwordResetService.requestResetOtp(email);
+        res.json({ message: "If that email exists, a 6-digit code has been sent." });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.verifyPasswordResetOtp = async (req, res, next) => {
+    try {
+        const { email, otp } = req.body;
+        if (!email || !otp) {
+            return res.status(400).json({ error: "Email and OTP are required" });
+        }
+
+        const user = await userRepo.findByEmail(email);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        const record = await passwordResetRepository.findByOtp(otp, user.id);
+        if (!record || record.usedAt || record.expiresAt < new Date()) {
+            return res.status(400).json({ error: "Invalid or expired OTP" });
+        }
+
+        // Return the token so the mobile app can use it for the final reset call
+        res.json({ message: "OTP verified", token: record.token });
+    } catch (err) {
+        next(err);
+    }
+};
+
 // src/controllers/authController.js
-exports.requestMagicLink = async (req, res, next) => {
+exports.requestMagicLink = async (req, res) => {
     try {
         const { email, fullName, role } = req.body;
 
@@ -483,7 +646,7 @@ exports.requestMagicLink = async (req, res, next) => {
 };
 
 // src/controllers/authController.js
-exports.consumeMagicLink = async (req, res, next) => {
+exports.consumeMagicLink = async (req, res) => {
     try {
         const { token, deviceFingerprint } = req.query;
         const tokens = await magicLinkService.consumeMagicLink(

@@ -23,6 +23,13 @@ class PasswordResetRepository {
     });
   }
 
+  findByOtp(otp, userId) {
+    return this.repo.findOne({
+      where: { otp, user: { id: userId } },
+      relations: ['user']
+    });
+  }
+
   async deleteExpired(beforeDate) {
     await this.repo.createQueryBuilder()
       .delete()
