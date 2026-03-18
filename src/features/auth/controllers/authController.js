@@ -527,7 +527,7 @@ exports.verifyEmailOtp = async (req, res, next) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        const ev = await emailVerRepo.findByOtp(otp, user.id);
+        const ev = await emailVerRepo.findByTokenAndUser(otp, user.id);
         if (!ev) {
             return res.status(400).json({ error: "Invalid OTP" });
         }
@@ -590,7 +590,7 @@ exports.verifyPasswordResetOtp = async (req, res, next) => {
         const user = await userRepo.findByEmail(email);
         if (!user) return res.status(404).json({ error: "User not found" });
 
-        const record = await passwordResetRepository.findByOtp(otp, user.id);
+        const record = await passwordResetRepository.findByTokenAndUser(otp, user.id);
         if (!record || record.usedAt || record.expiresAt < new Date()) {
             return res.status(400).json({ error: "Invalid or expired OTP" });
         }

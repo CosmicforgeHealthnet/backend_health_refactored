@@ -34,11 +34,11 @@ class PasswordResetService {
     const user = await userRepository.findByEmail(email);
     if (!user) return;
 
-    const token = uuidv4();
     const otp = otpService.generateOTP();
     const expiresAt = new Date(Date.now() + OTP_EXPIRES_MINUTES * 60 * 1000);
 
-    const record = passwordResetRepository.create({ user, token, otp, expiresAt });
+    // Use OTP as the token itself
+    const record = passwordResetRepository.create({ user, token: otp, expiresAt });
     await passwordResetRepository.save(record);
 
     sendPasswordResetOtpEmail(user, otp, OTP_EXPIRES_MINUTES)
@@ -88,8 +88,8 @@ class PasswordResetService {
 
     // Send email asynchronously
     const minutesLeft = Math.ceil((record.expiresAt - now) / 60000);
-    if (record.otp) {
-      sendPasswordResetOtpEmail(user, record.otp, minutesLeft)
+    if (record.token.length === 6) {
+      sendPasswordResetOtpEmail(user, record.token, minutesLeft)
         .catch(err => console.error(`❌ Background email resend failed for ${email}:`, err.message));
     } else {
       sendPasswordResetEmail(user, record.token, minutesLeft)

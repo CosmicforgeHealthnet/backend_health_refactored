@@ -16,11 +16,11 @@ class VerificationService {
   }
 
   async sendEmailVerificationOtp(user) {
-    const token = uuidv4();
     const otp = otpService.generateOTP();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // OTP expires in 15 mins
 
-    const record = this.emailVerRepo.create({ user, token, otp, expiresAt });
+    // Use the 6-digit OTP as the token itself
+    const record = this.emailVerRepo.create({ user, token: otp, expiresAt });
     await this.emailVerRepo.save(record);
     await sendVerificationOtpEmail(user, otp, 15);
   }
@@ -41,17 +41,21 @@ class VerificationService {
     let record = await this.emailVerRepo.findLatestByUser(user.id);
     const now = new Date();
     if (!record || record.usedAt || record.expiresAt < now) {
-      const token = uuidv4();
-      const expiresAt = new Date(now.getTime() + 60 * 60 * 1000);
-      record = this.emailVerRepo.create({ user, token, expiresAt });
+      // For resend, we generate a new 6-digit OTP if the first one was OTP-based or if we want to switch
+      // But let's check if the user is on mobile/otp flow. 
+      // Actually, let's just generate a new 6-digit OTP for simplicity if it was already an OTP
+      const isOtpFlow = record && record.token.length === 6; 
+      const newToken = isOtpFlow ? otpService.generateOTP() : uuidv4();
+      const expiresAt = new Date(now.getTime() + (isOtpFlow ? 15 : 60) * 60 * 1000);
+      record = this.emailVerRepo.create({ user, token: newToken, expiresAt });
       await this.emailVerRepo.save(record);
     }
 
     // send with remaining TTL
     const expiresInMinutes = Math.ceil((record.expiresAt - now) / 60000);
     
-    if (record.otp) {
-      await sendVerificationOtpEmail(user, record.otp, expiresInMinutes);
+    if (record.token.length === 6) {
+      await sendVerificationOtpEmail(user, record.token, expiresInMinutes);
     } else {
       await sendVerificationEmail(user, record.token, expiresInMinutes);
     }
