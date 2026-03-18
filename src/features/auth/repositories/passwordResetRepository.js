@@ -23,14 +23,9 @@ class PasswordResetRepository {
     });
   }
 
-  /**
-   * Find a reset record by its token or OTP for a specific user
-   * @param {string} tokenOrOtp
-   * @param {string} userId
-   */
-  findByTokenAndUser(tokenOrOtp, userId) {
+  findByOtp(otp, userId) {
     return this.repo.findOne({
-      where: { token: tokenOrOtp, user: { id: userId } },
+      where: { otp, user: { id: userId } },
       relations: ['user']
     });
   }

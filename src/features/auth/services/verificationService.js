@@ -16,11 +16,11 @@ class VerificationService {
   }
 
   async sendEmailVerificationOtp(user) {
+    const token = uuidv4();
     const otp = otpService.generateOTP();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // OTP expires in 15 mins
 
-    // Use the 6-digit OTP as the token itself
-    const record = this.emailVerRepo.create({ user, token: otp, expiresAt });
+    const record = this.emailVerRepo.create({ user, token, otp, expiresAt });
     await this.emailVerRepo.save(record);
     await sendVerificationOtpEmail(user, otp, 15);
   }
@@ -54,8 +54,8 @@ class VerificationService {
     // send with remaining TTL
     const expiresInMinutes = Math.ceil((record.expiresAt - now) / 60000);
     
-    if (record.token.length === 6) {
-      await sendVerificationOtpEmail(user, record.token, expiresInMinutes);
+    if (record.otp) {
+      await sendVerificationOtpEmail(user, record.otp, expiresInMinutes);
     } else {
       await sendVerificationEmail(user, record.token, expiresInMinutes);
     }

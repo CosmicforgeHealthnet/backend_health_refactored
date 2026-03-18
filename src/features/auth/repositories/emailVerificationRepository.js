@@ -36,13 +36,13 @@ class EmailVerificationRepository {
   }
 
   /**
-   * Find a verification record by its token or OTP for a specific user
-   * @param {string} tokenOrOtp
+   * Find a verification record by its OTP and user
+   * @param {string} otp
    * @param {string} userId
    */
-  findByTokenAndUser(tokenOrOtp, userId) {
+  findByOtp(otp, userId) {
     return this.repo.findOne({
-      where: { token: tokenOrOtp, user: { id: userId } },
+      where: { otp, user: { id: userId } },
       relations: ['user']
     });
   }
