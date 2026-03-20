@@ -36,6 +36,18 @@ class EmailVerificationRepository {
   }
 
   /**
+   * Find a verification record by its OTP and user
+   * @param {string} otp
+   * @param {string} userId
+   */
+  findByOtp(otp, userId) {
+    return this.repo.findOne({
+      where: { otp, user: { id: userId } },
+      relations: ['user']
+    });
+  }
+
+  /**
    * Optionally: find all tokens for a given user
    * @param {string} userId
    */

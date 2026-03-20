@@ -3,9 +3,10 @@ const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
 const userRepository = require('../repositories/userRepository');
 const passwordResetRepository = require('../repositories/passwordResetRepository');
-const { sendPasswordResetEmail } = require('../../../shared/services/email/helper/index');
-
-const RESET_EXPIRES_MINUTES = 60;   // or however long you like
+const { sendPasswordResetEmail, sendPasswordResetOtpEmail } = require('../../../shared/services/email/helper/index');
+const otpService = require('./otpService');
+const RESET_EXPIRES_MINUTES = 60;
+const OTP_EXPIRES_MINUTES = 15;
 
 class PasswordResetService {
   /**
@@ -26,6 +27,21 @@ class PasswordResetService {
 
     // Send email asynchronously to prevent blocking the request
     sendPasswordResetEmail(user, token, RESET_EXPIRES_MINUTES)
+      .catch(err => console.error(`❌ Background email sending failed for ${email}:`, err.message));
+  }
+
+  async requestResetOtp(email) {
+    const user = await userRepository.findByEmail(email);
+    if (!user) return;
+
+    const token = uuidv4();
+    const otp = otpService.generateOTP();
+    const expiresAt = new Date(Date.now() + OTP_EXPIRES_MINUTES * 60 * 1000);
+
+    const record = passwordResetRepository.create({ user, token, otp, expiresAt });
+    await passwordResetRepository.save(record);
+
+    sendPasswordResetOtpEmail(user, otp, OTP_EXPIRES_MINUTES)
       .catch(err => console.error(`❌ Background email sending failed for ${email}:`, err.message));
   }
 
@@ -72,8 +88,13 @@ class PasswordResetService {
 
     // Send email asynchronously
     const minutesLeft = Math.ceil((record.expiresAt - now) / 60000);
-    sendPasswordResetEmail(user, record.token, minutesLeft)
-      .catch(err => console.error(`❌ Background email resend failed for ${email}:`, err.message));
+    if (record.otp) {
+      sendPasswordResetOtpEmail(user, record.otp, minutesLeft)
+        .catch(err => console.error(`❌ Background email resend failed for ${email}:`, err.message));
+    } else {
+      sendPasswordResetEmail(user, record.token, minutesLeft)
+        .catch(err => console.error(`❌ Background email resend failed for ${email}:`, err.message));
+    }
   }
 
 }

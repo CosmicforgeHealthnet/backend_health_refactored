@@ -21,6 +21,24 @@ async function sendPasswordResetEmail(user, token, expiresInMinutes = 60) {
   );
 }
 
+async function sendVerificationOtpEmail(user, otp, expiresInMinutes = 15) {
+  await emailService.send(
+    "verification_otp",
+    user.email,
+    "Your CosmicForge verification code",
+    { fullName: user.fullName, otp, expiresInMinutes }
+  );
+}
+
+async function sendPasswordResetOtpEmail(user, otp, expiresInMinutes = 15) {
+  await emailService.send(
+    "password_reset_otp",
+    user.email,
+    "Your CosmicForge password reset code",
+    { fullName: user.fullName, otp, expiresInMinutes }
+  );
+}
+
 // send magiclink
 async function sendMagicLinkEmail(user, token, expiresInMinutes, purpose) {
   const link = `${process.env.APP_BASE_URL}/auth/magic-login?token=${token}`;
@@ -1029,8 +1047,12 @@ async function sendDoctorPaymentNotificationEmail(data) {
 
 module.exports = {
   sendVerificationEmail,
+  sendVerificationOtpEmail,
   sendPasswordResetEmail,
+  sendPasswordResetOtpEmail,
   sendMagicLinkEmail,
+  sendWalletPasswordResetConfirmationEmail,
+  sendCustomWithdrawalOtp,
   // NEW - Verification email functions
   sendVerificationStatusEmail,
   sendDocumentUploadEmail,
