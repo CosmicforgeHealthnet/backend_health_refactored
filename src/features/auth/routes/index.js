@@ -355,4 +355,63 @@ router.post("/google/mobile-login", authController.googleMobileLogin);
 router.use("/referrals", referralRoutes);
 router.use("/mfa", mfaRoutes);
 
+// ─── DEV ONLY: SMTP test endpoint ────────────────────────────────────────────
+// POST /api/auth/test-email   body: { "to": "some@email.com" }
+// Remove or protect this route before going to production
+router.post("/test-email", async (req, res) => {
+  try {
+    const emailService = require("../../../shared/services/email/emailService");
+    const to = req.body?.to;
+    if (!to) {
+      return res.status(400).json({ error: "Body must include { \"to\": \"email@example.com\" }" });
+    }
+
+    // 1. Log current SMTP config (no passwords)
+    const smtpConfig = {
+      host: process.env.CPANEL_EMAIL_HOST,
+      port: process.env.CPANEL_EMAIL_PORT,
+      secure: process.env.CPANEL_EMAIL_SECURE,
+      user: process.env.CPANEL_EMAIL_USER,
+      from: process.env.CPANEL_EMAIL_FROM,
+      passSet: !!process.env.CPANEL_EMAIL_PASS,
+    };
+    console.log("📧 SMTP config at test time:", smtpConfig);
+
+    // 2. Verify SMTP connection first
+    const connected = await emailService.verifyConnection();
+    if (!connected) {
+      return res.status(500).json({
+        success: false,
+        message: "SMTP connection failed. Check server logs for details.",
+        smtpConfig,
+      });
+    }
+
+    // 3. Send a raw test email
+    await emailService.sendRaw(
+      to,
+      "✅ CosmicForge SMTP Test",
+      `<h2>SMTP Test</h2><p>This is a test email sent at ${new Date().toISOString()}.</p><p>If you received this, your SMTP is working correctly!</p>`
+    );
+
+    return res.json({
+      success: true,
+      message: `Test email sent to ${to}. Check inbox (and spam folder).`,
+      smtpConfig,
+    });
+  } catch (err) {
+    console.error("❌ test-email error:", err);
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+      smtpConfig: {
+        host: process.env.CPANEL_EMAIL_HOST,
+        port: process.env.CPANEL_EMAIL_PORT,
+        user: process.env.CPANEL_EMAIL_USER,
+        passSet: !!process.env.CPANEL_EMAIL_PASS,
+      },
+    });
+  }
+});
+
 module.exports = router;

@@ -7,28 +7,9 @@ const config = require("../../config");
 
 class EmailService {
   constructor() {
-    const {
-      CPANEL_EMAIL_HOST,
-      CPANEL_EMAIL_PORT,
-      CPANEL_EMAIL_SECURE,
-      CPANEL_EMAIL_USER,
-      CPANEL_EMAIL_PASS,
-      CPANEL_EMAIL_FROM,
-    } = process.env;
-
-    this.from = CPANEL_EMAIL_FROM;
-    this.transport = nodemailer.createTransport({
-      host: CPANEL_EMAIL_HOST,
-      port: Number(CPANEL_EMAIL_PORT),
-      secure: CPANEL_EMAIL_SECURE === "true",
-      auth: {
-        user: CPANEL_EMAIL_USER,
-        pass: CPANEL_EMAIL_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+    // NOTE: transport is created lazily (see get transport) so that
+    // env vars are read AFTER dotenv has finished loading them.
+    this._transport = null;
 
     this.templateCache = {};
     this.layoutCache = {};
@@ -36,6 +17,36 @@ class EmailService {
     // Register Handlebars helpers and partials
     this.registerHelpers();
     this.registerPartials();
+  }
+
+  /** Lazily create and cache the nodemailer transport so env vars are always set */
+  get transport() {
+    if (!this._transport) {
+      const host = process.env.CPANEL_EMAIL_HOST;
+      const port = Number(process.env.CPANEL_EMAIL_PORT);
+      const secure = process.env.CPANEL_EMAIL_SECURE === "true";
+      const user = process.env.CPANEL_EMAIL_USER;
+      const pass = process.env.CPANEL_EMAIL_PASS;
+
+      if (!host || !user || !pass) {
+        console.error("❌ SMTP config missing! Check CPANEL_EMAIL_HOST / CPANEL_EMAIL_USER / CPANEL_EMAIL_PASS in your .env file.");
+        console.error("   Current values:", { host, port, secure, user, from: process.env.CPANEL_EMAIL_FROM });
+      }
+
+      this._transport = nodemailer.createTransport({
+        host,
+        port,
+        secure,
+        auth: { user, pass },
+        tls: { rejectUnauthorized: false },
+      });
+    }
+    return this._transport;
+  }
+
+  /** Always read from env at call time (not constructor time) */
+  get from() {
+    return process.env.CPANEL_EMAIL_FROM;
   }
 
   // Register custom Handlebars helpers

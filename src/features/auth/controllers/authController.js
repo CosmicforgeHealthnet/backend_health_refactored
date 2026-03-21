@@ -163,10 +163,17 @@ exports.signupOtp = async (req, res, next) => {
         });
 
         let emailSent = true;
+        let debugOtp = null;
         try {
-            await verificationService.sendEmailVerificationOtp(user);
+            debugOtp = await verificationService.sendEmailVerificationOtp(user);
         } catch (mailErr) {
-            console.error("💥 OTP Email send failed:", mailErr);
+            console.error("💥 OTP Email send failed:", mailErr.message);
+            console.error("💥 SMTP config:", {
+                host: process.env.CPANEL_EMAIL_HOST,
+                port: process.env.CPANEL_EMAIL_PORT,
+                user: process.env.CPANEL_EMAIL_USER,
+                from: process.env.CPANEL_EMAIL_FROM,
+            });
             emailSent = false;
         }
 
@@ -178,10 +185,11 @@ exports.signupOtp = async (req, res, next) => {
                 await referralService.verifyReferral(referral.referredUserId);
         }
 
-        return res.status(201).json({
+        const responseBody = {
             message: emailSent
                 ? "Account created successfully; check your email for a 6-digit verification code."
                 : "Account created, but we couldn't send the verification code. Please retry from your profile.",
+            emailSent,
             user: {
                 id: user.id,
                 fullName: user.fullName,
@@ -189,7 +197,14 @@ exports.signupOtp = async (req, res, next) => {
                 role: user.role,
                 status: user.status
             },
-        });
+        };
+
+        // In non-production, expose the OTP so it can be used in Postman without needing the email
+        if (process.env.NODE_ENV !== "production" && debugOtp) {
+            responseBody.debugOtp = debugOtp;
+        }
+
+        return res.status(201).json(responseBody);
     } catch (err) {
         if (err.message == "Email already in use") {
             return res.status(400).json({ error: err.message });
