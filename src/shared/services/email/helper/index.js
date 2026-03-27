@@ -52,6 +52,19 @@ async function sendMagicLinkEmail(user, token, expiresInMinutes, purpose) {
   );
 }
 
+// send mobile magic link (deep link — opens Doctor app directly)
+async function sendMobileMagicLinkEmail(user, token, expiresInMinutes, purpose) {
+  const deepLink = `cosmicforge-mobile-doctor://magic-link?token=${token}`;
+  await emailService.send(
+    "magic_link",
+    user.email,
+    purpose === "signup"
+      ? "Complete your CosmicForge Doctor signup"
+      : "Your CosmicForge Doctor login link",
+    { fullName: user.fullName, link: deepLink, expiresInMinutes }
+  );
+}
+
 /**
  * Send verification status email to doctor
  */
@@ -1051,6 +1064,7 @@ module.exports = {
   sendPasswordResetEmail,
   sendPasswordResetOtpEmail,
   sendMagicLinkEmail,
+  sendMobileMagicLinkEmail,
   sendWalletPasswordResetConfirmationEmail,
   sendCustomWithdrawalOtp,
   // NEW - Verification email functions

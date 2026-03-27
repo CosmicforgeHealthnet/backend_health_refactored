@@ -273,6 +273,31 @@ router.post("/magic-link", authController.requestMagicLink);
  */
 router.get("/magic-login", authController.consumeMagicLink);
 
+/**
+ * @swagger
+ * /api/auth/magic-link/mobile:
+ *   post:
+ *     summary: Request mobile magic link (deep link)
+ *     tags: [Authentication]
+ *     description: |
+ *       Sends a magic link email whose URL is a deep link that opens
+ *       the Doctor mobile app directly (cosmicforge-mobile-doctor://magic-link?token=xxx).
+ *       No browser redirect needed.
+ */
+router.post("/magic-link/mobile", authController.requestMobileMagicLink);
+
+/**
+ * @swagger
+ * /api/auth/magic-link/mobile-verify:
+ *   post:
+ *     summary: Verify mobile magic link token
+ *     tags: [Authentication]
+ *     description: |
+ *       Called by the Doctor app after it receives the token from the deep link.
+ *       Returns accessToken, refreshToken and payload.
+ */
+router.post("/magic-link/mobile-verify", authController.verifyMobileMagicLink);
+
 // ============================================
 // GOOGLE OAUTH ROUTES
 // ============================================
