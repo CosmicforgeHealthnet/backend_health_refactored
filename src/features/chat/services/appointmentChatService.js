@@ -24,27 +24,32 @@ class AppointmentChatService {
       throw new Error('End time must be after start time');
     }
 
-    if (startTime <= new Date()) {
-      throw new Error('Start time must be in the future');
+    // Check for an existing chat room between this doctor and patient
+    const existingAppointmentChat = await this.appointmentChatRepo.findExistingRoomByDoctorAndPatient(doctorId, patientId);
+
+    let room;
+    if (existingAppointmentChat && existingAppointmentChat.room) {
+      // Reuse the existing room so all messages stay in one conversation
+      room = existingAppointmentChat.room;
+    } else {
+      // No existing room — create a new one
+      room = await this.chatService.createRoom(doctorId, {
+        name: `Appointment Chat - ${startTime.toLocaleDateString()}`,
+        type: 'appointment',
+        isPrivate: true,
+        maxParticipants: 2,
+        settings: {
+          ...settings,
+          autoClose: true,
+          timeRestricted: true
+        }
+      });
+
+      // Add patient to room
+      await this.chatService.addParticipant(room.id, patientId, 'member');
     }
 
-    // Create chat room
-    const room = await this.chatService.createRoom(doctorId, {
-      name: `Appointment Chat - ${startTime.toLocaleDateString()}`,
-      type: 'appointment',
-      isPrivate: true,
-      maxParticipants: 2,
-      settings: {
-        ...settings,
-        autoClose: true,
-        timeRestricted: true
-      }
-    });
-
-    // Add patient to room
-    await this.chatService.addParticipant(room.id, patientId, 'member');
-
-    // Create appointment chat record
+    // Create appointment chat record (linked to the shared room)
     const appointmentChatData = {
       room,
       appointment: appointmentId ? { id: appointmentId } : null,

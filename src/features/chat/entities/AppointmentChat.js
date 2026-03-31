@@ -65,7 +65,7 @@ module.exports = new EntitySchema({
     relations: {
       room: {
         target: 'ChatRoom',
-        type: 'one-to-one',
+        type: 'many-to-one',
         joinColumn: { name: 'roomId' },
         nullable: false
       },
