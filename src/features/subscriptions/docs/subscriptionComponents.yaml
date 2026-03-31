@@ -207,12 +207,18 @@ components:
         price:
           type: number
           format: decimal
-          example: 39900.00
-        originalPrice:
+          description: "Main/base price (full price without discount)"
+          example: 49900.00
+        discountPrice:
           type: number
           format: decimal
-          description: "Original price before discount"
-          example: 49900.00
+          description: "Discounted price (what user pays during promo)"
+          example: 39900.00
+        discount:
+          type: number
+          format: decimal
+          description: "Amount saved with discount"
+          example: 10000.00
         currency:
           type: string
           example: "NGN"
@@ -222,6 +228,10 @@ components:
         discountPercentage:
           type: number
           example: 20
+        hasDiscount:
+          type: boolean
+          description: "Whether a discount is currently active"
+          example: true
         isPredefined:
           type: boolean
           description: "Whether pricing is predefined for this country"
@@ -354,10 +364,19 @@ components:
           type: string
         price:
           type: number
-          description: "Current price (converted to requested currency)"
-        originalPrice:
+          description: "Main/base price (full price without discount, converted to requested currency)"
+        discountPrice:
           type: number
-          description: "Original price before discount (converted)"
+          description: "Discounted price (what user pays during promo, converted)"
+        discount:
+          type: number
+          description: "Amount saved with discount"
+        discountPercentage:
+          type: integer
+          description: "Percentage discount applied"
+        hasDiscount:
+          type: boolean
+          description: "Whether a discount is currently active"
         currency:
           type: string
           description: "Currency based on country code"
@@ -377,12 +396,6 @@ components:
         isFallback:
           type: boolean
           description: "Whether fallback currency was used"
-        discountAmount:
-          type: number
-          description: "Amount saved with discount"
-        discountPercentage:
-          type: integer
-          description: "Percentage discount applied"
         features:
           type: array
           items:
@@ -464,10 +477,19 @@ components:
             # Dynamic pricing fields
             price:
               type: number
-              description: "Current price converted to requested currency"
-            originalPrice:
+              description: "Main/base price (full price without discount, converted to requested currency)"
+            discountPrice:
               type: number
-              description: "Original price converted to requested currency"
+              description: "Discounted price (what user pays during promo, converted)"
+            discount:
+              type: number
+              description: "Amount saved with discount"
+            discountPercentage:
+              type: integer
+              description: "Percentage discount applied"
+            hasDiscount:
+              type: boolean
+              description: "Whether a discount is currently active"
             currency:
               type: string
               description: "Currency based on country code"
@@ -551,13 +573,26 @@ components:
             price:
               type: number
               format: float
-              description: "Current discounted price (converted)"
-              example: 32.99
-            originalPrice:
+              description: "Main/base price (full price without discount, converted)"
+              example: 41.24
+            discountPrice:
               type: number
               format: float
-              description: "Original price before discount (converted)"
-              example: 41.24
+              description: "Discounted price (what user pays during promo, converted)"
+              example: 32.99
+            discount:
+              type: number
+              format: float
+              description: "Amount saved (converted)"
+              example: 8.25
+            discountPercentage:
+              type: integer
+              description: "Percentage discount"
+              example: 20
+            hasDiscount:
+              type: boolean
+              description: "Whether a discount is currently active"
+              example: true
             currency:
               type: string
               example: "GBP"
@@ -582,15 +617,6 @@ components:
               type: boolean
               description: "Whether fallback currency was used"
               example: false
-            discountAmount:
-              type: number
-              format: float
-              description: "Amount saved (converted)"
-              example: 8.25
-            discountPercentage:
-              type: integer
-              description: "Percentage discount"
-              example: 20
             features:
               type: array
               items:
@@ -680,22 +706,31 @@ components:
             amount:
               type: number
               format: float
-              description: "Final amount to pay (converted)"
+              description: "Final amount to pay (effective price - discounted if promo active)"
               example: 32.99
-            originalAmount:
+            basePrice:
               type: number
               format: float
-              description: "Original price (converted)"
+              description: "Main/base price (full price without discount)"
               example: 41.24
-            discountAmount:
+            discountPrice:
               type: number
               format: float
-              description: "Amount saved (converted)"
+              description: "Discounted price (what user pays during promo)"
+              example: 32.99
+            discount:
+              type: number
+              format: float
+              description: "Amount saved"
               example: 8.25
             discountPercentage:
               type: integer
               description: "Percentage saved"
               example: 20
+            hasDiscount:
+              type: boolean
+              description: "Whether a discount is currently active"
+              example: true
             currency:
               type: string
               description: "Final currency used for payment"
