@@ -23,6 +23,7 @@ class VerificationService {
     const record = this.emailVerRepo.create({ user, token, otp, expiresAt });
     await this.emailVerRepo.save(record);
     await sendVerificationOtpEmail(user, otp, 15);
+    return otp; // returned so caller can expose it in dev-mode responses
   }
 
   async resendVerificationEmail(email) {

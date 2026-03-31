@@ -52,6 +52,19 @@ async function sendMagicLinkEmail(user, token, expiresInMinutes, purpose) {
   );
 }
 
+// send mobile magic link (deep link — opens Doctor app directly)
+async function sendMobileMagicLinkEmail(user, token, expiresInMinutes, purpose) {
+  const deepLink = `cosmicforge-mobile-doctor://magic-link?token=${token}`;
+  await emailService.send(
+    "magic_link",
+    user.email,
+    purpose === "signup"
+      ? "Complete your CosmicForge Doctor signup"
+      : "Your CosmicForge Doctor login link",
+    { fullName: user.fullName, link: deepLink, expiresInMinutes }
+  );
+}
+
 /**
  * Send verification status email to doctor
  */
@@ -565,6 +578,7 @@ async function sendDoctorAppointmentCancellationEmail(data) {
       cancellationReason: data.appointmentDetails.cancellationReason,
       cancelledBy: data.appointmentDetails.cancelledBy,
       refundAmount: data.appointmentDetails.refundAmount,
+      currencySymbol: data.appointmentDetails.currencySymbol || '₦',
       dashboardLink: `${process.env.APP_BASE_URL}/doctors/dashboard/appointments`,
       supportLink: `${process.env.APP_BASE_URL}/doctors/dashboard/support`,
       currentYear: new Date().getFullYear(),
@@ -589,7 +603,8 @@ async function sendPatientAppointmentCancellationEmail(data) {
       cancellationReason: data.appointmentDetails.cancellationReason,
       cancelledBy: data.appointmentDetails.cancelledBy,
       refundAmount: data.appointmentDetails.refundAmount,
-      refundProcessingTime: "3-5 business days",
+      currencySymbol: data.appointmentDetails.currencySymbol || '₦',
+      refundProcessingTime: "7-9 business days",
       dashboardLink: `${process.env.APP_BASE_URL}/patients/dashboard/appointments/overview`,
       rebookLink: `${process.env.APP_BASE_URL}/patients/dashboard/explore-doctors`,
       supportLink: `${process.env.APP_BASE_URL}/patients/dashboard/support`,
@@ -634,6 +649,7 @@ async function sendRefundConfirmationEmail(data) {
       appointmentDate: data.appointmentDetails.date,
       appointmentTime: data.appointmentDetails.time,
       refundAmount: data.appointmentDetails.refundAmount,
+      currencySymbol: data.appointmentDetails.currencySymbol || '₦',
       refundReason: data.appointmentDetails.refundReason,
       processingTime: data.appointmentDetails.processingTime,
       refundedAt: new Date().toLocaleString(),
@@ -660,6 +676,7 @@ async function sendPatientUnapprovedCancellationEmail(data) {
       appointmentTime: data.appointmentDetails.time,
       cancellationReason: data.appointmentDetails.cancellationReason,
       refundAmount: data.appointmentDetails.refundAmount,
+      currencySymbol: data.appointmentDetails.currencySymbol || '₦',
       processingTime: data.appointmentDetails.processingTime,
       rebookLink: `${process.env.APP_BASE_URL}/patients/dashboard/explore-doctors`,
       dashboardLink: `${process.env.APP_BASE_URL}/patients/dashboard/appointments/overview`,
@@ -685,6 +702,7 @@ async function sendDoctorMissedApprovalNotificationEmail(data) {
       appointmentTime: data.appointmentDetails.time,
       cancellationReason: data.appointmentDetails.cancellationReason,
       refundAmount: data.appointmentDetails.refundAmount,
+      currencySymbol: data.appointmentDetails.currencySymbol || '₦',
       dashboardLink: `${process.env.APP_BASE_URL}/doctors/dashboard/appointments`,
       notificationSettingsLink: `${process.env.APP_BASE_URL}/doctors/dashboard/settings/notifications`,
       supportLink: `${process.env.APP_BASE_URL}/doctors/dashboard/support`,
@@ -1051,6 +1069,7 @@ module.exports = {
   sendPasswordResetEmail,
   sendPasswordResetOtpEmail,
   sendMagicLinkEmail,
+  sendMobileMagicLinkEmail,
   sendWalletPasswordResetConfirmationEmail,
   sendCustomWithdrawalOtp,
   // NEW - Verification email functions

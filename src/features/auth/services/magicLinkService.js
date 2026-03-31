@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const magicLinkRepo = require('../repositories/magicLinkRepository');
 const userRepository = require('../repositories/userRepository');
 const refreshTokenService = require('./refreshTokenService');     // ← import
-const { sendMagicLinkEmail } = require('../../../shared/services/email/helper/index');
+const { sendMagicLinkEmail, sendMobileMagicLinkEmail } = require('../../../shared/services/email/helper/index');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const ACCESS_EXPIRES = '15m';
@@ -39,6 +39,31 @@ class MagicLinkService {
 
     // 3) Email link
     await sendMagicLinkEmail(user, token, LINK_EXPIRES_MIN, record.purpose);
+  }
+
+  /**
+   * Send a mobile deep-link magic-link email (login only)
+   * The link opens the Doctor app directly: cosmicforge-mobile-doctor://magic-link?token=TOKEN
+   */
+  async requestMobileMagicLink({ email, role = 'doctor' }, ip, userAgent) {
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      throw Object.assign(new Error('No account found with that email.'), { statusCode: 404 });
+    }
+
+    const token = uuidv4();
+    const expiresAt = new Date(Date.now() + LINK_EXPIRES_MIN * 60 * 1000);
+    const record = magicLinkRepo.create({
+      user,
+      token,
+      purpose: 'login',
+      ip,
+      userAgent,
+      expiresAt,
+    });
+    await magicLinkRepo.save(record);
+
+    await sendMobileMagicLinkEmail(user, token, LINK_EXPIRES_MIN, 'login');
   }
 
   /**

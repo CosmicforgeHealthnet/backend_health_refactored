@@ -163,10 +163,17 @@ exports.signupOtp = async (req, res, next) => {
         });
 
         let emailSent = true;
+        let debugOtp = null;
         try {
-            await verificationService.sendEmailVerificationOtp(user);
+            debugOtp = await verificationService.sendEmailVerificationOtp(user);
         } catch (mailErr) {
-            console.error("💥 OTP Email send failed:", mailErr);
+            console.error("💥 OTP Email send failed:", mailErr.message);
+            console.error("💥 SMTP config:", {
+                host: process.env.CPANEL_EMAIL_HOST,
+                port: process.env.CPANEL_EMAIL_PORT,
+                user: process.env.CPANEL_EMAIL_USER,
+                from: process.env.CPANEL_EMAIL_FROM,
+            });
             emailSent = false;
         }
 
@@ -178,10 +185,11 @@ exports.signupOtp = async (req, res, next) => {
                 await referralService.verifyReferral(referral.referredUserId);
         }
 
-        return res.status(201).json({
+        const responseBody = {
             message: emailSent
                 ? "Account created successfully; check your email for a 6-digit verification code."
                 : "Account created, but we couldn't send the verification code. Please retry from your profile.",
+            emailSent,
             user: {
                 id: user.id,
                 fullName: user.fullName,
@@ -189,7 +197,14 @@ exports.signupOtp = async (req, res, next) => {
                 role: user.role,
                 status: user.status
             },
-        });
+        };
+
+        // In non-production, expose the OTP so it can be used in Postman without needing the email
+        if (process.env.NODE_ENV !== "production" && debugOtp) {
+            responseBody.debugOtp = debugOtp;
+        }
+
+        return res.status(201).json(responseBody);
     } catch (err) {
         if (err.message == "Email already in use") {
             return res.status(400).json({ error: err.message });
@@ -664,16 +679,55 @@ exports.consumeMagicLink = async (req, res) => {
                 .status(400)
                 .json({ error: "Magic link is invalid or has expired." });
         }
-        // IP/UA mismatch
-        // if (err.message === "Link must be opened from the same browser and IP") {
-        //   return res.status(401).json({
-        //     error: "Magic link must be opened from the same browser & IP.",
-        //   });
-        // }
         // Fallback generic
         return res
             .status(err.status || 500)
             .json({ error: err.message || "Internal server error" });
+    }
+};
+
+// mobile magic link — request (sends deep link email)
+exports.requestMobileMagicLink = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+        await magicLinkService.requestMobileMagicLink(
+            { email, role: 'doctor' },
+            req.ip,
+            req.headers['user-agent']
+        );
+        return res.json({
+            message: 'If that email is registered, a sign-in link has been sent.',
+        });
+    } catch (err) {
+        if (err.statusCode === 404) {
+            return res.status(404).json({ error: err.message });
+        }
+        next(err);
+    }
+};
+
+// mobile magic link — verify (called in-app after deep link opens)
+exports.verifyMobileMagicLink = async (req, res, next) => {
+    try {
+        const { token, deviceFingerprint } = req.body;
+        if (!token || !deviceFingerprint) {
+            return res.status(400).json({ error: 'token and deviceFingerprint are required' });
+        }
+        const tokens = await magicLinkService.consumeMagicLink(
+            token,
+            req.ip,
+            req.headers['user-agent'],
+            deviceFingerprint
+        );
+        return res.json(tokens);
+    } catch (err) {
+        if (err.message === 'Invalid or expired token') {
+            return res.status(400).json({ error: 'Magic link is invalid or has expired. Please request a new one.' });
+        }
+        next(err);
     }
 };
 
