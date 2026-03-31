@@ -11,7 +11,7 @@
  * This service delegates to the payment feature for actual payment processing.
  */
 
-const { PLAN_DEFINITIONS } = require("../utils/subscriptionConstants");
+const { PLAN_DEFINITIONS, isPromoActive } = require("../utils/subscriptionConstants");
 const subscriptionRepository = require("../repositories/subscriptionRepository");
 const userRepository = require("../../auth/repositories/userRepository");
 
@@ -48,21 +48,21 @@ class BillingService {
     // Get pricing
     const pricing = this._getPricing(plan, countryCode);
 
-    // Auto-upgrade if price is 0
-    if (pricing.amount <= 0) {
+    // Auto-upgrade if effective price is 0
+    if (pricing.effectiveAmount <= 0) {
       return this._handleFreeUpgrade(userId, planType, tier, plan, pricing);
     }
 
     // Select payment provider
     const provider = this._selectProvider(paymentProvider, pricing.currency);
 
-    // Create transaction
+    // Create transaction - charge the effective amount (discounted if promo active)
     const paymentServicePath = "../../payments/services/paymentService";
     const paymentService = require(paymentServicePath);
     const transaction = await paymentService.initiatePayment({
       patientId: userId,
       serviceType: "subscription",
-      originalAmount: pricing.amount,
+      originalAmount: pricing.effectiveAmount,
       originalCurrency: pricing.currency,
       paymentProvider: provider,
       description: `Upgrade to ${plan.name}`
@@ -75,9 +75,11 @@ class BillingService {
         newTier: tier,
         enableAutoBilling,
         countryCode,
-        originalPrice: pricing.originalAmount,
+        basePrice: pricing.amount,
+        discountPrice: pricing.discountAmount,
         discountAmount: pricing.discount,
-        discountPercentage: pricing.discountPercentage
+        discountPercentage: pricing.discountPercentage,
+        hasDiscount: pricing.hasDiscount
       }
     });
 
@@ -91,7 +93,10 @@ class BillingService {
       planType,
       tier,
       planName: plan.name,
-      amount: pricing.amount,
+      amount: pricing.effectiveAmount,
+      basePrice: pricing.amount,
+      discountPrice: pricing.discountAmount,
+      hasDiscount: pricing.hasDiscount,
       currency: pricing.currency,
       paymentProvider: provider
     };
@@ -234,14 +239,20 @@ class BillingService {
 
   _getPricing(plan, countryCode) {
     const currency = countryCode === "NG" ? "NGN" : "USD";
-    const amount = plan.price[currency] || plan.price.USD;
-    const originalAmount = plan.originalPrice?.[currency] || plan.originalPrice?.USD || amount;
+    const baseAmount = plan.price[currency] || plan.price.USD;
+    const discountAmount = plan.discountPrice?.[currency] || plan.discountPrice?.USD || baseAmount;
+    const promoActive = isPromoActive() && plan.discountPercentage > 0;
+
+    // Effective amount is what user actually pays (discounted if promo active)
+    const effectiveAmount = promoActive ? discountAmount : baseAmount;
 
     return {
-      amount,
-      originalAmount,
-      discount: originalAmount - amount,
+      amount: baseAmount,
+      discountAmount,
+      effectiveAmount,
+      discount: baseAmount - discountAmount,
       discountPercentage: plan.discountPercentage || 0,
+      hasDiscount: promoActive,
       currency
     };
   }
@@ -318,7 +329,7 @@ class BillingService {
       startDate: now,
       endDate,
       nextBillingDate: endDate,
-      price: pricing.amount,
+      price: pricing.effectiveAmount,
       currency: pricing.currency,
       autoRenew: enableAutoBilling,
       autoBillingEnabled: enableAutoBilling,

@@ -70,29 +70,38 @@ paths:
                         - tier: "free"
                           name: "Free Plan"
                           price: 0
+                          discountPrice: 0
                           currency: "NGN"
                           features: ["Basic AI Chat", "Limited Consultations"]
                         - tier: "basic"
                           name: "Basic Plan"
-                          price: 7900
-                          originalPrice: 9900
+                          price: 9900
+                          discountPrice: 7900
+                          discount: 2000
+                          discountPercentage: 20
+                          hasDiscount: true
                           currency: "NGN"
                           features: ["Voice Consultation", "All Specialists"]
                         - tier: "premium"
                           name: "Premium Plan"
-                          price: 39900
-                          originalPrice: 49900
+                          price: 49900
+                          discountPrice: 39900
+                          discount: 10000
+                          discountPercentage: 20
+                          hasDiscount: true
                           currency: "NGN"
                           features: ["Video Consultation", "Priority Support", "Family Members"]
                       doctorPlans:
                         - tier: "basic"
                           name: "Basic Plan"
-                          price: 14900
+                          price: 24900
+                          discountPrice: 14900
                           currency: "NGN"
                           commissionRate: 20
                         - tier: "professional"
                           name: "Professional Plan"
-                          price: 29900
+                          price: 44900
+                          discountPrice: 29900
                           currency: "NGN"
                           commissionRate: 15
 
@@ -186,8 +195,11 @@ paths:
                       tier: "premium"
                       planType: "patient"
                       status: "active"
-                      price: 32.99
-                      originalPrice: 41.24
+                      price: 41.24
+                      discountPrice: 32.99
+                      discount: 8.25
+                      discountPercentage: 20
+                      hasDiscount: true
                       currency: "GBP"
                       countryCode: "GB"
                       conversionRate: 0.73
@@ -219,8 +231,11 @@ paths:
                       tier: "premium"
                       planType: "patient"
                       status: "active"
-                      price: 39900.00
-                      originalPrice: 49900.00
+                      price: 49900.00
+                      discountPrice: 39900.00
+                      discount: 10000.00
+                      discountPercentage: 20
+                      hasDiscount: true
                       currency: "NGN"
                       countryCode: "NG"
                       isPredefined: true
@@ -305,9 +320,11 @@ paths:
                       tier: "premium"
                       planName: "Premium Plan"
                       amount: 32.99
-                      originalAmount: 41.24
-                      discountAmount: 8.25
+                      basePrice: 41.24
+                      discountPrice: 32.99
+                      discount: 8.25
                       discountPercentage: 20
+                      hasDiscount: true
                       currency: "GBP"
                       countryCode: "GB"
                       paymentProvider: "flutterwave"
@@ -329,9 +346,11 @@ paths:
                       tier: "premium"
                       planName: "Premium Plan"
                       amount: 39900.00
-                      originalAmount: 49900.00
-                      discountAmount: 10000.00
+                      basePrice: 49900.00
+                      discountPrice: 39900.00
+                      discount: 10000.00
                       discountPercentage: 20
+                      hasDiscount: true
                       currency: "NGN"
                       countryCode: "NG"
                       paymentProvider: "paystack"
@@ -532,13 +551,15 @@ paths:
                           tier: "basic"
                           planType: "patient"
                           name: "Basic Plan"
-                          price: 5.84
-                          originalPrice: 7.30
+                          price: 7.30
+                          discountPrice: 5.84
+                          discount: 1.46
+                          discountPercentage: 20
+                          hasDiscount: true
                           currency: "GBP"
                           conversionRate: 0.73
                           isPredefined: false
                           isFallback: false
-                          discountPercentage: 20
                           features: ["Voice Consultation", "All Specialists", "Standard Support"]
                           monthlyLimits: { "aiChatbotResponses": 30, "aiDiagnosticRequests": 20 }
                           familyMembers: 1
@@ -546,13 +567,15 @@ paths:
                           tier: "premium"
                           planType: "patient"
                           name: "Premium Plan"
-                          price: 32.99
-                          originalPrice: 41.24
+                          price: 41.24
+                          discountPrice: 32.99
+                          discount: 8.25
+                          discountPercentage: 20
+                          hasDiscount: true
                           currency: "GBP"
                           conversionRate: 0.73
                           isPredefined: false
                           isFallback: false
-                          discountPercentage: 20
                           features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
                           monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
                           familyMembers: 5
@@ -575,12 +598,14 @@ paths:
                           tier: "basic"
                           planType: "patient"
                           name: "Basic Plan"
-                          price: 7900.00
-                          originalPrice: 9900.00
+                          price: 9900.00
+                          discountPrice: 7900.00
+                          discount: 2000.00
+                          discountPercentage: 20
+                          hasDiscount: true
                           currency: "NGN"
                           isPredefined: true
                           isFallback: false
-                          discountPercentage: 20
                           features: ["Voice Consultation", "All Specialists", "Standard Support"]
                           monthlyLimits: { "aiChatbotResponses": 30, "aiDiagnosticRequests": 20 }
                           familyMembers: 1
@@ -588,12 +613,14 @@ paths:
                           tier: "premium"
                           planType: "patient"
                           name: "Premium Plan"
-                          price: 39900.00
-                          originalPrice: 49900.00
+                          price: 49900.00
+                          discountPrice: 39900.00
+                          discount: 10000.00
+                          discountPercentage: 20
+                          hasDiscount: true
                           currency: "NGN"
                           isPredefined: true
                           isFallback: false
-                          discountPercentage: 20
                           features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
                           monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
                           familyMembers: 5
@@ -616,12 +643,14 @@ paths:
                           tier: "basic"
                           planType: "doctor"
                           name: "Basic Plan"
-                          price: 19.99
-                          originalPrice: 24.99
+                          price: 24.99
+                          discountPrice: 19.99
+                          discount: 5.00
+                          discountPercentage: 20
+                          hasDiscount: true
                           currency: "USD"
                           isPredefined: true
                           isFallback: false
-                          discountPercentage: 20
                           commissionRate: 20
                           features: ["Video Consultation", "Regular Profile Listing", "Standard Support"]
                           monthlyLimits: { "maxPatients": 40, "aiResponses": 200 }
@@ -629,12 +658,14 @@ paths:
                           tier: "professional"
                           planType: "doctor"
                           name: "Professional Plan"
-                          price: 34.99
-                          originalPrice: 44.99
+                          price: 44.99
+                          discountPrice: 34.99
+                          discount: 10.00
+                          discountPercentage: 22
+                          hasDiscount: true
                           currency: "USD"
                           isPredefined: true
                           isFallback: false
-                          discountPercentage: 22
                           commissionRate: 15
                           features: ["Video Consultation", "Top Profile Listing", "Priority Support"]
                           monthlyLimits: { "maxPatients": 100, "aiResponses": 400 }
@@ -694,16 +725,17 @@ paths:
                       planType: "patient"
                       tier: "premium"
                       name: "Premium Plan"
-                      price: 32.99
-                      originalPrice: 41.24
+                      price: 41.24
+                      discountPrice: 32.99
+                      discount: 8.25
+                      discountPercentage: 20
+                      hasDiscount: true
                       currency: "GBP"
                       countryCode: "GB"
                       conversionRate: 0.73
                       convertedAt: "2025-01-20T10:30:00Z"
                       isPredefined: false
                       isFallback: false
-                      discountAmount: 8.25
-                      discountPercentage: 20
                       features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
                       monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
                       familyMembers: 5
@@ -716,14 +748,15 @@ paths:
                       planType: "patient"
                       tier: "premium"
                       name: "Premium Plan"
-                      price: 39900.00
-                      originalPrice: 49900.00
+                      price: 49900.00
+                      discountPrice: 39900.00
+                      discount: 10000.00
+                      discountPercentage: 20
+                      hasDiscount: true
                       currency: "NGN"
                       countryCode: "NG"
                       isPredefined: true
                       isFallback: false
-                      discountAmount: 10000.00
-                      discountPercentage: 20
                       features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
                       monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
                       familyMembers: 5
@@ -736,14 +769,15 @@ paths:
                       planType: "doctor"
                       tier: "professional"
                       name: "Professional Plan"
-                      price: 34.99
-                      originalPrice: 44.99
+                      price: 44.99
+                      discountPrice: 34.99
+                      discount: 10.00
+                      discountPercentage: 22
+                      hasDiscount: true
                       currency: "USD"
                       countryCode: "US"
                       isPredefined: true
                       isFallback: false
-                      discountAmount: 10.00
-                      discountPercentage: 22
                       commissionRate: 15.0
                       features: ["Video Consultation", "Top Profile Listing", "Priority Support"]
                       monthlyLimits: { "maxPatients": 100, "aiResponses": 400 }

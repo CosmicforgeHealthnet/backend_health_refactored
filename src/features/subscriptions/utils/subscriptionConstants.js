@@ -9,11 +9,15 @@
  * - Other African countries (Paystack regions) get converted pricing
  * - Rest of world pays in USD
  *
+ * PRICING STRUCTURE:
+ * - price = the MAIN/BASE price (full price without discount)
+ * - discountPrice = the discounted price (what user pays during promo)
+ * - discountPercentage = percentage off
+ *
  * DISCOUNT SYSTEM:
  * - Set PROMO_EXPIRY to a future date to enable discounts
- * - price = discounted price (what user pays during promo)
- * - originalPrice = full price (shown as strikethrough)
- * - discountPercentage = percentage off
+ * - When promo is active, user pays discountPrice
+ * - When promo is inactive, user pays price
  */
 
 const SUBSCRIPTION_TIERS = {
@@ -63,8 +67,7 @@ const DOCTOR_PLANS = {
         name: "Free Plan",
         // No discount for free plan
         price: { USD: 0.00, NGN: 0.00 },
-        originalPrice: { USD: 0.00, NGN: 0.00 },
-        discount: { USD: 0.00, NGN: 0.00 },
+        discountPrice: { USD: 0.00, NGN: 0.00 },
         discountPercentage: 0,
         promoExpiry: PROMO_EXPIRY,
         commissionRate: 30, // 30% commission per consultation
@@ -83,12 +86,11 @@ const DOCTOR_PLANS = {
             aiResponses: 50,
         },
     },
-    basic: {
+basic: {    
         name: "Basic Plan",
         // 50% discount: $24.99 -> $12.50
-        price: { USD: 12.50, NGN: 12450.00 },
-        originalPrice: { USD: 24.99, NGN: 24900.00 },
-        discount: { USD: 12.49, NGN: 12450.00 },
+        price: { USD: 24.99, NGN: 24900.00 },
+        discountPrice: { USD: 12.50, NGN: 12450.00 },
         discountPercentage: 50,
         promoExpiry: PROMO_EXPIRY,
         commissionRate: 20, // 20% commission per consultation
@@ -110,9 +112,8 @@ const DOCTOR_PLANS = {
     professional: {
         name: "Professional Plan",
         // 50% discount: $44.99 -> $22.50
-        price: { USD: 22.50, NGN: 22450.00 },
-        originalPrice: { USD: 44.99, NGN: 44900.00 },
-        discount: { USD: 22.49, NGN: 22450.00 },
+        price: { USD: 44.99, NGN: 44900.00 },
+        discountPrice: { USD: 22.50, NGN: 22450.00 },
         discountPercentage: 50,
         promoExpiry: PROMO_EXPIRY,
         commissionRate: 15, // 15% commission per consultation
@@ -134,9 +135,8 @@ const DOCTOR_PLANS = {
     premium: {
         name: "Premium Plan",
         // 50% discount: $99.99 -> $50.00
-        price: { USD: 50.00, NGN: 49950.00 },
-        originalPrice: { USD: 99.99, NGN: 99900.00 },
-        discount: { USD: 49.99, NGN: 49950.00 },
+        price: { USD: 99.99, NGN: 99900.00 },
+        discountPrice: { USD: 50.00, NGN: 49950.00 },
         discountPercentage: 50,
         promoExpiry: PROMO_EXPIRY,
         commissionRate: 10, // 10% commission per consultation
@@ -165,8 +165,7 @@ const PATIENT_PLANS = {
         name: "Free Plan",
         // No discount for free plan
         price: { USD: 0.00, NGN: 0.00 },
-        originalPrice: { USD: 0.00, NGN: 0.00 },
-        discount: { USD: 0.00, NGN: 0.00 },
+        discountPrice: { USD: 0.00, NGN: 0.00 },
         discountPercentage: 0,
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null, // No commission for patients
@@ -195,9 +194,8 @@ const PATIENT_PLANS = {
     basic: {
         name: "Basic Plan",
         // 50% discount: $9.99 -> $5.00
-        price: { USD: 5.00, NGN: 4950.00 },
-        originalPrice: { USD: 9.99, NGN: 9900.00 },
-        discount: { USD: 4.99, NGN: 4950.00 },
+        price: { USD: 9.99, NGN: 9900.00 },
+        discountPrice: { USD: 5.00, NGN: 4950.00 },
         discountPercentage: 50,
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null,
@@ -226,9 +224,8 @@ const PATIENT_PLANS = {
     standard: {
         name: "Standard Plan",
         // 50% discount: $14.99 -> $7.50
-        price: { USD: 7.50, NGN: 7950.00 },
-        originalPrice: { USD: 14.99, NGN: 15900.00 },
-        discount: { USD: 7.49, NGN: 7950.00 },
+        price: { USD: 14.99, NGN: 15900.00 },
+        discountPrice: { USD: 7.50, NGN: 7950.00 },
         discountPercentage: 50,
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null,
@@ -257,9 +254,8 @@ const PATIENT_PLANS = {
     medium: {
         name: "Medium Plan",
         // 50% discount: $19.99 -> $10.00
-        price: { USD: 10.00, NGN: 12450.00 },
-        originalPrice: { USD: 19.99, NGN: 24900.00 },
-        discount: { USD: 9.99, NGN: 12450.00 },
+        price: { USD: 19.99, NGN: 24900.00 },
+        discountPrice: { USD: 10.00, NGN: 12450.00 },
         discountPercentage: 50,
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null,
@@ -288,9 +284,8 @@ const PATIENT_PLANS = {
     premium: {
         name: "Premium Plan",
         // 50% discount: $49.99 -> $25.00
-        price: { USD: 25.00, NGN: 24950.00 },
-        originalPrice: { USD: 49.99, NGN: 49900.00 },
-        discount: { USD: 24.99, NGN: 24950.00 },
+        price: { USD: 49.99, NGN: 49900.00 },
+        discountPrice: { USD: 25.00, NGN: 24950.00 },
         discountPercentage: 50,
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null,
@@ -319,9 +314,8 @@ const PATIENT_PLANS = {
     gold_elite: {
         name: "Gold Elite Plan",
         // 50% discount: $99.99 -> $50.00
-        price: { USD: 50.00, NGN: 64950.00 },
-        originalPrice: { USD: 99.99, NGN: 129900.00 },
-        discount: { USD: 49.99, NGN: 64950.00 },
+        price: { USD: 99.99, NGN: 129900.00 },
+        discountPrice: { USD: 50.00, NGN: 64950.00 },
         discountPercentage: 50,
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null,
@@ -400,7 +394,7 @@ async function getPriceForCountry(planDefinition, countryCode) {
         // Fallback to USD pricing
         return {
             amount: planDefinition.price.USD,
-            originalAmount: planDefinition.originalPrice?.USD || planDefinition.price.USD,
+            discountAmount: planDefinition.discountPrice?.USD || planDefinition.price.USD,
             currency: "USD",
             countryCode,
             fallback: true,
@@ -481,23 +475,28 @@ function getFamilyMemberLimit(tier) {
     return config?.total || 1;
 }
 
-// Calculate discounted price for a plan
-function getDiscountedPrice(plan, currency = "USD") {
+// Calculate the effective price (discounted if promo active, otherwise base price)
+function getEffectivePrice(plan, currency = "USD") {
     if (!isPromoActive() || !plan.discountPercentage) {
-        return plan.originalPrice?.[currency] || plan.price[currency];
+        return plan.price[currency];
     }
-    return plan.price[currency];
+    return plan.discountPrice?.[currency] || plan.price[currency];
 }
 
 // Get full pricing info for a plan
+// - price: The MAIN/BASE price (what user would pay without discount)
+// - discountPrice: The price AFTER discount (what user actually pays during promo)
 function getPlanPricingInfo(plan, currency = "USD") {
     const promoActive = isPromoActive();
     const hasDiscount = promoActive && plan.discountPercentage > 0;
+    const basePrice = plan.price[currency];
+    const discountPrice = hasDiscount ? (plan.discountPrice?.[currency] || basePrice) : basePrice;
+    const discountAmount = hasDiscount ? (basePrice - discountPrice) : 0;
 
     return {
-        price: hasDiscount ? plan.price[currency] : (plan.originalPrice?.[currency] || plan.price[currency]),
-        originalPrice: plan.originalPrice?.[currency] || plan.price[currency],
-        discount: hasDiscount ? plan.discount?.[currency] || 0 : 0,
+        price: basePrice,
+        discountPrice,
+        discount: discountAmount,
         discountPercentage: hasDiscount ? plan.discountPercentage : 0,
         hasDiscount,
         promoActive,
@@ -527,6 +526,6 @@ module.exports = {
     getDoctorCommissionRate,
     hasFamilyPlanAccess,
     getFamilyMemberLimit,
-    getDiscountedPrice,
+    getEffectivePrice,
     getPlanPricingInfo,
 };

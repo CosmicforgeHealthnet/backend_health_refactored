@@ -161,9 +161,12 @@ class SubscriptionController {
           planType: subscription.planType,
           status: subscription.status,
 
-          // Pricing
+          // Pricing - price is the main/base price, discountPrice is what user pays during promo
           price: pricing?.price || subscription.price,
-          originalPrice: pricing?.originalPrice,
+          discountPrice: pricing?.discountPrice,
+          discount: pricing?.discount || 0,
+          discountPercentage: pricing?.discountPercentage || 0,
+          hasDiscount: pricing?.hasDiscount || false,
           currency: pricing?.currency || subscription.currency,
           countryCode,
 
