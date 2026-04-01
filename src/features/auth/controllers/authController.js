@@ -276,6 +276,9 @@ exports.login = async (req, res, next) => {
 
         return res.json(tokens);
     } catch (err) {
+        if (err.message === 'Invalid credentials') {
+            return res.status(401).json({ error: 'Invalid email or password. Please try again.' });
+        }
         next(err);
     }
 };
