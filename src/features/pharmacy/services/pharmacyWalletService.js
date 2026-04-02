@@ -70,8 +70,7 @@ const pharmacyWalletService = {
    * GET /pharmacy/wallet/summary
    */
   async getSummary(pharmacyId) {
-    const wallet = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
-    if (!wallet) throw Object.assign(new Error("Wallet not found"), { status: 404 });
+    const wallet = await pharmacyWalletService.ensureWallet(pharmacyId);
 
     const displayCurrency = wallet.preferredDisplayCurrency || "USD";
     const balances        = await formatWalletBalance(wallet, displayCurrency);
@@ -109,8 +108,7 @@ const pharmacyWalletService = {
     const safeLimit = Math.min(parseInt(limit) || 20, 100);
     const safePage  = parseInt(page) || 1;
 
-    const wallet = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
-    if (!wallet) throw Object.assign(new Error("Wallet not found"), { status: 404 });
+    const wallet = await pharmacyWalletService.ensureWallet(pharmacyId);
 
     const { transactions, total } = await walletTxnRepo.findByWallet({
       walletId: wallet.id, type, status, category,
