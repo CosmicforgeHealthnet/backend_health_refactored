@@ -71,10 +71,10 @@ module.exports = new EntitySchema({
       type: 'one-to-many',
       inverseSide: 'room'
     },
-    appointmentChat: {
+    appointmentChats: {
       target: 'AppointmentChat',
-      type: 'one-to-one',
-      mappedBy: true
+      type: 'one-to-many',
+      inverseSide: 'room'
     }
   },
 //   indices: [

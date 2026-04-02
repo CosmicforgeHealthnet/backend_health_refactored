@@ -2226,8 +2226,21 @@ class PaymentService {
         throw new Error("No appointment fee found to refund");
       }
 
-      // Calculate refund amount (only appointment fee - keep service fee & VAT)
-      const refundAmount = appointmentFeeSplit.usdAmount;
+      // Determine refund amount based on who cancelled
+      // Doctor/System cancellation → full refund (patient shouldn't lose money)
+      // Patient cancellation → only appointment fee (platform keeps service fee & VAT)
+      const cancelledBy = cancellationData.cancelledBy || cancellationData.reason || 'unknown';
+      let refundAmount;
+
+      if (cancelledBy === 'doctor' || cancelledBy === 'system') {
+        // Full refund — patient did nothing wrong
+        refundAmount = transaction.usdAmount;
+        console.log(`💰 Full refund of ${refundAmount} (cancelled by ${cancelledBy})`);
+      } else {
+        // Partial refund — patient-initiated, keep service fee & VAT
+        refundAmount = appointmentFeeSplit.usdAmount;
+        console.log(`💰 Partial refund of ${refundAmount} (cancelled by patient, keeping service fee & VAT)`);
+      }
 
       // Update transaction as cancelled
       await transactionRepository.repo.update(transactionId, {
@@ -2256,7 +2269,7 @@ class PaymentService {
           refundProcessedAt: new Date()
         });
 
-        console.log(`✅ Cancelled appointment payment ${transactionId} - refunded ${refundAmount} to patient`);
+        console.log(`✅ Cancelled appointment payment ${transactionId} - refunded ${refundAmount} to patient (cancelled by ${cancelledBy})`);
 
         return {
           success: true,

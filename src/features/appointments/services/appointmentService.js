@@ -419,6 +419,11 @@ class AppointmentService {
       const doctorData = appointment.doctor;
       const patientData = appointment.patient;
 
+      // Map currency code to symbol
+      const currencySymbols = { NGN: '₦', USD: '$', GBP: '£', EUR: '€', GHS: '₵', KES: 'KSh', ZAR: 'R' };
+      const currencyCode = appointment.consultationFeeCurrency || 'NGN';
+      const currencySymbol = currencySymbols[currencyCode] || currencyCode + ' ';
+
       const cancellationDetails = {
         id: appointment.id,
         date: appointment.appointmentDate,
@@ -426,6 +431,7 @@ class AppointmentService {
         cancellationReason: cancellationData.reason,
         cancelledBy: cancellationData.cancelledBy,
         refundAmount: cancellationData.refundAmount || null,
+        currencySymbol,
       };
 
       // Send cancellation email to doctor
@@ -479,7 +485,7 @@ class AppointmentService {
         `Dr. ${appointment.doctor?.fullName
         } has cancelled your appointment for ${appointment.appointmentDate
         } at ${appointment.appointmentTime}. ${cancellationData.refundAmount
-          ? `A refund of $${cancellationData.refundAmount} is being processed.`
+          ? `A refund of ${currencySymbol}${cancellationData.refundAmount} is being processed.`
           : ""
         }`,
         {
@@ -503,7 +509,7 @@ class AppointmentService {
       await this.notificationService.createNotification(
         appointment.patientId,
         "alert",
-        `Your appointment with Dr. ${appointment.doctor?.fullName} has been automatically cancelled. A full refund of $${appointment.consultationFee} is being processed.`,
+        `Your appointment with Dr. ${appointment.doctor?.fullName} has been automatically cancelled. A full refund of ${currencySymbol}${appointment.consultationFee} is being processed.`,
         {
           action: "appointment_auto_cancelled",
           appointmentId: appointment.id,

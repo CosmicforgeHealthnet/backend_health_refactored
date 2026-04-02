@@ -123,6 +123,19 @@ class AppointmentChatRepository {
         return this.repo.update(id, { status });
     }
 
+    /** Find an existing appointment chat room between a doctor and patient */
+    findExistingRoomByDoctorAndPatient(doctorId, patientId) {
+        return this.repo
+            .createQueryBuilder("ac")
+            .leftJoinAndSelect("ac.room", "room")
+            .where("ac.doctorId = :doctorId", { doctorId })
+            .andWhere("ac.patientId = :patientId", { patientId })
+            .andWhere("ac.status != :cancelled", { cancelled: "cancelled" })
+            .andWhere("room.deletedAt IS NULL")
+            .orderBy("ac.createdAt", "DESC")
+            .getOne();
+    }
+
     /** Delete appointment chat */
     delete(id) {
         return this.repo.delete(id);
