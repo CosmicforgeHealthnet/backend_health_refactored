@@ -211,6 +211,10 @@ class PharmacyRegistrationService {
     if (!pharmacy) {
       throw new Error("Pharmacy not found");
     }
+    // Accept both a single object and an array
+    if (Array.isArray(pricingData)) {
+      return Promise.all(pricingData.map(item => this.pricingRepo.setPricing(pharmacy.id, item)));
+    }
     return this.pricingRepo.setPricing(pharmacy.id, pricingData);
   }
 

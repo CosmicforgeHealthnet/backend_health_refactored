@@ -31,6 +31,10 @@ router.post(
   pharmacyAuthController.uploadProfileLogo,
 );
 
+// Account settings
+router.put("/account", authenticateJWT, pharmacyAuthController.updateAccountSettings);
+router.post("/change-password", authenticateJWT, pharmacyAuthController.changePassword);
+
 // Staff management
 router.post("/staff", authenticateJWT, pharmacyAuthController.addStaff);
 router.get("/staff", authenticateJWT, pharmacyAuthController.getStaff);
