@@ -349,6 +349,65 @@ class PharmacyAuthController {
     }
   }
 
+  async changePassword(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ success: false, message: "currentPassword and newPassword are required" });
+      }
+      if (newPassword.length < 8) {
+        return res.status(400).json({ success: false, message: "New password must be at least 8 characters" });
+      }
+
+      const user = await userRepo.findById(userId);
+      if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+      const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!valid) return res.status(400).json({ success: false, message: "Current password is incorrect" });
+
+      const passwordHash = await bcrypt.hash(newPassword, 12);
+      await userRepo.update(userId, { passwordHash });
+
+      return res.json({ success: true, message: "Password changed successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateAccountSettings(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const { fullName, email } = req.body;
+
+      const updates = {};
+      if (fullName) updates.fullName = fullName.trim();
+      if (email) {
+        const existing = await userRepo.findByEmail(email.toLowerCase().trim());
+        if (existing && existing.id !== userId) {
+          return res.status(400).json({ success: false, message: "Email already in use" });
+        }
+        updates.email = email.toLowerCase().trim();
+      }
+
+      if (!Object.keys(updates).length) {
+        return res.status(400).json({ success: false, message: "Nothing to update" });
+      }
+
+      await userRepo.update(userId, updates);
+      const updated = await userRepo.findById(userId);
+
+      return res.json({
+        success: true,
+        message: "Account settings updated",
+        data: { fullName: updated.fullName, email: updated.email }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async uploadProfileLogo(req, res, next) {
     try {
       const userId  = req.user.sub;
