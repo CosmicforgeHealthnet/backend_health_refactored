@@ -190,20 +190,22 @@ class PharmacyAuthController {
         return res.status(404).json({ error: "Pharmacy profile not found" });
       }
 
+      const freshUser = await userRepo.findById(userId);
+
       return res.json({
         user: {
-          id: req.user.sub,
-          fullName: req.user.fullName,
-          email: req.user.email,
-          role: req.user.role,
-          status: req.user.status,
-          provider: req.user.provider,
-          profileImageUrl: req.user.profileImageUrl,
-          isOnline: req.user.isOnline,
-          tier: req.user.tier,
-          mfaEnabled: req.user.mfaEnabled,
-          createdAt: req.user.createdAt,
-          updatedAt: req.user.updatedAt
+          id: freshUser.id,
+          fullName: freshUser.fullName,
+          email: freshUser.email,
+          role: freshUser.role,
+          status: freshUser.status,
+          provider: freshUser.provider,
+          profileImageUrl: freshUser.profileImageUrl,
+          isOnline: freshUser.isOnline,
+          tier: freshUser.tier,
+          mfaEnabled: freshUser.mfaEnabled,
+          createdAt: freshUser.createdAt,
+          updatedAt: freshUser.updatedAt
         },
         pharmacy: {
           id: pharmacyProfile.id,
