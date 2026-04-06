@@ -221,7 +221,8 @@ class PharmacyAuthController {
           licenseNumber: pharmacyProfile.licenseNumber,
           licenseExpiryDate: pharmacyProfile.licenseExpiryDate,
           operatingHours: pharmacyProfile.operatingHours,
-          documentsSubmitted: pharmacyProfile.documentsSubmitted,  // ADD THIS LINE
+          documentsSubmitted: pharmacyProfile.documentsSubmitted,
+          logoUrl: pharmacyProfile.logoUrl || null,
           createdAt: pharmacyProfile.createdAt,
           updatedAt: pharmacyProfile.updatedAt,
           // Include related data
@@ -247,6 +248,34 @@ class PharmacyAuthController {
     } catch (error) {
       next(error);
     }
+  }
+
+  async getPricingFeeTypes(req, res, next) {
+    return res.json({
+      success: true,
+      data: [
+        { value: "delivery",         label: "Delivery Fee" },
+        { value: "consultation",     label: "Consultation Fee" },
+        { value: "handling",         label: "Handling Fee" },
+        { value: "processing",       label: "Processing Fee" },
+        { value: "home_delivery",    label: "Home Delivery" },
+        { value: "express_delivery", label: "Express Delivery" },
+        { value: "packaging",        label: "Packaging Fee" },
+        { value: "call_in",          label: "Call-in Fee" },
+      ]
+    });
+  }
+
+  async getStaffRoles(req, res, next) {
+    return res.json({
+      success: true,
+      data: [
+        { value: "pharmacist", label: "Pharmacist" },
+        { value: "assistant",  label: "Assistant" },
+        { value: "dispatcher", label: "Dispatcher" },
+        { value: "pharmacy",   label: "Admin / Manager" },
+      ]
+    });
   }
 
   async setPricing(req, res, next) {
