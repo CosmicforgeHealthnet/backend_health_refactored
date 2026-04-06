@@ -448,7 +448,9 @@ class PharmacyAuthController {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const logoUrl = savedFiles[0].fileUrl;
+      const savedFile = savedFiles[0];
+      const baseUrl = process.env.FILE_SERVER_URL || process.env.APP_URL || process.env.APP_BASE_URL;
+      const logoUrl = savedFile.fileUrl || `${baseUrl}/api/documents/images/${savedFile.id}`;
 
       // Update pharmacy profile logo AND user profileImageUrl in parallel
       await Promise.all([
