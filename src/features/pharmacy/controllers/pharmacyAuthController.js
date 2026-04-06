@@ -447,7 +447,12 @@ class PharmacyAuthController {
       }
 
       const logoUrl = savedFiles[0].fileUrl;
-      await pharmacyProfileRepo.updateLogoUrl(userId, logoUrl);
+
+      // Update pharmacy profile logo AND user profileImageUrl in parallel
+      await Promise.all([
+        pharmacyProfileRepo.updateLogoUrl(userId, logoUrl),
+        userRepo.update(userId, { profileImageUrl: logoUrl }),
+      ]);
 
       return res.status(200).json({
         success: true,
