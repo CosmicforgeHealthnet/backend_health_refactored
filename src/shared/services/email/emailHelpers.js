@@ -2,7 +2,11 @@
 const emailService = require("./emailService");
 
 async function sendVerificationEmail(user, token, expiresInMinutes = 60) {
-    const link = `${process.env.APP_BASE_URL}/auth/verify-email?token=${token}`;
+    const role = user.role || "patient";
+    const baseUrl = role === "pharmacy"
+      ? (process.env.PHARMACY_APP_URL || process.env.APP_BASE_URL)
+      : process.env.APP_BASE_URL;
+    const link = `${baseUrl}/auth/verify-email?token=${token}`;
     await emailService.send(
         "verification",
         user.email,
@@ -12,7 +16,10 @@ async function sendVerificationEmail(user, token, expiresInMinutes = 60) {
 }
 
 async function sendPasswordResetEmail(user, token, expiresInMinutes = 60) {
-    const link = `${process.env.APP_BASE_URL}/auth/reset-password?token=${token}`;
+    const baseUrl = user.role === "pharmacy"
+      ? (process.env.PHARMACY_APP_URL || process.env.APP_BASE_URL)
+      : process.env.APP_BASE_URL;
+    const link = `${baseUrl}/auth/reset-password?token=${token}`;
     await emailService.send(
         "reset_password",
         user.email,
