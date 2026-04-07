@@ -6,11 +6,15 @@
  *
  * This middleware controls patient access to doctors based on:
  * 1. Patient's subscription tier and features
- * 2. Doctor's areas of specialization
+ * 2. Doctor's departmentSpecialty (from users table)
  *
  * ACCESS LEVELS:
  * - Free Tier: General + Emergency specialists only (generalEmergencySpecialists: true)
  * - Basic+ Tiers: All specialists (allSpecialists: true)
+ *
+ * ALLOWED SPECIALTIES FOR FREE TIER:
+ * - "general medicine"
+ * - "emergency medicine"
  *
  * USAGE:
  * Apply this middleware to appointment booking routes to enforce subscription-based access control
@@ -50,7 +54,7 @@ class DoctorSpecializationAccessMiddleware {
         doctorId
       );
 
-      // STEP 2: Get doctor profile with professional license information
+      // STEP 2: Get doctor profile with professional license and user information
       const doctorProfile = await doctorProfileRepository.findByUserId(
         doctorId
       );
@@ -63,18 +67,23 @@ class DoctorSpecializationAccessMiddleware {
         });
       }
 
-      // STEP 3: Extract doctor's specialization areas
-      const professionalLicense = doctorProfile.professionalLicense;
+      // STEP 3: Extract doctor's specialization from user.departmentSpecialty
+      const userDepartmentSpecialty = doctorProfile.user?.departmentSpecialty;
 
-      if (!professionalLicense || !professionalLicense.areasOfSpecialization) {
+      // If no departmentSpecialty defined, allow booking
+      if (!userDepartmentSpecialty) {
         console.log(
-          "⚠️ Doctor has no specialization areas defined, allowing booking"
+          "⚠️ Doctor has no departmentSpecialty defined, allowing booking"
         );
-        return next(); // Allow booking if no specialization restrictions
+        return next();
       }
 
-      const doctorSpecializations = professionalLicense.areasOfSpecialization;
-      console.log("👨‍⚕️ Doctor specializations:", doctorSpecializations);
+      // Create array with the single departmentSpecialty for consistent checking
+      const doctorSpecializations = [userDepartmentSpecialty];
+
+      console.log("👨‍⚕️ Doctor specialization:", {
+        departmentSpecialty: userDepartmentSpecialty
+      });
 
       // STEP 4: Get patient's subscription to determine access level
       const patientSubscription =
@@ -237,7 +246,11 @@ class DoctorSpecializationAccessMiddleware {
           patientId
         );
 
-      if (!doctorProfile?.professionalLicense?.areasOfSpecialization) {
+      // Extract specialization from user.departmentSpecialty only
+      const userDepartmentSpecialty = doctorProfile?.user?.departmentSpecialty;
+
+      // If no departmentSpecialty defined, allow booking
+      if (!userDepartmentSpecialty) {
         return {
           canBook: true,
           accessType: "unrestricted",
@@ -246,8 +259,8 @@ class DoctorSpecializationAccessMiddleware {
         };
       }
 
-      const doctorSpecializations =
-        doctorProfile.professionalLicense.areasOfSpecialization;
+      // Create array with the single departmentSpecialty for consistent checking
+      const doctorSpecializations = [userDepartmentSpecialty];
       const hasAllSpecialists = !!patientSubscription.features?.allSpecialists;
       const hasGeneralEmergency =
         !!patientSubscription.features?.generalEmergencySpecialists;
