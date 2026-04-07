@@ -9,9 +9,8 @@
  * 2. Doctor's areas of specialization
  *
  * ACCESS LEVELS:
- * - Free Tier: No specialist access
- * - Basic Tier: General + Emergency specialists only
- * - Premium Tier: All specialists (including advanced ones)
+ * - Free Tier: General + Emergency specialists only (generalEmergencySpecialists: true)
+ * - Basic+ Tiers: All specialists (allSpecialists: true)
  *
  * USAGE:
  * Apply this middleware to appointment booking routes to enforce subscription-based access control
@@ -155,9 +154,9 @@ class DoctorSpecializationAccessMiddleware {
         return next();
       }
 
-      // CASE 3: Free tier users (no specialist access)
+      // CASE 3: Users with no specialist access features (should rarely happen with proper subscription setup)
       if (!hasGeneralEmergencyAccess && !hasAllSpecialistsAccess) {
-        console.log("❌ Patient has no specialist access");
+        console.log("❌ Patient has no specialist access features enabled");
         return res.status(403).json({
           success: false,
           message:
