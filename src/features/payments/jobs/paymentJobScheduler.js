@@ -21,6 +21,16 @@ class PaymentJobScheduler {
       }
     });
 
+    // Recover stuck processing transactions every 15 minutes
+    cron.schedule('*/15 * * * *', async () => {
+      console.log("⏰ Running stuck processing transaction recovery job...");
+      try {
+        await PaymentJobs.recoverStuckProcessingTransactions();
+      } catch (error) {
+        console.error('❌ Stuck processing recovery job failed:', error);
+      }
+    });
+
     // Run failed payment retry every 6 hours
     cron.schedule('0 */6 * * *', async () => {
       console.log("⏰ Running failed payment retry job...");

@@ -32,7 +32,11 @@ class DisputeController {
       });
     } catch (error) {
       console.error("Error creating refund request:", error);
-      res.status(500).json({
+      const status = error.message.includes("Unauthorized") ? 403
+        : error.message.includes("not found") ? 404
+        : error.message.includes("expired") || error.message.includes("already exists") || error.message.includes("Can only") ? 400
+        : 500;
+      res.status(status).json({
         success: false,
         message: error.message || "Failed to create refund request"
       });
@@ -109,6 +113,48 @@ class DisputeController {
       res.status(500).json({
         success: false,
         message: error.message || "Failed to get patient disputes"
+      });
+    }
+  }
+
+  /**
+   * Resolve an escalated dispute (Admin only)
+   */
+  static async resolveDispute(req, res) {
+    try {
+      const { disputeId } = req.params;
+      const { action, adminNotes, refundAmount } = req.body;
+
+      if (!['approve', 'reject'].includes(action)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid action. Must be 'approve' or 'reject'"
+        });
+      }
+
+      const dispute = await disputeService.resolveDispute({
+        disputeId,
+        action,
+        adminNotes,
+        refundAmount: refundAmount ? parseFloat(refundAmount) : null
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Dispute ${action === 'approve' ? 'approved and refund processed' : 'rejected'}`,
+        data: {
+          disputeId: dispute.id,
+          status: dispute.status,
+          action,
+          adminNotes: dispute.adminNotes,
+          resolvedAt: dispute.resolvedAt
+        }
+      });
+    } catch (error) {
+      console.error("Error resolving dispute:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to resolve dispute"
       });
     }
   }

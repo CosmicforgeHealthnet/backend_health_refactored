@@ -585,7 +585,7 @@ const patientProfileUpdateSchema = Joi.object({
     notificationsPromotions: Joi.boolean().optional(),
     signature: Joi.string().trim().max(100).optional(),
   }).optional(),
-}).unknown(false);
+}).unknown(true);
 
 
 const doctorProfileUpdateSchema = Joi.object({
@@ -657,7 +657,7 @@ const doctorProfileUpdateSchema = Joi.object({
   gender: Joi.string().valid('male', 'female', 'other').insensitive().optional(),
   dateOfBirth: Joi.date().iso().optional(),
   nationality: Joi.string().trim().max(100).optional(),
-}).unknown(false);
+}).unknown(true);
 
 // Middleware to validate request body
 const validate = (schema) => (req, res, next) => {

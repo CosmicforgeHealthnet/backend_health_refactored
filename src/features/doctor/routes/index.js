@@ -325,6 +325,18 @@ router.get("/prescriptions", authenticateJWT, authorizeRoles('doctor'), prescrip
 
 /**
  * @swagger
+ * /api/doctor/prescriptions/{prescriptionId}:
+ *   get:
+ *     summary: Get a specific prescription
+ *     tags: [Doctor, Pharmacy]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Get a single prescription by ID
+ */
+router.get("/prescriptions/:prescriptionId", authenticateJWT, authorizeRoles('doctor'), prescriptionController.getPrescriptionById);
+
+/**
+ * @swagger
  * /api/doctor/{userId}:
  *   get:
  *     summary: Get a specific doctor
@@ -485,7 +497,7 @@ router.put("/status", authenticateJWT, profileController.updateOnlineStatus);
  *       
  *       **Legacy route**: `PUT /user/update-auth` (deprecated)
  */
-router.put("/auth-info", authenticateJWT, profileController.updateAuthInfo);
+router.put("/auth-info", authenticateJWT, DocumentUploadMiddleware.uploadDocuments(), DocumentUploadMiddleware.handleUploadError, profileController.updateAuthInfo);
 
 /**
  * @swagger

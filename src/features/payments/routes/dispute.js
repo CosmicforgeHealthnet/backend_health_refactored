@@ -23,7 +23,6 @@ router.use(SanitizerMiddleware.sanitizeInput);
  * @access  Private (Patient only)
  */
 router.post('/create',
-  PaymentAuthMiddleware.requireActivePatient,
   RateLimiterMiddleware.sensitive(),
   ValidationMiddleware.validateCreateDispute(),
   DisputeController.createRefundRequest
@@ -69,6 +68,17 @@ router.get('/patient',
 router.get('/pending',
   authorizeRoles('admin', 'super_admin'),
   DisputeController.getPendingDisputes
+);
+
+/**
+ * @route   POST /api/disputes/:disputeId/resolve
+ * @desc    Resolve an escalated dispute (approve refund or reject)
+ * @access  Private (Admin only)
+ */
+router.post('/:disputeId/resolve',
+  authorizeRoles('admin', 'super_admin'),
+  RateLimiterMiddleware.sensitive(),
+  DisputeController.resolveDispute
 );
 
 module.exports = router;
