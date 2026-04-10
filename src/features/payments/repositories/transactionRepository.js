@@ -26,7 +26,7 @@ class TransactionRepository {
     return this.repo.find({
       where: { patientId },
       order: { createdAt: 'DESC' },
-      relations: ['splits']
+      relations: ['splits', 'doctor']
     });
   }
 
@@ -34,7 +34,7 @@ class TransactionRepository {
     return this.repo.find({
       where: { doctorId },
       order: { createdAt: 'DESC' },
-      relations: ['splits']
+      relations: ['splits', 'patient']
     });
   }
 
