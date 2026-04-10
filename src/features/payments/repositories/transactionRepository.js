@@ -18,7 +18,7 @@ class TransactionRepository {
   findById(id) {
     return this.repo.findOne({
       where: { id },
-      relations: ['splits', 'disputes', 'paymentMethod']
+      relations: ['splits', 'disputes', 'paymentMethod', 'patient', 'doctor']
     });
   }
 
