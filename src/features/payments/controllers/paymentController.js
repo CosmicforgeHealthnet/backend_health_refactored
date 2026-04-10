@@ -624,13 +624,15 @@ class PaymentController {
             const apptDate = transaction.appointmentDate
               ? new Date(transaction.appointmentDate).toISOString().split('T')[0] : '';
             const role = req.user.role;
-            if (role === 'doctor' && transaction.patient) {
-              const n = [transaction.patient.firstName, transaction.patient.lastName].filter(Boolean).join(' ');
-              if (n) return `Appointment with ${n} on ${apptDate}`;
+            if (role === 'doctor') {
+              const p = transaction.patient;
+              const n = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || 'Patient' : 'Patient';
+              return `Appointment with ${n} on ${apptDate}`;
             }
-            if (role === 'patient' && transaction.doctor) {
-              const n = [transaction.doctor.firstName, transaction.doctor.lastName].filter(Boolean).join(' ');
-              if (n) return `Appointment with Dr. ${n} on ${apptDate}`;
+            if (role === 'patient') {
+              const d = transaction.doctor;
+              const n = d ? [d.firstName, d.lastName].filter(Boolean).join(' ') || 'Doctor' : 'Doctor';
+              return `Appointment with Dr. ${n} on ${apptDate}`;
             }
             return transaction.description;
           })(),
@@ -665,13 +667,13 @@ class PaymentController {
           : '';
         if (role === 'doctor') {
           const p = transaction.patient;
-          const name = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') : null;
-          return name ? `Appointment with ${name} on ${apptDate}` : transaction.description;
+          const name = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || 'Patient' : 'Patient';
+          return `Appointment with ${name} on ${apptDate}`;
         }
         if (role === 'patient') {
           const d = transaction.doctor;
-          const name = d ? `Dr. ${[d.firstName, d.lastName].filter(Boolean).join(' ')}` : null;
-          return name ? `Appointment with ${name} on ${apptDate}` : transaction.description;
+          const name = d ? [d.firstName, d.lastName].filter(Boolean).join(' ') || 'Doctor' : 'Doctor';
+          return `Appointment with Dr. ${name} on ${apptDate}`;
         }
         return transaction.description;
       };
