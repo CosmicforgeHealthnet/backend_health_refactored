@@ -32,7 +32,11 @@ class DisputeController {
       });
     } catch (error) {
       console.error("Error creating refund request:", error);
-      res.status(500).json({
+      const status = error.message.includes("Unauthorized") ? 403
+        : error.message.includes("not found") ? 404
+        : error.message.includes("expired") || error.message.includes("already exists") || error.message.includes("Can only") ? 400
+        : 500;
+      res.status(status).json({
         success: false,
         message: error.message || "Failed to create refund request"
       });

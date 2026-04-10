@@ -23,7 +23,6 @@ router.use(SanitizerMiddleware.sanitizeInput);
  * @access  Private (Patient only)
  */
 router.post('/create',
-  PaymentAuthMiddleware.requireActivePatient,
   RateLimiterMiddleware.sensitive(),
   ValidationMiddleware.validateCreateDispute(),
   DisputeController.createRefundRequest

@@ -73,7 +73,8 @@ class TransactionRepository {
       },
       order: {
         appointmentDate: 'DESC'
-      }
+      },
+      relations: ['patient', 'doctor']
     });
   }
 
@@ -88,7 +89,8 @@ class TransactionRepository {
       },
       order: {
         appointmentDate: 'DESC'
-      }
+      },
+      relations: ['patient', 'doctor']
     });
   }
 
