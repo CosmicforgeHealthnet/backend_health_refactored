@@ -15,7 +15,8 @@ class WalletController {
   static async getDoctorWallet(req, res) {
     try {
       const doctorId = req.user.sub;
-      const wallet = await walletService.getDoctorWallet(doctorId);
+      const locationCountry = req.location?.country || null;
+      const wallet = await walletService.getDoctorWallet(doctorId, locationCountry);
 
       res.status(200).json({
         success: true,
