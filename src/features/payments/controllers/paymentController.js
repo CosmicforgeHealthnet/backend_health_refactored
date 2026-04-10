@@ -644,6 +644,24 @@ class PaymentController {
       const { role } = req.user;
       const { page = 1, limit = 20, serviceType, status, currency } = req.query;
 
+      const buildDescription = (transaction) => {
+        if (transaction.serviceType !== 'appointment') return transaction.description;
+        const apptDate = transaction.appointmentDate
+          ? new Date(transaction.appointmentDate).toISOString().split('T')[0]
+          : '';
+        if (role === 'doctor') {
+          const p = transaction.patient;
+          const name = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') : null;
+          return name ? `Appointment with ${name} on ${apptDate}` : transaction.description;
+        }
+        if (role === 'patient') {
+          const d = transaction.doctor;
+          const name = d ? `Dr. ${[d.firstName, d.lastName].filter(Boolean).join(' ')}` : null;
+          return name ? `Appointment with ${name} on ${apptDate}` : transaction.description;
+        }
+        return transaction.description;
+      };
+
       let transactions = await paymentService.getUserTransactions(userId, role);
 
       // Apply filters
@@ -683,7 +701,7 @@ class PaymentController {
                 isAppointmentPayment: true,
                 createdAt: transaction.createdAt,
                 completedAt: transaction.completedAt,
-                description: transaction.description,
+                description: buildDescription(transaction),
                 isCancelled: transaction.isCancelled
               };
             }
@@ -698,7 +716,7 @@ class PaymentController {
               isAppointmentPayment: transaction.serviceType === 'appointment',
               createdAt: transaction.createdAt,
               completedAt: transaction.completedAt,
-              description: transaction.description,
+              description: buildDescription(transaction),
               isCancelled: transaction.isCancelled
             };
           } catch (error) {
@@ -712,7 +730,7 @@ class PaymentController {
               isAppointmentPayment: transaction.serviceType === 'appointment',
               createdAt: transaction.createdAt,
               completedAt: transaction.completedAt,
-              description: transaction.description
+              description: buildDescription(transaction)
             };
           }
         })
