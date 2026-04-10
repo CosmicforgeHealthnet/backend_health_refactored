@@ -722,13 +722,32 @@ class PaymentService {
   async getExchangeRate(from, to) {
     if (from === to) return 1.0;
 
+    const cacheKey = `${from}_${to}`;
+    const cached = this._rateCache?.get(cacheKey);
+    if (cached && Date.now() - cached.ts < 60 * 60 * 1000) {
+      return cached.rate;
+    }
+
     try {
       const response = await axios.get(`${this.exchangeRateApi}/${from}`);
-      return response.data.rates[to] || 1.0;
+      const rate = response.data.rates[to] || 1.0;
+
+      if (!this._rateCache) this._rateCache = new Map();
+      this._rateCache.set(cacheKey, { rate, ts: Date.now() });
+
+      return rate;
     } catch (error) {
+      // Return stale cache rather than failing completely
+      if (cached) return cached.rate;
       console.error('Error fetching exchange rate:', error);
       throw new Error('Unable to fetch current exchange rate');
     }
+  }
+
+  // Called by the background job to pre-warm the cache
+  warmExchangeRateCache(from, to, rate) {
+    if (!this._rateCache) this._rateCache = new Map();
+    this._rateCache.set(`${from}_${to}`, { rate, ts: Date.now() });
   }
 
   // ================================
@@ -1297,8 +1316,9 @@ class PaymentService {
    */
   async processFlutterwavePayment(transaction, paymentData) {
     try {
+      const txRef = `FLW-${transaction.id}-${Date.now()}`;
       const payload = {
-        tx_ref: `FLW-${transaction.id}-${Date.now()}`,
+        tx_ref: txRef,
         amount: transaction.originalAmount,
         currency: transaction.originalCurrency,
         payment_options: "card,banktransfer,ussd",
@@ -1312,7 +1332,7 @@ class PaymentService {
           description: transaction.description || `Payment for ${transaction.serviceType}`,
           logo: process.env.COMPANY_LOGO_URL
         },
-        redirect_url: `${process.env.FRONTEND_URL}/payment/callback`,
+        redirect_url: `${process.env.BACKEND_URL}/api/payments/callback`,
         // 🔥 ADD THIS WEBHOOK URL - This was missing!
         webhook_url: `${process.env.BACKEND_URL}/api/webhooks/payments/flutterwave`,
         meta: {
@@ -1342,7 +1362,7 @@ class PaymentService {
         // Update transaction immediately with provider reference
         await transactionRepository.repo.update(transaction.id, {
           providerTransactionId: response.data.data.id,
-          providerReference: `FLW-${transaction.id}-${Date.now()}`,
+          providerReference: txRef,
           status: 'processing'
         });
 
@@ -1387,7 +1407,7 @@ class PaymentService {
         amount: transaction.originalAmount * 100, // Convert to kobo/pesewas
         currency: transaction.originalCurrency,
         reference: reference,
-        callback_url: `${process.env.FRONTEND_URL}/payment/callback`,
+        callback_url: `${process.env.BACKEND_URL}/api/payments/callback`,
         // 🔥 NOTE: Paystack uses callback_url for webhooks too
         // But you should ALSO set webhook URL in your Paystack Dashboard
         metadata: {
@@ -1915,6 +1935,12 @@ class PaymentService {
    */
   async processFundsForAppointmentPayment(transaction) {
     try {
+      // Idempotency guard: if fundsStatus already set, funds were already processed
+      if (transaction.fundsStatus && transaction.fundsStatus !== null) {
+        console.log(`⚠️ Funds already processed for transaction ${transaction.id} (fundsStatus: ${transaction.fundsStatus}), skipping`);
+        return;
+      }
+
       const splits = await transactionSplitRepository.findByTransactionId(transaction.id);
       const doctorSplit = splits.find(split => split.recipientType === 'doctor_wallet');
 
@@ -2226,50 +2252,90 @@ class PaymentService {
         throw new Error("No appointment fee found to refund");
       }
 
-      // Determine refund amount based on who cancelled
-      // Doctor/System cancellation → full refund (patient shouldn't lose money)
-      // Patient cancellation → only appointment fee (platform keeps service fee & VAT)
-      const cancelledBy = cancellationData.cancelledBy || cancellationData.reason || 'unknown';
-      let refundAmount;
+      // Determine refund amount based on who cancelled and how close to appointment
+      const cancelledByRole = cancellationData.cancelledByRole || 'patient';
+      const now = new Date();
+      const appointmentDate = new Date(transaction.appointmentDate);
+      const hoursUntilAppointment = (appointmentDate - now) / (1000 * 60 * 60);
 
-      if (cancelledBy === 'doctor' || cancelledBy === 'system') {
-        // Full refund — patient did nothing wrong
+      let refundAmount;
+      let refundPolicy;
+
+      if (cancelledByRole === 'doctor' || cancelledByRole === 'system' ||
+          cancelledByRole === 'admin' || cancelledByRole === 'super_admin') {
+        // Doctor/admin/system cancellation → always full refund, patient did nothing wrong
         refundAmount = transaction.usdAmount;
-        console.log(`💰 Full refund of ${refundAmount} (cancelled by ${cancelledBy})`);
+        refundPolicy = 'full';
+        console.log(`💰 Full refund of $${refundAmount} (cancelled by ${cancelledByRole})`);
+      } else if (hoursUntilAppointment >= 24) {
+        // 24h+ before appointment → full refund
+        refundAmount = transaction.usdAmount;
+        refundPolicy = 'full';
+        console.log(`💰 Full refund of $${refundAmount} (cancelled ${Math.floor(hoursUntilAppointment)}h before appointment)`);
+      } else if (hoursUntilAppointment >= 2) {
+        // 2h–24h before appointment → 50% refund
+        refundAmount = parseFloat((transaction.usdAmount * 0.5).toFixed(2));
+        refundPolicy = 'partial';
+        console.log(`💰 50% refund of $${refundAmount} (cancelled ${Math.floor(hoursUntilAppointment)}h before appointment)`);
       } else {
-        // Partial refund — patient-initiated, keep service fee & VAT
-        refundAmount = appointmentFeeSplit.usdAmount;
-        console.log(`💰 Partial refund of ${refundAmount} (cancelled by patient, keeping service fee & VAT)`);
+        // Under 2h or appointment already passed → no refund
+        refundAmount = 0;
+        refundPolicy = 'none';
+        console.log(`💰 No refund (cancelled ${hoursUntilAppointment < 0 ? 'after' : 'under 2h before'} appointment)`);
       }
 
-      // Update transaction as cancelled
+      // Update transaction as cancelled — do NOT set fundsStatus to 'released'
+      // isCancelled flag is the correct guard; the dispute window job already filters isCancelled = false
       await transactionRepository.repo.update(transactionId, {
         isCancelled: true,
-        cancelledAt: new Date(),
+        cancelledAt: now,
         refundStatus: 'pending',
-        refundAmount: refundAmount,
-        fundsStatus: 'released'
+        refundAmount: refundAmount
       });
 
-      // Remove pending credits from doctor wallet if funds were pending
-      if (transaction.fundsStatus === 'pending_dispute' && transaction.doctorId) {
+      // Remove pending credits from doctor wallet if funds were already credited
+      // Covers both pending_appointment and pending_dispute states
+      if (transaction.doctorId && (
+        transaction.fundsStatus === 'pending_appointment' ||
+        transaction.fundsStatus === 'pending_dispute'
+      )) {
         await doctorWalletRepository.removePendingCredits(
           transaction.doctorId,
           appointmentFeeSplit.usdAmount
         );
-        console.log(`🔄 Removed ${appointmentFeeSplit.usdAmount} pending credits from doctor ${transaction.doctorId}`);
+        console.log(`🔄 Removed $${appointmentFeeSplit.usdAmount} pending credits from doctor ${transaction.doctorId}`);
       }
 
-      // Process the refund
+      // If no refund due, skip provider call and resolve immediately
+      if (refundAmount === 0) {
+        await transactionRepository.repo.update(transactionId, {
+          refundStatus: 'none',
+          refundProcessedAt: new Date()
+        });
+        console.log(`✅ Cancelled appointment payment ${transactionId} - no refund (policy: ${refundPolicy})`);
+        return {
+          success: true,
+          message: "Appointment payment cancelled. No refund applies based on cancellation policy.",
+          data: {
+            transactionId,
+            refundAmount: 0,
+            refundStatus: 'none',
+            keptAmount: parseFloat(transaction.usdAmount),
+            cancelledAt: now
+          }
+        };
+      }
+
+      // Process the refund via payment provider
       const refundResult = await this.processRefund(transaction, refundAmount);
 
       if (refundResult.success) {
         await transactionRepository.repo.update(transactionId, {
-          refundStatus: 'full',
+          refundStatus: refundPolicy,
           refundProcessedAt: new Date()
         });
 
-        console.log(`✅ Cancelled appointment payment ${transactionId} - refunded ${refundAmount} to patient (cancelled by ${cancelledBy})`);
+        console.log(`✅ Cancelled appointment payment ${transactionId} - refunded $${refundAmount} to patient (policy: ${refundPolicy})`);
 
         return {
           success: true,
@@ -2277,9 +2343,9 @@ class PaymentService {
           data: {
             transactionId,
             refundAmount,
-            refundStatus: 'full',
-            keptAmount: transaction.usdAmount - refundAmount,
-            cancelledAt: new Date()
+            refundStatus: refundPolicy,
+            keptAmount: parseFloat((transaction.usdAmount - refundAmount).toFixed(2)),
+            cancelledAt: now
           }
         };
       } else {

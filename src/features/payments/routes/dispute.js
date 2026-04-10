@@ -71,4 +71,15 @@ router.get('/pending',
   DisputeController.getPendingDisputes
 );
 
+/**
+ * @route   POST /api/disputes/:disputeId/resolve
+ * @desc    Resolve an escalated dispute (approve refund or reject)
+ * @access  Private (Admin only)
+ */
+router.post('/:disputeId/resolve',
+  authorizeRoles('admin', 'super_admin'),
+  RateLimiterMiddleware.sensitive(),
+  DisputeController.resolveDispute
+);
+
 module.exports = router;

@@ -3,6 +3,7 @@ const disputeRepository = require("../repositories/disputeRepository");
 const transactionRepository = require("../repositories/transactionRepository");
 const transactionSplitRepository = require("../repositories/transactionSplitRepository");
 const doctorWalletRepository = require("../../payments/repositories/doctorWalletRepository");
+const paymentService = require("./paymentService");
 
 class DisputeService {
   /**
@@ -93,24 +94,32 @@ class DisputeService {
   }
 
   /**
-   * Process approved refund
+   * Process approved refund — adjusts wallet AND sends money back via provider
    * @param {Object} dispute - Dispute object
+   * @param {number|null} overrideRefundAmount - Optional admin-specified amount (USD), defaults to appointment fee
    * @returns {Promise<void>}
    */
-  async processRefund(dispute) {
-    const transaction = dispute.transaction;
+  async processRefund(dispute, overrideRefundAmount = null) {
+    // Load full transaction to ensure all provider fields are present
+    const transaction = await transactionRepository.findById(dispute.transactionId);
     const splits = await transactionSplitRepository.findByTransactionId(transaction.id);
-
-    // Only refund appointment fee, not service fee or VAT
     const appointmentSplit = splits.find(split => split.type === 'appointment_fee');
 
+    const refundAmount = overrideRefundAmount !== null
+      ? overrideRefundAmount
+      : (appointmentSplit ? appointmentSplit.usdAmount : 0);
+
+    if (refundAmount <= 0) {
+      await transactionRepository.updateStatus(transaction.id, 'refunded');
+      return;
+    }
+
+    // Deduct from doctor wallet
     if (appointmentSplit) {
-      // If funds are still pending, just remove from pending
-      // If already released, deduct from available balance
       if (appointmentSplit.status === 'pending') {
-        await doctorWalletRepository.addPendingCredits(
+        await doctorWalletRepository.removePendingCredits(
           transaction.doctorId,
-          -appointmentSplit.usdAmount
+          appointmentSplit.usdAmount
         );
       } else {
         await doctorWalletRepository.deductAvailableBalance(
@@ -118,13 +127,58 @@ class DisputeService {
           appointmentSplit.usdAmount
         );
       }
-
-      // Update split status
       await transactionSplitRepository.updateStatus(appointmentSplit.id, 'refunded');
     }
 
-    // Update transaction status
-    await transactionRepository.updateStatus(transaction.id, 'refunded');
+    // Actually send money back to patient via payment provider
+    const refundResult = await paymentService.processRefund(transaction, refundAmount);
+    if (!refundResult.success) {
+      throw new Error(`Refund payment failed: ${refundResult.error}`);
+    }
+
+    await transactionRepository.repo.update(transaction.id, {
+      status: 'refunded',
+      refundAmount,
+      refundStatus: 'full',
+      refundProcessedAt: new Date()
+    });
+  }
+
+  /**
+   * Admin resolves an escalated dispute
+   * @param {Object} data - { disputeId, action: 'approve'|'reject', adminNotes, refundAmount }
+   * @returns {Promise<Object>} - Updated dispute
+   */
+  async resolveDispute(data) {
+    const { disputeId, action, adminNotes, refundAmount } = data;
+
+    const dispute = await disputeRepository.findById(disputeId);
+    if (!dispute) {
+      throw new Error("Dispute not found");
+    }
+
+    if (dispute.status !== 'escalated') {
+      throw new Error("Can only resolve escalated disputes");
+    }
+
+    if (action === 'approve') {
+      await this.processRefund(dispute, refundAmount || null);
+      await disputeRepository.updateStatus(disputeId, 'resolved', {
+        adminNotes: adminNotes || null,
+        resolvedAt: new Date()
+      });
+    } else if (action === 'reject') {
+      // Dispute rejected — funds stay with doctor, restore transaction to completed
+      await transactionRepository.updateStatus(dispute.transactionId, 'completed');
+      await disputeRepository.updateStatus(disputeId, 'resolved', {
+        adminNotes: adminNotes || null,
+        resolvedAt: new Date()
+      });
+    } else {
+      throw new Error("Invalid action. Must be 'approve' or 'reject'");
+    }
+
+    return await disputeRepository.findById(disputeId);
   }
 
   /**

@@ -114,6 +114,48 @@ class DisputeController {
   }
 
   /**
+   * Resolve an escalated dispute (Admin only)
+   */
+  static async resolveDispute(req, res) {
+    try {
+      const { disputeId } = req.params;
+      const { action, adminNotes, refundAmount } = req.body;
+
+      if (!['approve', 'reject'].includes(action)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid action. Must be 'approve' or 'reject'"
+        });
+      }
+
+      const dispute = await disputeService.resolveDispute({
+        disputeId,
+        action,
+        adminNotes,
+        refundAmount: refundAmount ? parseFloat(refundAmount) : null
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Dispute ${action === 'approve' ? 'approved and refund processed' : 'rejected'}`,
+        data: {
+          disputeId: dispute.id,
+          status: dispute.status,
+          action,
+          adminNotes: dispute.adminNotes,
+          resolvedAt: dispute.resolvedAt
+        }
+      });
+    } catch (error) {
+      console.error("Error resolving dispute:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to resolve dispute"
+      });
+    }
+  }
+
+  /**
    * Get all pending disputes (Admin only)
    */
   static async getPendingDisputes(req, res) {

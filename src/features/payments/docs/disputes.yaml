@@ -130,3 +130,76 @@ paths:
                           $ref: '#/components/schemas/Dispute'
         '403':
           $ref: '#/components/responses/Forbidden'
+
+  /api/payments/disputes/{disputeId}/resolve:
+    post:
+      tags:
+        - Disputes
+      summary: Resolve an escalated dispute (Admin)
+      description: Admin approves a refund or rejects a dispute that was escalated by a doctor. Approving triggers an actual refund to the patient via the payment provider.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: disputeId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the escalated dispute to resolve
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject]
+                  description: "'approve' refunds the patient, 'reject' keeps funds with doctor"
+                  example: approve
+                refundAmount:
+                  type: number
+                  description: Optional custom refund amount in USD. Defaults to appointment fee if not specified.
+                  example: 45.00
+                adminNotes:
+                  type: string
+                  description: Admin notes on the resolution decision
+                  example: "Patient provided valid evidence. Full refund approved."
+      responses:
+        '200':
+          description: Dispute resolved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          disputeId:
+                            type: string
+                            format: uuid
+                          status:
+                            type: string
+                            example: resolved
+                          action:
+                            type: string
+                            enum: [approve, reject]
+                          adminNotes:
+                            type: string
+                            nullable: true
+                          resolvedAt:
+                            type: string
+                            format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
