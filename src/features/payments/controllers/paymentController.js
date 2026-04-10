@@ -1286,14 +1286,23 @@ class PaymentController {
         });
       }
 
-      // Get user details for payment
-      const user = await userRepository.findById(userId);
+      // Get user and doctor details for payment
+      const [user, doctor] = await Promise.all([
+        userRepository.findById(userId),
+        userRepository.findById(doctorId)
+      ]);
       if (!user) {
         return res.status(404).json({
           success: false,
           message: "User not found"
         });
       }
+
+      const patientName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Patient';
+      const apptDateStr = new Date(appointmentDate).toISOString().split('T')[0];
+      const doctorName = doctor
+        ? `Dr. ${[doctor.firstName, doctor.lastName].filter(Boolean).join(' ')}`
+        : 'Doctor';
 
       // Create appointment payment transaction
       const paymentData = {
@@ -1305,7 +1314,7 @@ class PaymentController {
         originalAmount: amount,
         originalCurrency: currency,
         paymentProvider,
-        description: req.body.description || 'Medical appointment payment'
+        description: `Appointment with ${patientName} on ${apptDateStr}`
       };
 
       const transaction = await paymentService.initiatePayment(paymentData);
@@ -1322,7 +1331,7 @@ class PaymentController {
         phone: user.phone,
         callbackUrl,
         title: "Medical Appointment Payment",
-        description: `Payment for appointment with Dr. ${req.body.doctorName || 'Doctor'}`
+        description: `Payment for appointment with ${doctorName}`
       };
 
       // Process payment with the selected provider to get redirect URL
