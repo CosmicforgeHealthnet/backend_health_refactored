@@ -619,7 +619,21 @@ class PaymentController {
           disputeWindowEndsAt: transaction.disputeWindowEndsAt,
           createdAt: transaction.createdAt,
           completedAt: transaction.completedAt,
-          description: transaction.description,
+          description: (() => {
+            if (transaction.serviceType !== 'appointment') return transaction.description;
+            const apptDate = transaction.appointmentDate
+              ? new Date(transaction.appointmentDate).toISOString().split('T')[0] : '';
+            const role = req.user.role;
+            if (role === 'doctor' && transaction.patient) {
+              const n = [transaction.patient.firstName, transaction.patient.lastName].filter(Boolean).join(' ');
+              if (n) return `Appointment with ${n} on ${apptDate}`;
+            }
+            if (role === 'patient' && transaction.doctor) {
+              const n = [transaction.doctor.firstName, transaction.doctor.lastName].filter(Boolean).join(' ');
+              if (n) return `Appointment with Dr. ${n} on ${apptDate}`;
+            }
+            return transaction.description;
+          })(),
           isCancelled: transaction.isCancelled,
           cancelledAt: transaction.cancelledAt,
           rescheduleCount: transaction.rescheduleCount,
