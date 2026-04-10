@@ -32,6 +32,7 @@ class CurrencyService {
    * @returns {Promise<string>} - Currency code (e.g., 'NGN')
    */
   async getCountryCurrency(countryName) {
+    if (!countryName) return 'USD';
     try {
       // Check cache first
       const cacheKey = countryName.toLowerCase();
@@ -158,7 +159,7 @@ class CurrencyService {
       let targetCurrency = toCurrency;
       
       if (!targetCurrency) {
-        targetCurrency = await this.getCountryCurrency(userCountry);
+        targetCurrency = userCountry ? await this.getCountryCurrency(userCountry) : 'USD';
       }
 
       // Step 2: Check if target currency is supported by payment gateways
