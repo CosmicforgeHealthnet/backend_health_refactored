@@ -1240,7 +1240,7 @@ class PaymentController {
         success: true,
         message: "User payment settings retrieved successfully",
         data: {
-          preferredCurrency: user.preferredCurrency || 'NGN',
+          preferredCurrency: user.preferredCurrency || null,
           defaultPaymentMethod: defaultMethod ? {
             id: defaultMethod.id,
             cardLast4: defaultMethod.cardLast4,
@@ -1249,7 +1249,7 @@ class PaymentController {
           } : null,
           totalPaymentMethods: paymentMethods.length,
           autoChargeEnabled: paymentMethods.some(method => method.canAutoCharge),
-          country: user.country || 'NG'
+          country: user.country || req.location?.country || null
         }
       });
     } catch (error) {

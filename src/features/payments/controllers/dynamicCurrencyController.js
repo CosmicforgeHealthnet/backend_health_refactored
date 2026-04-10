@@ -15,8 +15,8 @@ const convertCurrency = async (req, res) => {
       });
     }
 
-    const userCountry = req.location?.country || 'Nigeria';
-    
+    const userCountry = req.location?.country || null;
+
     const result = await currencyService.convertCurrency({
       amount: parseFloat(amount),
       fromCurrency: fromCurrency.toUpperCase(),
@@ -68,7 +68,7 @@ const checkCurrencySupport = async (req, res) => {
 
 const getUserLocalCurrency = async (req, res) => {
   try {
-    const userCountry = req.location?.country || 'Nigeria';
+    const userCountry = req.location?.country || null;
     const currency = await currencyService.getCountryCurrency(userCountry);
     
     res.json({

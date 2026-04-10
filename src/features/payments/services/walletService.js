@@ -98,7 +98,7 @@ class WalletService {
    * Auto-syncs display currency from doctor's country on every fetch —
    * so if country changes on their profile, wallet currency updates automatically.
    */
-  async getDoctorWallet(doctorId) {
+  async getDoctorWallet(doctorId, locationCountry = null) {
     const [wallet, doctor] = await Promise.all([
       doctorWalletRepository.findByDoctorId(doctorId),
       userRepository.findById(doctorId)
@@ -108,16 +108,21 @@ class WalletService {
       throw new Error("Wallet not found for this doctor");
     }
 
-    // Auto-sync: resolve correct currency from current country
-    const correctCurrency = this.resolveCurrencyFromCountry(doctor?.country);
+    // Auto-sync: resolve correct currency — DB country wins, location middleware is fallback.
+    // Only persist to DB when country comes from the doctor's profile (not IP location),
+    // so that traveling doesn't permanently flip the wallet currency.
+    const dbCountry = doctor?.country || null;
+    const effectiveCountry = dbCountry || locationCountry;
+    const correctCurrency = this.resolveCurrencyFromCountry(effectiveCountry);
 
-    // Update stored preference if it has drifted (e.g. country changed, or was never set)
-    if (wallet.preferredDisplayCurrency !== correctCurrency) {
+    if (dbCountry && wallet.preferredDisplayCurrency !== correctCurrency) {
+      // Profile country is set and wallet currency is stale — persist the fix
       await doctorWalletRepository.repo.update(wallet.id, {
         preferredDisplayCurrency: correctCurrency
       });
-      wallet.preferredDisplayCurrency = correctCurrency;
     }
+    // Always use correctCurrency for this response (whether from DB or IP fallback)
+    wallet.preferredDisplayCurrency = correctCurrency;
 
     const exchangeRate = await this.getExchangeRate('USD', wallet.preferredDisplayCurrency);
 
