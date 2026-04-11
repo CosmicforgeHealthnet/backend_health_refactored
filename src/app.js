@@ -321,6 +321,7 @@ app.use("/api/chat", authenticateJWT, chatFeature.router);
 app.use("/api/chatbot", authenticateJWT, chatFeature.chatbotRouter);
 app.use("/api/notifications", authenticateJWT, notificationFeature.router);
 app.use("/api/subscription", subscriptionFeature.router); // Handles both public and auth routes (auth is per-route)
+app.use("/api/payments/callback", paymentFeature.callbackRouter); // Public — provider redirect, no auth
 app.use("/api/payments", authenticateJWT, paymentFeature.router);
 app.use("/api/webhooks/payments", paymentFeature.webhookRouter); // Public webhook route
 app.use("/api/webhooks/pharmacy", require("./features/pharmacy/routes/pharmacyWebhookRoutes")); // Pharmacy payment webhooks
