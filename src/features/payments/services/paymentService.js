@@ -1332,7 +1332,7 @@ class PaymentService {
           description: transaction.description || `Payment for ${transaction.serviceType}`,
           logo: process.env.COMPANY_LOGO_URL
         },
-        redirect_url: `${process.env.BACKEND_URL}/payments/callback`,
+        redirect_url: paymentData.redirectUrl || paymentData.returnUrl || `${process.env.FRONTEND_URL}/payment/callback`,
         // 🔥 ADD THIS WEBHOOK URL - This was missing!
         webhook_url: `${process.env.BACKEND_URL}/webhooks/payments/flutterwave`,
         meta: {
@@ -1407,7 +1407,7 @@ class PaymentService {
         amount: transaction.originalAmount * 100, // Convert to kobo/pesewas
         currency: transaction.originalCurrency,
         reference: reference,
-        callback_url: `${process.env.BACKEND_URL}/payments/callback`,
+        callback_url: paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl || `${process.env.FRONTEND_URL}/payment/callback`,
         // 🔥 NOTE: Paystack uses callback_url for webhooks too
         // But you should ALSO set webhook URL in your Paystack Dashboard
         metadata: {
