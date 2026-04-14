@@ -30,9 +30,12 @@ class DisputeService {
 
     // Allow disputes for transactions where payment was collected.
     // 'processing' covers payment received but webhook not yet confirmed.
+    // 'pending' with completedAt set covers a status-update lag after payment confirmation.
     // Block only statuses where no money actually moved or dispute already exists.
-    const nonDisputableStatuses = ['pending', 'failed', 'disputed', 'refunded'];
-    if (nonDisputableStatuses.includes(transaction.status)) {
+    const disputeAllowed =
+      ['completed', 'processing'].includes(transaction.status) ||
+      (transaction.status === 'pending' && transaction.completedAt !== null);
+    if (!disputeAllowed) {
       throw new Error("Can only dispute completed transactions");
     }
 
