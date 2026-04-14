@@ -169,6 +169,91 @@ class PaymentJobs {
   }
 
   /**
+   * Recover transactions stuck in processing state.
+   * Runs every 15 minutes. Verifies status directly with the payment provider
+   * so no payment is ever permanently lost due to a missed webhook.
+   */
+  static async recoverStuckProcessingTransactions() {
+    try {
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+      const stuckTransactions = await transactionRepository.repo.createQueryBuilder('transaction')
+        .where('transaction.status = :status', { status: 'processing' })
+        .andWhere('transaction.updatedAt < :thirtyMinutesAgo', { thirtyMinutesAgo })
+        .andWhere('transaction.providerReference IS NOT NULL')
+        .getMany();
+
+      if (stuckTransactions.length === 0) return { recoveredCount: 0, failedCount: 0 };
+
+      console.log(`🔍 Found ${stuckTransactions.length} stuck processing transaction(s) — verifying with providers...`);
+
+      const paymentService = require('../services/paymentService');
+      let recoveredCount = 0;
+      let failedCount = 0;
+
+      for (const transaction of stuckTransactions) {
+        try {
+          const isFlutterwave = transaction.providerReference?.startsWith('FLW-');
+          const isPaystack = transaction.providerReference?.startsWith('PST-');
+
+          let verificationResult = null;
+
+          if (isFlutterwave && transaction.providerTransactionId) {
+            verificationResult = await paymentService.verifyFlutterwavePayment(transaction.providerTransactionId);
+          } else if (isPaystack) {
+            verificationResult = await paymentService.verifyPaystackPayment(transaction.providerReference);
+          } else {
+            continue;
+          }
+
+          if (verificationResult && verificationResult.success) {
+            // Atomic conditional update — only completes if still in processing
+            const updated = await transactionRepository.repo.createQueryBuilder()
+              .update()
+              .set({
+                status: 'completed',
+                completedAt: new Date(),
+                providerFee: verificationResult.data?.app_fee || verificationResult.data?.fees || 0
+              })
+              .where('id = :id AND status = :status', { id: transaction.id, status: 'processing' })
+              .execute();
+
+            if (updated.affected > 0) {
+              // Process funds — idempotency guard inside each method prevents double-credit
+              if (transaction.serviceType === 'appointment' && transaction.doctorId) {
+                await paymentService.processFundsForAppointmentPayment(transaction);
+              } else if (transaction.doctorId) {
+                await paymentService.processFundsImmediate(transaction);
+              }
+              console.log(`✅ Recovered stuck transaction ${transaction.id} — marked completed`);
+              recoveredCount++;
+            }
+          } else if (transaction.updatedAt < twoHoursAgo) {
+            // Stuck for 2+ hours and provider confirms it didn't succeed — mark failed
+            await transactionRepository.repo.createQueryBuilder()
+              .update()
+              .set({ status: 'failed', failedAt: new Date() })
+              .where('id = :id AND status = :status', { id: transaction.id, status: 'processing' })
+              .execute();
+            console.log(`❌ Transaction ${transaction.id} stuck >2 hours with no provider confirmation — marked failed`);
+            failedCount++;
+          }
+          // else: < 2 hours and not confirmed yet — leave it, retry on next run
+        } catch (error) {
+          console.error(`❌ Error recovering transaction ${transaction.id}:`, error);
+        }
+      }
+
+      console.log(`🎉 Recovery complete — recovered: ${recoveredCount}, failed: ${failedCount}`);
+      return { recoveredCount, failedCount };
+    } catch (error) {
+      console.error('❌ Error in recoverStuckProcessingTransactions:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Retry failed payments
    */
   static async retryFailedPayments() {
@@ -215,26 +300,43 @@ class PaymentJobs {
   }
 
   /**
-   * Update currency exchange rates
+   * Pre-warm the exchange rate cache for all supported currencies.
+   * Runs every 4 hours so wallet requests never hit an external API.
    */
   static async updateCurrencyRates() {
     try {
-      console.log('🔄 Updating currency rates...');
+      console.log('🔄 Pre-warming exchange rate cache...');
 
-      const baseCurrencies = ['USD', 'NGN', 'GHS', 'EUR', 'GBP'];
+      const paymentService = require('../services/paymentService');
+
+      // All currencies used in the platform
+      const targetCurrencies = [
+        'NGN', 'GHS', 'ZAR', 'KES', 'XOF', 'EGP', 'XAF',
+        'EUR', 'GBP', 'UGX', 'TZS', 'SLL', 'MWK', 'ZMW', 'RWF', 'CAD', 'AUD'
+      ];
+
       let updatedCount = 0;
 
-      for (const currency of baseCurrencies) {
-        try {
-          const response = await axios.get(`https://api.exchangerate-api.com/v4/latest/${currency}`);
-          console.log(`✅ Updated rates for ${currency}`);
-          updatedCount++;
-        } catch (error) {
-          console.error(`❌ Failed to update rates for ${currency}:`, error);
+      // Fetch all rates from USD base in one request and warm cache for each pair
+      try {
+        const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+        const rates = response.data.rates;
+
+        for (const currency of targetCurrencies) {
+          if (rates[currency]) {
+            paymentService.warmExchangeRateCache('USD', currency, rates[currency]);
+            // Also cache inverse (currency → USD) for any reverse lookups
+            paymentService.warmExchangeRateCache(currency, 'USD', 1 / rates[currency]);
+            updatedCount++;
+          }
         }
+
+        console.log(`✅ Warmed cache for ${updatedCount} currency pairs from USD base`);
+      } catch (error) {
+        console.error('❌ Failed to fetch USD base rates:', error);
       }
 
-      console.log(`🎉 Updated ${updatedCount} currency rates successfully`);
+      console.log(`🎉 Exchange rate cache pre-warmed (${updatedCount} pairs)`);
       return updatedCount;
     } catch (error) {
       console.error('❌ Error updating currency rates:', error);

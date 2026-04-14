@@ -7,8 +7,8 @@ module.exports = new EntitySchema({
         id: { primary: true, type: "uuid", generated: "uuid" },
         pharmacyId: { type: "uuid", nullable: false },
         feeType: {
-            type: "enum",
-            enum: ["delivery", "consultation", "handling", "processing"],
+            type: "varchar",
+            length: 100,
             nullable: false
         },
         price: { type: "decimal", precision: 10, scale: 2, nullable: false },

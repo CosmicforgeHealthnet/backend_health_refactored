@@ -619,7 +619,23 @@ class PaymentController {
           disputeWindowEndsAt: transaction.disputeWindowEndsAt,
           createdAt: transaction.createdAt,
           completedAt: transaction.completedAt,
-          description: transaction.description,
+          description: (() => {
+            if (transaction.serviceType !== 'appointment') return transaction.description;
+            const apptDate = transaction.appointmentDate
+              ? new Date(transaction.appointmentDate).toISOString().split('T')[0] : '';
+            const role = req.user.role;
+            if (role === 'doctor') {
+              const p = transaction.patient;
+              const n = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || 'Patient' : 'Patient';
+              return `Appointment with ${n} on ${apptDate}`;
+            }
+            if (role === 'patient') {
+              const d = transaction.doctor;
+              const n = d ? [d.firstName, d.lastName].filter(Boolean).join(' ') || 'Doctor' : 'Doctor';
+              return `Appointment with Dr. ${n} on ${apptDate}`;
+            }
+            return transaction.description;
+          })(),
           isCancelled: transaction.isCancelled,
           cancelledAt: transaction.cancelledAt,
           rescheduleCount: transaction.rescheduleCount,
@@ -643,6 +659,24 @@ class PaymentController {
       const userId = req.user.sub;
       const { role } = req.user;
       const { page = 1, limit = 20, serviceType, status, currency } = req.query;
+
+      const buildDescription = (transaction) => {
+        if (transaction.serviceType !== 'appointment') return transaction.description;
+        const apptDate = transaction.appointmentDate
+          ? new Date(transaction.appointmentDate).toISOString().split('T')[0]
+          : '';
+        if (role === 'doctor') {
+          const p = transaction.patient;
+          const name = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || 'Patient' : 'Patient';
+          return `Appointment with ${name} on ${apptDate}`;
+        }
+        if (role === 'patient') {
+          const d = transaction.doctor;
+          const name = d ? [d.firstName, d.lastName].filter(Boolean).join(' ') || 'Doctor' : 'Doctor';
+          return `Appointment with Dr. ${name} on ${apptDate}`;
+        }
+        return transaction.description;
+      };
 
       let transactions = await paymentService.getUserTransactions(userId, role);
 
@@ -683,7 +717,7 @@ class PaymentController {
                 isAppointmentPayment: true,
                 createdAt: transaction.createdAt,
                 completedAt: transaction.completedAt,
-                description: transaction.description,
+                description: buildDescription(transaction),
                 isCancelled: transaction.isCancelled
               };
             }
@@ -698,7 +732,7 @@ class PaymentController {
               isAppointmentPayment: transaction.serviceType === 'appointment',
               createdAt: transaction.createdAt,
               completedAt: transaction.completedAt,
-              description: transaction.description,
+              description: buildDescription(transaction),
               isCancelled: transaction.isCancelled
             };
           } catch (error) {
@@ -712,7 +746,7 @@ class PaymentController {
               isAppointmentPayment: transaction.serviceType === 'appointment',
               createdAt: transaction.createdAt,
               completedAt: transaction.completedAt,
-              description: transaction.description
+              description: buildDescription(transaction)
             };
           }
         })
@@ -1240,7 +1274,7 @@ class PaymentController {
         success: true,
         message: "User payment settings retrieved successfully",
         data: {
-          preferredCurrency: user.preferredCurrency || 'NGN',
+          preferredCurrency: user.preferredCurrency || null,
           defaultPaymentMethod: defaultMethod ? {
             id: defaultMethod.id,
             cardLast4: defaultMethod.cardLast4,
@@ -1249,7 +1283,7 @@ class PaymentController {
           } : null,
           totalPaymentMethods: paymentMethods.length,
           autoChargeEnabled: paymentMethods.some(method => method.canAutoCharge),
-          country: user.country || 'NG'
+          country: user.country || req.location?.country || null
         }
       });
     } catch (error) {
@@ -1286,14 +1320,23 @@ class PaymentController {
         });
       }
 
-      // Get user details for payment
-      const user = await userRepository.findById(userId);
+      // Get user and doctor details for payment
+      const [user, doctor] = await Promise.all([
+        userRepository.findById(userId),
+        userRepository.findById(doctorId)
+      ]);
       if (!user) {
         return res.status(404).json({
           success: false,
           message: "User not found"
         });
       }
+
+      const patientName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Patient';
+      const apptDateStr = new Date(appointmentDate).toISOString().split('T')[0];
+      const doctorName = doctor
+        ? `Dr. ${[doctor.firstName, doctor.lastName].filter(Boolean).join(' ')}`
+        : 'Doctor';
 
       // Create appointment payment transaction
       const paymentData = {
@@ -1305,7 +1348,7 @@ class PaymentController {
         originalAmount: amount,
         originalCurrency: currency,
         paymentProvider,
-        description: req.body.description || 'Medical appointment payment'
+        description: `Appointment with ${patientName} on ${apptDateStr}`
       };
 
       const transaction = await paymentService.initiatePayment(paymentData);
@@ -1322,7 +1365,7 @@ class PaymentController {
         phone: user.phone,
         callbackUrl,
         title: "Medical Appointment Payment",
-        description: `Payment for appointment with Dr. ${req.body.doctorName || 'Doctor'}`
+        description: `Payment for appointment with ${doctorName}`
       };
 
       // Process payment with the selected provider to get redirect URL
@@ -1379,8 +1422,7 @@ class PaymentController {
    */
   static async handlePaymentCallback(req, res) {
     try {
-      const { reference, status, tx_ref, transaction_id } = req.query;
-      const { returnUrl } = req.query;
+      const { reference, tx_ref, transaction_id } = req.query;
 
       // Determine provider and reference
       let provider, transactionRef;
@@ -1391,19 +1433,28 @@ class PaymentController {
         provider = 'paystack';
         transactionRef = reference;
       } else {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid callback parameters"
-        });
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=Invalid+callback+parameters`);
       }
 
-      // Find transaction by provider reference
-      const transaction = await transactionRepository.findByProviderReference(transactionRef);
+      // Find transaction — first by provider reference, then by UUID parsed from the ref
+      let transaction = await transactionRepository.findByProviderReference(transactionRef);
+
       if (!transaction) {
-        return res.status(404).json({
-          success: false,
-          message: "Transaction not found"
-        });
+        const parts = transactionRef.split('-');
+        // Both FLW-{uuid5parts}-timestamp and PST-{uuid5parts}-timestamp share this structure
+        if (parts.length >= 7) {
+          const parsedId = `${parts[1]}-${parts[2]}-${parts[3]}-${parts[4]}-${parts[5]}`;
+          transaction = await transactionRepository.findById(parsedId);
+        }
+      }
+
+      if (!transaction) {
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=Transaction+not+found`);
+      }
+
+      // Idempotency: if already completed, just redirect to success
+      if (transaction.status === 'completed') {
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/success?transactionId=${transaction.id}`);
       }
 
       // Verify payment with provider
@@ -1411,50 +1462,50 @@ class PaymentController {
       if (provider === 'flutterwave') {
         verificationResult = await paymentService.verifyFlutterwavePayment(transaction_id || transaction.providerTransactionId);
       } else {
-        console.log("I am calling paystack");
         verificationResult = await paymentService.verifyPaystackPayment(transactionRef);
       }
 
       if (verificationResult.success) {
-        // Update transaction as completed
-        await transactionRepository.save({
-          ...transaction,
-          status: 'completed',
-          completedAt: new Date()
-        });
+        // Atomic conditional update — only succeeds if still in processing state
+        const updated = await transactionRepository.repo.createQueryBuilder()
+          .update()
+          .set({
+            status: 'completed',
+            completedAt: new Date(),
+            providerFee: verificationResult.data?.app_fee || verificationResult.data?.fees || 0
+          })
+          .where('id = :id AND status = :status', { id: transaction.id, status: 'processing' })
+          .execute();
 
-        // Process funds for appointment payment
-        if (transaction.serviceType === 'appointment') {
-          await paymentService.processFundsForAppointmentPayment(transaction);
+        // Only process funds if we were the one to complete it (prevents double-credit)
+        if (updated.affected > 0) {
+          const SubscriptionService = require('../../subscriptions/services/subscriptionService');
+          if (transaction.serviceType === 'subscription' || transaction.serviceType === 'subscription_upgrade') {
+            await SubscriptionService.processSubscriptionUpgradeAfterPayment(transaction.id).catch(e =>
+              console.error('Subscription upgrade error on callback:', e)
+            );
+          } else if (transaction.doctorId && transaction.serviceType === 'appointment') {
+            await paymentService.processFundsForAppointmentPayment(transaction);
+          } else if (transaction.doctorId) {
+            await paymentService.processFundsImmediate(transaction);
+          }
         }
 
-        // Redirect to success page
-        const successUrl = returnUrl
-          ? `${returnUrl}?status=success&transactionId=${transaction.id}`
-          : `${process.env.FRONTEND_URL}/payment/success?transactionId=${transaction.id}`;
-
-        res.redirect(successUrl);
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/success?transactionId=${transaction.id}`);
       } else {
-        // Update transaction as failed
-        await transactionRepository.save({
-          ...transaction,
-          status: 'failed',
-          failedAt: new Date()
-        });
+        // Atomic conditional update to failed
+        await transactionRepository.repo.createQueryBuilder()
+          .update()
+          .set({ status: 'failed', failedAt: new Date() })
+          .where('id = :id AND status = :status', { id: transaction.id, status: 'processing' })
+          .execute();
 
-        // Redirect to failure page
-        const failureUrl = returnUrl
-          ? `${returnUrl}?status=failed&transactionId=${transaction.id}`
-          : `${process.env.FRONTEND_URL}/payment/failed?transactionId=${transaction.id}`;
-
-        res.redirect(failureUrl);
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?transactionId=${transaction.id}`);
       }
 
     } catch (error) {
       console.error('Payment callback error:', error);
-
-      const errorUrl = `${process.env.FRONTEND_URL}/payment/error?message=${encodeURIComponent(error.message)}`;
-      res.redirect(errorUrl);
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=${encodeURIComponent(error.message)}`);
     }
   }
 

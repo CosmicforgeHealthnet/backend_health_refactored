@@ -350,12 +350,32 @@ exports.getOnlineStatus = async (req, res, next) => {
 exports.updateAuthInfo = async (req, res, next) => {
     try {
         const userId = req.user.sub;
-        const { fullName, profileImageUrl, bannerUrl, departmentSpecialty } =
-            req.body;
-        if ((!fullName && !profileImageUrl && !bannerUrl && !departmentSpecialty)) {
+        let { fullName, profileImageUrl, bannerUrl, departmentSpecialty } = req.body;
+
+        // If a file was uploaded via multipart, save it and use its path
+        if (req.files && req.files.length > 0) {
+            const crypto = require('node:crypto');
+            const path = require('node:path');
+            const fs = require('node:fs').promises;
+
+            const file = req.files[0];
+            const ext = path.extname(file.originalname);
+            const fileName = `${crypto.randomUUID()}${ext}`;
+
+            const uploadDir = process.env.UPLOAD_DIRECTORY ||
+                (process.env.NODE_ENV === 'production' ? '/app/uploads' : path.join(__dirname, '../../../../uploads'));
+            const imagesDir = path.join(uploadDir, 'images');
+            await fs.mkdir(imagesDir, { recursive: true });
+            await fs.writeFile(path.join(imagesDir, fileName), file.buffer);
+
+            const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+            profileImageUrl = `${baseUrl}/uploads/images/${fileName}`;
+        }
+
+        if (!fullName && !profileImageUrl && !bannerUrl && !departmentSpecialty) {
             return res.status(400).json({
                 error:
-                    "At least one field (fullName, profileImageUrl, bannerUrl, departmentSpecialty) is required",
+                    "At least one field (fullName, profileImageUrl, bannerUrl, departmentSpecialty) or a file is required",
             });
         }
         const updatedUser = await userService.updateAuthInfo(userId, {

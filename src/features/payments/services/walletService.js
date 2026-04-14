@@ -8,19 +8,67 @@ const walletWithdrawalRepository = require("../repositories/walletWithdrawalRepo
 const userRepository = require("../../auth/repositories/userRepository");
 const axios = require("axios");
 
+// Hardcoded country → currency map. No API calls, instant lookup.
+// Covers all countries supported by Flutterwave + Paystack.
+const COUNTRY_CURRENCY_MAP = {
+  // West Africa
+  'nigeria': 'NGN', 'ghana': 'GHS', 'senegal': 'XOF', 'ivory coast': 'XOF',
+  "cote d'ivoire": 'XOF', 'mali': 'XOF', 'burkina faso': 'XOF', 'niger': 'XOF',
+  'benin': 'XOF', 'togo': 'XOF', 'guinea-bissau': 'XOF', 'sierra leone': 'SLL',
+  'liberia': 'USD',
+  // East Africa
+  'kenya': 'KES', 'tanzania': 'TZS', 'uganda': 'UGX', 'rwanda': 'RWF',
+  'ethiopia': 'USD', 'somalia': 'USD',
+  // Central Africa
+  'cameroon': 'XAF', 'chad': 'XAF', 'central african republic': 'XAF',
+  'republic of the congo': 'XAF', 'democratic republic of the congo': 'XAF',
+  'gabon': 'XAF', 'equatorial guinea': 'XAF',
+  // Southern Africa
+  'south africa': 'ZAR', 'zambia': 'ZMW', 'malawi': 'MWK', 'zimbabwe': 'USD',
+  'botswana': 'USD', 'namibia': 'USD', 'mozambique': 'USD',
+  // North Africa
+  'egypt': 'EGP', 'morocco': 'USD', 'algeria': 'USD', 'tunisia': 'USD',
+  // Europe
+  'united kingdom': 'GBP', 'uk': 'GBP', 'germany': 'EUR', 'france': 'EUR',
+  'spain': 'EUR', 'italy': 'EUR', 'netherlands': 'EUR', 'belgium': 'EUR',
+  'portugal': 'EUR', 'ireland': 'EUR', 'austria': 'EUR', 'finland': 'EUR',
+  'greece': 'EUR', 'sweden': 'USD', 'norway': 'USD', 'denmark': 'USD',
+  // Americas
+  'united states': 'USD', 'usa': 'USD', 'canada': 'CAD',
+  // Oceania
+  'australia': 'AUD', 'new zealand': 'USD'
+};
+
+// Supported by at least one of Flutterwave or Paystack
+const SUPPORTED_CURRENCIES = new Set([
+  'NGN', 'USD', 'GHS', 'ZAR', 'KES', 'XOF', 'EGP', 'XAF',
+  'EUR', 'GBP', 'UGX', 'TZS', 'SLL', 'MWK', 'ZMW', 'RWF', 'CAD', 'AUD'
+]);
+
 class WalletService {
   constructor() {
     this.exchangeRateApi = "https://api.exchangerate-api.com/v4/latest";
     this.paymentService = require("./paymentService");
   }
 
-  // Then create a wrapper method:
   async getExchangeRate(from, to) {
     return await this.paymentService.getExchangeRate(from, to);
   }
 
   /**
-   * Create a wallet for a doctor
+   * Resolve the correct display currency for a doctor based on their country.
+   * No API calls — instant lookup from hardcoded map.
+   * Falls back to USD if country is unknown or currency unsupported.
+   */
+  resolveCurrencyFromCountry(country) {
+    if (!country) return 'USD';
+    const currency = COUNTRY_CURRENCY_MAP[country.toLowerCase().trim()];
+    if (currency && SUPPORTED_CURRENCIES.has(currency)) return currency;
+    return 'USD';
+  }
+
+  /**
+   * Create a wallet for a doctor — currency auto-detected from country
    */
   async createDoctorWallet(doctorId) {
     const doctor = await userRepository.findById(doctorId);
@@ -38,7 +86,7 @@ class WalletService {
       totalBalanceUsd: 0.00,
       pendingCreditsUsd: 0.00,
       availableBalanceUsd: 0.00,
-      preferredDisplayCurrency: 'USD'
+      preferredDisplayCurrency: this.resolveCurrencyFromCountry(doctor.country)
     };
 
     const wallet = doctorWalletRepository.create(walletData);
@@ -46,13 +94,35 @@ class WalletService {
   }
 
   /**
-   * Get doctor's wallet with currency conversion
+   * Get doctor's wallet with currency conversion.
+   * Auto-syncs display currency from doctor's country on every fetch —
+   * so if country changes on their profile, wallet currency updates automatically.
    */
-  async getDoctorWallet(doctorId) {
-    const wallet = await doctorWalletRepository.findByDoctorId(doctorId);
+  async getDoctorWallet(doctorId, locationCountry = null) {
+    const [wallet, doctor] = await Promise.all([
+      doctorWalletRepository.findByDoctorId(doctorId),
+      userRepository.findById(doctorId)
+    ]);
+
     if (!wallet) {
       throw new Error("Wallet not found for this doctor");
     }
+
+    // Auto-sync: resolve correct currency — DB country wins, location middleware is fallback.
+    // Only persist to DB when country comes from the doctor's profile (not IP location),
+    // so that traveling doesn't permanently flip the wallet currency.
+    const dbCountry = doctor?.country || null;
+    const effectiveCountry = dbCountry || locationCountry;
+    const correctCurrency = this.resolveCurrencyFromCountry(effectiveCountry);
+
+    if (dbCountry && wallet.preferredDisplayCurrency !== correctCurrency) {
+      // Profile country is set and wallet currency is stale — persist the fix
+      await doctorWalletRepository.repo.update(wallet.id, {
+        preferredDisplayCurrency: correctCurrency
+      });
+    }
+    // Always use correctCurrency for this response (whether from DB or IP fallback)
+    wallet.preferredDisplayCurrency = correctCurrency;
 
     const exchangeRate = await this.getExchangeRate('USD', wallet.preferredDisplayCurrency);
 

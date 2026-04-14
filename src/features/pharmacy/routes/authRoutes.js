@@ -12,6 +12,7 @@ router.post("/login", pharmacyAuthController.loginPharmacy);
 // Protected routes
 router.get("/profile", authenticateJWT, pharmacyAuthController.getPharmacyProfile);
 router.put("/profile", authenticateJWT, pharmacyAuthController.updatePharmacyProfile);
+router.get("/pricing/fee-types", pharmacyAuthController.getPricingFeeTypes);
 router.get("/pricing", authenticateJWT, pharmacyAuthController.getPricing);
 router.post("/pricing", authenticateJWT, pharmacyAuthController.setPricing);
 
@@ -31,8 +32,13 @@ router.post(
   pharmacyAuthController.uploadProfileLogo,
 );
 
+// Account settings
+router.put("/account", authenticateJWT, pharmacyAuthController.updateAccountSettings);
+router.post("/change-password", authenticateJWT, pharmacyAuthController.changePassword);
+
 // Staff management
 router.post("/staff", authenticateJWT, pharmacyAuthController.addStaff);
+router.get("/staff/roles", pharmacyAuthController.getStaffRoles);
 router.get("/staff", authenticateJWT, pharmacyAuthController.getStaff);
 router.delete("/staff/:id", authenticateJWT, pharmacyAuthController.removeStaff);
 

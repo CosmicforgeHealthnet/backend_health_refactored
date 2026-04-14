@@ -195,12 +195,19 @@ class SubscriptionCompatibilityService {
    * - If PROMO_EXPIRY is in the future AND plan has discount config → apply discount
    * - If PROMO_EXPIRY is in the past OR no discount config → regular pricing
    *
+   * Output:
+   * - price: The MAIN/BASE price (what user would pay without discount)
+   * - discountPrice: The price AFTER discount (what user actually pays during promo)
+   * - discount: The amount saved
+   * - discountPercentage: The percentage off
+   * - hasDiscount: Whether a discount is currently active
+   *
    * @param {Object} plan - Plan definition
    * @param {string} currency - Currency code
    * @returns {Object} Pricing details
    */
   static _getPricing(plan, currency) {
-    // Get base price from plan
+    // Get the main/base price from plan.price
     const basePrice = plan.price?.[currency] || plan.price?.USD || 0;
 
     // Check if promo is active based on PROMO_EXPIRY
@@ -210,7 +217,7 @@ class SubscriptionCompatibilityService {
     if (!isPromoActive) {
       return {
         price: basePrice,
-        originalPrice: basePrice,
+        discountPrice: basePrice,
         discount: 0,
         discountPercentage: 0,
         hasDiscount: false
@@ -218,17 +225,16 @@ class SubscriptionCompatibilityService {
     }
 
     // Promo is active - check if plan has promotional pricing defined
-    const hasPromoConfig = plan.originalPrice && plan.discountPercentage > 0;
+    const hasPromoConfig = plan.discountPrice && plan.discountPercentage > 0;
 
     if (hasPromoConfig) {
-      const originalPrice = plan.originalPrice[currency] || plan.originalPrice.USD || basePrice;
-      const discountedPrice = plan.price[currency] || plan.price.USD || 0;
-      const discountAmount = originalPrice - discountedPrice;
+      const discountPrice = plan.discountPrice[currency] || plan.discountPrice.USD || basePrice;
+      const discountAmount = basePrice - discountPrice;
       const discountPercentage = plan.discountPercentage || 0;
 
       return {
-        price: discountedPrice,
-        originalPrice,
+        price: basePrice,
+        discountPrice,
         discount: discountAmount,
         discountPercentage,
         hasDiscount: true
@@ -238,7 +244,7 @@ class SubscriptionCompatibilityService {
     // Promo active but plan has no discount config (e.g., free plan)
     return {
       price: basePrice,
-      originalPrice: basePrice,
+      discountPrice: basePrice,
       discount: 0,
       discountPercentage: 0,
       hasDiscount: false
@@ -333,6 +339,10 @@ class SubscriptionCompatibilityService {
     const tier = subscription.tier || "free";
     const plan = PLAN_DEFINITIONS[planType]?.[tier] || PLAN_DEFINITIONS.patient.free;
 
+    // Always use plan features based on tier to ensure consistency
+    // This prevents issues with stale or missing features in stored subscriptions
+    const features = plan.features;
+
     return {
       // Core fields
       id: subscription.id,
@@ -347,9 +357,9 @@ class SubscriptionCompatibilityService {
       price: subscription.price,
       currency: subscription.currency,
 
-      // Features & limits
+      // Features & limits - always use plan features to ensure free tier gets generalEmergencySpecialists
       commissionRate: subscription.commissionRate ?? plan.commissionRate,
-      features: subscription.features || plan.features,
+      features,
       monthlyLimits: subscription.monthlyLimits || plan.monthlyLimits,
       currentUsage: subscription.currentUsage || {},
       familyMembers: subscription.familyMembers || plan.familyMembers || 1,
@@ -367,7 +377,7 @@ class SubscriptionCompatibilityService {
 
       // Computed fields
       planDefinition: plan,
-      featureList: this._formatFeatures(subscription.features || plan.features),
+      featureList: this._formatFeatures(features),
       isActive: subscription.status === "active",
       isExpired: subscription.status === "expired",
       isPremium: tier !== "free",
@@ -390,6 +400,10 @@ class SubscriptionCompatibilityService {
     const tier = subscription.tier || "free";
     const plan = PLAN_DEFINITIONS[planType]?.[tier] || PLAN_DEFINITIONS.patient.free;
 
+    // Always use plan features based on tier to ensure consistency
+    // This prevents issues with stale or missing features in stored subscriptions
+    const features = plan.features;
+
     return {
       id: subscription.id,
       userId: subscription.userId,
@@ -397,14 +411,14 @@ class SubscriptionCompatibilityService {
       planType,
       status: subscription.status,
 
-      // Essentials
-      features: subscription.features || plan.features,
+      // Essentials - always use plan features to ensure free tier gets generalEmergencySpecialists
+      features,
       monthlyLimits: subscription.monthlyLimits || plan.monthlyLimits,
       currentUsage: subscription.currentUsage || {},
       commissionRate: subscription.commissionRate ?? plan.commissionRate,
 
       // Computed
-      featureList: this._formatFeatures(subscription.features || plan.features),
+      featureList: this._formatFeatures(features),
       isActive: subscription.status === "active",
       isPremium: tier !== "free",
       daysRemaining: this._daysRemaining(subscription.endDate),

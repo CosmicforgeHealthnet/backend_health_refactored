@@ -190,20 +190,22 @@ class PharmacyAuthController {
         return res.status(404).json({ error: "Pharmacy profile not found" });
       }
 
+      const freshUser = await userRepo.findById(userId);
+
       return res.json({
         user: {
-          id: req.user.sub,
-          fullName: req.user.fullName,
-          email: req.user.email,
-          role: req.user.role,
-          status: req.user.status,
-          provider: req.user.provider,
-          profileImageUrl: req.user.profileImageUrl,
-          isOnline: req.user.isOnline,
-          tier: req.user.tier,
-          mfaEnabled: req.user.mfaEnabled,
-          createdAt: req.user.createdAt,
-          updatedAt: req.user.updatedAt
+          id: freshUser.id,
+          fullName: freshUser.fullName,
+          email: freshUser.email,
+          role: freshUser.role,
+          status: freshUser.status,
+          provider: freshUser.provider,
+          profileImageUrl: freshUser.profileImageUrl,
+          isOnline: freshUser.isOnline,
+          tier: freshUser.tier,
+          mfaEnabled: freshUser.mfaEnabled,
+          createdAt: freshUser.createdAt,
+          updatedAt: freshUser.updatedAt
         },
         pharmacy: {
           id: pharmacyProfile.id,
@@ -221,7 +223,8 @@ class PharmacyAuthController {
           licenseNumber: pharmacyProfile.licenseNumber,
           licenseExpiryDate: pharmacyProfile.licenseExpiryDate,
           operatingHours: pharmacyProfile.operatingHours,
-          documentsSubmitted: pharmacyProfile.documentsSubmitted,  // ADD THIS LINE
+          documentsSubmitted: pharmacyProfile.documentsSubmitted,
+          logoUrl: pharmacyProfile.logoUrl || null,
           createdAt: pharmacyProfile.createdAt,
           updatedAt: pharmacyProfile.updatedAt,
           // Include related data
@@ -247,6 +250,34 @@ class PharmacyAuthController {
     } catch (error) {
       next(error);
     }
+  }
+
+  async getPricingFeeTypes(req, res, next) {
+    return res.json({
+      success: true,
+      data: [
+        { value: "delivery",         label: "Delivery Fee" },
+        { value: "consultation",     label: "Consultation Fee" },
+        { value: "handling",         label: "Handling Fee" },
+        { value: "processing",       label: "Processing Fee" },
+        { value: "home_delivery",    label: "Home Delivery" },
+        { value: "express_delivery", label: "Express Delivery" },
+        { value: "packaging",        label: "Packaging Fee" },
+        { value: "call_in",          label: "Call-in Fee" },
+      ]
+    });
+  }
+
+  async getStaffRoles(req, res, next) {
+    return res.json({
+      success: true,
+      data: [
+        { value: "pharmacist", label: "Pharmacist" },
+        { value: "assistant",  label: "Assistant" },
+        { value: "dispatcher", label: "Dispatcher" },
+        { value: "pharmacy",   label: "Admin / Manager" },
+      ]
+    });
   }
 
   async setPricing(req, res, next) {
@@ -349,6 +380,65 @@ class PharmacyAuthController {
     }
   }
 
+  async changePassword(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ success: false, message: "currentPassword and newPassword are required" });
+      }
+      if (newPassword.length < 8) {
+        return res.status(400).json({ success: false, message: "New password must be at least 8 characters" });
+      }
+
+      const user = await userRepo.findById(userId);
+      if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+      const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!valid) return res.status(400).json({ success: false, message: "Current password is incorrect" });
+
+      const passwordHash = await bcrypt.hash(newPassword, 12);
+      await userRepo.update(userId, { passwordHash });
+
+      return res.json({ success: true, message: "Password changed successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateAccountSettings(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const { fullName, email } = req.body;
+
+      const updates = {};
+      if (fullName) updates.fullName = fullName.trim();
+      if (email) {
+        const existing = await userRepo.findByEmail(email.toLowerCase().trim());
+        if (existing && existing.id !== userId) {
+          return res.status(400).json({ success: false, message: "Email already in use" });
+        }
+        updates.email = email.toLowerCase().trim();
+      }
+
+      if (!Object.keys(updates).length) {
+        return res.status(400).json({ success: false, message: "Nothing to update" });
+      }
+
+      await userRepo.update(userId, updates);
+      const updated = await userRepo.findById(userId);
+
+      return res.json({
+        success: true,
+        message: "Account settings updated",
+        data: { fullName: updated.fullName, email: updated.email }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async uploadProfileLogo(req, res, next) {
     try {
       const userId  = req.user.sub;
@@ -358,8 +448,15 @@ class PharmacyAuthController {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const logoUrl = savedFiles[0].fileUrl;
-      await pharmacyProfileRepo.updateLogoUrl(userId, logoUrl);
+      const savedFile = savedFiles[0];
+      const baseUrl = process.env.FILE_SERVER_URL || process.env.APP_URL || process.env.APP_BASE_URL;
+      const logoUrl = savedFile.fileUrl || `${baseUrl}/api/documents/images/${savedFile.id}`;
+
+      // Update pharmacy profile logo AND user profileImageUrl in parallel
+      await Promise.all([
+        pharmacyProfileRepo.updateLogoUrl(userId, logoUrl),
+        userRepo.update(userId, { profileImageUrl: logoUrl }),
+      ]);
 
       return res.status(200).json({
         success: true,

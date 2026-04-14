@@ -18,7 +18,7 @@ class TransactionRepository {
   findById(id) {
     return this.repo.findOne({
       where: { id },
-      relations: ['splits', 'disputes', 'paymentMethod']
+      relations: ['splits', 'disputes', 'paymentMethod', 'patient', 'doctor']
     });
   }
 
@@ -26,7 +26,7 @@ class TransactionRepository {
     return this.repo.find({
       where: { patientId },
       order: { createdAt: 'DESC' },
-      relations: ['splits']
+      relations: ['splits', 'doctor']
     });
   }
 
@@ -34,7 +34,7 @@ class TransactionRepository {
     return this.repo.find({
       where: { doctorId },
       order: { createdAt: 'DESC' },
-      relations: ['splits']
+      relations: ['splits', 'patient']
     });
   }
 
@@ -73,7 +73,8 @@ class TransactionRepository {
       },
       order: {
         appointmentDate: 'DESC'
-      }
+      },
+      relations: ['patient', 'doctor']
     });
   }
 
@@ -88,7 +89,8 @@ class TransactionRepository {
       },
       order: {
         appointmentDate: 'DESC'
-      }
+      },
+      relations: ['patient', 'doctor']
     });
   }
 
