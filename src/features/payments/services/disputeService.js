@@ -28,11 +28,16 @@ class DisputeService {
     // Resolve the patientId from the transaction regardless of who is raising the dispute
     const patientId = transaction.patientId;
 
-    if (transaction.status !== 'completed') {
+    // Allow disputes for transactions where payment was collected.
+    // 'processing' covers payment received but webhook not yet confirmed.
+    // Block only statuses where no money actually moved or dispute already exists.
+    const nonDisputableStatuses = ['pending', 'failed', 'disputed', 'refunded'];
+    if (nonDisputableStatuses.includes(transaction.status)) {
       throw new Error("Can only dispute completed transactions");
     }
 
-    if (new Date() > transaction.disputeWindowEndsAt) {
+    // Only enforce the dispute window if it was actually set (null = window open)
+    if (transaction.disputeWindowEndsAt && new Date() > transaction.disputeWindowEndsAt) {
       throw new Error("Dispute window has expired");
     }
 
