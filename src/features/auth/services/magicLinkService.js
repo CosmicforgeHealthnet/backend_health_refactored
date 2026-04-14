@@ -4,10 +4,12 @@ const magicLinkRepo = require('../repositories/magicLinkRepository');
 const userRepository = require('../repositories/userRepository');
 const refreshTokenService = require('./refreshTokenService');     // ← import
 const { sendMagicLinkEmail, sendMobileMagicLinkEmail } = require('../../../shared/services/email/helper/index');
+const {
+  sendGenericWhatsAppNotification,
+} = require('../../notifications/whatsapp/helper');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const ACCESS_EXPIRES = '15m';
-const REFRESH_EXPIRES = '30d';
 const LINK_EXPIRES_MIN = 10;
 
 class MagicLinkService {
@@ -36,16 +38,24 @@ class MagicLinkService {
     const expiresAt = new Date(Date.now() + LINK_EXPIRES_MIN * 60 * 1000);
     const record = magicLinkRepo.create({ user, token, purpose: user.status === 'pending_email_verification' ? 'signup' : 'login', ip, userAgent, expiresAt });
     await magicLinkRepo.save(record);
+    const link = `${process.env.APP_BASE_URL}/auth/magic-login?token=${token}`;
 
     // 3) Email link
     await sendMagicLinkEmail(user, token, LINK_EXPIRES_MIN, record.purpose);
+    await sendGenericWhatsAppNotification({
+      phoneNumber: user.phoneNumber,
+      text: `Hello ${user.fullName || "there"}, your CosmicForge ${record.purpose} link is ${link}. It expires in ${LINK_EXPIRES_MIN} minutes.`,
+      recipientName: user.fullName || "Customer",
+      serviceType: "magic link",
+      referenceId: record.purpose,
+    });
   }
 
   /**
    * Send a mobile deep-link magic-link email (login only)
    * The link opens the Doctor app directly: cosmicforge-mobile-doctor://magic-link?token=TOKEN
    */
-  async requestMobileMagicLink({ email, role = 'doctor' }, ip, userAgent) {
+  async requestMobileMagicLink({ email }, ip, userAgent) {
     const user = await userRepository.findByEmail(email);
     if (!user) {
       throw Object.assign(new Error('No account found with that email.'), { statusCode: 404 });
@@ -64,6 +74,13 @@ class MagicLinkService {
     await magicLinkRepo.save(record);
 
     await sendMobileMagicLinkEmail(user, token, LINK_EXPIRES_MIN, 'login');
+    await sendGenericWhatsAppNotification({
+      phoneNumber: user.phoneNumber,
+      text: `Hello ${user.fullName || "there"}, your CosmicForge Doctor login link is cosmicforge-mobile-doctor://magic-link?token=${token}. It expires in ${LINK_EXPIRES_MIN} minutes.`,
+      recipientName: user.fullName || "Customer",
+      serviceType: "magic link",
+      referenceId: "doctor-login",
+    });
   }
 
   /**

@@ -4,8 +4,11 @@ const transactionSplitRepository = require("../repositories/transactionSplitRepo
 const userPaymentMethodRepository = require("../repositories/userPaymentMethodRepository");
 const doctorWalletRepository = require("../repositories/doctorWalletRepository");
 const { sendAppointmentPaymentReceiptEmail, sendSubscriptionPaymentReceiptEmail } = require('../../../shared/services/email/emailHelpers');
-const disputeRepository = require("../repositories/disputeRepository");
 const userRepository = require("../../auth/repositories/userRepository");
+const {
+  sendAppointmentPaymentReceiptWhatsApp,
+  sendSubscriptionPaymentReceiptWhatsApp,
+} = require("../../notifications/whatsapp/helper");
 const axios = require("axios");
 
 class PaymentService {
@@ -590,7 +593,7 @@ class PaymentService {
    * @returns {Promise<Object>} - Payment options with fees and recommendations
    */
   async getPaymentOptions(data) {
-    const { amount, currency, userId, paymentMethodId } = data;
+    const { amount, currency, paymentMethodId } = data;
 
     // Get user's payment method performance if provided
     let paymentMethod = null;
@@ -1693,6 +1696,7 @@ class PaymentService {
 
             if (appointment && patient) {
               await sendAppointmentPaymentReceiptEmail(patient, ourTransaction, appointment, splits);
+              await sendAppointmentPaymentReceiptWhatsApp(patient, ourTransaction, appointment);
               console.log('✅ Appointment receipt email sent successfully');
             }
           } else if (ourTransaction.serviceType === 'subscription' || ourTransaction.serviceType === 'subscription_upgrade') {
@@ -1703,6 +1707,7 @@ class PaymentService {
 
             if (subscription && patient) {
               await sendSubscriptionPaymentReceiptEmail(patient, ourTransaction, subscription);
+              await sendSubscriptionPaymentReceiptWhatsApp(patient, ourTransaction, subscription);
               console.log('✅ Subscription receipt email sent successfully');
             }
           }
@@ -2080,7 +2085,7 @@ class PaymentService {
    * @returns {Promise<Object>} - Saved payment method
    */
   async savePaymentMethod(data) {
-    const { userId, cardLast4 } = data;
+    const { userId } = data;
 
     // Check if we should set as default (first payment method)
     const existingMethods = await userPaymentMethodRepository.findByUserId(userId);
@@ -2152,7 +2157,6 @@ class PaymentService {
    * @returns {Promise<Array>} - Transaction history
    */
   async getUserTransactions(userId, role, page = 1, limit = 20) {
-    const offset = (page - 1) * limit;
     if (role === 'patient') {
       return await transactionRepository.findByPatientId(userId);
     } else if (role === 'doctor') {

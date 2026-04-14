@@ -1,6 +1,9 @@
 const { sendVerificationEmail, sendVerificationOtpEmail } = require('../../../shared/services/email/helper/index');
 const otpService = require('./otpService');
 const { v4: uuidv4 } = require('uuid');
+const {
+  sendGenericWhatsAppNotification,
+} = require('../../notifications/whatsapp/helper');
 
 class VerificationService {
   get userRepo() { return require('../repositories/userRepository'); }
@@ -9,10 +12,18 @@ class VerificationService {
   async sendEmailVerification(user) {
     const token = uuidv4();
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+    const link = `${process.env.APP_BASE_URL}/auth/verify-email?token=${token}`;
 
     const record = this.emailVerRepo.create({ user, token, expiresAt });
     await this.emailVerRepo.save(record);
     await sendVerificationEmail(user, token, 60);
+    await sendGenericWhatsAppNotification({
+      phoneNumber: user.phoneNumber,
+      text: `Hello ${user.fullName || "there"}, verify your CosmicForge account here: ${link}. This link expires in 60 minutes.`,
+      recipientName: user.fullName || "Customer",
+      serviceType: "account verification",
+      referenceId: "verification",
+    });
   }
 
   async sendEmailVerificationOtp(user) {
@@ -23,6 +34,13 @@ class VerificationService {
     const record = this.emailVerRepo.create({ user, token, otp, expiresAt });
     await this.emailVerRepo.save(record);
     await sendVerificationOtpEmail(user, otp, 15);
+    await sendGenericWhatsAppNotification({
+      phoneNumber: user.phoneNumber,
+      text: `Hello ${user.fullName || "there"}, your CosmicForge verification code is ${otp}. It expires in 15 minutes.`,
+      recipientName: user.fullName || "Customer",
+      serviceType: "account verification",
+      referenceId: "verification",
+    });
     return otp; // returned so caller can expose it in dev-mode responses
   }
 
@@ -57,8 +75,22 @@ class VerificationService {
     
     if (record.otp) {
       await sendVerificationOtpEmail(user, record.otp, expiresInMinutes);
+      await sendGenericWhatsAppNotification({
+        phoneNumber: user.phoneNumber,
+        text: `Hello ${user.fullName || "there"}, your CosmicForge verification code is ${record.otp}. It expires in ${expiresInMinutes} minutes.`,
+        recipientName: user.fullName || "Customer",
+        serviceType: "account verification",
+        referenceId: "verification",
+      });
     } else {
       await sendVerificationEmail(user, record.token, expiresInMinutes);
+      await sendGenericWhatsAppNotification({
+        phoneNumber: user.phoneNumber,
+        text: `Hello ${user.fullName || "there"}, verify your CosmicForge account here: ${process.env.APP_BASE_URL}/auth/verify-email?token=${record.token}. This link expires in ${expiresInMinutes} minutes.`,
+        recipientName: user.fullName || "Customer",
+        serviceType: "account verification",
+        referenceId: "verification",
+      });
     }
   }
 

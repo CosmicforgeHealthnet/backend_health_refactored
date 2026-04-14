@@ -1,389 +1,374 @@
-// src/services/whatsappService.js
-const axios = require('axios');
+const axios = require("axios");
+const crypto = require("node:crypto");
+const config = require("../../../../config");
+const cache = require("../../../../shared/utils/cache");
 
 class WhatsAppService {
   constructor() {
-    this.baseURL = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}`;
-    this.accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-    
-    if (!this.accessToken) {
-      throw new Error('WHATSAPP_ACCESS_TOKEN is required');
-    }
+    this.config = config.whatsapp;
+    this.baseURL = `https://graph.facebook.com/${this.config.apiVersion}`;
+    this.windowCachePrefix = "whatsapp:last_inbound:";
   }
 
-  /**
-   * Send a template message
-   * @param {string} to - Recipient phone number (with country code, no + sign)
-   * @param {string} templateName - Name of the approved template
-   * @param {string} languageCode - Language code (e.g., 'en_US')
-   * @param {Array} parameters - Array of parameter values for template variables
-   * @param {Array} buttons - Optional button parameters for interactive templates
-   */
-  async sendTemplate(to, templateName, languageCode = 'en_US', parameters = [], buttons = []) {
-    try {
-      const payload = {
-        messaging_product: "whatsapp",
-        to: to,
-        type: "template",
-        template: {
-          name: templateName,
-          language: {
-            code: languageCode
-          }
-        }
-      };
+  isConfigured() {
+    return Boolean(this.config.accessToken && this.config.phoneNumberId);
+  }
 
-      // Add parameters if provided
-      if (parameters.length > 0) {
-        payload.template.components = [
-          {
-            type: "body",
-            parameters: parameters.map(param => ({
-              type: "text",
-              text: String(param)
-            }))
-          }
-        ];
-      }
-
-      // Add button parameters if provided
-      if (buttons.length > 0) {
-        if (!payload.template.components) {
-          payload.template.components = [];
-        }
-        payload.template.components.push({
-          type: "button",
-          sub_type: "quick_reply",
-          parameters: buttons
-        });
-      }
-
-      const response = await axios.post(
-        `${this.baseURL}/messages`,
-        payload,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
+  assertConfigured() {
+    if (!this.isConfigured()) {
+      throw new Error(
+        "WhatsApp is not configured. Set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID."
       );
-
-      console.log(`WhatsApp template sent successfully to ${to}:`, response.data);
-      return {
-        success: true,
-        messageId: response.data.messages[0].id,
-        data: response.data
-      };
-
-    } catch (error) {
-      console.error('Error sending WhatsApp template:', error.response?.data || error.message);
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message
-      };
     }
   }
 
-  /**
-   * Format phone number for WhatsApp (remove + and spaces)
-   * @param {string} phoneNumber - Phone number with country code
-   * @returns {string} Formatted phone number
-   */
   formatPhoneNumber(phoneNumber) {
-    return phoneNumber.replace(/[\s+\-()]/g, '');
+    return String(phoneNumber || "").replace(/[^\d]/g, "");
   }
 
-  /**
-   * Send verification email template
-   */
-  async sendVerificationTemplate(phoneNumber, fullName, expiresInMinutes) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    return await this.sendTemplate(
-      formattedPhone,
-      'email_verification',
-      'en_US',
-      [fullName, expiresInMinutes.toString()]
-    );
+  buildMessagesUrl() {
+    this.assertConfigured();
+    return `${this.baseURL}/${this.config.phoneNumberId}/messages`;
   }
 
-  /**
-   * Send password reset template
-   */
-  async sendPasswordResetTemplate(phoneNumber, fullName, expiresInMinutes) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    return await this.sendTemplate(
-      formattedPhone,
-      'password_reset',
-      'en_US',
-      [fullName, expiresInMinutes.toString()]
-    );
-  }
-
-  /**
-   * Send doctor verification status template
-   */
-  async sendDoctorVerificationStatusTemplate(phoneNumber, doctorName, status, licenseNumber, verificationId) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    
-    const templateMappings = {
-      'pending': 'verification_submitted',
-      'in_progress': 'verification_in_progress',
-      'manual_review': 'verification_manual_review',
-      'approved': 'verification_approved',
-      'rejected': 'verification_rejected',
-      'expired': 'verification_expired'
+  getRequestHeaders() {
+    this.assertConfigured();
+    return {
+      Authorization: `Bearer ${this.config.accessToken}`,
+      "Content-Type": "application/json",
     };
-
-    const templateName = templateMappings[status] || 'verification_submitted';
-    
-    let parameters = [doctorName];
-    if (licenseNumber) parameters.push(licenseNumber);
-    if (verificationId) parameters.push(verificationId);
-
-    return await this.sendTemplate(
-      formattedPhone,
-      templateName,
-      'en_US',
-      parameters
-    );
   }
 
-  /**
-   * Send appointment reminder template
-   */
-  async sendAppointmentReminderTemplate(phoneNumber, recipientName, otherPersonName, date, time, duration, consultationType, meetingLink, isDoctor = false) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    const templateName = isDoctor ? 'doctor_appointment_reminder' : 'patient_appointment_reminder';
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      templateName,
-      'en_US',
-      [recipientName, otherPersonName, date, time, duration.toString(), consultationType, meetingLink]
-    );
-  }
-
-  /**
-   * Send appointment approval template
-   */
-  async sendAppointmentApprovedTemplate(phoneNumber, patientName, doctorName, date, time, consultationType) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      'patient_appointment_approved',
-      'en_US',
-      [patientName, doctorName, date, time, consultationType]
-    );
-  }
-
-  /**
-   * Send appointment cancellation template
-   */
-  async sendAppointmentCancellationTemplate(phoneNumber, recipientName, otherPersonName, date, time, reason, cancelledBy, refundAmount, isDoctor = false) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    const templateName = isDoctor ? 'doctor_appointment_cancelled' : 'patient_appointment_cancelled';
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      templateName,
-      'en_US',
-      [recipientName, otherPersonName, date, time, reason, cancelledBy, refundAmount]
-    );
-  }
-
-  /**
-   * Send payment receipt template
-   */
-  async sendPaymentReceiptTemplate(phoneNumber, patientName, doctorName, date, time, amount, currency, transactionId) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      'appointment_payment_receipt',
-      'en_US',
-      [patientName, doctorName, date, time, amount, currency, transactionId]
-    );
-  }
-
-  /**
-   * Send meeting preparation template
-   */
-  async sendMeetingPreparationTemplate(phoneNumber, recipientName, otherPersonName, time, meetingLink, password, isDoctor = false) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    const templateName = isDoctor ? 'doctor_meeting_preparation' : 'patient_meeting_preparation';
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      templateName,
-      'en_US',
-      [recipientName, otherPersonName, time, meetingLink, password]
-    );
-  }
-
-  /**
-   * Send Google Meet link template
-   */
-  async sendGoogleMeetLinkTemplate(phoneNumber, recipientName, otherPersonName, date, time, meetingLink, meetingCode, isDoctor = false) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    const templateName = isDoctor ? 'doctor_google_meet_link' : 'patient_google_meet_link';
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      templateName,
-      'en_US',
-      [recipientName, otherPersonName, date, time, meetingLink, meetingCode]
-    );
-  }
-
-  /**
-   * Send Zoom meeting link template
-   */
-  async sendZoomMeetingLinkTemplate(phoneNumber, recipientName, otherPersonName, date, time, meetingLink, meetingId, password, hostKey = null, isDoctor = false) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    const templateName = isDoctor ? 'doctor_zoom_meeting_link' : 'patient_zoom_meeting_link';
-    
-    let parameters = [recipientName, otherPersonName, date, time, meetingLink, meetingId, password];
-    if (isDoctor && hostKey) {
-      parameters.push(hostKey);
+  getTemplateBodyComponent(values = []) {
+    if (!values.length) {
+      return [];
     }
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      templateName,
-      'en_US',
-      parameters
-    );
+
+    return [
+      {
+        type: "body",
+        parameters: values.map((value) => ({
+          type: "text",
+          text: String(value),
+        })),
+      },
+    ];
   }
 
-  /**
-   * Send reward notification template
-   */
-  async sendRewardNotificationTemplate(phoneNumber, rewardType, rewardValue, rewardCode, validityDays) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      'reward_verification',
-      'en_US',
-      [rewardType, rewardValue, rewardCode, validityDays.toString()]
-    );
-  }
+  async sendTextMessage(to, text, options = {}) {
+    const phoneNumber = this.formatPhoneNumber(to);
+    if (!phoneNumber || !text) {
+      throw new Error("Both 'to' and 'text' are required to send a WhatsApp text message.");
+    }
 
-  /**
-   * Send lab facility status template
-   */
-  async sendLabFacilityStatusTemplate(phoneNumber, adminName, facilityName, facilityType, registrationNumber, trackingId = null) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    
-    let parameters = [adminName, facilityName, facilityType, registrationNumber];
-    if (trackingId) parameters.push(trackingId);
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      'lab_facility_registration',
-      'en_US',
-      parameters
-    );
-  }
-
-  /**
-   * Send spin wheel reminder template
-   */
-  async sendSpinWheelReminderTemplate(phoneNumber, userName) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      'spin_wheel_reminder',
-      'en_US',
-      [userName]
-    );
-  }
-
-  /**
-   * Send withdrawal OTP template
-   */
-  async sendWithdrawalOtpTemplate(phoneNumber, doctorName, amount, currency, accountName, withdrawalId) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      'withdrawal_otp_notification',
-      'en_US',
-      [doctorName, amount, currency, accountName, withdrawalId]
-    );
-  }
-
-  /**
-   * Send reminder templates
-   */
-  async sendProfileCompletionReminderTemplate(phoneNumber, doctorName) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      'profile_completion_reminder',
-      'en_US',
-      [doctorName]
-    );
-  }
-
-  async sendVerificationReminderTemplate(phoneNumber, doctorName, daysPending, verificationId, documentsNeeded) {
-    const formattedPhone = this.formatPhoneNumber(phoneNumber);
-    
-    return await this.sendTemplate(
-      formattedPhone,
-      'verification_reminder',
-      'en_US',
-      [doctorName, daysPending.toString(), verificationId, documentsNeeded.join(', ')]
-    );
-  }
-
-  /**
-   * Send bulk templates (useful for campaigns)
-   */
-  async sendBulkTemplates(recipients, templateName, languageCode, parametersFunction) {
-    const results = {
-      successful: 0,
-      failed: 0,
-      errors: []
+    const payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "text",
+      text: {
+        body: String(text),
+        preview_url: Boolean(options.previewUrl),
+      },
     };
 
-    for (const recipient of recipients) {
-      try {
-        const parameters = parametersFunction(recipient);
-        const result = await this.sendTemplate(
-          recipient.phoneNumber,
-          templateName,
-          languageCode,
-          parameters
-        );
+    if (options.replyToMessageId) {
+      payload.context = { message_id: options.replyToMessageId };
+    }
 
-        if (result.success) {
-          results.successful++;
-        } else {
-          results.failed++;
-          results.errors.push({
-            phoneNumber: recipient.phoneNumber,
-            error: result.error
-          });
-        }
+    const response = await axios.post(this.buildMessagesUrl(), payload, {
+      headers: this.getRequestHeaders(),
+    });
 
-        // Add delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
+    return response.data;
+  }
 
-      } catch (error) {
-        results.failed++;
-        results.errors.push({
-          phoneNumber: recipient.phoneNumber,
-          error: error.message
-        });
+  async sendTemplateMessage(
+    to,
+    templateName,
+    languageCode = this.config.defaultTemplateLanguage,
+    components = []
+  ) {
+    const phoneNumber = this.formatPhoneNumber(to);
+    if (!phoneNumber || !templateName) {
+      throw new Error("Both 'to' and 'templateName' are required to send a WhatsApp template message.");
+    }
+
+    const payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "template",
+      template: {
+        name: templateName,
+        language: {
+          code: languageCode,
+        },
+      },
+    };
+
+    if (components.length > 0) {
+      payload.template.components = components;
+    }
+
+    const response = await axios.post(this.buildMessagesUrl(), payload, {
+      headers: this.getRequestHeaders(),
+    });
+
+    return response.data;
+  }
+
+  async sendImageMessage(to, imageUrl, caption = "") {
+    const phoneNumber = this.formatPhoneNumber(to);
+    if (!phoneNumber || !imageUrl) {
+      throw new Error("Both 'to' and 'imageUrl' are required to send a WhatsApp image message.");
+    }
+
+    const payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "image",
+      image: {
+        link: imageUrl,
+      },
+    };
+
+    if (caption) {
+      payload.image.caption = caption;
+    }
+
+    const response = await axios.post(this.buildMessagesUrl(), payload, {
+      headers: this.getRequestHeaders(),
+    });
+
+    return response.data;
+  }
+
+  async sendInteractiveMessage(to, bodyText, buttons) {
+    const phoneNumber = this.formatPhoneNumber(to);
+    if (!phoneNumber || !bodyText || !Array.isArray(buttons) || buttons.length === 0) {
+      throw new Error("Valid 'to', 'bodyText', and non-empty 'buttons' are required for an interactive message.");
+    }
+
+    const normalizedButtons = buttons.slice(0, 3).map((button, index) => {
+      if (typeof button === "string") {
+        return {
+          type: "reply",
+          reply: {
+            id: `btn_${index}`,
+            title: button.slice(0, 20),
+          },
+        };
       }
+
+      return {
+        type: "reply",
+        reply: {
+          id: String(button.id || `btn_${index}`),
+          title: String(button.title || button.label || `Option ${index + 1}`).slice(0, 20),
+        },
+      };
+    });
+
+    const payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "interactive",
+      interactive: {
+        type: "button",
+        body: {
+          text: String(bodyText),
+        },
+        action: {
+          buttons: normalizedButtons,
+        },
+      },
+    };
+
+    const response = await axios.post(this.buildMessagesUrl(), payload, {
+      headers: this.getRequestHeaders(),
+    });
+
+    return response.data;
+  }
+
+  async markAsRead(messageId) {
+    if (!messageId) {
+      throw new Error("'messageId' is required to mark a WhatsApp message as read.");
     }
 
-    return results;
+    const payload = {
+      messaging_product: "whatsapp",
+      status: "read",
+      message_id: messageId,
+    };
+
+    const response = await axios.post(this.buildMessagesUrl(), payload, {
+      headers: this.getRequestHeaders(),
+    });
+
+    return response.data;
+  }
+
+  async getBusinessProfile() {
+    this.assertConfigured();
+
+    const response = await axios.get(
+      `${this.baseURL}/${this.config.phoneNumberId}`,
+      {
+        params: {
+          fields: "verified_name,display_phone_number,quality_rating",
+        },
+        headers: {
+          Authorization: `Bearer ${this.config.accessToken}`,
+        },
+      }
+    );
+
+    return response.data;
+  }
+
+  async getLastInboundMessageAt(phoneNumber) {
+    const formattedPhone = this.formatPhoneNumber(phoneNumber);
+    if (!formattedPhone) {
+      return null;
+    }
+
+    return cache.get(`${this.windowCachePrefix}${formattedPhone}`);
+  }
+
+  async recordLastInboundMessage(phoneNumber, timestamp = new Date()) {
+    const formattedPhone = this.formatPhoneNumber(phoneNumber);
+    if (!formattedPhone) {
+      return null;
+    }
+
+    const value = new Date(timestamp).toISOString();
+    await cache.set(`${this.windowCachePrefix}${formattedPhone}`, value, 35 * 24 * 60 * 60);
+    return value;
+  }
+
+  async isWithinCustomerServiceWindow(phoneNumber, explicitTimestamp = null) {
+    const sourceTimestamp =
+      explicitTimestamp || (await this.getLastInboundMessageAt(phoneNumber));
+
+    if (!sourceTimestamp) {
+      return false;
+    }
+
+    const lastInboundAt = new Date(sourceTimestamp);
+    if (Number.isNaN(lastInboundAt.getTime())) {
+      return false;
+    }
+
+    const windowMs =
+      Number(this.config.customerServiceWindowHours || 24) * 60 * 60 * 1000;
+
+    return Date.now() - lastInboundAt.getTime() <= windowMs;
+  }
+
+  buildFallbackTemplateComponents({ recipientName, serviceType, referenceId }) {
+    return this.getTemplateBodyComponent([
+      recipientName || "Customer",
+      serviceType || "service",
+      referenceId || "N/A",
+    ]);
+  }
+
+  async sendNotification({
+    to,
+    text,
+    recipientName = "Customer",
+    serviceType = "service",
+    referenceId = "N/A",
+    lastInboundAt = null,
+    preferFreeform = true,
+  }) {
+    const phoneNumber = this.formatPhoneNumber(to);
+    if (!phoneNumber) {
+      throw new Error("'to' is required to send a WhatsApp notification.");
+    }
+
+    const withinWindow =
+      preferFreeform &&
+      text &&
+      (await this.isWithinCustomerServiceWindow(phoneNumber, lastInboundAt));
+
+    if (withinWindow) {
+      const response = await this.sendTextMessage(phoneNumber, text);
+      return {
+        channel: "session_text",
+        withinWindow: true,
+        response,
+      };
+    }
+
+    const fallbackTemplateName = this.config.defaultTemplateName;
+    if (!fallbackTemplateName) {
+      throw new Error(
+        "Recipient is outside the customer service window and no approved fallback template is configured."
+      );
+    }
+
+    const response = await this.sendTemplateMessage(
+      phoneNumber,
+      fallbackTemplateName,
+      this.config.defaultTemplateLanguage,
+      this.buildFallbackTemplateComponents({
+        recipientName,
+        serviceType,
+        referenceId,
+      })
+    );
+
+    return {
+      channel: "template",
+      withinWindow: false,
+      templateName: fallbackTemplateName,
+      response,
+    };
+  }
+
+  verifyWebhookSignature(rawBody, signatureHeader) {
+    if (!this.config.appSecret) {
+      throw new Error("WHATSAPP_APP_SECRET is required to verify webhook signatures.");
+    }
+
+    if (!rawBody || !signatureHeader || !signatureHeader.startsWith("sha256=")) {
+      return false;
+    }
+
+    const expectedSignature = crypto
+      .createHmac("sha256", this.config.appSecret)
+      .update(rawBody)
+      .digest("hex");
+
+    const receivedSignature = signatureHeader.slice("sha256=".length);
+    const expectedBuffer = Buffer.from(expectedSignature, "hex");
+    const receivedBuffer = Buffer.from(receivedSignature, "hex");
+
+    if (expectedBuffer.length !== receivedBuffer.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+  }
+
+  async getHealthStatus() {
+    return {
+      ok: true,
+      configured: this.isConfigured(),
+      apiVersion: this.config.apiVersion,
+      phoneNumberIdConfigured: Boolean(this.config.phoneNumberId),
+      accessTokenConfigured: Boolean(this.config.accessToken),
+      webhookVerifyTokenConfigured: Boolean(this.config.webhookVerifyToken),
+      webhookSignatureConfigured: Boolean(this.config.appSecret),
+      internalApiTokenConfigured: Boolean(this.config.internalApiToken),
+      defaultTemplateConfigured: Boolean(this.config.defaultTemplateName),
+      customerServiceWindowHours: Number(this.config.customerServiceWindowHours || 24),
+    };
   }
 }
 

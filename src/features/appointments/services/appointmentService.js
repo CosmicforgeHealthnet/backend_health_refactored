@@ -16,6 +16,13 @@ const { USER_ROLES } = require("../../../shared/utils/constants");
 const AppointmentChatService = require("../../chat/services/appointmentChatService");
 const appointmentEmailHelpers = require("../../../shared/services/email/emailHelpers");
 const NotificationService = require("../../notifications/services/notificationService");
+const {
+  sendPatientAppointmentApprovedWhatsApp,
+  sendDoctorAppointmentCancellationWhatsApp,
+  sendPatientAppointmentCancellationWhatsApp,
+  sendDoctorAppointmentRescheduledWhatsApp,
+  sendPatientAppointmentRescheduledWhatsApp,
+} = require("../../notifications/whatsapp/helper");
 
 const TimezoneService = require("../../compliance/services/timezoneService");
 
@@ -301,9 +308,22 @@ class AppointmentService {
           },
         });
       }
+
+      if (patientData?.phoneNumber) {
+        await sendPatientAppointmentApprovedWhatsApp({
+          phoneNumber: patientData.phoneNumber,
+          patientName: patientData.fullName,
+          doctorName: doctorData?.fullName || "your doctor",
+          appointmentDetails: {
+            id: appointment.id,
+            date: appointment.appointmentDate,
+            time: appointment.appointmentTime,
+          },
+        });
+      }
     } catch (emailError) {
       console.error(
-        `Failed to send approval email for appointment ${appointmentId}:`,
+        `Failed to send approval email/WhatsApp for appointment ${appointmentId}:`,
         emailError
       );
     }
@@ -392,6 +412,11 @@ class AppointmentService {
       throw new Error("Appointment not found");
     }
 
+    // Map currency code to symbol
+    const currencySymbols = { NGN: '₦', USD: '$', GBP: '£', EUR: '€', GHS: '₵', KES: 'KSh', ZAR: 'R' };
+    const currencyCode = appointment.consultationFeeCurrency || 'NGN';
+    const currencySymbol = currencySymbols[currencyCode] || currencyCode + ' ';
+
     // Cancel meeting based on provider
     if (appointment.meetingProvider == "zoom") {
       await this.cancelZoomMeetingAppointment(id, cancellationData.reason);
@@ -414,15 +439,10 @@ class AppointmentService {
       updateData
     );
 
-    // Send cancellation emails to both doctor and patient
-    try {
-      const doctorData = appointment.doctor;
-      const patientData = appointment.patient;
-
-      // Map currency code to symbol
-      const currencySymbols = { NGN: '₦', USD: '$', GBP: '£', EUR: '€', GHS: '₵', KES: 'KSh', ZAR: 'R' };
-      const currencyCode = appointment.consultationFeeCurrency || 'NGN';
-      const currencySymbol = currencySymbols[currencyCode] || currencyCode + ' ';
+      // Send cancellation emails to both doctor and patient
+      try {
+        const doctorData = appointment.doctor;
+        const patientData = appointment.patient;
 
       const cancellationDetails = {
         id: appointment.id,
@@ -453,9 +473,27 @@ class AppointmentService {
           appointmentDetails: cancellationDetails,
         });
       }
+
+      if (doctorData?.phoneNumber) {
+        await sendDoctorAppointmentCancellationWhatsApp({
+          phoneNumber: doctorData.phoneNumber,
+          doctorName: doctorData.fullName,
+          patientName: patientData?.fullName || "your patient",
+          appointmentDetails: cancellationDetails,
+        });
+      }
+
+      if (patientData?.phoneNumber) {
+        await sendPatientAppointmentCancellationWhatsApp({
+          phoneNumber: patientData.phoneNumber,
+          patientName: patientData.fullName,
+          doctorName: doctorData?.fullName || "your doctor",
+          appointmentDetails: cancellationDetails,
+        });
+      }
     } catch (emailError) {
       console.error(
-        `❌ Error sending cancellation emails for appointment ${id}:`,
+        `❌ Error sending cancellation emails/WhatsApp for appointment ${id}:`,
         emailError
       );
       // Don't fail the cancellation if email sending fails
@@ -667,10 +705,28 @@ class AppointmentService {
         });
       }
 
+      if (doctorData?.phoneNumber) {
+        await sendDoctorAppointmentRescheduledWhatsApp({
+          phoneNumber: doctorData.phoneNumber,
+          doctorName: doctorData.fullName,
+          patientName: patientData?.fullName || "your patient",
+          appointmentDetails: rescheduleDetails,
+        });
+      }
+
+      if (patientData?.phoneNumber) {
+        await sendPatientAppointmentRescheduledWhatsApp({
+          phoneNumber: patientData.phoneNumber,
+          patientName: patientData.fullName,
+          doctorName: doctorData?.fullName || "your doctor",
+          appointmentDetails: rescheduleDetails,
+        });
+      }
+
       console.log(`✅ Reschedule emails sent for appointment ${id}`);
     } catch (emailError) {
       console.error(
-        `❌ Error sending reschedule emails for appointment ${id}:`,
+        `❌ Error sending reschedule emails/WhatsApp for appointment ${id}:`,
         emailError
       );
       // Don't fail the reschedule if email sending fails

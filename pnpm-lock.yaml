@@ -125,6 +125,9 @@ importers:
       typeorm:
         specifier: ^0.3.24
         version: 0.3.28(pg@8.20.0)(redis@4.7.1)
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
       xlsx:
         specifier: ^0.18.5
         version: 0.18.5

@@ -5,6 +5,9 @@ const userRepository = require('../repositories/userRepository');
 const passwordResetRepository = require('../repositories/passwordResetRepository');
 const { sendPasswordResetEmail, sendPasswordResetOtpEmail } = require('../../../shared/services/email/helper/index');
 const otpService = require('./otpService');
+const {
+  sendGenericWhatsAppNotification,
+} = require('../../notifications/whatsapp/helper');
 const RESET_EXPIRES_MINUTES = 60;
 const OTP_EXPIRES_MINUTES = 15;
 
@@ -21,6 +24,7 @@ class PasswordResetService {
 
     const token = uuidv4();
     const expiresAt = new Date(Date.now() + RESET_EXPIRES_MINUTES * 60 * 1000);
+    const link = `${process.env.APP_BASE_URL}/auth/reset-password?token=${token}`;
 
     const record = passwordResetRepository.create({ user, token, expiresAt });
     await passwordResetRepository.save(record);
@@ -28,6 +32,13 @@ class PasswordResetService {
     // Send email asynchronously to prevent blocking the request
     sendPasswordResetEmail(user, token, RESET_EXPIRES_MINUTES)
       .catch(err => console.error(`❌ Background email sending failed for ${email}:`, err.message));
+    sendGenericWhatsAppNotification({
+      phoneNumber: user.phoneNumber,
+      text: `Hello ${user.fullName || "there"}, reset your CosmicForge password here: ${link}. This link expires in ${RESET_EXPIRES_MINUTES} minutes.`,
+      recipientName: user.fullName || "Customer",
+      serviceType: "password reset",
+      referenceId: "password-reset",
+    }).catch(err => console.error(`❌ Background WhatsApp sending failed for ${email}:`, err.message));
   }
 
   async requestResetOtp(email) {
@@ -43,6 +54,13 @@ class PasswordResetService {
 
     sendPasswordResetOtpEmail(user, otp, OTP_EXPIRES_MINUTES)
       .catch(err => console.error(`❌ Background email sending failed for ${email}:`, err.message));
+    sendGenericWhatsAppNotification({
+      phoneNumber: user.phoneNumber,
+      text: `Hello ${user.fullName || "there"}, your CosmicForge password reset code is ${otp}. It expires in ${OTP_EXPIRES_MINUTES} minutes.`,
+      recipientName: user.fullName || "Customer",
+      serviceType: "password reset",
+      referenceId: "password-reset",
+    }).catch(err => console.error(`❌ Background WhatsApp sending failed for ${email}:`, err.message));
   }
 
   /**
@@ -91,9 +109,23 @@ class PasswordResetService {
     if (record.otp) {
       sendPasswordResetOtpEmail(user, record.otp, minutesLeft)
         .catch(err => console.error(`❌ Background email resend failed for ${email}:`, err.message));
+      sendGenericWhatsAppNotification({
+        phoneNumber: user.phoneNumber,
+        text: `Hello ${user.fullName || "there"}, your CosmicForge password reset code is ${record.otp}. It expires in ${minutesLeft} minutes.`,
+        recipientName: user.fullName || "Customer",
+        serviceType: "password reset",
+        referenceId: "password-reset",
+      }).catch(err => console.error(`❌ Background WhatsApp resend failed for ${email}:`, err.message));
     } else {
       sendPasswordResetEmail(user, record.token, minutesLeft)
         .catch(err => console.error(`❌ Background email resend failed for ${email}:`, err.message));
+      sendGenericWhatsAppNotification({
+        phoneNumber: user.phoneNumber,
+        text: `Hello ${user.fullName || "there"}, reset your CosmicForge password here: ${process.env.APP_BASE_URL}/auth/reset-password?token=${record.token}. This link expires in ${minutesLeft} minutes.`,
+        recipientName: user.fullName || "Customer",
+        serviceType: "password reset",
+        referenceId: "password-reset",
+      }).catch(err => console.error(`❌ Background WhatsApp resend failed for ${email}:`, err.message));
     }
   }
 
