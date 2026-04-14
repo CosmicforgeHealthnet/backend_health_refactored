@@ -262,7 +262,7 @@ class ValidationMiddleware {
  static validateCreateDispute() {
    const schema = Joi.object({
      transactionId: Joi.string().uuid().required(),
-     patientId: Joi.string().uuid().required(),
+     // patientId is extracted from the JWT token in the controller and must not be trusted from the client
      reason: Joi.string().valid(
        'service_not_provided', 'poor_quality', 'billing_error', 'unauthorized_charge', 'other'
      ).required(),
