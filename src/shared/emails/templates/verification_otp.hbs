@@ -1,14 +1,32 @@
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-  <h2 style="color: #007bff; text-align: center;">Verify Your Account</h2>
-  <p>Hi {{fullName}},</p>
-  <p>Thank you for signing up for CosmicForge. Please use the following 6-digit code to verify your email address:</p>
-  
-  <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 8px; margin: 30px 0;">
-    <h1 style="color: #007bff; font-size: 48px; letter-spacing: 15px; margin: 0;">{{otp}}</h1>
-  </div>
-  
-  <p style="text-align: center; color: #666; font-size: 14px;">This code will expire in {{expiresInMinutes}} minutes.</p>
-  
-  <p>If you didn't request this, please ignore this email.</p>
-  <p>Best regards,<br>The CosmicForge Team</p>
+<div style="padding: 30px; font-family: Arial, sans-serif;">
+    <!-- Heading -->
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+        Verify Account
+    </h1>
+
+    <!-- Greeting -->
+    <p style="font-size: 16px; margin-bottom: 10px;">
+        Hey <strong>{{fullName}}</strong>,
+    </p>
+
+    <!-- Intro message -->
+    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
+        Thank you for registering with <strong>CosmicForge HealthNet</strong>! Please use the following 6-digit code to verify your email address:
+    </p>
+
+    <!-- OTP Code Display -->
+    <div style="background-color: #f8f9fa; padding: 30px; text-align: center; border-radius: 8px; margin: 30px 0; border: 1px solid #e5e7eb;">
+        <h1 style="color: #3964EA; font-size: 48px; letter-spacing: 10px; margin: 0; font-family: 'Courier New', monospace;">{{otp}}</h1>
+        <p style="text-align: center; color: #666; font-size: 14px; margin-top: 10px;">This code will expire in {{expiresInMinutes}} minutes.</p>
+    </div>
+
+    <!-- Instructions -->
+    <p style="font-size: 16px; margin-bottom: 20px;">
+        If you didn't request this, please ignore this email.
+    </p>
+
+    <p style="font-size: 16px;">
+        Best regards,<br>
+        <strong>The CosmicForge Team</strong>
+    </p>
 </div>

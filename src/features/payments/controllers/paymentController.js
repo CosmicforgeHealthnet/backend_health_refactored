@@ -626,12 +626,12 @@ class PaymentController {
             const role = req.user.role;
             if (role === 'doctor') {
               const p = transaction.patient;
-              const n = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || 'Patient' : 'Patient';
+              const n = p ? (p.fullName || [p.firstName, p.lastName].filter(Boolean).join(' ') || 'Patient') : 'Patient';
               return `Appointment with ${n} on ${apptDate}`;
             }
             if (role === 'patient') {
               const d = transaction.doctor;
-              const n = d ? [d.firstName, d.lastName].filter(Boolean).join(' ') || 'Doctor' : 'Doctor';
+              const n = d ? (d.fullName || [d.firstName, d.lastName].filter(Boolean).join(' ') || 'Doctor') : 'Doctor';
               return `Appointment with Dr. ${n} on ${apptDate}`;
             }
             return transaction.description;
@@ -667,12 +667,12 @@ class PaymentController {
           : '';
         if (role === 'doctor') {
           const p = transaction.patient;
-          const name = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || 'Patient' : 'Patient';
+          const name = p ? (p.fullName || [p.firstName, p.lastName].filter(Boolean).join(' ') || 'Patient') : 'Patient';
           return `Appointment with ${name} on ${apptDate}`;
         }
         if (role === 'patient') {
           const d = transaction.doctor;
-          const name = d ? [d.firstName, d.lastName].filter(Boolean).join(' ') || 'Doctor' : 'Doctor';
+          const name = d ? (d.fullName || [d.firstName, d.lastName].filter(Boolean).join(' ') || 'Doctor') : 'Doctor';
           return `Appointment with Dr. ${name} on ${apptDate}`;
         }
         return transaction.description;

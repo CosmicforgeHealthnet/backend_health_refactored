@@ -43,9 +43,9 @@ class MagicLinkService {
 
   /**
    * Send a mobile deep-link magic-link email (login only)
-   * The link opens the Doctor app directly: cosmicforge-mobile-doctor://magic-link?token=TOKEN
+   * The link opens the app directly (using role-based schemes).
    */
-  async requestMobileMagicLink({ email, role = 'doctor' }, ip, userAgent) {
+  async requestMobileMagicLink({ email }, ip, userAgent) {
     const user = await userRepository.findByEmail(email);
     if (!user) {
       throw Object.assign(new Error('No account found with that email.'), { statusCode: 404 });
@@ -63,7 +63,8 @@ class MagicLinkService {
     });
     await magicLinkRepo.save(record);
 
-    await sendMobileMagicLinkEmail(user, token, LINK_EXPIRES_MIN, 'login');
+    // Use the actual role from the user record to decide which mobile app to deep-link to
+    await sendMobileMagicLinkEmail(user, token, LINK_EXPIRES_MIN, 'login', user.role);
   }
 
   /**
