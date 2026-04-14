@@ -15,7 +15,8 @@ class DisputeController {
     try {
       const disputeData = {
         ...req.validatedData,
-        patientId: req.user.sub
+        userId: req.user.sub,
+        userRole: req.user.role
       };
 
       const dispute = await disputeService.createRefundRequest(disputeData);

@@ -12,16 +12,21 @@ class DisputeService {
    * @returns {Promise<Object>} - Created dispute
    */
   async createRefundRequest(data) {
-    const { transactionId, patientId, reason, description } = data;
+    const { transactionId, userId, userRole, reason, description } = data;
 
     const transaction = await transactionRepository.findById(transactionId);
     if (!transaction) {
       throw new Error("Transaction not found");
     }
 
-    if (transaction.patientId !== patientId) {
+    const isPatient = userRole === 'patient' && transaction.patientId === userId;
+    const isDoctor = userRole === 'doctor' && transaction.doctorId === userId;
+    if (!isPatient && !isDoctor) {
       throw new Error("Unauthorized to dispute this transaction");
     }
+
+    // Resolve the patientId from the transaction regardless of who is raising the dispute
+    const patientId = transaction.patientId;
 
     if (transaction.status !== 'completed') {
       throw new Error("Can only dispute completed transactions");
