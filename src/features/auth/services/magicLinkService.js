@@ -53,7 +53,7 @@ class MagicLinkService {
 
   /**
    * Send a mobile deep-link magic-link email (login only)
-   * The link opens the Doctor app directly: cosmicforge-mobile-doctor://magic-link?token=TOKEN
+   * The link opens the app directly (using role-based schemes).
    */
   async requestMobileMagicLink({ email }, ip, userAgent) {
     const user = await userRepository.findByEmail(email);
@@ -73,14 +73,20 @@ class MagicLinkService {
     });
     await magicLinkRepo.save(record);
 
-    await sendMobileMagicLinkEmail(user, token, LINK_EXPIRES_MIN, 'login');
+    // Use the actual role from the user record to decide which mobile app to deep-link to
+    await sendMobileMagicLinkEmail(user, token, LINK_EXPIRES_MIN, 'login', user.role);
+
+    const scheme = user.role === 'doctor' ? 'cosmicforge-mobile-doctor' : 'cosmicforge';
+    const appName = user.role === 'doctor' ? 'Doctor' : 'Patient';
+
     await sendGenericWhatsAppNotification({
       phoneNumber: user.phoneNumber,
-      text: `Hello ${user.fullName || "there"}, your CosmicForge Doctor login link is cosmicforge-mobile-doctor://magic-link?token=${token}. It expires in ${LINK_EXPIRES_MIN} minutes.`,
+      text: `Hello ${user.fullName || "there"}, your CosmicForge ${appName} login link is ${scheme}://magic-link?token=${token}. It expires in ${LINK_EXPIRES_MIN} minutes.`,
       recipientName: user.fullName || "Customer",
       serviceType: "magic link",
-      referenceId: "doctor-login",
+      referenceId: `${user.role}-login`,
     });
+
   }
 
   /**

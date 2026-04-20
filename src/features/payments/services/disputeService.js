@@ -12,22 +12,35 @@ class DisputeService {
    * @returns {Promise<Object>} - Created dispute
    */
   async createRefundRequest(data) {
-    const { transactionId, patientId, reason, description } = data;
+    const { transactionId, userId, userRole, reason, description } = data;
 
     const transaction = await transactionRepository.findById(transactionId);
     if (!transaction) {
       throw new Error("Transaction not found");
     }
 
-    if (transaction.patientId !== patientId) {
+    const isPatient = userRole === 'patient' && transaction.patientId === userId;
+    const isDoctor = userRole === 'doctor' && transaction.doctorId === userId;
+    if (!isPatient && !isDoctor) {
       throw new Error("Unauthorized to dispute this transaction");
     }
 
-    if (transaction.status !== 'completed') {
+    // Resolve the patientId from the transaction regardless of who is raising the dispute
+    const patientId = transaction.patientId;
+
+    // Allow disputes for transactions where payment was collected.
+    // 'processing' covers payment received but webhook not yet confirmed.
+    // 'pending' with completedAt set covers a status-update lag after payment confirmation.
+    // Block only statuses where no money actually moved or dispute already exists.
+    const disputeAllowed =
+      ['completed', 'processing'].includes(transaction.status) ||
+      (transaction.status === 'pending' && transaction.completedAt !== null);
+    if (!disputeAllowed) {
       throw new Error("Can only dispute completed transactions");
     }
 
-    if (new Date() > transaction.disputeWindowEndsAt) {
+    // Only enforce the dispute window if it was actually set (null = window open)
+    if (transaction.disputeWindowEndsAt && new Date() > transaction.disputeWindowEndsAt) {
       throw new Error("Dispute window has expired");
     }
 

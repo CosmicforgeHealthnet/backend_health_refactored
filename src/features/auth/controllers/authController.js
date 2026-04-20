@@ -717,7 +717,7 @@ exports.requestMobileMagicLink = async (req, res, next) => {
             return res.status(400).json({ error: 'Email is required' });
         }
         await magicLinkService.requestMobileMagicLink(
-            { email, role: 'doctor' },
+            { email },
             req.ip,
             req.headers['user-agent']
         );

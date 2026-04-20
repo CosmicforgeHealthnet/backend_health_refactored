@@ -59,15 +59,18 @@ async function sendMagicLinkEmail(user, token, expiresInMinutes, purpose) {
   );
 }
 
-// send mobile magic link (deep link — opens Doctor app directly)
-async function sendMobileMagicLinkEmail(user, token, expiresInMinutes, purpose) {
-  const deepLink = `cosmicforge-mobile-doctor://magic-link?token=${token}`;
+// send mobile magic link (deep link — opens the corresponding mobile app directly)
+async function sendMobileMagicLinkEmail(user, token, expiresInMinutes, purpose, role = 'patient') {
+  const scheme = role === 'doctor' ? 'cosmicforge-mobile-doctor' : 'cosmicforge';
+  const appName = role === 'doctor' ? 'CosmicForge Doctor' : 'CosmicForge';
+  const deepLink = `${scheme}://magic-link?token=${token}`;
+
   await emailService.send(
     "magic_link",
     user.email,
     purpose === "signup"
-      ? "Complete your CosmicForge Doctor signup"
-      : "Your CosmicForge Doctor login link",
+      ? `Complete your ${appName} signup`
+      : `Your ${appName} login link`,
     { fullName: user.fullName, link: deepLink, expiresInMinutes }
   );
 }
