@@ -10,7 +10,7 @@ module.exports = class PhoneNUmberForDoctors1758131286123 {
     name = 'PhoneNUmberForDoctors1758131286123'
 
     async up(queryRunner) {
-        await queryRunner.query(`ALTER TABLE "users" ADD "phoneNumber" character varying`);
+        await queryRunner.query(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "phoneNumber" character varying`);
         await queryRunner.query(`COMMENT ON COLUMN "users"."phoneNumber" IS 'Phone number for doctors (optional)'`);
     }
 

@@ -59,6 +59,22 @@ module.exports = new EntitySchema({
     },
   },
 
+  // Define indices for performance
+  indices: [
+    {
+      name: "IDX_NOTIFICATION_USER",
+      columns: ["userId"],
+    },
+    {
+      name: "IDX_NOTIFICATION_CREATED_AT",
+      columns: ["createdAt"],
+    },
+    {
+       name: "IDX_NOTIFICATION_USER_READ",
+       columns: ["userId", "isRead", "isDeleted"]
+    }
+  ],
+
   // Define relationships with other entities
   relations: {
     user: {

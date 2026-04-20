@@ -111,51 +111,122 @@ class DoctorService {
             (key) => updateData[key] === undefined && delete updateData[key]
         );
 
+        // Deep sanitize to remove "undefined" strings and handle empty strings for DB types
+        const sanitize = (val) => {
+            if (val === "undefined" || val === "null" || val === "") return undefined;
+            return val;
+        };
+
+
         if (data.professionalLicense) {
-            const existingLicense = await doctorProfileRepository.professionalLicenseRepo.findOne({ where: { doctorProfile: { id } } });
+            const license = { ...data.professionalLicense };
+            // Sanitize all fields
+            Object.keys(license).forEach(key => {
+                license[key] = sanitize(license[key]);
+            });
+
+            const existingLicense = await doctorProfileRepository.professionalLicenseRepo.findOne({
+                where: { doctorProfile: { id } },
+            });
+
             if (existingLicense) {
-                await doctorProfileRepository.professionalLicenseRepo.update(existingLicense.id, data.professionalLicense);
+                await doctorProfileRepository.professionalLicenseRepo.update(existingLicense.id, license);
             } else {
-                await doctorProfileRepository.professionalLicenseRepo.save({ ...data.professionalLicense, doctorProfile: { id } });
+                // For new licenses, ensure mandatory fields have fallbacks to avoid NOT NULL constraint violations
+                if (!license.countryOfLicense) {
+                    license.countryOfLicense = "Not Specified";
+                }
+                if (!license.medicalLicenseNumber) {
+                    license.medicalLicenseNumber = "Not Specified";
+                }
+                if (!license.licenseAuthority) {
+                    license.licenseAuthority = "Not Specified";
+                }
+                if (!license.medicalInstitution) {
+                    license.medicalInstitution = "Not Specified";
+                }
+                await doctorProfileRepository.professionalLicenseRepo.save({
+                    ...license,
+                    doctorProfile: { id },
+                });
             }
+
         }
 
         if (data.professionalCertificate && Array.isArray(data.professionalCertificate)) {
-            // For arrays, simple replacement is often safer unless we have IDs, but user asked for "update it" behavior.
-            // Assuming certificates are replaced as a list for now, or we'd need complex diffing.
-            // Keeping delete/create for list items is standard unless items have persistent IDs passed from frontend.
-            await doctorProfileRepository.professionalCertificateRepo.delete({ doctorProfile: { id } });
+            await doctorProfileRepository.professionalCertificateRepo.delete({
+                doctorProfile: { id },
+            });
             for (const certificate of data.professionalCertificate) {
-                await doctorProfileRepository.professionalCertificateRepo.save({ ...certificate, doctorProfile: { id } });
+                const sanitizedCert = { ...certificate };
+                Object.keys(sanitizedCert).forEach(key => {
+                    sanitizedCert[key] = sanitize(sanitizedCert[key]);
+                });
+                await doctorProfileRepository.professionalCertificateRepo.save({
+                    ...sanitizedCert,
+                    doctorProfile: { id },
+                });
             }
         }
 
+
         if (data.clinicalPractice) {
-            const existingPractice = await doctorProfileRepository.clinicalPracticeRepo.findOne({ where: { doctorProfile: { id } } });
+            const practice = { ...data.clinicalPractice };
+            Object.keys(practice).forEach(key => {
+                practice[key] = sanitize(practice[key]);
+            });
+
+            const existingPractice = await doctorProfileRepository.clinicalPracticeRepo.findOne({
+                where: { doctorProfile: { id } },
+            });
             if (existingPractice) {
-                await doctorProfileRepository.clinicalPracticeRepo.update(existingPractice.id, data.clinicalPractice);
+                await doctorProfileRepository.clinicalPracticeRepo.update(existingPractice.id, practice);
             } else {
-                await doctorProfileRepository.clinicalPracticeRepo.save({ ...data.clinicalPractice, doctorProfile: { id } });
+                await doctorProfileRepository.clinicalPracticeRepo.save({
+                    ...practice,
+                    doctorProfile: { id },
+                });
             }
         }
 
         if (data.digitalHealthTools) {
-            const existingTools = await doctorProfileRepository.digitalHealthToolsRepo.findOne({ where: { doctorProfile: { id } } });
+            const tools = { ...data.digitalHealthTools };
+            Object.keys(tools).forEach(key => {
+                tools[key] = sanitize(tools[key]);
+            });
+
+            const existingTools = await doctorProfileRepository.digitalHealthToolsRepo.findOne({
+                where: { doctorProfile: { id } },
+            });
             if (existingTools) {
-                await doctorProfileRepository.digitalHealthToolsRepo.update(existingTools.id, data.digitalHealthTools);
+                await doctorProfileRepository.digitalHealthToolsRepo.update(existingTools.id, tools);
             } else {
-                await doctorProfileRepository.digitalHealthToolsRepo.save({ ...data.digitalHealthTools, doctorProfile: { id } });
+                await doctorProfileRepository.digitalHealthToolsRepo.save({
+                    ...tools,
+                    doctorProfile: { id },
+                });
             }
         }
 
         if (data.wallet) {
-            const existingWallet = await doctorProfileRepository.walletRepo.findOne({ where: { doctorProfile: { id } } });
+            const wallet = { ...data.wallet };
+            Object.keys(wallet).forEach(key => {
+                wallet[key] = sanitize(wallet[key]);
+            });
+
+            const existingWallet = await doctorProfileRepository.walletRepo.findOne({
+                where: { doctorProfile: { id } },
+            });
             if (existingWallet) {
-                await doctorProfileRepository.walletRepo.update(existingWallet.id, data.wallet);
+                await doctorProfileRepository.walletRepo.update(existingWallet.id, wallet);
             } else {
-                await doctorProfileRepository.walletRepo.save({ ...data.wallet, doctorProfile: { id } });
+                await doctorProfileRepository.walletRepo.save({
+                    ...wallet,
+                    doctorProfile: { id },
+                });
             }
         }
+
 
         const updatedProfile = await doctorProfileRepository.update(id, updateData);
 
@@ -297,6 +368,9 @@ class DoctorService {
             requestingUser.role !== USER_ROLES.SUPER_ADMIN
         ) {
             throw new Error("Unauthorized: Only the doctor or an admin can update online status");
+        }
+        if (isOnline && user.status !== "doctor_active") {
+            throw new Error("Account must be fully verified before going online");
         }
         await userRepository.updateOnlineStatus(userId, isOnline);
 

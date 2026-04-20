@@ -8,6 +8,7 @@ const router = require("express").Router();
 
 // Import controller from the existing location (will be moved later)
 const authController = require("../controllers/authController");
+const { authenticateJWT } = require("../middlewares/authMiddleware");
 const referralRoutes = require("./referral");
 const mfaRoutes = require("./mfa");
 
@@ -115,6 +116,22 @@ router.post("/login", authController.login);
  *                 type: string
  */
 router.post("/logout", authController.logout);
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Returns the profile details of the currently authenticated user.
+ *     responses:
+ *       200:
+ *         description: Profile retrieved successfully
+ */
+router.get("/me", authenticateJWT, authController.getCurrentUser);
 
 /**
  * @swagger

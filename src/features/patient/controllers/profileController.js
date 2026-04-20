@@ -47,10 +47,10 @@ exports.createProfile = [
                 err.message === "Email already in use" ||
                 err.message === "Patient profile already exists for this user"
             ) {
-                return res.status(400).json({ error: err.message });
+                return res.status(400).json({ success: false, message: err.message });
             }
             if (err.message === "User not found") {
-                return res.status(404).json({ error: err.message });
+                return res.status(404).json({ success: false, message: err.message });
             }
             next(err);
         }
@@ -72,7 +72,7 @@ exports.getProfileById = async (req, res, next) => {
         });
     } catch (err) {
         if (err.message === "Patient profile not found") {
-            return res.status(404).json({ error: err.message });
+            return res.status(404).json({ success: false, message: err.message });
         }
         next(err);
     }
@@ -93,7 +93,7 @@ exports.getProfileByUserId = async (req, res, next) => {
         });
     } catch (err) {
         if (err.message === "Patient profile not found for this user") {
-            return res.status(404).json({ error: err.message });
+            return res.status(404).json({ success: false, message: err.message });
         }
         next(err);
     }
@@ -123,7 +123,7 @@ exports.updateProfile = [
             });
         } catch (err) {
             if (err.message === "Patient profile not found") {
-                return res.status(404).json({ error: err.message });
+                return res.status(404).json({ success: false, message: err.message });
             }
             next(err);
         }
@@ -142,7 +142,7 @@ exports.deleteProfile = async (req, res, next) => {
         return res.json({ message: "Patient profile deleted successfully" });
     } catch (err) {
         if (err.message === "Patient profile not found") {
-            return res.status(404).json({ error: err.message });
+            return res.status(404).json({ success: false, message: err.message });
         }
         next(err);
     }
@@ -193,7 +193,8 @@ exports.updateAuthInfo = async (req, res, next) => {
 
         if (!fullName && !profileImageUrl && !bannerUrl) {
             return res.status(400).json({
-                error: "At least one field (fullName, profileImageUrl, bannerUrl) is required"
+                success: false,
+                message: "At least one field (fullName, profileImageUrl, bannerUrl) is required"
             });
         }
 

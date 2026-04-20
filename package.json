@@ -4,6 +4,7 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon src/server.js",
+    "repair": "node src/scripts/repair_users.js",
     "start": "cross-env NODE_ENV=production node src/server.js",
     "typeorm": "typeorm",
     "migration:generate": "cross-env NODE_ENV=development npx typeorm migration:generate --dataSource src/config/database.js --outputJs",

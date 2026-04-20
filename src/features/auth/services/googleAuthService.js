@@ -17,15 +17,15 @@ const client = new OAuth2Client(
 class GoogleAuthService {
   /**
    * Generate Google OAuth2 consent screen URL
-   * @param {string} role - desired user role (patient|doctor|pharmacy|lab)
+   * @param {string} state - encoded state sharing role, fingerprint, etc.
    */
-  getAuthUrl(role) {
+  getAuthUrl(state) {
     return client.generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',
       scope: ['openid', 'email', 'profile'],
       redirect_uri: config.google.redirectUri,
-      state: role  // pass desired role through state
+      state: state
     });
   }
 
@@ -36,7 +36,9 @@ class GoogleAuthService {
    * @param {string} userAgent
    * @param {string} role - desired user role for new signup
    */
-  async handleCallback(code, deviceFingerprint, userAgent, role) {
+  async handleCallback(code, deviceFingerprint, userAgent, extraData) {
+    console.log('🚀 [GoogleAuthService] handleCallback extraData:', extraData);
+    const { role, departmentSpecialty, phoneNumber } = extraData || {};
     // Exchange code for tokens
     const { tokens } = await client.getToken(code);
     client.setCredentials(tokens);
@@ -57,12 +59,23 @@ class GoogleAuthService {
       user = await userRepository.findByEmail(email);
       if (user) {
         // Link Google to existing local account
+        console.log('🚀 [GoogleAuthService] Existing user found by email, linking accounts. Email:', email);
         user.provider = 'google';
         user.providerId = sub;
         user.profileImageUrl = picture;
+        
+        // If the user was a patient but is now registering as a doctor, upgrade them
+        if (role === 'doctor' && user.role !== 'doctor') {
+            console.log('🚀 [GoogleAuthService] Upgrading existing patient to doctor role.');
+            user.role = 'doctor';
+            user.departmentSpecialty = departmentSpecialty;
+            user.phoneNumber = phoneNumber;
+        }
+
         user.status = email_verified
-          ? 'active'
+          ? (user.role === 'doctor' ? 'pending_doctor_verification' : 'active')
           : 'pending_email_verification';
+          
         await userRepository.save(user);
         await referralService.createUserReferralCode(user.id);
       } else {
@@ -76,6 +89,8 @@ class GoogleAuthService {
           provider: 'google',
           providerId: sub,
           profileImageUrl: picture,
+          phoneNumber: phoneNumber,
+          departmentSpecialty: departmentSpecialty,
           status: email_verified
             ? (newRole === 'doctor'
               ? 'pending_doctor_verification'
@@ -129,7 +144,9 @@ class GoogleAuthService {
    * @param {string} userAgent
    * @param {string} role
    */
-  async verifyMobileIdToken(idToken, deviceFingerprint, userAgent, role) {
+  async verifyMobileIdToken(idToken, deviceFingerprint, userAgent, extraData) {
+    console.log('🚀 [GoogleAuthService] verifyMobileIdToken extraData:', extraData);
+    const { role, departmentSpecialty, phoneNumber } = extraData || {};
     // Accept tokens from web, Android, and iOS clients.
     // Mobile apps sign tokens with their own platform client ID, NOT the web client ID.
     // Passing only the web clientId causes "Wrong recipient" verification failure on mobile.
@@ -159,10 +176,20 @@ class GoogleAuthService {
       user = await userRepository.findByEmail(email);
       if (user) {
         // Link Google to existing local account
+        console.log('🚀 [GoogleAuthService] Mobile: Existing user found by email, linking accounts. Email:', email);
         user.provider = 'google';
         user.providerId = sub;
         user.profileImageUrl = picture;
-        user.status = email_verified ? 'active' : 'pending_email_verification';
+
+        // Upgrade if doctor
+        if (role === 'doctor' && user.role !== 'doctor') {
+            console.log('🚀 [GoogleAuthService] Mobile: Upgrading patient to doctor.');
+            user.role = 'doctor';
+            user.departmentSpecialty = departmentSpecialty;
+            user.phoneNumber = phoneNumber;
+        }
+
+        user.status = email_verified ? (user.role === 'doctor' ? 'pending_doctor_verification' : 'active') : 'pending_email_verification';
         await userRepository.save(user);
         await referralService.createUserReferralCode(user.id);
       } else {
@@ -174,6 +201,8 @@ class GoogleAuthService {
           provider: 'google',
           providerId: sub,
           profileImageUrl: picture,
+          phoneNumber: phoneNumber,
+          departmentSpecialty: departmentSpecialty,
           status: email_verified ? (newRole === 'doctor' ? 'pending_doctor_verification' : 'active') : 'pending_email_verification',
           role: newRole
         });

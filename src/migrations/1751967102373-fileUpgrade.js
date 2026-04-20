@@ -10,23 +10,25 @@ module.exports = class FileUpgrade1751967102373 {
     name = 'FileUpgrade1751967102373'
 
     async up(queryRunner) {
-        await queryRunner.query(`CREATE TYPE "public"."document_files_fhir_resource_type_enum" AS ENUM('Patient', 'Practitioner', 'Organization', 'Observation', 'DiagnosticReport', 'Condition', 'Procedure', 'MedicationRequest', 'MedicationStatement', 'AllergyIntolerance', 'Immunization', 'CarePlan', 'Encounter', 'DocumentReference', 'Consent', 'Other')`);
-        await queryRunner.query(`ALTER TABLE "document_files" ADD "fhir_resource_type" "public"."document_files_fhir_resource_type_enum"`);
+        await queryRunner.query(`DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'document_files_fhir_resource_type_enum') THEN CREATE TYPE "public"."document_files_fhir_resource_type_enum" AS ENUM('Patient', 'Practitioner', 'Organization', 'Observation', 'DiagnosticReport', 'Condition', 'Procedure', 'MedicationRequest', 'MedicationStatement', 'AllergyIntolerance', 'Immunization', 'CarePlan', 'Encounter', 'DocumentReference', 'Consent', 'Other'); END IF; END $$;`);
+        await queryRunner.query(`ALTER TABLE "document_files" ADD COLUMN IF NOT EXISTS "fhir_resource_type" "public"."document_files_fhir_resource_type_enum"`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."fhir_resource_type" IS 'FHIR resource type if document contains FHIR data'`);
-        await queryRunner.query(`ALTER TABLE "document_files" ADD "patient_identifier" character varying`);
+        await queryRunner.query(`ALTER TABLE "document_files" ADD COLUMN IF NOT EXISTS "patient_identifier" character varying`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."patient_identifier" IS 'Patient ID extracted from FHIR resource for linking related documents'`);
-        await queryRunner.query(`ALTER TABLE "document_files" ADD "fhir_security_labels" jsonb`);
+        await queryRunner.query(`ALTER TABLE "document_files" ADD COLUMN IF NOT EXISTS "fhir_security_labels" jsonb`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."fhir_security_labels" IS 'FHIR security labels from meta.security field'`);
-        await queryRunner.query(`ALTER TABLE "document_files" ADD "consent_directives" jsonb`);
+        await queryRunner.query(`ALTER TABLE "document_files" ADD COLUMN IF NOT EXISTS "consent_directives" jsonb`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."consent_directives" IS 'Patient consent directives and restrictions'`);
-        await queryRunner.query(`ALTER TABLE "document_files" ADD "fhir_version" character varying`);
+        await queryRunner.query(`ALTER TABLE "document_files" ADD COLUMN IF NOT EXISTS "fhir_version" character varying`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."fhir_version" IS 'FHIR specification version (e.g., 4.0.1)'`);
-        await queryRunner.query(`CREATE TYPE "public"."document_files_fhir_sensitivity_level_enum" AS ENUM('normal', 'high', 'very_high')`);
-        await queryRunner.query(`ALTER TABLE "document_files" ADD "fhir_sensitivity_level" "public"."document_files_fhir_sensitivity_level_enum" DEFAULT 'normal'`);
+        
+        await queryRunner.query(`DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'document_files_fhir_sensitivity_level_enum') THEN CREATE TYPE "public"."document_files_fhir_sensitivity_level_enum" AS ENUM('normal', 'high', 'very_high'); END IF; END $$;`);
+        
+        await queryRunner.query(`ALTER TABLE "document_files" ADD COLUMN IF NOT EXISTS "fhir_sensitivity_level" "public"."document_files_fhir_sensitivity_level_enum" DEFAULT 'normal'`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."fhir_sensitivity_level" IS 'FHIR-specific sensitivity classification'`);
-        await queryRunner.query(`ALTER TABLE "document_files" ADD "fhir_resource_id" character varying`);
+        await queryRunner.query(`ALTER TABLE "document_files" ADD COLUMN IF NOT EXISTS "fhir_resource_id" character varying`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."fhir_resource_id" IS 'Original FHIR resource ID'`);
-        await queryRunner.query(`ALTER TABLE "document_files" ADD "purpose_of_use" jsonb`);
+        await queryRunner.query(`ALTER TABLE "document_files" ADD COLUMN IF NOT EXISTS "purpose_of_use" jsonb`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."purpose_of_use" IS 'Intended purpose of use for access control'`);
         await queryRunner.query(`COMMENT ON COLUMN "document_files"."metadata" IS 'Extended metadata including FHIR-specific information'`);
         await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_FHIR_RESOURCE_TYPE" ON "document_files" ("fhir_resource_type") `);

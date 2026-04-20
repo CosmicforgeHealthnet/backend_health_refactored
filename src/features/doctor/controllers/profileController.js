@@ -42,10 +42,10 @@ exports.createProfile = [
                 err.message === "Email already in use" ||
                 err.message === "Doctor profile already exists for this user"
             ) {
-                return res.status(400).json({ error: err.message });
+                return res.status(400).json({ success: false, message: err.message });
             }
             if (err.message === "User not found") {
-                return res.status(404).json({ error: err.message });
+                return res.status(404).json({ success: false, message: err.message });
             }
             next(err);
         }
@@ -67,7 +67,7 @@ exports.getProfileById = async (req, res, next) => {
         });
     } catch (err) {
         if (err.message === "Doctor profile not found") {
-            return res.status(404).json({ error: err.message });
+            return res.status(404).json({ success: false, message: err.message });
         }
         next(err);
     }
@@ -88,7 +88,7 @@ exports.getProfileByUserId = async (req, res, next) => {
         });
     } catch (err) {
         if (err.message === "Doctor profile not found for this user") {
-            return res.status(404).json({ error: err.message });
+            return res.status(404).json({ success: false, message: err.message });
         }
         next(err);
     }
@@ -118,7 +118,7 @@ exports.updateProfile = [
             });
         } catch (err) {
             if (err.message === "Doctor profile not found") {
-                return res.status(404).json({ error: err.message });
+                return res.status(404).json({ success: false, message: err.message });
             }
             next(err);
         }
@@ -137,7 +137,7 @@ exports.deleteProfile = async (req, res, next) => {
         return res.json({ message: "Doctor profile deleted successfully" });
     } catch (err) {
         if (err.message === "Doctor profile not found") {
-            return res.status(404).json({ error: err.message });
+            return res.status(404).json({ success: false, message: err.message });
         }
         next(err);
     }
@@ -239,7 +239,7 @@ exports.getDoctorsByOnlineStatus = async (req, res, next) => {
         if (isOnline === undefined) {
             return res
                 .status(400)
-                .json({ error: "isOnline query parameter is required" });
+                .json({ success: false, message: "isOnline query parameter is required" });
         }
         const isOnlineBool = isOnline === "true";
         const doctors = await userService.getDoctorsByOnlineStatus(isOnlineBool);
@@ -262,7 +262,7 @@ exports.searchDoctors = async (req, res, next) => {
     try {
         const q = req.query.q || req.query.search;
         if (!q) {
-            return res.status(400).json({ error: "Search query (q or search) is required" });
+            return res.status(400).json({ success: false, message: "Search query (q or search) is required" });
         }
         const doctors = await userService.searchDoctors(q);
         return res.json({
@@ -272,7 +272,7 @@ exports.searchDoctors = async (req, res, next) => {
         });
     } catch (err) {
         if (err.message === "Search query must be at least 3 characters long") {
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json({ success: false, message: err.message });
         }
         next(err);
     }
@@ -290,7 +290,7 @@ exports.updateOnlineStatus = async (req, res, next) => {
         if (!userId || isOnline === undefined) {
             return res
                 .status(400)
-                .json({ error: "userId and isOnline are required" });
+                .json({ success: false, message: "userId and isOnline are required" });
         }
         const result = await userService.updateOnlineStatus(
             userId,
@@ -308,7 +308,7 @@ exports.updateOnlineStatus = async (req, res, next) => {
             err.message === "User must be a doctor" ||
             err.message.includes("Unauthorized")
         ) {
-            return res.status(403).json({ error: err.message });
+            return res.status(403).json({ success: false, message: err.message });
         }
         next(err);
     }
@@ -323,7 +323,7 @@ exports.getOnlineStatus = async (req, res, next) => {
     try {
         const { userId } = req.params;
         if (!userId) {
-            return res.status(400).json({ error: "userId is required" });
+            return res.status(400).json({ success: false, message: "userId is required" });
         }
         const result = await userService.getDoctorOnlineStatus(userId);
         return res.json({
@@ -336,7 +336,7 @@ exports.getOnlineStatus = async (req, res, next) => {
             err.message === "User not found" ||
             err.message === "User must be a doctor"
         ) {
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json({ success: false, message: err.message });
         }
         next(err);
     }
@@ -374,7 +374,8 @@ exports.updateAuthInfo = async (req, res, next) => {
 
         if (!fullName && !profileImageUrl && !bannerUrl && !departmentSpecialty) {
             return res.status(400).json({
-                error:
+                success: false,
+                message:
                     "At least one field (fullName, profileImageUrl, bannerUrl, departmentSpecialty) or a file is required",
             });
         }
@@ -429,6 +430,6 @@ exports.getRatings = async (req, res, next) => {
             message: "Ratings retrieved successfully"
         });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ success: false, message: err.message });
     }
 };

@@ -1,5 +1,5 @@
 const { Client } = require('pg');
-const fs = require('fs');
+const fs = require('node:fs');
 require('dotenv').config({ path: '.env.production' });
 
 async function getTypes() {

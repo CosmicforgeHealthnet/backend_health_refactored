@@ -1486,10 +1486,25 @@ class PaymentController {
             );
           } else if (transaction.doctorId && transaction.serviceType === 'appointment') {
             await paymentService.processFundsForAppointmentPayment(transaction);
+            
+            // 🔥 AUTOMATIC SYNC: Update appointment payment status immediately
+            try {
+              const AppointmentService = require('../../appointments/services/appointmentService');
+              const appointmentService = new AppointmentService();
+              await appointmentService.updatePaymentStatus(transaction.serviceId, {
+                paymentStatus: 'completed',
+                paymentId: transaction.id,
+                paymentMethod: transaction.paymentProvider || 'paystack'
+              });
+              console.log(`✅ Automatically updated appointment ${transaction.serviceId} to paid status`);
+            } catch (syncError) {
+              console.error(`❌ Failed to automatically sync appointment status:`, syncError);
+            }
           } else if (transaction.doctorId) {
             await paymentService.processFundsImmediate(transaction);
           }
         }
+
 
         return res.redirect(`${process.env.FRONTEND_URL}/payment/success?transactionId=${transaction.id}`);
       } else {

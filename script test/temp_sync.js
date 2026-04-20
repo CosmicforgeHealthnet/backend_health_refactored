@@ -40,8 +40,8 @@ async function main() {
             )
         `);
         // Add indices if they don't exist (using try/catch or just ignore errors for simplicity in temp script)
-        try { await queryRunner.query('CREATE INDEX IF NOT EXISTS "IDX_pharmacy_pricing_pharmacyId" ON "pharmacy_pricing" ("pharmacyId")'); } catch (e) { }
-        try { await queryRunner.query('CREATE INDEX IF NOT EXISTS "IDX_pharmacy_pricing_feeType" ON "pharmacy_pricing" ("feeType")'); } catch (e) { }
+        try { await queryRunner.query('CREATE INDEX IF NOT EXISTS "IDX_pharmacy_pricing_pharmacyId" ON "pharmacy_pricing" ("pharmacyId")'); } catch { /* ignore */ }
+        try { await queryRunner.query('CREATE INDEX IF NOT EXISTS "IDX_pharmacy_pricing_feeType" ON "pharmacy_pricing" ("feeType")'); } catch { /* ignore */ }
 
         console.log('🚀 Success! Columns and tables added.');
 

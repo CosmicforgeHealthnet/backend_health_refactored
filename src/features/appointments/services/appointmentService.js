@@ -99,12 +99,18 @@ class AppointmentService {
         appointmentTimeUTC.getTime() + (appointmentData.duration || 30) * 60000
       );
 
-      // Validate appointment is not in the past
-      if (
-        TimezoneService.isAppointmentInPast(appointmentTimeUTC, patientTimezone)
-      ) {
+      // Validate appointment is not in the past and is at least 1 hour in advance
+      const now = new Date();
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+
+      if (appointmentTimeUTC < now) {
         throw new Error("Cannot create appointment in the past");
       }
+
+      if (appointmentTimeUTC < oneHourFromNow) {
+        throw new Error("Appointment must be scheduled at least 1 hour in advance");
+      }
+
 
       // Existing validation logic...
       const isPatient = await userRepository.hasRole(
@@ -769,13 +775,15 @@ class AppointmentService {
     };
 
     // Notify patient about completion
-    await this.notificationService.createNotification(
+    const notification = await this.notificationService.createNotification(
       appointment.patientId,
       "notification",
-      `Your consultation with Dr. ${appointment.doctor?.fullName
-      } has been completed. ${completionData.followUpRequired
-        ? "A follow-up appointment may be needed."
-        : ""
+      `Your consultation with Dr. ${
+        appointment.doctor?.fullName
+      } has been completed. ${
+        completionData.followUpRequired
+          ? "A follow-up appointment may be needed."
+          : ""
       }`,
       {
         action: "appointment_completed",
@@ -785,6 +793,23 @@ class AppointmentService {
         link: "/patients/dashboard/appointments/overview",
       }
     );
+
+    // Emit websocket event for real-time rating popup
+    try {
+      const { getIO } = require("../../../config/websocket");
+      const io = getIO();
+      if (io) {
+        io.to(`user_${appointment.patientId}`).emit("APPOINTMENT_COMPLETED", {
+          appointmentId: appointment.id,
+          doctorId: appointment.doctorId,
+          doctorName: appointment.doctor?.fullName || "Doctor",
+          notificationId: notification.id
+        });
+        console.log(`✉️ Emitted APPOINTMENT_COMPLETED to patient ${appointment.patientId}`);
+      }
+    } catch (socketError) {
+      console.error("❌ Failed to emit APPOINTMENT_COMPLETED socket event:", socketError);
+    }
 
     return await this.appointmentRepository.update(id, updateData);
   }

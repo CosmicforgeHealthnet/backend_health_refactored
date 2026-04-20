@@ -9,7 +9,8 @@ const ApiProvider = {
   ECFMG: "ecfmg",
   SUREPASS: "surepass",
   IDFY: "idfy",
-  CUSTOM: "custom"
+  CUSTOM: "custom",
+  SYSTEM: "system"
 };
 
 module.exports = new EntitySchema({

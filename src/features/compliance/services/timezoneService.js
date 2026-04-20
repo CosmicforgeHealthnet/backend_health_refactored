@@ -52,19 +52,9 @@ class TimezoneService {
       // Convert to UTC using the specified timezone
       const utcDate = fromZonedTime(localDate, timezone);
 
-      // Force UTC by creating new Date with UTC methods
-      const utcTimestamp = new Date(
-        utcDate.getUTCFullYear(),
-        utcDate.getUTCMonth(),
-        utcDate.getUTCDate(),
-        utcDate.getUTCHours(),
-        utcDate.getUTCMinutes(),
-        utcDate.getUTCSeconds()
-      );
-
-
-      return utcTimestamp;
+      return utcDate;
     } catch (error) {
+
       throw new Error(`Failed to convert to UTC: ${error.message}`);
     }
   }

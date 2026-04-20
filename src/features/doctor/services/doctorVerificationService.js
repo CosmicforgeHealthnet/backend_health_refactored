@@ -161,8 +161,11 @@ class DoctorVerificationService {
         }
       );
 
-      // 10. Start automated verification if applicable
-      if (verificationMethod.method === 'automated' || verificationMethod.method === 'hybrid') {
+      // 10. Start automated verification only if the country has an active API endpoint
+      // For 'hybrid' countries without an API (e.g. Nigeria tier_2, hasApi: false),
+      // we DON'T call processApiVerification — the doctor must upload documents first.
+      if (verificationMethod.method === 'automated' ||
+          (verificationMethod.method === 'hybrid' && verificationMethod.apiProvider)) {
         // Queue for immediate API verification
         setImmediate(() => {
           this.processApiVerification(verificationRequest.id).catch(console.error);
@@ -185,6 +188,22 @@ class DoctorVerificationService {
       const verificationRequest = await verificationRequestRepo.findById(verificationRequestId, ['doctor']);
       if (!verificationRequest) {
         throw new Error("Verification request not found");
+      }
+
+      // If the request is already waiting for documents or is in a terminal/manual state,
+      // skip the API verification step — it is not applicable.
+      const skipStatuses = [
+        VerificationStatus.PENDING_DOCUMENTS,
+        VerificationStatus.MANUAL_REVIEW,
+        VerificationStatus.APPROVED,
+        VerificationStatus.REJECTED,
+      ];
+      if (skipStatuses.includes(verificationRequest.status)) {
+        console.log(
+          `[processApiVerification] Skipping API verification for request ${verificationRequestId} ` +
+          `— current status is '${verificationRequest.status}' which does not require API verification.`
+        );
+        return;
       }
 
       // Update status to API verification

@@ -56,6 +56,7 @@ class UserRepository {
         "departmentSpecialty",
         "averageRating",
         "totalRatings",
+        "tier",
         "createdAt",
         "updatedAt",
       ],
@@ -91,6 +92,7 @@ class UserRepository {
         "user.departmentSpecialty",
         "user.averageRating",
         "user.totalRatings",
+        "user.tier",
         "user.createdAt",
         "user.updatedAt",
       ])
@@ -132,6 +134,7 @@ class UserRepository {
         "profileImageUrl",
         "averageRating",
         "totalRatings",
+        "tier",
         "createdAt",
         "updatedAt",
         "departmentSpecialty",
@@ -163,6 +166,7 @@ class UserRepository {
         "profileImageUrl",
         "averageRating",
         "totalRatings",
+        "tier",
         "createdAt",
         "updatedAt",
         "departmentSpecialty",
@@ -199,6 +203,7 @@ class UserRepository {
         "user.departmentSpecialty",
         "user.averageRating",
         "user.totalRatings",
+        "user.tier",
         "user.createdAt",
         "user.updatedAt",
       ])
@@ -276,6 +281,7 @@ class UserRepository {
         "user.departmentSpecialty",
         "user.averageRating",
         "user.totalRatings",
+        "user.tier",
         "user.createdAt",
         "user.updatedAt"
       ])

@@ -1691,10 +1691,25 @@ class PaymentService {
         } else if (ourTransaction.doctorId && ourTransaction.serviceType === 'appointment') {
           console.log('💰 Processing appointment funds...');
           await this.processFundsForAppointmentPayment(ourTransaction);
+          
+          // 🔥 AUTOMATIC SYNC: Update appointment payment status immediately
+          try {
+            const AppointmentService = require('../../appointments/services/appointmentService');
+            const appointmentService = new AppointmentService();
+            await appointmentService.updatePaymentStatus(ourTransaction.serviceId, {
+              paymentStatus: 'completed',
+              paymentId: ourTransaction.id,
+              paymentMethod: ourTransaction.paymentProvider || provider
+            });
+            console.log(`✅ Automatically updated appointment ${ourTransaction.serviceId} to paid status via webhook`);
+          } catch (syncError) {
+            console.error(`❌ Failed to automatically sync appointment status via webhook:`, syncError);
+          }
         } else if (ourTransaction.doctorId) {
           console.log('💰 Processing immediate funds...');
           await this.processFundsImmediate(ourTransaction);
         }
+
 
         // 📧 NEW: Send payment receipt emails
         console.log('📧 Sending payment receipt email...');

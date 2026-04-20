@@ -1,11 +1,11 @@
 // src/services/refreshTokenService.js
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const refreshTokenRepository = require('../repositories/refreshTokenRepository');
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const ACCESS_EXPIRES = '15m';
+const ACCESS_EXPIRES = '1h';
 const REFRESH_EXPIRES_DAYS = 30;
 const BCRYPT_SALT_ROUNDS = 12;
 

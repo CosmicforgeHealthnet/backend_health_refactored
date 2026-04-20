@@ -9,7 +9,7 @@ module.exports = new EntitySchema({
         feeType: {
             type: "varchar",
             length: 100,
-            nullable: false
+            nullable: true
         },
         price: { type: "decimal", precision: 10, scale: 2, nullable: false },
         currency: { type: "varchar", length: 3, default: "NGN", nullable: false },
