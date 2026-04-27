@@ -58,10 +58,13 @@ class TimezoneMiddleware {
    */
   static validateAppointmentTimezone(req, res, next) {
     try {
-      const { appointmentDate, appointmentTime, timezone } = req.body;
+      const { appointmentDate, appointmentTime, newDate, newTime, timezone } = req.body;
+
+      const effectiveDate = appointmentDate || newDate;
+      const effectiveTime = appointmentTime || newTime;
 
       // Validate date and time format
-      if (!appointmentDate || !appointmentTime) {
+      if (!effectiveDate || !effectiveTime) {
         return res.status(400).json({
           success: false,
           error: 'Appointment date and time are required'

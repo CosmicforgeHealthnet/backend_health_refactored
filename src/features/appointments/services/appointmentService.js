@@ -599,6 +599,14 @@ class AppointmentService {
       throw new Error("Appointment not found");
     }
 
+    const rescheduledById = rescheduleData.rescheduledBy || req?.user?.sub;
+    const isDoctor = rescheduledById === appointment.doctorId;
+    const isPatient = rescheduledById === appointment.patientId;
+
+    if (isDoctor && appointment.type !== "follow-up") {
+      throw new Error("Doctors can only reschedule follow-up appointments.");
+    }
+
     // Store old appointment details for email
     const oldAppointmentDetails = {
       date: appointment.appointmentDate,
@@ -639,24 +647,34 @@ class AppointmentService {
       appointment.patientTimezone
     );
 
+    // Validate new slot availability server-side
+    await this.validateDoctorAvailabilityWithTimezone(
+      appointment.doctorId,
+      rescheduleData.newDate,
+      rescheduleData.newTime,
+      appointment.duration,
+      appointment.patientTimezone,
+      appointment.doctorTimezone
+    );
+
     const updateData = {
       appointmentDate: rescheduleData.newDate,
       appointmentTime: rescheduleData.newTime,
       appointmentTimeUTC: newAppointmentUTC,
       doctorLocalTime: doctorLocalTime.time,
       patientLocalTime: patientLocalTime.time,
-      duration: rescheduleData.duration || appointment.duration,
-      status: "rescheduled",
+      duration: appointment.duration,
+      status: isPatient ? "pending" : "rescheduled",
+      isDoctorApproved: isPatient ? false : appointment.isDoctorApproved,
       endTime: this.calculateEndTime(
         rescheduleData.newTime,
-        rescheduleData.duration || appointment.duration
+        appointment.duration
       ),
       endTimeUTC: new Date(
-        newAppointmentUTC.getTime() +
-        (rescheduleData.duration || appointment.duration) * 60000
+        newAppointmentUTC.getTime() + appointment.duration * 60000
       ),
       rescheduledAt: new Date(),
-      rescheduledBy: rescheduleData.rescheduledBy,
+      rescheduledBy: rescheduledById,
       rescheduleReason: rescheduleData.reason,
     };
 
@@ -738,22 +756,63 @@ class AppointmentService {
       // Don't fail the reschedule if email sending fails
     }
 
-    await this.notificationService.createNotification(
-      appointment.doctorId,
-      "notification",
-      `Appointment with ${appointment.patient?.fullName} has been rescheduled from ${oldAppointmentDetails.date} at ${oldAppointmentDetails.time} to ${rescheduleData.newDate} at ${rescheduleData.newTime}.`,
-      {
-        action: "appointment_rescheduled",
-        appointmentId: appointment.id,
-        oldDate: oldAppointmentDetails.date,
-        oldTime: oldAppointmentDetails.time,
-        newDate: rescheduleData.newDate,
-        newTime: rescheduleData.newTime,
-        link: "/doctors/dashboard/appointments",
-      }
-    );
+    if (isPatient || !isDoctor) {
+      await this.notificationService.createNotification(
+        appointment.doctorId,
+        "notification",
+        `Appointment with ${appointment.patient?.fullName} has been rescheduled from ${oldAppointmentDetails.date} at ${oldAppointmentDetails.time} to ${rescheduleData.newDate} at ${rescheduleData.newTime} and requires approval.`,
+        {
+          action: "appointment_rescheduled",
+          appointmentId: appointment.id,
+          oldDate: oldAppointmentDetails.date,
+          oldTime: oldAppointmentDetails.time,
+          newDate: rescheduleData.newDate,
+          newTime: rescheduleData.newTime,
+          link: "/doctors/dashboard/appointments",
+        }
+      );
+    }
+
+    if (isDoctor) {
+      await this.notificationService.createNotification(
+        appointment.patientId,
+        "alert",
+        `Your appointment with Dr. ${appointment.doctor?.fullName} has been rescheduled from ${oldAppointmentDetails.date} at ${oldAppointmentDetails.time} to ${rescheduleData.newDate} at ${rescheduleData.newTime}.`,
+        {
+          action: "appointment_rescheduled",
+          appointmentId: appointment.id,
+          oldDate: oldAppointmentDetails.date,
+          oldTime: oldAppointmentDetails.time,
+          newDate: rescheduleData.newDate,
+          newTime: rescheduleData.newTime,
+          link: "/patients/dashboard/appointments/overview",
+        }
+      );
+    }
     // Note: External service integrations will be called here:
     // - Meeting service for meeting update (already handled above)
+
+    // Emit websocket event for real-time dashboard updates
+    try {
+      const { getIO } = require("../../../config/websocket");
+      const io = getIO();
+      if (io) {
+        io.to(`user_${appointment.patientId}`).emit("APPOINTMENT_RESCHEDULED", {
+          appointmentId: appointment.id,
+          status: updatedAppointment.status,
+          newDate: rescheduleData.newDate,
+          newTime: rescheduleData.newTime
+        });
+        io.to(`user_${appointment.doctorId}`).emit("APPOINTMENT_RESCHEDULED", {
+          appointmentId: appointment.id,
+          status: updatedAppointment.status,
+          newDate: rescheduleData.newDate,
+          newTime: rescheduleData.newTime
+        });
+      }
+    } catch (socketError) {
+      console.error("❌ Failed to emit APPOINTMENT_RESCHEDULED socket event:", socketError);
+    }
 
     return updatedAppointment;
   }
@@ -1500,7 +1559,7 @@ class AppointmentService {
       paymentData.paymentStatus === "completed" &&
       appointment.status === "pending"
     ) {
-      // updateData.status = "scheduled";
+      updateData.status = "scheduled";
 
       // Send email notification to doctor about payment and approval request
       try {

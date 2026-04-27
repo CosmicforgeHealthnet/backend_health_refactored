@@ -1320,6 +1320,10 @@ class PaymentService {
   async processFlutterwavePayment(transaction, paymentData) {
     try {
       const txRef = `FLW-${transaction.id}-${Date.now()}`;
+      const baseReturnUrlFLW = (paymentData.redirectUrl || paymentData.returnUrl) 
+        ? `?returnUrl=${encodeURIComponent(paymentData.redirectUrl || paymentData.returnUrl)}` 
+        : '';
+        
       const payload = {
         tx_ref: txRef,
         amount: transaction.originalAmount,
@@ -1335,7 +1339,7 @@ class PaymentService {
           description: transaction.description || `Payment for ${transaction.serviceType}`,
           logo: process.env.COMPANY_LOGO_URL
         },
-        redirect_url: paymentData.redirectUrl || paymentData.returnUrl || `${process.env.FRONTEND_URL}/payment/callback`,
+        redirect_url: `${process.env.APP_BASE_URL}/api/payments/callback${baseReturnUrlFLW}`,
         // 🔥 ADD THIS WEBHOOK URL - This was missing!
         webhook_url: `${process.env.BACKEND_URL}/webhooks/payments/flutterwave`,
         meta: {
@@ -1404,13 +1408,16 @@ class PaymentService {
   async processPaystackPayment(transaction, paymentData) {
     try {
       const reference = `PST-${transaction.id}-${Date.now()}`;
+      const baseReturnUrlPST = (paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl)
+        ? `?returnUrl=${encodeURIComponent(paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl)}`
+        : '';
 
       const payload = {
         email: paymentData.email,
         amount: transaction.originalAmount * 100, // Convert to kobo/pesewas
         currency: transaction.originalCurrency,
         reference: reference,
-        callback_url: paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl || `${process.env.FRONTEND_URL}/payment/callback`,
+        callback_url: `${process.env.APP_BASE_URL}/api/payments/callback${baseReturnUrlPST}`,
         // 🔥 NOTE: Paystack uses callback_url for webhooks too
         // But you should ALSO set webhook URL in your Paystack Dashboard
         metadata: {

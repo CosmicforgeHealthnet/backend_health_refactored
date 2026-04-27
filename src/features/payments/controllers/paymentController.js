@@ -2,11 +2,7 @@
 const paymentService = require("../services/paymentService");
 const userRepository = require("../../auth/repositories/userRepository");
 const transactionRepository = require("../repositories/transactionRepository");
-const paymentJobs = require('../jobs/paymentJobs');
-const ValidationMiddleware = require("../../../shared/middlewares/validation");
 const PaymentAuthMiddleware = require("../middlewares/paymentAuth");
-const RateLimiterMiddleware = require("../../../shared/middlewares/rateLimiter");
-const SanitizerMiddleware = require("../../../shared/middlewares/sanitizer");
 
 class PaymentController {
   // ================================
@@ -1422,7 +1418,7 @@ class PaymentController {
    */
   static async handlePaymentCallback(req, res) {
     try {
-      const { reference, tx_ref, transaction_id } = req.query;
+      const { reference, tx_ref, transaction_id, returnUrl } = req.query;
 
       // Determine provider and reference
       let provider, transactionRef;
@@ -1433,7 +1429,8 @@ class PaymentController {
         provider = 'paystack';
         transactionRef = reference;
       } else {
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=Invalid+callback+parameters`);
+        const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=Invalid+callback+parameters${baseReturnUrl}`);
       }
 
       // Find transaction — first by provider reference, then by UUID parsed from the ref
@@ -1454,7 +1451,8 @@ class PaymentController {
 
       // Idempotency: if already completed, just redirect to success
       if (transaction.status === 'completed') {
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/success?transactionId=${transaction.id}`);
+        const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/callback?reference=${transactionRef}&status=successful${baseReturnUrl}`);
       }
 
       // Verify payment with provider
@@ -1505,8 +1503,8 @@ class PaymentController {
           }
         }
 
-
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/success?transactionId=${transaction.id}`);
+        const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/callback?reference=${transactionRef}&status=successful${baseReturnUrl}`);
       } else {
         // Atomic conditional update to failed
         await transactionRepository.repo.createQueryBuilder()
@@ -1515,7 +1513,8 @@ class PaymentController {
           .where('id = :id AND status = :status', { id: transaction.id, status: 'processing' })
           .execute();
 
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?transactionId=${transaction.id}`);
+        const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/callback?reference=${transactionRef}&status=failed${baseReturnUrl}`);
       }
 
     } catch (error) {
