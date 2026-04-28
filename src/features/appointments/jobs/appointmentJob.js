@@ -1365,6 +1365,82 @@ class AppointmentCronJobs {
     }
   }
 
+  async sendMeetingPreparationNotification(appointment) {
+    try {
+      const appointmentUTC = appointment.appointmentTimeUTC
+        ? new Date(appointment.appointmentTimeUTC)
+        : TimezoneService.convertToUTC(
+            appointment.appointmentDate,
+            appointment.appointmentTime,
+            appointment.patientTimezone || appointment.doctorTimezone || "UTC"
+          );
+
+      const patientDisplayTime = TimezoneService.formatTimeForDisplay(
+        appointmentUTC,
+        appointment.patientTimezone || "UTC"
+      );
+      const doctorDisplayTime = TimezoneService.formatTimeForDisplay(
+        appointmentUTC,
+        appointment.doctorTimezone || "UTC"
+      );
+
+      const appointmentDetails = {
+        id: appointment.id,
+        time: patientDisplayTime.userTime.time,
+        meetingLink: appointment.meetingLink,
+        meetingProvider: appointment.meetingProvider,
+        meetingPassword: appointment.meetingPassword,
+      };
+
+      if (appointment.doctor?.email) {
+        await this.appointmentEmailHelpers.sendDoctorMeetingPreparation({
+          email: appointment.doctor.email,
+          doctorName: appointment.doctor.fullName,
+          patientName: appointment.patient.fullName,
+          appointmentDetails: { ...appointmentDetails, time: doctorDisplayTime.userTime.time },
+        });
+      }
+
+      if (appointment.patient?.email) {
+        await this.appointmentEmailHelpers.sendPatientMeetingPreparation({
+          email: appointment.patient.email,
+          patientName: appointment.patient.fullName,
+          doctorName: appointment.doctor.fullName,
+          appointmentDetails,
+        });
+      }
+
+      await this.notificationService.createNotification(
+        appointment.patientId,
+        "alert",
+        `Your appointment with Dr. ${appointment.doctor.fullName} starts in 15 minutes! Join now.`,
+        {
+          action: "meeting_starting_soon",
+          appointmentId: appointment.id,
+          meetingLink: appointment.meetingLink,
+          link: "/patients/dashboard/appointments/overview",
+        }
+      );
+
+      await this.notificationService.createNotification(
+        appointment.doctorId,
+        "alert",
+        `Your appointment with ${appointment.patient.fullName} starts in 15 minutes! Join now.`,
+        {
+          action: "meeting_starting_soon",
+          appointmentId: appointment.id,
+          meetingLink: appointment.meetingLink,
+          link: "doctors/dashboard/appointments",
+        }
+      );
+    } catch (error) {
+      console.error(
+        `❌ Error sending preparation notification for appointment ${appointment.id}:`,
+        error
+      );
+    }
+  }
+
   /**
    * Parse appointment date and time into Date object
    */

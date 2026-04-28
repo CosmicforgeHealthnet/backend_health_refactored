@@ -113,5 +113,14 @@ if (redisClient) {
   });
 }
 
+// Prevent unhandled promise rejections from crashing the process
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("⚠️ Unhandled promise rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("⚠️ Uncaught exception:", error);
+});
+
 // Start the server
 startServer();
