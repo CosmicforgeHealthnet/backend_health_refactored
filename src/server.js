@@ -58,7 +58,6 @@ async function startServer() {
       if (!redisConnected) {
         console.log("⚠️  Running without Redis - some features may be limited");
       }
-      console.log("⚠️  Running without Redis - some features may be limited");
     });
 
     // Graceful shutdown handlers
