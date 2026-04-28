@@ -84,7 +84,6 @@ jobs:
             git reset --hard origin/dev
 
             echo "Configuring environment..."
-            # Create .env.dev from environment variable for reliability
             echo "# Updated at: $(date)" > .env.dev
             echo "$DEV_ENV_FILE" >> .env.dev
             cp .env.dev .env
@@ -106,14 +105,10 @@ jobs:
             docker pull nginx:alpine
 
             echo "Aggressively cleaning up old containers..."
-            # 1. Stop host-level web servers that might be hogging ports
             systemctl stop nginx apache2 2>/dev/null || true
-
-            # 2. Clear Port 80 and 443 (for consistency)
             fuser -k 80/tcp 2>/dev/null || true
             fuser -k 443/tcp 2>/dev/null || true
 
-            # 3. Destroy ANY container matching our names by ID (Fixes Ghost Containers)
             echo "Identifying and destroying cosmic containers by ID..."
             for name in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
                 IDs=$(docker ps -a -q --filter "name=$name")
@@ -132,7 +127,6 @@ jobs:
             docker network create cosmic_network_dev 2>/dev/null || true
 
             echo "Starting Redis..."
-            # Redis on dev port 6380:6379
             docker run -d \
               --name cosmic_redis_dev \
               --network cosmic_network_dev \
@@ -142,7 +136,6 @@ jobs:
               redis:alpine
 
             echo "Starting AI Service..."
-            # AI on dev port 8002:8001
             docker run -d \
               --name cosmic_brain_dev \
               --network cosmic_network_dev \
@@ -152,7 +145,6 @@ jobs:
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:dev-latest
 
             echo "Starting Backend Service..."
-            # Backend on dev port 5001:5000
             docker run -d \
               --name cosmic_backend_dev \
               --network cosmic_network_dev \
@@ -166,7 +158,6 @@ jobs:
                npm run dev
 
             echo "Starting Nginx Gateway..."
-            # Nginx on dev port 8081:80
             docker run -d \
               --name cosmic_gateway_dev \
               --network cosmic_network_dev \
@@ -175,6 +166,9 @@ jobs:
               -v $(pwd)/deployment/nginx.dev.conf:/etc/nginx/nginx.conf:ro \
               -v $(pwd)/uploads:/app/uploads:ro \
               nginx:alpine
+
+            echo "Connecting prod gateway to dev network for SSL routing..."
+            docker network connect cosmic_network_dev cosmic_gateway_prod 2>/dev/null || true
 
             echo "Cleaning up..."
             docker image prune -f
