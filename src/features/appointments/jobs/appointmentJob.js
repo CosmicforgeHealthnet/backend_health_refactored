@@ -1185,7 +1185,8 @@ class AppointmentCronJobs {
           if (appointment.zoomMeetingId) {
             result = await this.zoomMeetingService.endMeetingWithWarning(
               appointment.zoomMeetingId,
-              "Meeting duration elapsed - automatically ended"
+              "Meeting duration elapsed - automatically ended",
+              0
             );
           }
           break;
