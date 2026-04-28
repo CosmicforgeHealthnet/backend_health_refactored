@@ -991,19 +991,16 @@ class AppointmentCronJobs {
 
           // Check if appointment duration has elapsed
           if (isAfter(now, appointmentEndUTC)) {
-            const success = await this.endMeeting(appointment);
-            if (success) {
-              this.processedMeetingEnds.add(appointment.id);
-              meetingsEnded++;
+            await this.endMeeting(appointment); // best-effort; don't block completion on it
+            this.processedMeetingEnds.add(appointment.id);
+            meetingsEnded++;
 
-              // Update appointment status to completed if not already
-              if (appointment.status !== "completed") {
-                await this.appointmentRepository.update(appointment.id, {
-                  status: "completed",
-                  completedAt: now,
-                  notes: "Appointment automatically completed after duration elapsed",
-                });
-              }
+            if (appointment.status !== "completed") {
+              await this.appointmentRepository.update(appointment.id, {
+                status: "completed",
+                completedAt: now,
+                notes: "Appointment automatically completed after duration elapsed",
+              });
             }
           }
         } catch (error) {
@@ -1245,6 +1242,10 @@ class AppointmentCronJobs {
             endReason: "Duration elapsed",
           },
         });
+      } else if (result.meetingStatus === "waiting") {
+        console.log(
+          `ℹ️ Meeting for appointment ${appointment.id} was never started (waiting) — skipping end`
+        );
       } else {
         console.error(
           `❌ Failed to end meeting for appointment ${appointment.id}:`,
