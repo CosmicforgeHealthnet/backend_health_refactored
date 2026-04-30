@@ -189,12 +189,31 @@ exports.manageProfileOptions = [
 exports.updateAuthInfo = async (req, res, next) => {
     try {
         const userId = req.user.sub;
-        const { fullName, profileImageUrl, bannerUrl } = req.body;
+        let { fullName, profileImageUrl, bannerUrl } = req.body;
+
+        if (req.files && req.files.length > 0) {
+            const crypto = require('node:crypto');
+            const path = require('node:path');
+            const fs = require('node:fs').promises;
+
+            const file = req.files[0];
+            const ext = path.extname(file.originalname);
+            const fileName = `${crypto.randomUUID()}${ext}`;
+
+            const uploadDir = process.env.UPLOAD_DIRECTORY ||
+                (process.env.NODE_ENV === 'production' ? '/app/uploads' : path.join(__dirname, '../../../../uploads'));
+            const imagesDir = path.join(uploadDir, 'images');
+            await fs.mkdir(imagesDir, { recursive: true });
+            await fs.writeFile(path.join(imagesDir, fileName), file.buffer);
+
+            const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+            profileImageUrl = `${baseUrl}/uploads/images/${fileName}`;
+        }
 
         if (!fullName && !profileImageUrl && !bannerUrl) {
             return res.status(400).json({
                 success: false,
-                message: "At least one field (fullName, profileImageUrl, bannerUrl) is required"
+                message: "At least one field (fullName, profileImageUrl, bannerUrl) or a file is required"
             });
         }
 
