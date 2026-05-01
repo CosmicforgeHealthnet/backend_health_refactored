@@ -263,7 +263,12 @@ class DocumentFolderMiddleware {
     // For other documents, use signed URLs with tokens for security
     const secret = process.env.URL_SIGNING_SECRET;
     if (!secret) {
-      throw new Error('URL_SIGNING_SECRET must be set in environment variables for secure document access');
+      // Fall back to simple unsigned URL when signing secret is not configured
+      console.warn('URL_SIGNING_SECRET is not set — serving document without signed URL. Set this env var in production.');
+      if (thumbnail) {
+        return `${baseUrl}/api/documents/files/${file.id}/thumbnail`;
+      }
+      return `${baseUrl}/api/documents/files/${file.id}`;
     }
 
     // Create expiration time (24 hours from now)

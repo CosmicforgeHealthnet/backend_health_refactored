@@ -1328,6 +1328,15 @@ class PaymentController {
         });
       }
 
+      // Payment providers require a valid email — catch missing/invalid emails early
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!user.email || !emailRegex.test(user.email)) {
+        return res.status(400).json({
+          success: false,
+          message: "Your account does not have a valid email address. Please update your profile with a valid email before making a payment."
+        });
+      }
+
       const patientName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Patient';
       const apptDateStr = new Date(appointmentDate).toISOString().split('T')[0];
       const doctorName = doctor
@@ -1357,7 +1366,7 @@ class PaymentController {
       // Prepare payment data for provider
       const providerPaymentData = {
         email: user.email,
-        name: `${user.firstName} ${user.lastName}`,
+        name: [user.firstName, user.lastName].filter(Boolean).join(' ') || patientName,
         phone: user.phone,
         callbackUrl,
         title: "Medical Appointment Payment",
