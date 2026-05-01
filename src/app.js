@@ -9,6 +9,7 @@ const path = require('node:path');
 const archiver = require('archiver');
 const swaggerUi = require("swagger-ui-express");
 const morgan = require("morgan");
+const logger = require("./config/logger");
 
 // ============================================
 // SHARED IMPORTS
@@ -180,7 +181,9 @@ const serviceManagementSwaggerDoc = loadSwaggerDoc("./features/service-managemen
 // ============================================
 // GLOBAL MIDDLEWARE
 // ============================================
-app.use(morgan("dev"));
+app.use(morgan("combined", {
+  stream: { write: (msg) => logger.info(msg.trim()) },
+}));
 app.use(cors({
     origin: config.corsOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -336,6 +339,7 @@ app.use("/api/firstaid", firstaidFeature.router);
 app.use("/api/marketing", marketingFeature.router);
 app.use("/api/services", serviceManagementFeature.router);
 app.use("/api/admin/verification", adminVerificationRoutes);
+app.use("/api/admin/logs", require("./features/admin/routes/logsRoute"));
 
 
 // ============================================

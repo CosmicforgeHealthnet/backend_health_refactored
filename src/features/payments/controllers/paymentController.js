@@ -1329,19 +1329,19 @@ class PaymentController {
       }
 
       // Payment providers require a valid email — catch missing/invalid emails early
+      const userEmail = (user.email || '').trim();
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!user.email || !emailRegex.test(user.email)) {
+      if (!userEmail || !emailRegex.test(userEmail)) {
         return res.status(400).json({
           success: false,
           message: "Your account does not have a valid email address. Please update your profile with a valid email before making a payment."
         });
       }
 
-      const patientName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Patient';
+      // User entity uses fullName, not firstName/lastName
+      const patientName = user.fullName || 'Patient';
       const apptDateStr = new Date(appointmentDate).toISOString().split('T')[0];
-      const doctorName = doctor
-        ? `Dr. ${[doctor.firstName, doctor.lastName].filter(Boolean).join(' ')}`
-        : 'Doctor';
+      const doctorName = doctor ? `Dr. ${doctor.fullName || ''}`.trim() : 'Doctor';
 
       // Create appointment payment transaction
       const paymentData = {
@@ -1365,9 +1365,9 @@ class PaymentController {
 
       // Prepare payment data for provider
       const providerPaymentData = {
-        email: user.email,
-        name: [user.firstName, user.lastName].filter(Boolean).join(' ') || patientName,
-        phone: user.phone,
+        email: userEmail,
+        name: patientName,
+        phone: user.phoneNumber || undefined,
         callbackUrl,
         title: "Medical Appointment Payment",
         description: `Payment for appointment with ${doctorName}`
