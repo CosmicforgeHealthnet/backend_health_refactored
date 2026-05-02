@@ -1436,6 +1436,7 @@ class PaymentController {
    * Handle payment callback from provider
    */
   static async handlePaymentCallback(req, res) {
+    const FRONTEND = process.env.FRONTEND_URL || process.env.APP_BASE_URL || process.env.APP_URL || '';
     try {
       const { reference, tx_ref, transaction_id, returnUrl } = req.query;
 
@@ -1449,7 +1450,7 @@ class PaymentController {
         transactionRef = reference;
       } else {
         const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=Invalid+callback+parameters${baseReturnUrl}`);
+        return res.redirect(`${FRONTEND}/payment/error?message=Invalid+callback+parameters${baseReturnUrl}`);
       }
 
       // Find transaction — first by provider reference, then by UUID parsed from the ref
@@ -1465,13 +1466,13 @@ class PaymentController {
       }
 
       if (!transaction) {
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=Transaction+not+found`);
+        return res.redirect(`${FRONTEND}/payment/error?message=Transaction+not+found`);
       }
 
       // Idempotency: if already completed, just redirect to success
       if (transaction.status === 'completed') {
         const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/callback?reference=${transactionRef}&status=successful${baseReturnUrl}`);
+        return res.redirect(`${FRONTEND}/payment/callback?reference=${transactionRef}&status=successful${baseReturnUrl}`);
       }
 
       // Verify payment with provider
@@ -1503,8 +1504,7 @@ class PaymentController {
             );
           } else if (transaction.doctorId && transaction.serviceType === 'appointment') {
             await paymentService.processFundsForAppointmentPayment(transaction);
-            
-            // 🔥 AUTOMATIC SYNC: Update appointment payment status immediately
+
             try {
               const AppointmentService = require('../../appointments/services/appointmentService');
               const appointmentService = new AppointmentService();
@@ -1523,7 +1523,7 @@ class PaymentController {
         }
 
         const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/callback?reference=${transactionRef}&status=successful${baseReturnUrl}`);
+        return res.redirect(`${FRONTEND}/payment/callback?reference=${transactionRef}&status=successful${baseReturnUrl}`);
       } else {
         // Atomic conditional update to failed
         await transactionRepository.repo.createQueryBuilder()
@@ -1533,12 +1533,12 @@ class PaymentController {
           .execute();
 
         const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/callback?reference=${transactionRef}&status=failed${baseReturnUrl}`);
+        return res.redirect(`${FRONTEND}/payment/callback?reference=${transactionRef}&status=failed${baseReturnUrl}`);
       }
 
     } catch (error) {
       console.error('Payment callback error:', error);
-      return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=${encodeURIComponent(error.message)}`);
+      return res.redirect(`${FRONTEND}/payment/error?message=${encodeURIComponent(error.message)}`);
     }
   }
 
