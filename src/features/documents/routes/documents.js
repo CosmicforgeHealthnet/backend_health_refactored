@@ -1,5 +1,6 @@
 // src/routes/documentRoutes.js
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 
 // Import controllers
@@ -11,11 +12,28 @@ const AnalyticsController = require('../controllers/analyticsController');
 const DocumentUploadMiddleware = require('../middlewares/documentUploadMiddleware');
 const DocumentFolderMiddleware = require('../middlewares/documentFolderMiddleware');
 
+// Accepts JWT from Authorization header OR ?token= query param.
+// Used for file viewing so direct browser URLs (with embedded token) work.
+function authenticateJWTFlexible(req, res, next) {
+  const authHeader = req.headers.authorization;
+  const queryToken = req.query.token;
+  const token = (authHeader && authHeader.startsWith('Bearer '))
+    ? authHeader.slice(7)
+    : queryToken;
+  if (!token) return res.status(401).json({ error: 'Authorization header missing or malformed' });
+  jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
+    if (err) return res.status(401).json({ error: 'Invalid or expired token' });
+    req.user = payload;
+    next();
+  });
+}
 
 // PUBLIC ROUTES FIRST (no authentication)
 router.get('/images/:imageId', DocumentFileController.servePublicImage);
 router.get('/images/:imageId/thumbnail', DocumentFileController.serveImageThumbnail);
 
+// File view route — accepts token from header OR query param (registered before global auth)
+router.get('/files/:fileId', authenticateJWTFlexible, DocumentFileController.getFile);
 
 // Authentication middleware (assuming you have this)
 const { authenticateJWT } = require('../../../shared/middlewares/authMiddleware');
@@ -221,16 +239,6 @@ router.get('/files/type/:documentType',
 router.delete('/files/bulk',
   // authenticateUser,
   DocumentFileController.bulkDeleteFiles
-);
-
-/**
- * @route   GET /api/documents/files/:fileId
- * @desc    Get file metadata by ID
- * @access  Private
- */
-router.get('/files/:fileId',
-  // authenticateUser,
-  DocumentFileController.getFile
 );
 
 /**

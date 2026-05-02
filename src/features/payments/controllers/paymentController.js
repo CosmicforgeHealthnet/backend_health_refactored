@@ -1358,8 +1358,9 @@ class PaymentController {
 
       const transaction = await paymentService.initiatePayment(paymentData);
 
-      // Always use FRONTEND_URL as the base — strip whatever origin the client sent
-      // so localhost:3000 or staging URLs from the frontend never leak into production callbacks
+      // Build the final destination URL — strip any origin from the client so localhost never leaks.
+      // The service layer already wraps this in /api/payments/callback?returnUrl=..., so we must
+      // pass the raw destination here (not a pre-wrapped /payment/callback URL).
       let safeReturnPath = '';
       if (returnUrl) {
         try {
@@ -1369,8 +1370,8 @@ class PaymentController {
         }
       }
       const callbackUrl = safeReturnPath
-        ? `${process.env.FRONTEND_URL}/payment/callback?returnUrl=${encodeURIComponent(process.env.FRONTEND_URL + safeReturnPath)}`
-        : `${process.env.FRONTEND_URL}/payment/callback`;
+        ? `${process.env.FRONTEND_URL}${safeReturnPath}`
+        : null;
 
       // Prepare payment data for provider
       const providerPaymentData = {
@@ -1679,16 +1680,22 @@ class PaymentController {
         });
       }
 
-      // Create callback URL
-      const callbackUrl = returnUrl
-        ? `${process.env.FRONTEND_URL}/payment/callback?returnUrl=${encodeURIComponent(returnUrl)}`
-        : `${process.env.FRONTEND_URL}/payment/callback`;
+      // Pass raw destination — service layer wraps it in /api/payments/callback?returnUrl=...
+      let safeRetryPath = '';
+      if (returnUrl) {
+        try {
+          safeRetryPath = new URL(returnUrl).pathname + (new URL(returnUrl).search || '');
+        } catch {
+          safeRetryPath = returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`;
+        }
+      }
+      const callbackUrl = safeRetryPath ? `${process.env.FRONTEND_URL}${safeRetryPath}` : null;
 
       // Prepare payment data
       const providerPaymentData = {
         email: user.email,
-        name: `${user.firstName} ${user.lastName}`,
-        phone: user.phone,
+        name: user.fullName || 'Patient',
+        phone: user.phoneNumber || undefined,
         callbackUrl,
         title: "Medical Appointment Payment (Retry)",
         description: `Retry payment for appointment`

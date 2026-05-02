@@ -1320,8 +1320,8 @@ class PaymentService {
   async processFlutterwavePayment(transaction, paymentData) {
     try {
       const txRef = `FLW-${transaction.id}-${Date.now()}`;
-      const baseReturnUrlFLW = (paymentData.redirectUrl || paymentData.returnUrl) 
-        ? `?returnUrl=${encodeURIComponent(paymentData.redirectUrl || paymentData.returnUrl)}` 
+      const baseReturnUrlFLW = (paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl)
+        ? `?returnUrl=${encodeURIComponent(paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl)}`
         : '';
         
       const payload = {
