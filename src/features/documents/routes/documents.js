@@ -35,6 +35,12 @@ router.get('/images/:imageId/thumbnail', DocumentFileController.serveImageThumbn
 // File view route — accepts token from header OR query param (registered before global auth)
 router.get('/files/:fileId', authenticateJWTFlexible, DocumentFileController.getFile);
 
+// Serve actual file bytes — browser can open this URL directly if ?token= is present
+router.get('/files/:fileId/content', authenticateJWTFlexible, DocumentFileController.serveDocumentContent);
+
+// Generate a fresh signed URL for any file the user owns (requires Bearer auth)
+router.get('/files/:fileId/view-url', authenticateJWTFlexible, DocumentFileController.generateViewUrl);
+
 // Authentication middleware (assuming you have this)
 const { authenticateJWT } = require('../../../shared/middlewares/authMiddleware');
 

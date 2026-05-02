@@ -2,6 +2,7 @@
 const DocumentFileService = require('../services/documentFileService');
 const DocumentFolderMiddleware = require('../middlewares/documentFolderMiddleware');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -397,6 +398,66 @@ class DocumentFileController {
         error: 'Failed to upload images',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
+    }
+  }
+
+  /**
+   * Serve document content directly — browser opens this to view/download files.
+   * Accepts JWT from Authorization header OR ?token= query param.
+   * GET /api/documents/files/:fileId/content
+   */
+  static async serveDocumentContent(req, res) {
+    try {
+      const { fileId } = req.params;
+      const userId = req.user?.sub || req.user?.id;
+
+      const result = await DocumentFileService.downloadFile(fileId, userId, req.ip, req.get('User-Agent'));
+
+      if (!result.success) {
+        return res.status(404).json({ success: false, error: result.error || 'File not found' });
+      }
+
+      const { file } = result;
+      res.setHeader('Content-Type', file.mimeType);
+      res.setHeader('Content-Length', file.fileSize);
+      res.setHeader('Content-Disposition', `inline; filename="${file.originalFileName}"`);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      res.send(file.buffer);
+
+    } catch (error) {
+      console.error('Error serving document content:', error);
+      res.status(500).json({ success: false, error: 'Failed to serve file' });
+    }
+  }
+
+  /**
+   * Return a fresh signed view URL for an existing file the user owns.
+   * Frontend calls this to get a URL it can open in a new tab.
+   * GET /api/documents/files/:fileId/view-url
+   */
+  static async generateViewUrl(req, res) {
+    try {
+      const { fileId } = req.params;
+      const userId = req.user?.sub || req.user?.id;
+
+      const fileCheck = await DocumentFileService.getFile(fileId, userId, req.ip, req.get('User-Agent'));
+      if (!fileCheck.success) {
+        return res.status(404).json({ success: false, error: 'File not found or access denied' });
+      }
+
+      const baseUrl = process.env.FILE_SERVER_URL || process.env.APP_URL;
+      if (!baseUrl) {
+        return res.status(500).json({ success: false, error: 'Server URL not configured' });
+      }
+
+      const token = jwt.sign({ fileId, purpose: 'view', sub: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      const url = `${baseUrl}/api/documents/files/${fileId}/content?token=${token}`;
+
+      res.json({ success: true, url, expiresIn: '7 days' });
+
+    } catch (error) {
+      console.error('Error generating view URL:', error);
+      res.status(500).json({ success: false, error: 'Failed to generate view URL' });
     }
   }
 

@@ -264,19 +264,18 @@ class DocumentFolderMiddleware {
     // For other documents, use signed URLs with tokens for security
     const secret = process.env.URL_SIGNING_SECRET;
     if (!secret) {
-      // No signing secret — embed a short-lived JWT so the view route can still auth the request
-      console.warn('URL_SIGNING_SECRET is not set — using JWT-embedded URL. Set this env var in production.');
+      // No URL signing secret — embed a JWT so the /content route can authenticate the request
       const jwtSecret = process.env.JWT_SECRET;
       if (jwtSecret) {
-        const viewToken = jwt.sign({ fileId: file.id, purpose: 'view' }, jwtSecret, { expiresIn: '24h' });
+        const viewToken = jwt.sign({ fileId: file.id, purpose: 'view' }, jwtSecret, { expiresIn: '7d' });
         if (thumbnail) {
-          return `${baseUrl}/api/documents/files/${file.id}/thumbnail?token=${viewToken}`;
+          return `${baseUrl}/api/documents/files/${file.id}/content?token=${viewToken}&thumbnail=true`;
         }
-        return `${baseUrl}/api/documents/files/${file.id}?token=${viewToken}`;
+        return `${baseUrl}/api/documents/files/${file.id}/content?token=${viewToken}`;
       }
-      // Last resort — no secrets at all, serve bare URL
-      if (thumbnail) return `${baseUrl}/api/documents/files/${file.id}/thumbnail`;
-      return `${baseUrl}/api/documents/files/${file.id}`;
+      // Last resort — bare URL, frontend must append ?token=
+      if (thumbnail) return `${baseUrl}/api/documents/files/${file.id}/content`;
+      return `${baseUrl}/api/documents/files/${file.id}/content`;
     }
 
     // Create expiration time (24 hours from now)
