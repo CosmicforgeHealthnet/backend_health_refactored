@@ -1,6 +1,7 @@
 // src/middlewares/documentFolderMiddleware.js
 const AppDataSource = require('../../../config/database');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 /**
  * Document Folder Middleware
@@ -263,11 +264,18 @@ class DocumentFolderMiddleware {
     // For other documents, use signed URLs with tokens for security
     const secret = process.env.URL_SIGNING_SECRET;
     if (!secret) {
-      // Fall back to simple unsigned URL when signing secret is not configured
-      console.warn('URL_SIGNING_SECRET is not set — serving document without signed URL. Set this env var in production.');
-      if (thumbnail) {
-        return `${baseUrl}/api/documents/files/${file.id}/thumbnail`;
+      // No signing secret — embed a short-lived JWT so the view route can still auth the request
+      console.warn('URL_SIGNING_SECRET is not set — using JWT-embedded URL. Set this env var in production.');
+      const jwtSecret = process.env.JWT_SECRET;
+      if (jwtSecret) {
+        const viewToken = jwt.sign({ fileId: file.id, purpose: 'view' }, jwtSecret, { expiresIn: '24h' });
+        if (thumbnail) {
+          return `${baseUrl}/api/documents/files/${file.id}/thumbnail?token=${viewToken}`;
+        }
+        return `${baseUrl}/api/documents/files/${file.id}?token=${viewToken}`;
       }
+      // Last resort — no secrets at all, serve bare URL
+      if (thumbnail) return `${baseUrl}/api/documents/files/${file.id}/thumbnail`;
       return `${baseUrl}/api/documents/files/${file.id}`;
     }
 
