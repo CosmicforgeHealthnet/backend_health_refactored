@@ -1358,9 +1358,18 @@ class PaymentController {
 
       const transaction = await paymentService.initiatePayment(paymentData);
 
-      // Create callback URL for provider to redirect back to
-      const callbackUrl = returnUrl
-        ? `${process.env.FRONTEND_URL}/payment/callback?returnUrl=${encodeURIComponent(returnUrl)}`
+      // Always use FRONTEND_URL as the base — strip whatever origin the client sent
+      // so localhost:3000 or staging URLs from the frontend never leak into production callbacks
+      let safeReturnPath = '';
+      if (returnUrl) {
+        try {
+          safeReturnPath = new URL(returnUrl).pathname + (new URL(returnUrl).search || '');
+        } catch {
+          safeReturnPath = returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`;
+        }
+      }
+      const callbackUrl = safeReturnPath
+        ? `${process.env.FRONTEND_URL}/payment/callback?returnUrl=${encodeURIComponent(process.env.FRONTEND_URL + safeReturnPath)}`
         : `${process.env.FRONTEND_URL}/payment/callback`;
 
       // Prepare payment data for provider
