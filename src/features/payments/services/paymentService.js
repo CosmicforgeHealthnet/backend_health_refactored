@@ -1339,9 +1339,8 @@ class PaymentService {
           description: transaction.description || `Payment for ${transaction.serviceType}`,
           logo: process.env.COMPANY_LOGO_URL
         },
-        redirect_url: `${process.env.APP_BASE_URL}/api/payments/callback${baseReturnUrlFLW}`,
-        // 🔥 ADD THIS WEBHOOK URL - This was missing!
-        webhook_url: `${process.env.BACKEND_URL}/webhooks/payments/flutterwave`,
+        redirect_url: `${process.env.BACKEND_URL || process.env.APP_BASE_URL}/api/payments/callback${baseReturnUrlFLW}`,
+        webhook_url: `${process.env.BACKEND_URL || process.env.APP_BASE_URL}/webhooks/payments/flutterwave`,
         meta: {
           transaction_id: transaction.id,
           service_type: transaction.serviceType,
@@ -1417,15 +1416,12 @@ class PaymentService {
         amount: transaction.originalAmount * 100, // Convert to kobo/pesewas
         currency: transaction.originalCurrency,
         reference: reference,
-        callback_url: `${process.env.APP_BASE_URL}/api/payments/callback${baseReturnUrlPST}`,
-        // 🔥 NOTE: Paystack uses callback_url for webhooks too
-        // But you should ALSO set webhook URL in your Paystack Dashboard
+        callback_url: `${process.env.BACKEND_URL || process.env.APP_BASE_URL}/api/payments/callback${baseReturnUrlPST}`,
         metadata: {
           transaction_id: transaction.id,
           service_type: transaction.serviceType,
           service_id: transaction.serviceId,
-          // Add webhook URL in metadata as backup
-          webhook_url: `${process.env.BACKEND_URL}/webhooks/payments/paystack`,
+          webhook_url: `${process.env.BACKEND_URL || process.env.APP_BASE_URL}/webhooks/payments/paystack`,
           custom_fields: [
             {
               display_name: "Service Type",
