@@ -9,7 +9,8 @@
       "PowerShell(npm install bcryptjs uuid --prefix \"$env:TEMP\\\\pgtemp\" 2>&1 | Select-Object -Last 3)",
       "PowerShell([System.IO.Path]::GetFullPath\\($env:TEMP\\))",
       "PowerShell(node \"C:\\\\Users\\\\TriumphAdeniran\\\\AppData\\\\Local\\\\Temp\\\\create_admin.js\")",
-      "WebFetch(domain:dev-api.cosmicforge-healthnet.com)"
+      "WebFetch(domain:dev-api.cosmicforge-healthnet.com)",
+      "Bash(psql --version)"
     ],
     "additionalDirectories": [
       "C:\\Users\\TriumphAdeniran\\AppData\\Local\\Temp"
