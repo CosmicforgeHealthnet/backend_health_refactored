@@ -27,18 +27,28 @@ async function connectRedis() {
 
 async function startServer() {
   try {
+
+    console.log("config.runMigrations", config.runMigrations);
+
+    const shouldRunMigrations = config.runMigrations;
+
     // Initialize database
     await AppDataSource.initialize();
     console.log("✔️  Database connected");
 
     // Try to connect to Redis (non-blocking)
-    await connectRedis();
+    // await connectRedis();
 
-    try {
-      await AppDataSource.runMigrations();
-      console.log("✔️  Migrations run successfully");
-    } catch (err) {
-      console.error("❌ Migration error:", err);
+    if (shouldRunMigrations) {
+      try {
+        await AppDataSource.runMigrations();
+        console.log("✔️  Migrations run successfully");
+      } catch (err) {
+        console.error("❌ Migration error:", err);
+        throw err;
+      }
+    } else {
+      console.log("Migrations skipped. Set RUN_MIGRATIONS=true to run them explicitly.");
     }
 
     //runing jobs```

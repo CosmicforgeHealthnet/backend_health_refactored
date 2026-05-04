@@ -1,7 +1,7 @@
 // src/entities/DataLineage.js
 const { EntitySchema } = require("typeorm");
 
-module.exports.DataLineageSchema = new EntitySchema({
+const DataLineageSchema = new EntitySchema({
   name: "DataLineage",
   tableName: "data_lineage",
   columns: {
@@ -168,3 +168,6 @@ module.exports.DataLineageSchema = new EntitySchema({
     { name: "IDX_LINEAGE_PRIVACY", columns: ["privacyLevel"] }
   ]
 });
+
+module.exports = DataLineageSchema;
+module.exports.DataLineageSchema = DataLineageSchema;

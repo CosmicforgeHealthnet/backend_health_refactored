@@ -37,7 +37,7 @@ const documentsFeature = require("./features/documents");
 const firstaidFeature = require("./features/firstaid");
 
 // Legacy feature locations (to be moved)
-const labRoutes = require("./features/LAB/routes");
+const legacyLabRoutesEnabled = process.env.ENABLE_LEGACY_LAB_ROUTES === "true";
 // const pharmacyRoutes = require("./shared/services/email/helper/index");
 // const firstaidRoutes = require('./shared/services/email/helper/index');
 // const sosRoutes = require('./features/firstaid/routes/content/sosRoutes');
@@ -173,7 +173,9 @@ pharmacySwaggerDoc.servers = [
         description: process.env.NODE_ENV === "production" ? "Production server" : "Development server"
     }
 ];
-const labSwaggerDoc = loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.json", "Lab");
+const labSwaggerDoc = legacyLabRoutesEnabled
+    ? loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.json", "Lab")
+    : null;
 const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundle.json", "SOS");
 const serviceManagementSwaggerDoc = loadSwaggerDoc("./features/service-management/docs/service-management-swagger.json", "Service Management");
 
@@ -232,11 +234,13 @@ app.use('/pharmacy-docs', swaggerUi.serveFiles(pharmacySwaggerDoc, {}), swaggerU
 }));
 
 
-app.use('/lab-docs', swaggerUi.serveFiles(labSwaggerDoc, {}), swaggerUi.setup(labSwaggerDoc, {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: "CosmicForge Lab API",
-    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
-}));
+if (legacyLabRoutesEnabled) {
+    app.use('/lab-docs', swaggerUi.serveFiles(labSwaggerDoc, {}), swaggerUi.setup(labSwaggerDoc, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: "CosmicForge Lab API",
+        swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+    }));
+}
 
 app.use('/sos-docs', swaggerUi.serveFiles(sosSwaggerDoc, {}), swaggerUi.setup(sosSwaggerDoc, {
     customCss: '.swagger-ui .topbar { display: none }',
@@ -273,7 +277,7 @@ app.get("/", (req, res) => {
         swagger: {
             main: "/api-docs",
             pharmacy: "/pharmacy-docs",
-            lab: "/lab-docs",
+            ...(legacyLabRoutesEnabled ? { lab: "/lab-docs" } : {}),
             sos: "/sos-docs",
             serviceManagement: "/service-docs"
         },
@@ -359,7 +363,9 @@ app.use("/api/admin/verification", adminVerificationRoutes);
 // app.use("/appointments", authenticateJWT, appointmentRoutes);
 // app.use("/support", authenticateJWT, supportRoutes);
 // app.use("/pharmacy", pharmacyRoutes);
-app.use("/lab", labRoutes);
+if (legacyLabRoutesEnabled) {
+    app.use("/lab", require("./features/LAB/routes"));
+}
 // app.use("/api/firstaid", firstaidRoutes);
 // app.use('/api/sos', sosRoutes);
 // app.use("/governance", dataGovernanceRoutes);
