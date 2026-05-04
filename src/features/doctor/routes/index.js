@@ -15,6 +15,7 @@ const DocumentUploadMiddleware = require("../../documents/middlewares/documentUp
 
 // Subscription middlewares
 const requireSubscription = require("../../subscriptions/middlewares/requireSubscription");
+const { getLocationFromIPCached } = require("../../../shared/middlewares/locationMiddleware");
 
 // Import pricing and availability controllers
 const DoctorPricingController = require("../controllers/doctorPricingController");
@@ -545,7 +546,7 @@ router.post("/:doctorId/pricing", authenticateJWT, requireSubscription, pricingC
  *     tags: [Doctor]
  *     description: Get all pricing for a doctor
  */
-router.get("/:doctorId/pricing", pricingController.getDoctorPricing.bind(pricingController));
+router.get("/:doctorId/pricing", getLocationFromIPCached, pricingController.getDoctorPricing.bind(pricingController));
 
 /**
  * @swagger

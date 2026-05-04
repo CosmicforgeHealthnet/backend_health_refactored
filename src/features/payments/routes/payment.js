@@ -14,9 +14,6 @@ const SanitizerMiddleware = require('../../../shared/middlewares/sanitizer');
 // PUBLIC ROUTES
 // ================================
 
-// PAYMENT CALLBACK ROUTE (PUBLIC - for provider redirects)
-router.get('/callback', PaymentController.handlePaymentCallback);
-
 // ================================
 // AUTHENTICATED ROUTES
 // ================================

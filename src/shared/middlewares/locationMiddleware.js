@@ -58,10 +58,11 @@ const getLocationFromIP = async (req, res, next) => {
     
   } catch (error) {
     console.warn('⚠️ Location detection failed:', error.message);
-    
-    // 🔧 Fallback location data
-    req.location = { 
-      country: 'Unknown', 
+
+    // countryCode: null so downstream code can reliably detect "unknown location"
+    req.location = {
+      country: 'Unknown',
+      countryCode: null,
       city: 'Unknown',
       regionName: 'Unknown',
       timezone: 'Unknown',
@@ -90,7 +91,7 @@ function getClientIP(req) {
 }
 
 /**
- * Check if IP is localhost/development IP
+ * Check if IP is localhost/private/development IP
  */
 function isLocalIP(ip) {
   const localIPs = [
@@ -100,11 +101,19 @@ function isLocalIP(ip) {
     '::ffff:127.0.0.1',
     'unknown'
   ];
-  
-  return localIPs.includes(ip) || 
-         ip.startsWith('192.168.') || 
-         ip.startsWith('10.') ||
-         ip.startsWith('172.');
+
+  if (localIPs.includes(ip)) return true;
+  if (ip.startsWith('192.168.')) return true;
+  if (ip.startsWith('10.')) return true;
+
+  // Only 172.16.0.0 – 172.31.255.255 is private (not all of 172.x)
+  const parts = ip.split('.');
+  if (parts[0] === '172') {
+    const second = parseInt(parts[1], 10);
+    if (second >= 16 && second <= 31) return true;
+  }
+
+  return false;
 }
 
 /**
@@ -120,35 +129,31 @@ function setLocationHeaders(res, location) {
   });
 }
 
-/**
- * Optional: Rate-limited version for high-traffic apps
- */
 const locationCache = new Map();
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+const MAX_CACHE_SIZE = 5000;            // evict oldest when over this limit
 
 const getLocationFromIPCached = async (req, res, next) => {
   try {
     const ip = getClientIP(req);
-    const cacheKey = ip;
-    const cached = locationCache.get(cacheKey);
-    
-    // Use cached data if available and not expired
+    const cached = locationCache.get(ip);
+
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       req.location = cached.data;
       setLocationHeaders(res, req.location);
       return next();
     }
-    
-    // If not cached, fetch and cache
+
     await getLocationFromIP(req, res, () => {
-      // Cache the result
-      locationCache.set(cacheKey, {
-        data: req.location,
-        timestamp: Date.now()
-      });
+      // Evict oldest entry if cache is full
+      if (locationCache.size >= MAX_CACHE_SIZE) {
+        const oldestKey = locationCache.keys().next().value;
+        locationCache.delete(oldestKey);
+      }
+      locationCache.set(ip, { data: req.location, timestamp: Date.now() });
       next();
     });
-    
+
   } catch (error) {
     console.warn('Cached location middleware error:', error.message);
     next();

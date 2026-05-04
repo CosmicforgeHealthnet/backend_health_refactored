@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PGPASSWORD=\"wvlAZUDdnEdjpuxEVSZEJkYFwAYJhDEf\" psql -h 72.61.20.94 -p 5432 -U postgres -d cosmicforge_clean -c \"SELECT id, email, role, status FROM users WHERE email = 'celebrationavenue.info@gmail.com';\")",
+      "Bash(npm install *)",
+      "PowerShell(npm install pg --prefix \"$env:TEMP\\\\pgtemp\" 2>&1 | Select-Object -Last 3)",
+      "PowerShell($env:PG_PATH = \"$env:TEMP\\\\pgtemp\\\\node_modules\\\\pg\"; node \"$env:TEMP\\\\verify_user.js\")",
+      "PowerShell($env:PG_PATH = \"$env:TEMP\\\\pgtemp\\\\node_modules\\\\pg\"; node \"$env:TEMP\\\\check_db.js\")",
+      "PowerShell(npm install bcryptjs uuid --prefix \"$env:TEMP\\\\pgtemp\" 2>&1 | Select-Object -Last 3)",
+      "PowerShell([System.IO.Path]::GetFullPath\\($env:TEMP\\))",
+      "PowerShell(node \"C:\\\\Users\\\\TriumphAdeniran\\\\AppData\\\\Local\\\\Temp\\\\create_admin.js\")",
+      "WebFetch(domain:dev-api.cosmicforge-healthnet.com)",
+      "Bash(psql --version)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\TriumphAdeniran\\AppData\\Local\\Temp"
+    ]
+  }
+}

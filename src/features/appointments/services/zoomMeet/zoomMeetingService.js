@@ -682,6 +682,19 @@ ${
     warningSeconds = 30
   ) {
     try {
+      const meetingStatus = await this.getMeetingStatus(zoomMeetingId);
+
+      if (!meetingStatus.success || meetingStatus.status !== "started") {
+        console.log(
+          `⏭️ Skipping end for meeting ${zoomMeetingId} — status is '${meetingStatus.status || "unknown"}'`
+        );
+        return {
+          success: false,
+          error: `Meeting is not currently live. Status: ${meetingStatus.status || "unknown"}`,
+          meetingStatus: meetingStatus.status,
+        };
+      }
+
       const headers = await this.getZoomHeaders();
 
       // First, send a message to all participants (if chat is enabled)
