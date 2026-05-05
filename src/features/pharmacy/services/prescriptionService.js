@@ -686,6 +686,11 @@ class PrescriptionService {
       throw new Error("Prescription not found or unauthorized");
     }
 
+    // Idempotency guard — if already confirmed, return without adding duplicate history
+    if (prescription.availabilityStatus === "confirmed") {
+      return this.getPrescriptionById(prescriptionId);
+    }
+
     // Confirm availability and auto-start processing in one step
     await prescriptionRepo.updateFields(prescriptionId, {
       availabilityStatus: "confirmed",
