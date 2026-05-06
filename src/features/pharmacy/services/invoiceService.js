@@ -309,9 +309,7 @@ const invoiceService = {
     await invoiceRepo.update(invoiceId, { status: InvoiceStatus.SENT, dueAt });
 
     // Advance prescription status
-    await prescriptionRepo.update(invoice.prescriptionId, {
-      status: PrescriptionStatus.AWAITING_PAYMENT,
-    });
+    await prescriptionRepo.updateStatus(invoice.prescriptionId, PrescriptionStatus.AWAITING_PAYMENT);
 
     const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
 
@@ -368,9 +366,7 @@ const invoiceService = {
     // Revert prescription if it was waiting for this invoice's payment
     const prescription = await prescriptionRepo.findById(invoice.prescriptionId);
     if (prescription?.status === PrescriptionStatus.AWAITING_PAYMENT) {
-      await prescriptionRepo.update(invoice.prescriptionId, {
-        status: PrescriptionStatus.UNDER_REVIEW,
-      });
+      await prescriptionRepo.updateStatus(invoice.prescriptionId, PrescriptionStatus.UNDER_REVIEW);
     }
 
     const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
