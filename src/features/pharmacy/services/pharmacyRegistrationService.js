@@ -8,6 +8,7 @@ const verificationService = require('../../auth/services/verificationService'); 
 const referralService = require('../../auth/services/referralService'); // Pending refactor to auth
 const { sendPharmacyStaffWelcomeEmail } = require("../../../shared/services/email/helper/pharmacy");
 const AppDataSource = require('../../../config/database');
+const CurrencyService = require('../../payments/services/currencyService');
 
 class PharmacyRegistrationService {
   get profileRepo() { return require("../repositories/pharmacyProfileRepository"); }
@@ -26,8 +27,22 @@ class PharmacyRegistrationService {
       address,
       phone,
       primaryContactPerson,
-      preferredUsername
+      preferredUsername,
+      countryCode,
     } = registrationData;
+
+    // Resolve defaultCurrency from pharmacy's location — fall back to USD if not supported
+    let defaultCurrency = "USD";
+    try {
+      const localCurrency = CurrencyService.getCurrencyForCountry(countryCode);
+      const [paystackOk, flutterwaveOk] = await Promise.all([
+        CurrencyService.isCurrencySupportedByProvider(localCurrency, "paystack"),
+        CurrencyService.isCurrencySupportedByProvider(localCurrency, "flutterwave"),
+      ]);
+      if (paystackOk || flutterwaveOk) defaultCurrency = localCurrency;
+    } catch (_) {
+      // Currency resolution is non-critical — keep USD fallback
+    }
 
     const normalizedEmail = email.toLowerCase().trim();
 
@@ -70,7 +85,8 @@ class PharmacyRegistrationService {
         email: normalizedEmail,
         preferredUsername,
         verificationStatus: "pending",
-        documentsSubmitted: false
+        documentsSubmitted: false,
+        defaultCurrency,
       });
 
       await queryRunner.manager.save("PharmacyVerificationRequest", {

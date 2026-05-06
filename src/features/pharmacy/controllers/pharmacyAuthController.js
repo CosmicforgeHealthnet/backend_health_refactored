@@ -37,7 +37,8 @@ class PharmacyAuthController {
         address,
         phone,
         primaryContactPerson,
-        preferredUsername
+        preferredUsername,
+        countryCode: req.location?.countryCode ?? null,
       });
 
       return res.status(201).json({
