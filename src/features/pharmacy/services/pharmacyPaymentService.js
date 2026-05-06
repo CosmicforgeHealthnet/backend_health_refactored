@@ -109,8 +109,16 @@ const pharmacyPaymentService = {
    * Rate limited: max 5 attempts per invoice per hour.
    */
   async initiatePayment(patientId, body, patientCountryCode) {
-    const { invoiceId } = body;
+    const { invoiceId, provider: requestedProvider } = body;
     if (!invoiceId) throw Object.assign(new Error("invoiceId is required"), { status: 400 });
+
+    const validProviders = Object.values(PaymentProvider);
+    if (requestedProvider && !validProviders.includes(requestedProvider)) {
+      throw Object.assign(
+        new Error(`Invalid provider. Must be one of: ${validProviders.join(", ")}`),
+        { status: 400 }
+      );
+    }
 
     const invoice = await invoiceRepo.findByIdAndPatient(invoiceId, patientId);
     if (!invoice) throw Object.assign(new Error("Invoice not found"), { status: 404 });
@@ -148,9 +156,19 @@ const pharmacyPaymentService = {
       );
     }
 
-    // Resolve payment currency based on patient's location
-    const countryCode = patientCountryCode || "US";
-    const { currency, provider, fallback } = await resolvePaymentCurrency(countryCode);
+    // Resolve provider + currency: patient's explicit choice takes priority over auto-detection
+    const countryCode = patientCountryCode || "NG";
+    let currency, provider;
+    if (requestedProvider) {
+      provider = requestedProvider;
+      const localCurrency = CurrencyService.getCurrencyForCountry(countryCode);
+      const supported = await CurrencyService.isCurrencySupportedByProvider(localCurrency, provider);
+      currency = supported ? localCurrency : "NGN";
+    } else {
+      const resolved = await resolvePaymentCurrency(countryCode);
+      currency  = resolved.currency;
+      provider  = resolved.provider;
+    }
 
     // Convert USD amount → patient's local currency
     const amountUsd = parseFloat(invoice.totalAmountUsd);
