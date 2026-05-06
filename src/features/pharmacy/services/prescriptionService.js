@@ -368,7 +368,8 @@ class PrescriptionService {
       throw new Error("Unauthorized: Not assigned to your pharmacy");
     }
 
-    if (prescription.status !== PrescriptionStatus.PHARMACY_PROCESSING) {
+    const readyAllowed = [PrescriptionStatus.PHARMACY_PROCESSING, PrescriptionStatus.IN_PROGRESS];
+    if (!readyAllowed.includes(prescription.status)) {
       throw new Error("Prescription is not being processed");
     }
 
