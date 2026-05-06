@@ -183,8 +183,12 @@ const pharmacyPaymentService = {
         );
       }
     } catch (err) {
-      console.error("Payment gateway initiation failed:", err.message);
-      throw Object.assign(new Error("Payment gateway error. Please try again."), { status: 502 });
+      const gatewayDetail = err.response?.data?.message ?? err.response?.data ?? err.message;
+      console.error("Payment gateway initiation failed:", gatewayDetail, err.response?.data);
+      throw Object.assign(
+        new Error(`Payment gateway error: ${typeof gatewayDetail === "string" ? gatewayDetail : JSON.stringify(gatewayDetail)}`),
+        { status: 502 }
+      );
     }
 
     // Save payment record
