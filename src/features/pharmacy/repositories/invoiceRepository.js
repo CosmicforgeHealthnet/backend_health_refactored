@@ -63,14 +63,18 @@ const invoiceRepository = {
   /**
    * Paginated list for patient.
    */
-  findByPatient: async ({ patientId, status, page, limit }) => {
+  findByPatient: async ({ patientId, status, excludeCancelled = false, page, limit }) => {
     const qb = repo()
       .createQueryBuilder("inv")
       .leftJoinAndSelect("inv.lineItems", "li")
       .leftJoinAndSelect("inv.pharmacy", "pha")
       .where("inv.patientId = :patientId", { patientId });
 
-    if (status) qb.andWhere("inv.status = :status", { status });
+    if (status) {
+      qb.andWhere("inv.status = :status", { status });
+    } else if (excludeCancelled) {
+      qb.andWhere("inv.status != :cancelled", { cancelled: "cancelled" });
+    }
 
     const total = await qb.getCount();
     const invoices = await qb

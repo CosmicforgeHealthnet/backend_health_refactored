@@ -140,6 +140,16 @@ const invoiceService = {
       throw Object.assign(new Error("Prescription does not belong to this pharmacy"), { status: 403 });
     }
 
+    // Block duplicate invoices — only one active (draft or sent) invoice per prescription
+    const { invoices: existing } = await invoiceRepo.findByPharmacy({ pharmacyId, prescriptionId, page: 1, limit: 10 });
+    const activeInvoice = existing.find(inv => ["draft", "sent", "viewed", "awaiting_payment"].includes(inv.status));
+    if (activeInvoice) {
+      throw Object.assign(
+        new Error(`An active invoice (${activeInvoice.reference}) already exists for this prescription. Cancel it before creating a new one.`),
+        { status: 409 }
+      );
+    }
+
     // Get pharmacy profile for display currency
     const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
     const displayCurrency = pharmacy.defaultCurrency || "NGN";
