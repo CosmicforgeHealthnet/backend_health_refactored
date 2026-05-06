@@ -11,7 +11,7 @@ const NotificationService   = require("../../notifications/services/notification
 const PayoutSchema          = require("../entities/PharmacyPayoutRequest");
 const WalletTxnSchema       = require("../entities/PharmacyWalletTransaction");
 
-const { AppDataSource }     = require("../../../config/database");
+const AppDataSource         = require("../../../config/database");
 const axios                 = require("axios");
 
 const notificationService   = new NotificationService();
