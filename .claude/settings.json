@@ -12,7 +12,9 @@
       "WebFetch(domain:dev-api.cosmicforge-healthnet.com)",
       "Bash(psql --version)",
       "Bash(PGPASSWORD='wvlAZUDdnEdjpuxEVSZEJkYFwAYJhDEf' psql -h 72.61.20.94 -U postgres -d cosmicforge_clean -p 5432 -c \"\\\\d prescriptions\")",
-      "Bash(apt list *)"
+      "Bash(apt list *)",
+      "Bash(PGPASSWORD=\"wvlAZUDdnEdjpuxEVSZEJkYFwAYJhDEf\" psql -h 72.61.20.94 -U postgres -d cosmicforge_clean -p 5432 -c \"SELECT id, \\\\\"pharmacyName\\\\\", \\\\\"defaultCurrency\\\\\" FROM pharmacy_profiles LIMIT 10;\")",
+      "Bash(docker run *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\TriumphAdeniran\\AppData\\Local\\Temp"

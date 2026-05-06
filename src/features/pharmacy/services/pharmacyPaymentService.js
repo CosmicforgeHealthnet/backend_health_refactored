@@ -149,12 +149,13 @@ const pharmacyPaymentService = {
     // Use the exchange rate locked at invoice creation when paying in the same currency —
     // guarantees the patient pays exactly what the pharmacy quoted, regardless of live rate shifts.
     const amountUsd = parseFloat(invoice.totalAmountUsd);
-    let amountLocal;
+    let amountLocal, rate;
     if (currency === invoice.displayCurrency && invoice.exchangeRateToUsd) {
-      amountLocal = Math.round(amountUsd * parseFloat(invoice.exchangeRateToUsd) * 100) / 100;
+      rate        = parseFloat(invoice.exchangeRateToUsd);
+      amountLocal = Math.round(amountUsd * rate * 100) / 100;
     } else {
       const rates = await CurrencyService.getExchangeRates();
-      const rate  = rates[currency] || 1;
+      rate        = rates[currency] || 1;
       amountLocal = Math.round(amountUsd * rate * 100) / 100;
     }
 
