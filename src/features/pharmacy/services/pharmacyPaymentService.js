@@ -132,30 +132,6 @@ const pharmacyPaymentService = {
       );
     }
 
-    // Idempotency — return existing pending payment
-    const existing = await pharmacyPaymentRepo.findPendingByInvoice(invoiceId);
-    if (existing) {
-      return {
-        paymentId:        existing.id,
-        invoiceId:        existing.invoiceId,
-        amount:           parseFloat(existing.amountLocal),
-        currency:         existing.currency,
-        status:           existing.status,
-        authorizationUrl: existing.authorizationUrl,
-        reference:        existing.reference,
-      };
-    }
-
-    // Rate limit: max 5 attempts per invoice per hour
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const attempts   = await pharmacyPaymentRepo.countRecentAttempts(invoiceId, oneHourAgo);
-    if (attempts >= 5) {
-      throw Object.assign(
-        new Error("Too many payment attempts. Please try again later."),
-        { status: 429 }
-      );
-    }
-
     // Resolve provider + currency: patient's explicit choice takes priority over auto-detection
     const countryCode = patientCountryCode || "NG";
     let currency, provider;
@@ -170,11 +146,52 @@ const pharmacyPaymentService = {
       provider  = resolved.provider;
     }
 
-    // Convert USD amount → patient's local currency
+    // Use the exchange rate locked at invoice creation when paying in the same currency —
+    // guarantees the patient pays exactly what the pharmacy quoted, regardless of live rate shifts.
     const amountUsd = parseFloat(invoice.totalAmountUsd);
-    const rates     = await CurrencyService.getExchangeRates();
-    const rate      = rates[currency] || 1;
-    const amountLocal = Math.round(amountUsd * rate * 100) / 100;
+    let amountLocal;
+    if (currency === invoice.displayCurrency && invoice.exchangeRateToUsd) {
+      amountLocal = Math.round(amountUsd * parseFloat(invoice.exchangeRateToUsd) * 100) / 100;
+    } else {
+      const rates = await CurrencyService.getExchangeRates();
+      const rate  = rates[currency] || 1;
+      amountLocal = Math.round(amountUsd * rate * 100) / 100;
+    }
+
+    // Idempotency — reuse an existing pending payment only if it matches the current
+    // currency and provider. A mismatch means the pharmacy fixed their settings after
+    // the bad payment was created; void it so a correct one can be issued.
+    const existing = await pharmacyPaymentRepo.findPendingByInvoice(invoiceId);
+    if (existing) {
+      const currencyMatches  = existing.currency === currency;
+      const providerMatches  = !requestedProvider || existing.provider === requestedProvider;
+      const amountMatches    = Math.abs(parseFloat(existing.amountLocal) - amountLocal) < 1;
+
+      if (currencyMatches && providerMatches && amountMatches) {
+        return {
+          paymentId:        existing.id,
+          invoiceId:        existing.invoiceId,
+          amount:           parseFloat(existing.amountLocal),
+          currency:         existing.currency,
+          status:           existing.status,
+          authorizationUrl: existing.authorizationUrl,
+          reference:        existing.reference,
+        };
+      }
+
+      // Stale payment — void it so we can create a correct one
+      await pharmacyPaymentRepo.update(existing.id, { status: "failed" });
+    }
+
+    // Rate limit: max 5 attempts per invoice per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const attempts   = await pharmacyPaymentRepo.countRecentAttempts(invoiceId, oneHourAgo);
+    if (attempts >= 5) {
+      throw Object.assign(
+        new Error("Too many payment attempts. Please try again later."),
+        { status: 429 }
+      );
+    }
 
     const reference = generatePaymentReference();
 
