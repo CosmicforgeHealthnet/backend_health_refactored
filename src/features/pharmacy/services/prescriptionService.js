@@ -8,6 +8,7 @@ const { PrescriptionStatus, PaymentStatus } = require("../entities/Prescription"
 
 const NotificationService = require("../../notifications/services/notificationService");
 const pharmacyEmailHelper = require("../../../shared/services/email/helper/pharmacy");
+const { getIO }           = require("../../../config/websocket");
 
 const appointmentRepo = new AppointmentRepository();
 const notificationService = new NotificationService();
@@ -15,6 +16,23 @@ const notificationService = new NotificationService();
 // Helper: fire-and-forget email (never throw)
 function sendEmail(fn, ...args) {
   fn(...args).catch(err => console.error("Email send failed:", err.message));
+}
+
+// Emit prescription_status_changed to patient + pharmacy so their UIs update in real-time
+function emitStatusChange(prescription, newStatus) {
+  try {
+    const io = getIO();
+    const payload = {
+      prescriptionId: prescription.id,
+      reference:      prescription.reference,
+      status:         newStatus,
+      updatedAt:      new Date().toISOString(),
+    };
+    io.to(`user_${prescription.patientId}`).emit("prescription_status_changed", payload);
+    if (prescription.pharmacyId) {
+      io.to(`user_${prescription.pharmacyId}`).emit("prescription_status_changed", payload);
+    }
+  } catch (_) {}
 }
 
 class PrescriptionService {
@@ -394,6 +412,7 @@ class PrescriptionService {
       status: newStatus,
       note: `Prescription ready for ${readyType}`
     });
+    emitStatusChange(prescription, newStatus);
 
     // Get patient and pharmacy info
     const patient = await userRepo.findById(prescription.patientId);
@@ -459,6 +478,7 @@ class PrescriptionService {
       status: PrescriptionStatus.COMPLETED,
       note: "Prescription fulfilled successfully"
     });
+    emitStatusChange(prescription, PrescriptionStatus.COMPLETED);
 
     // Get patient and pharmacy info
     const patient = await userRepo.findById(prescription.patientId);
@@ -531,6 +551,7 @@ class PrescriptionService {
       status: PrescriptionStatus.CANCELLED,
       note: `Cancelled by ${cancelledBy}: ${reason}`
     });
+    emitStatusChange(prescription, PrescriptionStatus.CANCELLED);
 
     const cancellationMsg = `Prescription ${prescription.reference} has been cancelled by the ${cancelledBy}. Reason: ${reason || "Not specified"}.`;
 
@@ -954,6 +975,7 @@ class PrescriptionService {
       status: PrescriptionStatus.OUT_FOR_DELIVERY,
       note:   note || 'Order dispatched for delivery',
     });
+    emitStatusChange(prescription, PrescriptionStatus.OUT_FOR_DELIVERY);
 
     notificationService.createNotification(
       prescription.patientId,
@@ -999,6 +1021,7 @@ class PrescriptionService {
       status: PrescriptionStatus.COMPLETED,
       note:   'Order delivered successfully',
     });
+    emitStatusChange(prescription, PrescriptionStatus.COMPLETED);
 
     // Notify patient
     notificationService.createNotification(
