@@ -14,6 +14,7 @@ const { PrescriptionStatus } = require("../entities/Prescription");
 const CurrencyService       = require("../../payments/services/currencyService");
 const NotificationService   = require("../../notifications/services/notificationService");
 const pharmacyEmailHelper   = require("../../../shared/services/email/helper/pharmacy");
+const { getIO }             = require("../../../config/websocket");
 
 const notificationService = new NotificationService();
 
@@ -323,19 +324,38 @@ const invoiceService = {
 
     const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
 
-    // Notify patient (push + email)
+    // Notify patient (real-time + push + email)
     try {
       const updatedForNotif = await invoiceRepo.findByIdAndPharmacy(invoiceId, pharmacyId);
       const dispCurrency    = pharmacy.defaultCurrency || "NGN";
       const rates           = await CurrencyService.getExchangeRates();
       const displayTotal    = Math.round(parseFloat(updatedForNotif.totalAmountUsd) * (rates[dispCurrency] || 1) * 100) / 100;
 
-      await notificationService.createNotification(invoice.patientId, {
-        title:   "New Invoice from Pharmacy",
-        message: `You have a new invoice ${invoice.reference} for your prescription.`,
-        type:    "invoice_sent",
-        data:    { invoiceId: invoice.id },
-      });
+      // Real-time: patient's prescription moved to awaiting_payment
+      try {
+        const io = getIO();
+        io.to(`user_${invoice.patientId}`).emit("prescription_status_changed", {
+          prescriptionId: invoice.prescriptionId,
+          reference:      invoice.reference,
+          status:         PrescriptionStatus.AWAITING_PAYMENT,
+          updatedAt:      new Date().toISOString(),
+        });
+        io.to(`user_${invoice.patientId}`).emit("invoice_sent", {
+          invoiceId:      invoice.id,
+          reference:      invoice.reference,
+          prescriptionId: invoice.prescriptionId,
+          totalAmount:    displayTotal,
+          currency:       dispCurrency,
+        });
+      } catch (_) {}
+
+      // DB notification (correct positional args: userId, type, message, metadata)
+      await notificationService.createNotification(
+        invoice.patientId,
+        "invoice_sent",
+        `You have a new invoice ${invoice.reference} for your prescription.`,
+        { invoiceId: invoice.id }
+      );
 
       const patient = await userRepo.findById(invoice.patientId);
       if (patient?.email) {
@@ -447,18 +467,37 @@ const invoiceService = {
 
     const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
 
-    // Notify patient (push + email)
+    // Notify patient + pharmacy (real-time + DB notification + email)
     try {
       const dispCurrency = pharmacy.defaultCurrency || "NGN";
       const rates        = await CurrencyService.getExchangeRates();
       const displayTotal = Math.round(parseFloat(invoice.totalAmountUsd) * (rates[dispCurrency] || 1) * 100) / 100;
 
-      await notificationService.createNotification(invoice.patientId, {
-        title:   "Payment Confirmed",
-        message: `Your payment for invoice ${invoice.reference} has been confirmed.`,
-        type:    "payment_confirmed",
-        data:    { invoiceId: invoice.id },
-      });
+      // Real-time: prescription moved to in_progress
+      const statusPayload = {
+        prescriptionId: invoice.prescriptionId,
+        reference:      invoice.reference,
+        status:         PrescriptionStatus.IN_PROGRESS,
+        updatedAt:      new Date().toISOString(),
+      };
+      try {
+        const io = getIO();
+        io.to(`user_${invoice.patientId}`).emit("prescription_status_changed", statusPayload);
+        io.to(`pharmacy_${pharmacyId}`).emit("prescription_status_changed", statusPayload);
+        io.to(`pharmacy_${pharmacyId}`).emit("payment_received", {
+          invoiceId:      invoice.id,
+          reference:      invoice.reference,
+          prescriptionId: invoice.prescriptionId,
+        });
+      } catch (_) {}
+
+      // DB notifications (correct positional args: userId, type, message, metadata)
+      await notificationService.createNotification(
+        invoice.patientId,
+        "payment_confirmed",
+        `Your payment for invoice ${invoice.reference} has been confirmed.`,
+        { invoiceId: invoice.id }
+      );
 
       const patient = await userRepo.findById(invoice.patientId);
       if (patient?.email) {

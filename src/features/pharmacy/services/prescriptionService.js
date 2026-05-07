@@ -18,7 +18,8 @@ function sendEmail(fn, ...args) {
   fn(...args).catch(err => console.error("Email send failed:", err.message));
 }
 
-// Emit prescription_status_changed to patient + pharmacy so their UIs update in real-time
+// Emit prescription_status_changed to patient + all pharmacy staff.
+// Patient room: user_${patientId}  |  Pharmacy room: pharmacy_${pharmacyId} (profile ID, not userId)
 function emitStatusChange(prescription, newStatus) {
   try {
     const io = getIO();
@@ -30,7 +31,7 @@ function emitStatusChange(prescription, newStatus) {
     };
     io.to(`user_${prescription.patientId}`).emit("prescription_status_changed", payload);
     if (prescription.pharmacyId) {
-      io.to(`user_${prescription.pharmacyId}`).emit("prescription_status_changed", payload);
+      io.to(`pharmacy_${prescription.pharmacyId}`).emit("prescription_status_changed", payload);
     }
   } catch (_) {}
 }
@@ -192,6 +193,18 @@ class PrescriptionService {
         `New prescription request from ${patient?.fullName || "a patient"} (Ref: ${prescription.reference}).`,
         { prescriptionId, reference: prescription.reference, type: "prescription_assigned" }
       ).catch(err => console.error("Notification failed:", err.message));
+
+      // Dedicated event so all pharmacy staff see new prescription immediately
+      try {
+        const io = getIO();
+        io.to(`pharmacy_${pharmacyId}`).emit("new_prescription", {
+          prescriptionId,
+          reference:   prescription.reference,
+          patientName: patient?.fullName || "A patient",
+          status:      PrescriptionStatus.PHARMACY_ASSIGNED,
+          createdAt:   new Date().toISOString(),
+        });
+      } catch (_) {}
     }
 
     if (pharmacy.email) {
@@ -392,7 +405,7 @@ class PrescriptionService {
     }
 
     const newStatus = readyType === 'delivery'
-      ? PrescriptionStatus.READY_FOR_DELIVERY
+      ? PrescriptionStatus.OUT_FOR_DELIVERY
       : PrescriptionStatus.READY_FOR_PICKUP;
 
     // Update status
@@ -461,7 +474,7 @@ class PrescriptionService {
       throw new Error("Unauthorized: Not assigned to your pharmacy");
     }
 
-    const validStatuses = [PrescriptionStatus.READY_FOR_DELIVERY, PrescriptionStatus.READY_FOR_PICKUP];
+    const validStatuses = [PrescriptionStatus.OUT_FOR_DELIVERY, PrescriptionStatus.READY_FOR_PICKUP];
     if (!validStatuses.includes(prescription.status)) {
       throw new Error("Prescription is not ready for completion");
     }
@@ -667,7 +680,7 @@ class PrescriptionService {
       activeOrders: prescriptions.filter(p => [
         PrescriptionStatus.PHARMACY_PROCESSING,
         PrescriptionStatus.READY_FOR_PICKUP,
-        PrescriptionStatus.READY_FOR_DELIVERY
+        PrescriptionStatus.OUT_FOR_DELIVERY
       ].includes(p.status)).length,
       completedToday: prescriptions.filter(p =>
         p.status === PrescriptionStatus.COMPLETED &&

@@ -16,6 +16,7 @@ const CurrencyService         = require("../../payments/services/currencyService
 const NotificationService     = require("../../notifications/services/notificationService");
 const pharmacyEmailHelper     = require("../../../shared/services/email/helper/pharmacy");
 const { formatInvoice }       = require("./invoiceService");
+const { getIO }               = require("../../../config/websocket");
 
 const axios                   = require("axios");
 
@@ -452,26 +453,45 @@ const pharmacyPaymentService = {
       }
     });
 
-    // Notify both sides (push + email for patient)
+    // Notify both sides (real-time socket + DB notification + email)
     try {
       const pharmacy = await AppDataSource.getRepository("PharmacyProfile").findOne({
         where: { id: invoice.pharmacyId },
       });
 
+      // Real-time: prescription moved to in_progress
+      const statusPayload = {
+        prescriptionId: invoice.prescriptionId,
+        reference:      invoice.reference,
+        status:         PrescriptionStatus.IN_PROGRESS,
+        updatedAt:      new Date().toISOString(),
+      };
+      try {
+        const io = getIO();
+        io.to(`user_${invoice.patientId}`).emit("prescription_status_changed", statusPayload);
+        io.to(`pharmacy_${invoice.pharmacyId}`).emit("prescription_status_changed", statusPayload);
+        io.to(`pharmacy_${invoice.pharmacyId}`).emit("payment_received", {
+          invoiceId:      invoice.id,
+          reference:      invoice.reference,
+          prescriptionId: invoice.prescriptionId,
+        });
+      } catch (_) {}
+
+      // DB notifications (correct positional args: userId, type, message, metadata)
       await Promise.all([
-        notificationService.createNotification(invoice.patientId, {
-          title:   "Payment Confirmed",
-          message: `Your payment for invoice ${invoice.reference} was successful.`,
-          type:    "payment_confirmed",
-          data:    { invoiceId: invoice.id },
-        }),
-        pharmacy
-          ? notificationService.createNotification(pharmacy.userId, {
-              title:   "Payment Received",
-              message: `Invoice ${invoice.reference} has been paid.`,
-              type:    "payment_received",
-              data:    { invoiceId: invoice.id },
-            })
+        notificationService.createNotification(
+          invoice.patientId,
+          "payment_confirmed",
+          `Your payment for invoice ${invoice.reference} was successful.`,
+          { invoiceId: invoice.id }
+        ),
+        pharmacy?.userId
+          ? notificationService.createNotification(
+              pharmacy.userId,
+              "payment_received",
+              `Invoice ${invoice.reference} has been paid.`,
+              { invoiceId: invoice.id }
+            )
           : Promise.resolve(),
       ]);
 
@@ -532,12 +552,12 @@ const pharmacyPaymentService = {
         relations: ["user"],
       });
       if (pharmacy) {
-        await notificationService.createNotification(pharmacy.userId, {
-          title:   "Payout Completed",
-          message: `Your payout (${payout.reference}) has been completed.`,
-          type:    "payout_completed",
-          data:    { payoutId: payout.id },
-        });
+        await notificationService.createNotification(
+          pharmacy.userId,
+          "payout_completed",
+          `Your payout (${payout.reference}) has been completed.`,
+          { payoutId: payout.id }
+        );
 
         if (pharmacy.user?.email) {
           await pharmacyEmailHelper.sendPayoutCompletedEmail({
@@ -596,12 +616,12 @@ const pharmacyPaymentService = {
         relations: ["user"],
       });
       if (pharmacy) {
-        await notificationService.createNotification(pharmacy.userId, {
-          title:   "Payout Failed",
-          message: `Your payout (${payout.reference}) failed. Funds have been restored.`,
-          type:    "payout_failed",
-          data:    { payoutId: payout.id, reason },
-        });
+        await notificationService.createNotification(
+          pharmacy.userId,
+          "payout_failed",
+          `Your payout (${payout.reference}) failed. Funds have been restored.`,
+          { payoutId: payout.id, reason }
+        );
 
         if (pharmacy.user?.email) {
           await pharmacyEmailHelper.sendPayoutFailedEmail({

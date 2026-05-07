@@ -226,6 +226,8 @@ class PharmacyAuthController {
           operatingHours: pharmacyProfile.operatingHours,
           documentsSubmitted: pharmacyProfile.documentsSubmitted,
           logoUrl: pharmacyProfile.logoUrl || null,
+          serviceRadius: pharmacyProfile.serviceRadius,
+          defaultCurrency: pharmacyProfile.defaultCurrency,
           createdAt: pharmacyProfile.createdAt,
           updatedAt: pharmacyProfile.updatedAt,
           // Include related data
@@ -304,6 +306,17 @@ class PharmacyAuthController {
         success: true,
         data: pricing
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deletePricing(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const { id } = req.params;
+      await pharmacyRegistrationService.deletePricing(userId, id);
+      return res.json({ success: true, message: "Pricing configuration deleted" });
     } catch (error) {
       next(error);
     }

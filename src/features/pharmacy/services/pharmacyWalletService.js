@@ -26,8 +26,11 @@ function generatePayoutReference() {
 }
 
 async function getDisplayCurrency(pharmacyId) {
-  const wallet   = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
-  return wallet?.preferredDisplayCurrency || "USD";
+  const [wallet, pharmacy] = await Promise.all([
+    pharmacyWalletRepo.findByPharmacyId(pharmacyId),
+    pharmacyProfileRepo.findById(pharmacyId),
+  ]);
+  return wallet?.preferredDisplayCurrency || pharmacy?.defaultCurrency || "NGN";
 }
 
 /**
@@ -53,16 +56,23 @@ const pharmacyWalletService = {
   /**
    * Ensure wallet exists for pharmacy (called at registration time).
    */
-  async ensureWallet(pharmacyId, preferredCurrency = "NGN") {
+  async ensureWallet(pharmacyId, preferredCurrency) {
     const existing = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
     if (existing) return existing;
+
+    // Use caller-supplied currency, then pharmacy.defaultCurrency, then NGN
+    let currency = preferredCurrency;
+    if (!currency) {
+      const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+      currency = pharmacy?.defaultCurrency || "NGN";
+    }
 
     return pharmacyWalletRepo.save({
       pharmacyId,
       availableBalanceUsd: 0,
       pendingClearanceUsd: 0,
       totalEarningsUsd:    0,
-      preferredDisplayCurrency: preferredCurrency,
+      preferredDisplayCurrency: currency,
     });
   },
 
@@ -72,7 +82,7 @@ const pharmacyWalletService = {
   async getSummary(pharmacyId) {
     const wallet = await pharmacyWalletService.ensureWallet(pharmacyId);
 
-    const displayCurrency = wallet.preferredDisplayCurrency || "USD";
+    const displayCurrency = await getDisplayCurrency(pharmacyId);
     const balances        = await formatWalletBalance(wallet, displayCurrency);
 
     // Last payout
@@ -117,7 +127,7 @@ const pharmacyWalletService = {
       page: safePage, limit: safeLimit,
     });
 
-    const displayCurrency = wallet.preferredDisplayCurrency || "USD";
+    const displayCurrency = await getDisplayCurrency(pharmacyId);
     const rates           = await CurrencyService.getExchangeRates();
     const rate            = rates[displayCurrency] || 1;
     const conv            = (usd) => Math.round(parseFloat(usd || 0) * rate * 100) / 100;
@@ -154,8 +164,10 @@ const pharmacyWalletService = {
       throw Object.assign(new Error('Transaction not found'), { status: 404 });
     }
 
-    const { displayCurrency, rate } = await CurrencyService.getCurrencyForCountry(null);
-    const conv = (usd) => parseFloat((usd * rate).toFixed(2));
+    const displayCurrency = await getDisplayCurrency(pharmacyId);
+    const rates = await CurrencyService.getExchangeRates();
+    const rate  = rates[displayCurrency] || 1;
+    const conv  = (usd) => Math.round(parseFloat(usd || 0) * rate * 100) / 100;
 
     return {
       id:           txn.id,
@@ -182,7 +194,7 @@ const pharmacyWalletService = {
     const to       = dateTo   ? new Date(dateTo)   : now;
 
     const wallet          = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
-    const displayCurrency = wallet?.preferredDisplayCurrency || "USD";
+    const displayCurrency = await getDisplayCurrency(pharmacyId);
     const rates           = await CurrencyService.getExchangeRates();
     const rate            = rates[displayCurrency] || 1;
     const conv            = (usd) => Math.round(parseFloat(usd || 0) * rate * 100) / 100;
@@ -236,7 +248,7 @@ const pharmacyWalletService = {
     });
 
     const wallet          = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
-    const displayCurrency = wallet?.preferredDisplayCurrency || "USD";
+    const displayCurrency = await getDisplayCurrency(pharmacyId);
     const rates           = await CurrencyService.getExchangeRates();
     const rate            = rates[displayCurrency] || 1;
     const conv            = (usd) => Math.round(parseFloat(usd || 0) * rate * 100) / 100;
@@ -364,12 +376,12 @@ const pharmacyWalletService = {
     // Notify admin
     try {
       const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
-      await notificationService.createNotification(pharmacy.userId, {
-        title:   "Payout Requested",
-        message: `A payout of ${amount} ${displayCurrency} has been requested.`,
-        type:    "payout_requested",
-        data:    { reference },
-      });
+      await notificationService.createNotification(
+        pharmacy.userId,
+        "payout_requested",
+        `A payout of ${amount} ${displayCurrency} has been requested.`,
+        { reference }
+      );
     } catch (err) {
       console.error("Notification send failed:", err.message);
     }

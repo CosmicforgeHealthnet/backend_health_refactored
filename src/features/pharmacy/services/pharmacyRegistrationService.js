@@ -242,6 +242,12 @@ class PharmacyRegistrationService {
     return this.pricingRepo.getPricing(pharmacy.id);
   }
 
+  async deletePricing(userId, pricingId) {
+    const pharmacy = await this.profileRepo.findByUserId(userId);
+    if (!pharmacy) throw new Error("Pharmacy not found");
+    return this.pricingRepo.deletePricing(pricingId);
+  }
+
   async addStaffMember(userId, staffData) {
     const pharmacy = await this.profileRepo.findByUserId(userId);
     if (!pharmacy) {

@@ -15,6 +15,7 @@ router.put("/profile", authenticateJWT, pharmacyAuthController.updatePharmacyPro
 router.get("/pricing/fee-types", pharmacyAuthController.getPricingFeeTypes);
 router.get("/pricing", authenticateJWT, pharmacyAuthController.getPricing);
 router.post("/pricing", authenticateJWT, pharmacyAuthController.setPricing);
+router.delete("/pricing/:id", authenticateJWT, pharmacyAuthController.deletePricing);
 
 /**
  * @route   POST /api/pharmacy/auth/profile/logo

@@ -136,6 +136,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PharmacyPricing"
+  /pharmacy/auth/pricing/{id}:
+    delete:
+      summary: Delete a pricing configuration
+      tags:
+        - PharmacyPricing
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The pricing config ID to delete
+      responses:
+        "200":
+          description: Pricing configuration deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Pricing configuration deleted
+        "404":
+          description: Pricing not found
   /pharmacy/auth/staff:
     get:
       summary: Get pharmacy staff members

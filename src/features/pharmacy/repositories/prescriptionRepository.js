@@ -244,7 +244,7 @@ class PrescriptionRepository {
   // Active orders for a pharmacy (processing / ready stages)
   async findActiveOrdersByPharmacyId(pharmacyId, options = {}) {
     const { limit = 50, offset = 0 } = options;
-    const activeStatuses = ["pharmacy_processing", "ready_for_delivery", "ready_for_pickup"];
+    const activeStatuses = ["under_review", "awaiting_payment", "in_progress", "pharmacy_processing", "ready_for_pickup", "out_for_delivery"];
     return this.repo.createQueryBuilder("prescription")
       .leftJoinAndSelect("prescription.patient", "patient")
       .leftJoinAndSelect("prescription.doctor", "doctor")
