@@ -133,7 +133,9 @@ const pharmacyPaymentService = {
       );
     }
 
-    // Resolve provider + currency: patient's explicit choice takes priority over auto-detection
+    // Resolve provider + currency from patient's location — patient pays in their own currency.
+    // The invoice stores totalAmountUsd (correctly converted from pharmacy's local currency),
+    // so converting to the patient's currency gives the correct equivalent amount.
     const countryCode = patientCountryCode || "NG";
     let currency, provider;
     if (requestedProvider) {
@@ -147,8 +149,9 @@ const pharmacyPaymentService = {
       provider  = resolved.provider;
     }
 
-    // Use the exchange rate locked at invoice creation when paying in the same currency —
-    // guarantees the patient pays exactly what the pharmacy quoted, regardless of live rate shifts.
+    // Convert the USD-stored amount to the patient's payment currency.
+    // If the patient's currency matches the pharmacy's quoted currency, use the locked rate
+    // so they pay exactly what was quoted. Otherwise use the live rate.
     const amountUsd = parseFloat(invoice.totalAmountUsd);
     let amountLocal, rate;
     if (currency === invoice.displayCurrency && invoice.exchangeRateToUsd) {
