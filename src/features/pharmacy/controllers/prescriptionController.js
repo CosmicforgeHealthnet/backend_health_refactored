@@ -217,6 +217,27 @@ class PrescriptionController {
   });
 
   /**
+   * Approve alternative medications proposed by pharmacy
+   */
+  approveAlternative = asyncHandler(async (req, res) => {
+    const { prescriptionId } = req.params;
+    const userId = req.user.sub;
+    const prescription = await PrescriptionService.approveAlternative(prescriptionId, userId);
+    res.status(200).json({ success: true, data: prescription });
+  });
+
+  /**
+   * Reject alternative medications proposed by pharmacy
+   */
+  rejectAlternative = asyncHandler(async (req, res) => {
+    const { prescriptionId } = req.params;
+    const { reason } = req.body;
+    const userId = req.user.sub;
+    const prescription = await PrescriptionService.rejectAlternative(prescriptionId, userId, reason);
+    res.status(200).json({ success: true, data: prescription });
+  });
+
+  /**
    * Search prescriptions
    */
   searchPrescriptions = asyncHandler(async (req, res) => {

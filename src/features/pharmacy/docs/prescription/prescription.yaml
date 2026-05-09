@@ -256,7 +256,8 @@ paths:
       summary: Mark prescription as ready
       description: |
         Allows a pharmacy to mark a prescription as ready for delivery or pickup.
-        - Updates status to READY_FOR_DELIVERY or READY_FOR_PICKUP.
+        - Updates status to `out_for_delivery` (delivery) or `ready_for_pickup` (pickup).
+        - `readyType` must be `"delivery"` or `"pickup"`.
       tags: [Prescription]
       security:
         - bearerAuth: []
@@ -760,3 +761,287 @@ paths:
           description: Unauthorized - Invalid or missing token
         '403':
           description: Forbidden - User not authorized
+
+  # ── Alternative medication flow ─────────────────────────────────────────────
+
+  /pharmacy/prescriptions/{prescriptionId}/approve-alternative:
+    post:
+      summary: Approve alternative medications
+      description: |
+        Doctor or patient approves the pharmacy's proposed alternative medications.
+        - Prescription `availabilityStatus` moves from `alternatives_proposed` → `confirmed`.
+        - Pharmacy is notified via WebSocket (`alternative_approved`) and push notification.
+        - Returns 422 if no proposal is pending.
+      tags: [Prescription Operations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      responses:
+        '200':
+          description: Alternatives approved — pharmacy notified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden — only the patient or the prescribing doctor can approve
+        '404':
+          description: Prescription not found
+        '422':
+          description: No pending alternative proposal to approve
+
+  /pharmacy/prescriptions/{prescriptionId}/reject-alternative:
+    post:
+      summary: Reject alternative medications
+      description: |
+        Doctor or patient rejects the pharmacy's proposed alternative medications.
+        - Prescription `availabilityStatus` moves from `alternatives_proposed` → `pending`.
+        - Pharmacy is notified via WebSocket (`alternative_rejected`) and push notification.
+        - Returns 422 if no proposal is pending.
+      tags: [Prescription Operations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the prescription
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  example: Prefer the originally prescribed brand
+      responses:
+        '200':
+          description: Alternatives rejected — pharmacy notified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden — only the patient or the prescribing doctor can reject
+        '404':
+          description: Prescription not found
+        '422':
+          description: No pending alternative proposal to reject
+
+  # ── Dispatch & delivery flow ─────────────────────────────────────────────────
+
+  /pharmacy/prescriptions/dispatch:
+    get:
+      summary: Get dispatch items
+      description: |
+        Returns a paginated list of prescriptions eligible for dispatch (pharmacy only).
+        - Eligible statuses: `ready_for_pickup`, `out_for_delivery`, `completed`.
+        - Filter by a single status using the `status` query param.
+      tags: [Pharmacy Dashboard]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ready_for_pickup, out_for_delivery, completed]
+          description: Filter by dispatch status
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Items per page
+      responses:
+        '200':
+          description: Paginated dispatch items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DispatchItem'
+                  total:
+                    type: integer
+                    example: 42
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 20
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden — not a pharmacy
+
+  /pharmacy/prescriptions/{prescriptionId}/dispatch:
+    post:
+      summary: Initiate dispatch
+      description: |
+        Transitions a prescription from `ready_for_pickup` → `out_for_delivery` and records `dispatchedAt`.
+        - `dispatchedAt` is **immutable** — calling this again on the same prescription returns 409.
+        - Patient is notified via WebSocket (`prescription_status_changed`) and push notification.
+        - Optional: supply `estimatedDelivery` (ISO 8601) and `note`.
+      tags: [Pharmacy Dashboard]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                estimatedDelivery:
+                  type: string
+                  format: date-time
+                  example: "2025-08-25T14:00:00Z"
+                  description: Expected delivery timestamp (ISO 8601)
+                note:
+                  type: string
+                  example: Dispatched via courier
+      responses:
+        '200':
+          description: Prescription dispatched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchResult'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden — not assigned to this pharmacy
+        '404':
+          description: Prescription not found
+        '409':
+          description: Already dispatched — dispatchedAt is immutable
+        '422':
+          description: Prescription is not in ready_for_pickup status
+
+  /pharmacy/prescriptions/{prescriptionId}/delivered:
+    post:
+      summary: Mark prescription as delivered
+      description: |
+        Transitions a prescription from `out_for_delivery` → `completed`.
+        - Records `actualDeliveryDate`.
+        - Notifies patient via WebSocket + push notification.
+        - Notifies pharmacy dashboard via WebSocket (`prescription_status_changed`).
+      tags: [Pharmacy Dashboard]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Prescription marked as delivered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchResult'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden — not assigned to this pharmacy
+        '404':
+          description: Prescription not found
+        '422':
+          description: Prescription is not in out_for_delivery status
+
+  /pharmacy/prescriptions/{prescriptionId}/status:
+    patch:
+      summary: Update prescription status (generic override)
+      description: |
+        Generic status override for pharmacy staff.
+        - Accepts any valid `PrescriptionStatus` value.
+        - Adds a fulfillment history entry.
+        - Use specific action endpoints (start-processing, mark-ready, dispatch, etc.) where possible.
+      tags: [Prescription Operations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prescriptionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - pending
+                    - patient_uploaded
+                    - pharmacy_assigned
+                    - pharmacy_processing
+                    - under_review
+                    - awaiting_payment
+                    - in_progress
+                    - ready_for_pickup
+                    - out_for_delivery
+                    - completed
+                    - cancelled
+                  example: in_progress
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+        '400':
+          description: Invalid status value
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden — not assigned to this pharmacy
+        '404':
+          description: Prescription not found

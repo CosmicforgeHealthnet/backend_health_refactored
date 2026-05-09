@@ -415,9 +415,10 @@ const pharmacyPaymentService = {
         paidAt: new Date(),
       });
 
-      // 2. Prescription in_progress
+      // 2. Prescription in_progress + paymentStatus paid
       await trx.update("Prescription", { id: invoice.prescriptionId }, {
-        status: PrescriptionStatus.IN_PROGRESS,
+        status:        PrescriptionStatus.IN_PROGRESS,
+        paymentStatus: "paid",
       });
 
       // 3. Credit pharmacy wallet (escrow — pendingClearance for online payments)
@@ -462,11 +463,12 @@ const pharmacyPaymentService = {
         where: { id: invoice.pharmacyId },
       });
 
-      // Real-time: prescription moved to in_progress
+      // Real-time: prescription moved to in_progress, payment confirmed
       const statusPayload = {
         prescriptionId: invoice.prescriptionId,
         reference:      invoice.reference,
         status:         PrescriptionStatus.IN_PROGRESS,
+        paymentStatus:  "paid",
         updatedAt:      new Date().toISOString(),
       };
       try {

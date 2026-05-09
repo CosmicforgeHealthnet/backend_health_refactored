@@ -424,6 +424,19 @@ const invoiceService = {
       throw Object.assign(new Error("Cannot mark a cancelled invoice as paid"), { status: 422 });
     }
 
+    // Fetch pharmacy + ensure wallet exists BEFORE the transaction so wallet.id is always valid
+    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+    let wallet = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
+    if (!wallet) {
+      wallet = await pharmacyWalletRepo.save({
+        pharmacyId,
+        availableBalanceUsd:      0,
+        pendingClearanceUsd:      0,
+        totalEarningsUsd:         0,
+        preferredDisplayCurrency: pharmacy?.defaultCurrency || "NGN",
+      });
+    }
+
     await AppDataSource.transaction(async (trx) => {
       // Mark invoice paid
       await trx.update("Invoice", { id: invoiceId }, {
@@ -431,13 +444,13 @@ const invoiceService = {
         paidAt: new Date(),
       });
 
-      // Advance prescription
+      // Advance prescription + mark payment paid
       await trx.update("Prescription", { id: invoice.prescriptionId }, {
-        status: PrescriptionStatus.IN_PROGRESS,
+        status:        PrescriptionStatus.IN_PROGRESS,
+        paymentStatus: "paid",
       });
 
       // Credit wallet immediately — no escrow hold for cash
-      const wallet = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
       const amountUsd = parseFloat(invoice.totalAmountUsd);
 
       await trx.update("PharmacyWallet", { id: wallet.id }, {
@@ -465,19 +478,18 @@ const invoiceService = {
       });
     });
 
-    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
-
     // Notify patient + pharmacy (real-time + DB notification + email)
     try {
       const dispCurrency = pharmacy.defaultCurrency || "NGN";
       const rates        = await CurrencyService.getExchangeRates();
       const displayTotal = Math.round(parseFloat(invoice.totalAmountUsd) * (rates[dispCurrency] || 1) * 100) / 100;
 
-      // Real-time: prescription moved to in_progress
+      // Real-time: prescription moved to in_progress, payment confirmed
       const statusPayload = {
         prescriptionId: invoice.prescriptionId,
         reference:      invoice.reference,
         status:         PrescriptionStatus.IN_PROGRESS,
+        paymentStatus:  "paid",
         updatedAt:      new Date().toISOString(),
       };
       try {

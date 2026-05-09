@@ -178,6 +178,26 @@ const labSwaggerDoc = loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.jso
 const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundle.json", "SOS");
 const serviceManagementSwaggerDoc = loadSwaggerDoc("./features/service-management/docs/service-management-swagger.json", "Service Management");
 
+const patientSwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/patient-swagger.bundle.json", "Patient");
+patientSwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server"
+    }
+];
+
+const doctorSwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/doctor-swagger.bundle.json", "Doctor");
+doctorSwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server"
+    }
+];
+
 // ============================================
 // GLOBAL MIDDLEWARE
 // ============================================
@@ -252,6 +272,18 @@ app.use('/service-docs', swaggerUi.serveFiles(serviceManagementSwaggerDoc, {}), 
     swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
 }));
 
+app.use('/patient-docs', swaggerUi.serveFiles(patientSwaggerDoc, {}), swaggerUi.setup(patientSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Patient API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
+app.use('/doctor-docs', swaggerUi.serveFiles(doctorSwaggerDoc, {}), swaggerUi.setup(doctorSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Doctor API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
 // ============================================
 // HEALTH CHECK
 // ============================================
@@ -276,6 +308,8 @@ app.get("/", (req, res) => {
         swagger: {
             main: "/api-docs",
             pharmacy: "/pharmacy-docs",
+            patient: "/patient-docs",
+            doctor: "/doctor-docs",
             lab: "/lab-docs",
             sos: "/sos-docs",
             serviceManagement: "/service-docs"

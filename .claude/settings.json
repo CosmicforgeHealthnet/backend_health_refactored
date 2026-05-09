@@ -15,7 +15,8 @@
       "Bash(apt list *)",
       "Bash(PGPASSWORD=\"wvlAZUDdnEdjpuxEVSZEJkYFwAYJhDEf\" psql -h 72.61.20.94 -U postgres -d cosmicforge_clean -p 5432 -c \"SELECT id, \\\\\"pharmacyName\\\\\", \\\\\"defaultCurrency\\\\\" FROM pharmacy_profiles LIMIT 10;\")",
       "Bash(docker run *)",
-      "Bash(node src/features/pharmacy/docs/pharmacySwaggerMerger.js)"
+      "Bash(node src/features/pharmacy/docs/pharmacySwaggerMerger.js)",
+      "Bash(node src/features/pharmacy/docs/buildRoleSwaggerBundles.js)"
     ],
     "additionalDirectories": [
       "C:\\Users\\TriumphAdeniran\\AppData\\Local\\Temp"
