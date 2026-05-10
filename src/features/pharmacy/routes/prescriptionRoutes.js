@@ -63,8 +63,8 @@ router.post("/:prescriptionId/complete", authorizeRoles('pharmacy'), completePre
 router.post("/:prescriptionId/confirm-availability", authorizeRoles('pharmacy'), confirmAvailability);
 router.post("/:prescriptionId/internal-notes", authorizeRoles('pharmacy'), addInternalNote);
 router.post("/:prescriptionId/propose-alternative", authorizeRoles('pharmacy'), proposeAlternative);
-router.post("/:prescriptionId/approve-alternative", authorizeRoles('doctor', 'patient'), approveAlternative);
-router.post("/:prescriptionId/reject-alternative", authorizeRoles('doctor', 'patient'), rejectAlternative);
+router.post("/:prescriptionId/approve-alternative", authorizeRoles('doctor'), approveAlternative);
+router.post("/:prescriptionId/reject-alternative", authorizeRoles('doctor'), rejectAlternative);
 router.post("/:prescriptionId/dispatch", authorizeRoles('pharmacy'), initiateDispatch);
 router.post("/:prescriptionId/delivered", authorizeRoles('pharmacy'), markDelivered);
 router.patch("/:prescriptionId/status", authorizeRoles('pharmacy'), updatePrescriptionStatus);
