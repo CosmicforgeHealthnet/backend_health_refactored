@@ -319,6 +319,15 @@ const invoiceService = {
 
     await invoiceRepo.update(invoiceId, { status: InvoiceStatus.SENT, dueAt });
 
+    // Sync delivery fee + total back onto the prescription so patient/doctor screens show correct values
+    const rate = parseFloat(invoice.exchangeRateToUsd) || 1;
+    const deliveryFeeDisplay = Math.round(parseFloat(invoice.deliveryFeeUsd) * rate * 100) / 100;
+    const totalDueDisplay    = Math.round(parseFloat(invoice.totalAmountUsd) * rate * 100) / 100;
+    await prescriptionRepo.updateFields(invoice.prescriptionId, {
+      deliveryFee:   deliveryFeeDisplay,
+      totalDue:      totalDueDisplay,
+    });
+
     // Advance prescription status
     await prescriptionRepo.updateStatus(invoice.prescriptionId, PrescriptionStatus.AWAITING_PAYMENT);
 
