@@ -649,16 +649,6 @@ class PrescriptionService {
       delete prescription.internalNotes;
     }
 
-    // Extract proposed alternatives from internalNotes for patient/doctor visibility
-    const allNotes = prescription.internalNotes || [];
-    const latestProposal = [...allNotes].reverse().find(n => n.type === "alternative_proposal");
-    prescription.proposedAlternatives = latestProposal?.alternatives ?? [];
-
-    // Strip internalNotes from non-pharmacy roles — it contains private pharmacy staff notes
-    if (role && role !== "pharmacy") {
-      delete prescription.internalNotes;
-    }
-
     // Enrich with appointment data (Patient Complaint)
     if (prescription.consultationId) {
       try {
