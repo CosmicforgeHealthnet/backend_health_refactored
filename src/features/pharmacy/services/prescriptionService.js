@@ -872,8 +872,8 @@ class PrescriptionService {
     const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) throw Object.assign(new Error("Prescription not found"), { status: 404 });
 
-    if (prescription.patientId !== userId && prescription.doctorId !== userId) {
-      throw Object.assign(new Error("Unauthorized: Only the patient or doctor can approve alternatives"), { status: 403 });
+    if (prescription.doctorId !== userId) {
+      throw Object.assign(new Error("Unauthorized: Only the doctor can approve alternatives"), { status: 403 });
     }
 
     if (prescription.availabilityStatus !== "alternatives_proposed") {
@@ -892,7 +892,7 @@ class PrescriptionService {
     // Notify pharmacy
     const pharmacy = await pharmacyProfileRepo.findById(prescription.pharmacyId);
     if (pharmacy) {
-      const approverLabel = prescription.doctorId === userId ? "The doctor" : "The patient";
+      const approverLabel = "The doctor";
       notificationService.createNotification(
         pharmacy.userId,
         "notification",
@@ -920,8 +920,8 @@ class PrescriptionService {
     const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) throw Object.assign(new Error("Prescription not found"), { status: 404 });
 
-    if (prescription.patientId !== userId && prescription.doctorId !== userId) {
-      throw Object.assign(new Error("Unauthorized: Only the patient or doctor can reject alternatives"), { status: 403 });
+    if (prescription.doctorId !== userId) {
+      throw Object.assign(new Error("Unauthorized: Only the doctor can reject alternatives"), { status: 403 });
     }
 
     if (prescription.availabilityStatus !== "alternatives_proposed") {
@@ -940,7 +940,7 @@ class PrescriptionService {
     // Notify pharmacy
     const pharmacy = await pharmacyProfileRepo.findById(prescription.pharmacyId);
     if (pharmacy) {
-      const rejecterLabel = prescription.doctorId === userId ? "The doctor" : "The patient";
+      const rejecterLabel = "The doctor";
       notificationService.createNotification(
         pharmacy.userId,
         "notification",
