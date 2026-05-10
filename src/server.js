@@ -27,9 +27,6 @@ async function connectRedis() {
 
 async function startServer() {
   try {
-
-    console.log("config.runMigrations", config.runMigrations);
-
     const shouldRunMigrations = config.runMigrations;
 
     // Initialize database

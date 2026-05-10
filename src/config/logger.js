@@ -1,9 +1,8 @@
 const winston = require('winston');
-const path = require('path');
-const fs = require('fs');
+const path = require('node:path');
+const fs = require('node:fs');
 
-const logDir = process.env.LOG_DIRECTORY ||
-  (process.env.NODE_ENV === 'production' ? '/app/logs' : path.join(__dirname, '../../logs'));
+const logDir = process.env.LOG_DIRECTORY || path.join(process.cwd(), 'logs');
 
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
