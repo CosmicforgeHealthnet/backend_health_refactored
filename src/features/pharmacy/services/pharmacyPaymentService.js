@@ -138,16 +138,16 @@ const pharmacyPaymentService = {
     // The invoice stores totalAmountUsd (correctly converted from pharmacy's local currency),
     // so converting to the patient's currency gives the correct equivalent amount.
     const countryCode = patientCountryCode || "NG";
-    let currency, provider;
+    let currency, resolvedProvider;
     if (requestedProvider) {
-      provider = requestedProvider;
+      resolvedProvider = requestedProvider;
       const localCurrency = CurrencyService.getCurrencyForCountry(countryCode);
-      const supported = await CurrencyService.isCurrencySupportedByProvider(localCurrency, provider);
+      const supported = await CurrencyService.isCurrencySupportedByProvider(localCurrency, resolvedProvider);
       currency = supported ? localCurrency : "NGN";
     } else {
       const resolved = await resolvePaymentCurrency(countryCode);
-      currency  = resolved.currency;
-      provider  = resolved.provider;
+      currency         = resolved.currency;
+      resolvedProvider = resolved.provider;
     }
 
     // Convert the USD-stored amount to the patient's payment currency.
@@ -214,7 +214,7 @@ const pharmacyPaymentService = {
     };
 
     try {
-      if (provider === PaymentProvider.PAYSTACK) {
+      if (resolvedProvider === PaymentProvider.PAYSTACK) {
         authorizationUrl = await pharmacyPaymentService._initPaystack(
           patientId, invoice, amountLocal, currency, reference, metadata
         );
@@ -243,7 +243,7 @@ const pharmacyPaymentService = {
       exchangeRate:     rate,
       amountUsd,
       status:           PharmacyPaymentStatus.PENDING,
-      provider,
+      provider:         resolvedProvider,
       authorizationUrl,
       providerReference: reference,
       metadata,
