@@ -110,7 +110,8 @@ const pharmacyPaymentService = {
    * Rate limited: max 5 attempts per invoice per hour.
    */
   async initiatePayment(patientId, body, patientCountryCode) {
-    const { invoiceId, provider: requestedProvider } = body;
+    const { invoiceId, provider, gateway } = body;
+    const requestedProvider = provider || gateway;
     if (!invoiceId) throw Object.assign(new Error("invoiceId is required"), { status: 400 });
 
     const validProviders = Object.values(PaymentProvider);
