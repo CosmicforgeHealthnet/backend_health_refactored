@@ -343,42 +343,53 @@ const pharmacyPaymentService = {
 
     // Verify with gateway
     let gatewaySuccess = false;
+    let gatewayStatus  = null;
     try {
       if (payment.provider === PaymentProvider.PAYSTACK) {
-        gatewaySuccess = await pharmacyPaymentService._verifyPaystack(reference);
+        const result = await pharmacyPaymentService._verifyPaystack(reference);
+        gatewaySuccess = result.success;
+        gatewayStatus  = result.gatewayStatus;
       } else {
         gatewaySuccess = await pharmacyPaymentService._verifyFlutterwave(reference);
+        gatewayStatus  = gatewaySuccess ? "successful" : "not_successful";
       }
     } catch (err) {
-      console.error("Gateway verification error:", err.message);
+      const detail = err.response?.data ?? err.message;
+      console.error("Gateway verification error:", JSON.stringify(detail));
+      throw Object.assign(
+        new Error(`Payment verification failed: ${typeof detail === "string" ? detail : JSON.stringify(detail)}`),
+        { status: 502 }
+      );
     }
 
     if (gatewaySuccess && payment.status !== PharmacyPaymentStatus.SUCCESS) {
-      // Trigger the same atomic logic as the webhook
       await pharmacyPaymentService.handlePaymentSuccess(payment.invoiceId, payment);
     }
 
     const updated = await pharmacyPaymentRepo.findByReference(reference);
     return {
-      paymentId: updated.id,
-      invoiceId: updated.invoiceId,
-      amount:    parseFloat(updated.amountLocal),
-      currency:  updated.currency,
-      status:    updated.status === PharmacyPaymentStatus.SUCCESS ? "success" : "pending",
-      reference: updated.reference,
+      paymentId:     updated.id,
+      invoiceId:     updated.invoiceId,
+      amount:        parseFloat(updated.amountLocal),
+      currency:      updated.currency,
+      status:        updated.status === PharmacyPaymentStatus.SUCCESS ? "success" : "pending",
+      gatewayStatus,
+      reference:     updated.reference,
     };
   },
 
   async _verifyPaystack(reference) {
     const secret = process.env.PAYSTACK_SECRET_KEY;
-    if (!secret) return false;
+    if (!secret) return { success: false, gatewayStatus: "no_key" };
 
     const resp = await axios.get(
       `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
       { headers: { Authorization: `Bearer ${secret}` } }
     );
 
-    return resp.data?.data?.status === "success";
+    const gatewayStatus = resp.data?.data?.status ?? "unknown";
+    console.log(`[Paystack verify] reference=${reference} status=${gatewayStatus}`);
+    return { success: gatewayStatus === "success", gatewayStatus };
   },
 
   async _verifyFlutterwave(reference) {
