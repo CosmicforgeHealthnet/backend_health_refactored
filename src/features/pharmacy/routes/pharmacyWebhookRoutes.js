@@ -2,6 +2,23 @@ const express               = require("express");
 const router                = express.Router();
 const crypto                = require("node:crypto");
 const pharmacyWebhookCtrl   = require("../controllers/pharmacyWebhookController");
+const { logWebhookDelivery } = require('../../admin-ops/services/jobTracker');
+
+const webhookLogger = (req, res, next) => {
+    const originalJson = res.json.bind(res);
+    res.json = function (data) {
+        const event = req.body?.event || req.body?.data?.event || 'unknown';
+        logWebhookDelivery({
+            event,
+            provider: req.params.provider || 'unknown',
+            statusCode: res.statusCode,
+            payload: req.body,
+            responseBody: JSON.stringify(data).substring(0, 500),
+        }).catch(() => {});
+        return originalJson(data);
+    };
+    next();
+};
 
 // ─── Signature verification ──────────────────────────────────────────────────
 
@@ -77,6 +94,6 @@ const routeByProvider = (req, res, next) => {
  * @desc    Receive Paystack or Flutterwave webhook events for pharmacy payments
  * @access  Internal (gateway only — verified by signature)
  */
-router.post("/:provider", routeByProvider, pharmacyWebhookCtrl.handleWebhook);
+router.post("/:provider", routeByProvider, webhookLogger, pharmacyWebhookCtrl.handleWebhook);
 
 module.exports = router;

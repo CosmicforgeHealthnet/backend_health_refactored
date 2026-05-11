@@ -73,6 +73,7 @@ const serviceManagementFeature = require('./features/service-management');
 const waitlistRoute = require("./features/marketing/routes/waitlistRoutes"); // Keep independent for legacy /lab_pharm
 const whatsappRoutesNotification = require("./features/notifications/whatsapp/routes");
 const adminVerificationRoutes = require("./features/auth/routes/adminVerificationRoutes");
+const adminOpsFeature = require("./features/admin-ops");
 
 // Legacy Compatibility Routes
 
@@ -177,6 +178,7 @@ pharmacySwaggerDoc.servers = [
 const labSwaggerDoc = loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.json", "Lab");
 const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundle.json", "SOS");
 const serviceManagementSwaggerDoc = loadSwaggerDoc("./features/service-management/docs/service-management-swagger.json", "Service Management");
+const adminOpsSwaggerDoc = loadSwaggerDoc("./features/admin-ops/docs/admin-ops-swagger.json", "Admin Ops");
 
 const patientSwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/patient-swagger.bundle.json", "Patient");
 patientSwaggerDoc.servers = [
@@ -284,6 +286,12 @@ app.use('/doctor-docs', swaggerUi.serveFiles(doctorSwaggerDoc, {}), swaggerUi.se
     swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
 }));
 
+app.use('/admin-ops-docs', swaggerUi.serveFiles(adminOpsSwaggerDoc, {}), swaggerUi.setup(adminOpsSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Admin Ops API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
 // ============================================
 // HEALTH CHECK
 // ============================================
@@ -312,7 +320,8 @@ app.get("/", (req, res) => {
             doctor: "/doctor-docs",
             lab: "/lab-docs",
             sos: "/sos-docs",
-            serviceManagement: "/service-docs"
+            serviceManagement: "/service-docs",
+            adminOps: "/admin-ops-docs"
         },
         routes: {
             new: {
@@ -374,6 +383,7 @@ app.use("/api/marketing", marketingFeature.router);
 app.use("/api/services", serviceManagementFeature.router);
 app.use("/api/admin/verification", adminVerificationRoutes);
 app.use("/api/admin/logs", require("./features/admin/routes/logsRoute"));
+app.use("/api/admin/ops", adminOpsFeature.router);
 
 
 // ============================================
