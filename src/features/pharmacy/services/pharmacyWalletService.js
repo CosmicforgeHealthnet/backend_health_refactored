@@ -4,14 +4,13 @@ const pharmacyPayoutRepo    = require("../repositories/pharmacyPayoutRepository"
 const bankAccountRepo       = require("../repositories/pharmacyBankAccountRepository");
 const pharmacyProfileRepo   = require("../repositories/pharmacyProfileRepository");
 
-const { fromUsd }           = require("./invoiceService");
 const CurrencyService       = require("../../payments/services/currencyService");
 const NotificationService   = require("../../notifications/services/notificationService");
 
 const PayoutSchema          = require("../entities/PharmacyPayoutRequest");
 const WalletTxnSchema       = require("../entities/PharmacyWalletTransaction");
 
-const { AppDataSource }     = require("../../../config/database");
+const AppDataSource         = require("../../../config/database");
 const axios                 = require("axios");
 
 const notificationService   = new NotificationService();
@@ -26,8 +25,11 @@ function generatePayoutReference() {
 }
 
 async function getDisplayCurrency(pharmacyId) {
-  const wallet   = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
-  return wallet?.preferredDisplayCurrency || "USD";
+  const [wallet, pharmacy] = await Promise.all([
+    pharmacyWalletRepo.findByPharmacyId(pharmacyId),
+    pharmacyProfileRepo.findById(pharmacyId),
+  ]);
+  return wallet?.preferredDisplayCurrency || pharmacy?.defaultCurrency || "NGN";
 }
 
 /**
@@ -53,16 +55,23 @@ const pharmacyWalletService = {
   /**
    * Ensure wallet exists for pharmacy (called at registration time).
    */
-  async ensureWallet(pharmacyId, preferredCurrency = "NGN") {
+  async ensureWallet(pharmacyId, preferredCurrency) {
     const existing = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
     if (existing) return existing;
+
+    // Use caller-supplied currency, then pharmacy.defaultCurrency, then NGN
+    let currency = preferredCurrency;
+    if (!currency) {
+      const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+      currency = pharmacy?.defaultCurrency || "NGN";
+    }
 
     return pharmacyWalletRepo.save({
       pharmacyId,
       availableBalanceUsd: 0,
       pendingClearanceUsd: 0,
       totalEarningsUsd:    0,
-      preferredDisplayCurrency: preferredCurrency,
+      preferredDisplayCurrency: currency,
     });
   },
 
@@ -72,7 +81,7 @@ const pharmacyWalletService = {
   async getSummary(pharmacyId) {
     const wallet = await pharmacyWalletService.ensureWallet(pharmacyId);
 
-    const displayCurrency = wallet.preferredDisplayCurrency || "USD";
+    const displayCurrency = await getDisplayCurrency(pharmacyId);
     const balances        = await formatWalletBalance(wallet, displayCurrency);
 
     // Last payout
@@ -117,7 +126,7 @@ const pharmacyWalletService = {
       page: safePage, limit: safeLimit,
     });
 
-    const displayCurrency = wallet.preferredDisplayCurrency || "USD";
+    const displayCurrency = await getDisplayCurrency(pharmacyId);
     const rates           = await CurrencyService.getExchangeRates();
     const rate            = rates[displayCurrency] || 1;
     const conv            = (usd) => Math.round(parseFloat(usd || 0) * rate * 100) / 100;
@@ -154,8 +163,10 @@ const pharmacyWalletService = {
       throw Object.assign(new Error('Transaction not found'), { status: 404 });
     }
 
-    const { displayCurrency, rate } = await CurrencyService.getCurrencyForCountry(null);
-    const conv = (usd) => parseFloat((usd * rate).toFixed(2));
+    const displayCurrency = await getDisplayCurrency(pharmacyId);
+    const rates = await CurrencyService.getExchangeRates();
+    const rate  = rates[displayCurrency] || 1;
+    const conv  = (usd) => Math.round(parseFloat(usd || 0) * rate * 100) / 100;
 
     return {
       id:           txn.id,
@@ -176,31 +187,17 @@ const pharmacyWalletService = {
    * GET /pharmacy/wallet/earnings
    */
   async getEarnings(pharmacyId, query) {
-    const { period = "monthly", dateFrom, dateTo } = query;
+    const { dateFrom, dateTo } = query;
     const now      = new Date();
     const from     = dateFrom ? new Date(dateFrom) : new Date(now.getFullYear(), now.getMonth() - 5, 1);
     const to       = dateTo   ? new Date(dateTo)   : now;
 
-    const wallet          = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
-    const displayCurrency = wallet?.preferredDisplayCurrency || "USD";
+    const displayCurrency = await getDisplayCurrency(pharmacyId);
     const rates           = await CurrencyService.getExchangeRates();
     const rate            = rates[displayCurrency] || 1;
     const conv            = (usd) => Math.round(parseFloat(usd || 0) * rate * 100) / 100;
 
-    // Build period breakdown via raw SQL grouping
-    let groupBy, labelFmt;
-    if (period === "weekly") {
-      groupBy  = "TO_CHAR(txn.\"createdAt\", 'IYYY-IW')";
-      labelFmt = "TO_CHAR(MIN(txn.\"createdAt\"), 'Mon DD, YYYY')";
-    } else if (period === "yearly") {
-      groupBy  = "TO_CHAR(txn.\"createdAt\", 'YYYY')";
-      labelFmt = "TO_CHAR(MIN(txn.\"createdAt\"), 'YYYY')";
-    } else {
-      groupBy  = "TO_CHAR(txn.\"createdAt\", 'YYYY-MM')";
-      labelFmt = "TO_CHAR(MIN(txn.\"createdAt\"), 'Month YYYY')";
-    }
-
-    const rows = await walletTxnRepo.getEarningsSummary(pharmacyId, from, to);
+    await walletTxnRepo.getEarningsSummary(pharmacyId, from, to);
 
     // Summaries
     const thisMonthStart  = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -235,8 +232,7 @@ const pharmacyWalletService = {
       pharmacyId, status, page: safePage, limit: safeLimit,
     });
 
-    const wallet          = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
-    const displayCurrency = wallet?.preferredDisplayCurrency || "USD";
+    const displayCurrency = await getDisplayCurrency(pharmacyId);
     const rates           = await CurrencyService.getExchangeRates();
     const rate            = rates[displayCurrency] || 1;
     const conv            = (usd) => Math.round(parseFloat(usd || 0) * rate * 100) / 100;
@@ -354,7 +350,7 @@ const pharmacyWalletService = {
     // Initiate bank transfer via Paystack
     try {
       await pharmacyWalletService._initiatePaystackTransfer(
-        pharmacyId, bankAccount, amountUsd, displayCurrency, rate, reference, wallet.id
+        pharmacyId, bankAccount, amountUsd, displayCurrency, rate, reference
       );
     } catch (err) {
       console.error("Paystack transfer initiation failed:", err.message);
@@ -364,12 +360,12 @@ const pharmacyWalletService = {
     // Notify admin
     try {
       const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
-      await notificationService.createNotification(pharmacy.userId, {
-        title:   "Payout Requested",
-        message: `A payout of ${amount} ${displayCurrency} has been requested.`,
-        type:    "payout_requested",
-        data:    { reference },
-      });
+      await notificationService.createNotification(
+        pharmacy.userId,
+        "payout_requested",
+        `A payout of ${amount} ${displayCurrency} has been requested.`,
+        { reference }
+      );
     } catch (err) {
       console.error("Notification send failed:", err.message);
     }
@@ -377,7 +373,7 @@ const pharmacyWalletService = {
     return pharmacyPayoutRepo.findByReference(reference);
   },
 
-  async _initiatePaystackTransfer(pharmacyId, bankAccount, amountUsd, displayCurrency, rate, reference, walletId) {
+  async _initiatePaystackTransfer(pharmacyId, bankAccount, amountUsd, displayCurrency, rate, reference) {
     const secret = process.env.PAYSTACK_SECRET_KEY;
     if (!secret) return;
 

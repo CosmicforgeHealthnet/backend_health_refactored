@@ -1,0 +1,936 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Doctor API (Pharmacy)",
+    "version": "1.0.0",
+    "description": "All pharmacy-related endpoints available to the **doctor** role.\n\n**Auth:** All endpoints require a Bearer JWT in the `Authorization` header.\n\n**Base URL:** `/api`  — paths below are relative to it.\n\n**WebSocket events doctors receive:**\n| Event | Trigger |\n|---|---|\n| `prescription_status_changed` | Any status change on a prescription the doctor created (includes `paymentStatus` when payment confirmed) |\n| `new_notification` | Any push notification |\n"
+  },
+  "tags": [
+    {
+      "name": "Prescriptions (Doctor)",
+      "description": "Create and manage prescriptions for patients"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Unauthorized"
+          }
+        }
+      },
+      "Medication": {
+        "type": "object",
+        "required": [
+          "name",
+          "dosage",
+          "frequency",
+          "duration",
+          "quantity",
+          "route"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Amoxicillin"
+          },
+          "dosage": {
+            "type": "string",
+            "example": "500mg"
+          },
+          "frequency": {
+            "type": "string",
+            "example": "Twice daily"
+          },
+          "duration": {
+            "type": "string",
+            "example": "7 days"
+          },
+          "quantity": {
+            "type": "integer",
+            "example": 14
+          },
+          "route": {
+            "type": "string",
+            "example": "Oral"
+          }
+        }
+      },
+      "CreatePrescriptionRequest": {
+        "type": "object",
+        "required": [
+          "patientId",
+          "medications"
+        ],
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "medications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Medication"
+            }
+          },
+          "consultationId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "789e4567-e89b-12d3-a456-426614174000"
+          },
+          "doctorNotes": {
+            "type": "string",
+            "example": "Take medication with food"
+          },
+          "diagnosis": {
+            "type": "string",
+            "example": "Acute Respiratory Infection"
+          },
+          "doctorSignature": {
+            "type": "string",
+            "example": "data:image/png;base64,..."
+          }
+        }
+      },
+      "PrescriptionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reference": {
+            "type": "string",
+            "example": "RX-2025-0001"
+          },
+          "doctorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "consultationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pharmacyId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "assignedPharmacistId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "medications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Medication"
+            }
+          },
+          "doctorNotes": {
+            "type": "string",
+            "example": "Take medication with food"
+          },
+          "diagnosis": {
+            "type": "string",
+            "example": "Acute Respiratory Infection"
+          },
+          "doctorSignature": {
+            "type": "string",
+            "example": "https://example.com/signatures/doc123.png"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PATIENT_UPLOADED",
+              "PHARMACY_ASSIGNED",
+              "PHARMACY_PROCESSING",
+              "READY_FOR_DELIVERY",
+              "READY_FOR_PICKUP",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED"
+            ],
+            "example": "PENDING"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "unpaid",
+              "paid",
+              "cancelled"
+            ],
+            "example": "unpaid"
+          },
+          "availabilityStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "unavailable",
+              "alternatives_proposed"
+            ],
+            "example": "pending"
+          },
+          "deliveryAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "deliveryInstructions": {
+            "type": "string",
+            "nullable": true
+          },
+          "expectedDeliveryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "actualDeliveryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "totalDue": {
+            "type": "number",
+            "example": 80,
+            "nullable": true
+          },
+          "deliveryFee": {
+            "type": "number",
+            "example": 10,
+            "nullable": true
+          },
+          "paymentMethod": {
+            "type": "string",
+            "example": "credit_card",
+            "nullable": true
+          },
+          "fulfillmentHistory": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "note": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "chatMessages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "senderId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "senderType": {
+                  "type": "string",
+                  "enum": [
+                    "patient",
+                    "pharmacy"
+                  ]
+                },
+                "message": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/pharmacy/prescriptions/doctor/prescriptions": {
+      "post": {
+        "summary": "Create a prescription",
+        "description": "Creates a new prescription for a patient. The prescription starts in `PENDING` status.\n\nThe patient will be notified and must **upload** the prescription to a pharmacy via\n`POST /pharmacy/prescriptions/patient/prescriptions/{prescriptionId}/upload`.\n",
+        "tags": [
+          "Prescriptions (Doctor)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePrescriptionRequest"
+              },
+              "example": {
+                "patientId": "123e4567-e89b-12d3-a456-426614174000",
+                "consultationId": "789e4567-e89b-12d3-a456-426614174000",
+                "medications": [
+                  {
+                    "name": "Amoxicillin",
+                    "dosage": "500mg",
+                    "frequency": "Twice daily",
+                    "duration": "7 days",
+                    "quantity": 14,
+                    "route": "Oral"
+                  }
+                ],
+                "doctorNotes": "Take with food. Avoid alcohol.",
+                "diagnosis": "Acute Respiratory Infection"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Prescription created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PrescriptionResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role is not doctor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List my prescriptions",
+        "description": "Returns all prescriptions created by the authenticated doctor, newest first.",
+        "tags": [
+          "Prescriptions (Doctor)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "PATIENT_UPLOADED",
+                "PHARMACY_ASSIGNED",
+                "PHARMACY_PROCESSING",
+                "READY_FOR_DELIVERY",
+                "READY_FOR_PICKUP",
+                "IN_PROGRESS",
+                "COMPLETED",
+                "CANCELLED"
+              ]
+            },
+            "description": "Filter by status"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of prescriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PrescriptionResponse"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/search": {
+      "get": {
+        "summary": "Search prescriptions",
+        "description": "Search prescriptions by reference number, patient name, or status.\nDoctors see only prescriptions they created.\n",
+        "tags": [
+          "Prescriptions (Doctor)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search term (reference number, patient name)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "PATIENT_UPLOADED",
+                "PHARMACY_ASSIGNED",
+                "PHARMACY_PROCESSING",
+                "READY_FOR_DELIVERY",
+                "READY_FOR_PICKUP",
+                "IN_PROGRESS",
+                "COMPLETED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PrescriptionResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}": {
+      "get": {
+        "summary": "Get prescription details",
+        "description": "Returns full details of a prescription, including medications, chat, fulfillment history, and invoice items.",
+        "tags": [
+          "Prescriptions (Doctor)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "prescriptionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescription details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PrescriptionResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Prescription does not belong to this doctor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prescription not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/cancel": {
+      "post": {
+        "summary": "Cancel a prescription",
+        "description": "Cancels a prescription. Doctors can cancel prescriptions they created as long as the\nprescription has not yet been completed.\n\n**Cannot cancel:** prescriptions with status `COMPLETED` or already `CANCELLED`.\n",
+        "tags": [
+          "Prescriptions (Doctor)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "prescriptionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "example": "Patient no longer needs medication"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prescription cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PrescriptionResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Doctor did not create this prescription",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Prescription is already cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Prescription is completed and cannot be cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/approve-alternative": {
+      "post": {
+        "summary": "Approve an alternative medication",
+        "description": "Approves an alternative medication proposed by the pharmacy via\n`POST /{prescriptionId}/propose-alternative`.\n\nSets `availabilityStatus` to `confirmed`. The pharmacy will be notified and\ncan proceed with the approved alternatives.\n",
+        "tags": [
+          "Prescriptions (Doctor)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "prescriptionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alternative approved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PrescriptionResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to approve this prescription",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prescription not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No alternative has been proposed yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/reject-alternative": {
+      "post": {
+        "summary": "Reject an alternative medication",
+        "description": "Rejects an alternative medication proposed by the pharmacy.\n\nSets `availabilityStatus` back to `pending`. The pharmacy will be notified\nand may propose a different alternative or source the original medication.\n",
+        "tags": [
+          "Prescriptions (Doctor)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "prescriptionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "example": "The proposed alternative has known drug interactions for this patient"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alternative rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PrescriptionResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to reject this prescription",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prescription not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No alternative has been proposed yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

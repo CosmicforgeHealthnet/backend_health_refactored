@@ -1,13 +1,10 @@
 // src/services/pharmacy/pharmacyRegistrationService.js
-const pharmacyProfileRepo = require("../repositories/pharmacyProfileRepository");
-const pharmacyDocumentRepo = require("../repositories/pharmacyDocumentRepository");
-const pharmacyVerificationRepo = require("../repositories/pharmacyVerificationRepository");
-const userRepo = require("../../auth/repositories/userRepository");
 const bcrypt = require('bcryptjs');
 const verificationService = require('../../auth/services/verificationService'); // Assuming this is still in global services or moved
 const referralService = require('../../auth/services/referralService'); // Pending refactor to auth
 const { sendPharmacyStaffWelcomeEmail } = require("../../../shared/services/email/helper/pharmacy");
 const AppDataSource = require('../../../config/database');
+const CurrencyService = require('../../payments/services/currencyService');
 
 class PharmacyRegistrationService {
   get profileRepo() { return require("../repositories/pharmacyProfileRepository"); }
@@ -26,8 +23,22 @@ class PharmacyRegistrationService {
       address,
       phone,
       primaryContactPerson,
-      preferredUsername
+      preferredUsername,
+      countryCode,
     } = registrationData;
+
+    // Resolve defaultCurrency from pharmacy's location — fall back to USD if not supported
+    let defaultCurrency = "USD";
+    try {
+      const localCurrency = CurrencyService.getCurrencyForCountry(countryCode);
+      const [paystackOk, flutterwaveOk] = await Promise.all([
+        CurrencyService.isCurrencySupportedByProvider(localCurrency, "paystack"),
+        CurrencyService.isCurrencySupportedByProvider(localCurrency, "flutterwave"),
+      ]);
+      if (paystackOk || flutterwaveOk) defaultCurrency = localCurrency;
+    } catch {
+      // Currency resolution is non-critical — keep USD fallback
+    }
 
     const normalizedEmail = email.toLowerCase().trim();
 
@@ -70,7 +81,8 @@ class PharmacyRegistrationService {
         email: normalizedEmail,
         preferredUsername,
         verificationStatus: "pending",
-        documentsSubmitted: false
+        documentsSubmitted: false,
+        defaultCurrency,
       });
 
       await queryRunner.manager.save("PharmacyVerificationRequest", {
@@ -224,6 +236,12 @@ class PharmacyRegistrationService {
       throw new Error("Pharmacy not found");
     }
     return this.pricingRepo.getPricing(pharmacy.id);
+  }
+
+  async deletePricing(userId, pricingId) {
+    const pharmacy = await this.profileRepo.findByUserId(userId);
+    if (!pharmacy) throw new Error("Pharmacy not found");
+    return this.pricingRepo.deletePricing(pricingId);
   }
 
   async addStaffMember(userId, staffData) {

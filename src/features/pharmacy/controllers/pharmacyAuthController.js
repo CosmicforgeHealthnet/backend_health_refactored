@@ -37,7 +37,8 @@ class PharmacyAuthController {
         address,
         phone,
         primaryContactPerson,
-        preferredUsername
+        preferredUsername,
+        countryCode: req.location?.countryCode ?? null,
       });
 
       return res.status(201).json({
@@ -225,6 +226,8 @@ class PharmacyAuthController {
           operatingHours: pharmacyProfile.operatingHours,
           documentsSubmitted: pharmacyProfile.documentsSubmitted,
           logoUrl: pharmacyProfile.logoUrl || null,
+          serviceRadius: pharmacyProfile.serviceRadius,
+          defaultCurrency: pharmacyProfile.defaultCurrency,
           createdAt: pharmacyProfile.createdAt,
           updatedAt: pharmacyProfile.updatedAt,
           // Include related data
@@ -252,7 +255,7 @@ class PharmacyAuthController {
     }
   }
 
-  async getPricingFeeTypes(req, res, next) {
+  async getPricingFeeTypes(req, res) {
     return res.json({
       success: true,
       data: [
@@ -268,7 +271,7 @@ class PharmacyAuthController {
     });
   }
 
-  async getStaffRoles(req, res, next) {
+  async getStaffRoles(req, res) {
     return res.json({
       success: true,
       data: [
@@ -303,6 +306,17 @@ class PharmacyAuthController {
         success: true,
         data: pricing
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deletePricing(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const { id } = req.params;
+      await pharmacyRegistrationService.deletePricing(userId, id);
+      return res.json({ success: true, message: "Pricing configuration deleted" });
     } catch (error) {
       next(error);
     }

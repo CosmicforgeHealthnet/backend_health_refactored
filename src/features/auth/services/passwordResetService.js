@@ -11,6 +11,11 @@ const {
 const RESET_EXPIRES_MINUTES = 60;
 const OTP_EXPIRES_MINUTES = 15;
 
+const getBaseUrl = (user) =>
+  user?.role === "pharmacy"
+    ? (process.env.PHARMACY_APP_URL || process.env.APP_BASE_URL)
+    : process.env.APP_BASE_URL;
+
 class PasswordResetService {
   /**
    * Kick off a reset: generate token, store it, email the link.
@@ -24,7 +29,7 @@ class PasswordResetService {
 
     const token = uuidv4();
     const expiresAt = new Date(Date.now() + RESET_EXPIRES_MINUTES * 60 * 1000);
-    const link = `${process.env.APP_BASE_URL}/auth/reset-password?token=${token}`;
+    const link = `${getBaseUrl(user)}/auth/reset-password?token=${token}`;
 
     const record = passwordResetRepository.create({ user, token, expiresAt });
     await passwordResetRepository.save(record);
@@ -121,7 +126,7 @@ class PasswordResetService {
         .catch(err => console.error(`❌ Background email resend failed for ${email}:`, err.message));
       sendGenericWhatsAppNotification({
         phoneNumber: user.phoneNumber,
-        text: `Hello ${user.fullName || "there"}, reset your CosmicForge password here: ${process.env.APP_BASE_URL}/auth/reset-password?token=${record.token}. This link expires in ${minutesLeft} minutes.`,
+        text: `Hello ${user.fullName || "there"}, reset your CosmicForge password here: ${getBaseUrl(user)}/auth/reset-password?token=${record.token}. This link expires in ${minutesLeft} minutes.`,
         recipientName: user.fullName || "Customer",
         serviceType: "password reset",
         referenceId: "password-reset",

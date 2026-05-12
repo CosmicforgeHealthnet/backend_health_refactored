@@ -1,4 +1,7 @@
 const NotificationService = require("../services/notificationService");
+const AppDataSource       = require("../../../config/database");
+
+const PHARMACY_ROLES = new Set(["pharmacy", "pharmacist", "assistant", "dispatcher"]);
 
 class NotificationSocketHandler {
   constructor(io) {
@@ -7,7 +10,7 @@ class NotificationSocketHandler {
   }
 
   initialize() {
-    this.io.on("connection", (socket) => {
+    this.io.on("connection", async (socket) => {
       // Only handle if user is authenticated (auth middleware already ran from chat handler)
       if (!socket.userId) return;
 
@@ -15,6 +18,30 @@ class NotificationSocketHandler {
       const userRoom = `user_${socket.userId}`;
       socket.join(userRoom);
       console.log(`🔔 User ${socket.user?.email || socket.userId} joined notification room: ${userRoom}`);
+
+      // Pharmacy staff join a shared pharmacy room so all staff get real-time pharmacy events
+      if (PHARMACY_ROLES.has(socket.user?.role)) {
+        try {
+          let pharmacyProfileId = socket.user.pharmacyId; // already set for staff roles
+
+          if (socket.user.role === "pharmacy") {
+            // Owner: look up profile by userId
+            const profile = await AppDataSource.getRepository("PharmacyProfile").findOne({
+              where: { userId: socket.userId },
+              select: ["id"],
+            });
+            pharmacyProfileId = profile?.id;
+          }
+
+          if (pharmacyProfileId) {
+            const pharmacyRoom = `pharmacy_${pharmacyProfileId}`;
+            socket.join(pharmacyRoom);
+            console.log(`💊 ${socket.user?.email || socket.userId} joined pharmacy room: ${pharmacyRoom}`);
+          }
+        } catch (err) {
+          console.error("Failed to join pharmacy room:", err.message);
+        }
+      }
 
       // Send connection confirmation
       socket.emit("connection-confirmed", {

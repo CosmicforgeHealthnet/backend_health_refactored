@@ -298,8 +298,8 @@ components:
           description: Current status of the prescription
         paymentStatus:
           type: string
-          enum: ['UNPAID', 'PAID', 'CANCELLED']
-          example: "UNPAID"
+          enum: ['unpaid', 'paid', 'cancelled']
+          example: "unpaid"
           description: Payment status of the prescription
         deliveryAddress:
           type: string
@@ -385,8 +385,8 @@ components:
       properties:
         status:
           type: string
-          enum: ['PENDING', 'PATIENT_UPLOADED', 'PHARMACY_ASSIGNED', 'PHARMACY_PROCESSING', 'READY_FOR_DELIVERY', 'READY_FOR_PICKUP', 'COMPLETED', 'CANCELLED']
-          example: "PENDING"
+          enum: ['pending', 'patient_uploaded', 'pharmacy_assigned', 'pharmacy_processing', 'under_review', 'awaiting_payment', 'in_progress', 'ready_for_pickup', 'out_for_delivery', 'completed', 'cancelled']
+          example: "pending"
           description: Status at the time of the history entry
         timestamp:
           type: string
@@ -518,3 +518,98 @@ components:
             total:
               type: integer
               example: 5
+
+    DispatchItem:
+      type: object
+      description: A prescription item in the dispatch queue
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "abc12345-0000-0000-0000-000000000001"
+        reference:
+          type: string
+          example: "RX-20250821-001"
+        status:
+          type: string
+          enum: [ready_for_pickup, out_for_delivery, completed]
+          example: "ready_for_pickup"
+        patient:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            fullName:
+              type: string
+              example: Adaeze Okafor
+            phone:
+              type: string
+              example: "+2348012345678"
+        medications:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              dosage:
+                type: string
+              quantity:
+                type: integer
+        deliveryAddress:
+          type: string
+          example: "12 Marina Road, Lagos"
+        deliveryInstructions:
+          type: string
+          example: "Call on arrival"
+        deliveryFee:
+          type: number
+          example: 1500
+        dispatchedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-08-25T10:30:00Z"
+        estimatedDelivery:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-08-25T14:00:00Z"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DispatchResult:
+      type: object
+      description: Response shape for dispatch and delivered actions
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "abc12345-0000-0000-0000-000000000001"
+        reference:
+          type: string
+          example: "RX-20250821-001"
+        status:
+          type: string
+          enum: [out_for_delivery, completed]
+          example: "out_for_delivery"
+        dispatchedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Set once when dispatch is initiated — never overwritten
+          example: "2025-08-25T10:30:00Z"
+        estimatedDelivery:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-08-25T14:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-08-25T10:30:00Z"

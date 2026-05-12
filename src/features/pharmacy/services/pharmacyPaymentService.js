@@ -1,11 +1,7 @@
-const { AppDataSource }       = require("../../../config/database");
+const AppDataSource           = require("../../../config/database");
 
 const invoiceRepo             = require("../repositories/invoiceRepository");
 const pharmacyPaymentRepo     = require("../repositories/pharmacyPaymentRepository");
-const pharmacyWalletRepo      = require("../repositories/pharmacyWalletRepository");
-const walletTxnRepo           = require("../repositories/pharmacyWalletTransactionRepository");
-const prescriptionRepo        = require("../repositories/prescriptionRepository");
-const pharmacyDisputeRepo     = require("../repositories/pharmacyDisputeRepository");
 
 const InvoiceSchema           = require("../entities/Invoice");
 const PaymentSchema           = require("../entities/PharmacyPayment");
@@ -16,6 +12,7 @@ const CurrencyService         = require("../../payments/services/currencyService
 const NotificationService     = require("../../notifications/services/notificationService");
 const pharmacyEmailHelper     = require("../../../shared/services/email/helper/pharmacy");
 const { formatInvoice }       = require("./invoiceService");
+const { getIO }               = require("../../../config/websocket");
 
 const axios                   = require("axios");
 
@@ -63,8 +60,11 @@ const pharmacyPaymentService = {
     const safeLimit = Math.min(parseInt(limit) || 20, 100);
     const safePage  = parseInt(page) || 1;
 
+    // Default: hide cancelled invoices from patient view unless explicitly requested
+    const statusFilter = status || { $not: "cancelled" };
+
     const { invoices, total } = await invoiceRepo.findByPatient({
-      patientId, status, page: safePage, limit: safeLimit,
+      patientId, status: statusFilter, excludeCancelled: !status, page: safePage, limit: safeLimit,
     });
 
     // For patients, show amounts in their preferred/local currency
@@ -106,8 +106,17 @@ const pharmacyPaymentService = {
    * Rate limited: max 5 attempts per invoice per hour.
    */
   async initiatePayment(patientId, body, patientCountryCode) {
-    const { invoiceId } = body;
+    const { invoiceId, provider, gateway } = body;
+    const requestedProvider = provider || gateway;
     if (!invoiceId) throw Object.assign(new Error("invoiceId is required"), { status: 400 });
+
+    const validProviders = Object.values(PaymentProvider);
+    if (requestedProvider && !validProviders.includes(requestedProvider)) {
+      throw Object.assign(
+        new Error(`Invalid provider. Must be one of: ${validProviders.join(", ")}`),
+        { status: 400 }
+      );
+    }
 
     const invoice = await invoiceRepo.findByIdAndPatient(invoiceId, patientId);
     if (!invoice) throw Object.assign(new Error("Invoice not found"), { status: 404 });
@@ -121,18 +130,59 @@ const pharmacyPaymentService = {
       );
     }
 
-    // Idempotency — return existing pending payment
+    // Resolve provider + currency from patient's location — patient pays in their own currency.
+    // The invoice stores totalAmountUsd (correctly converted from pharmacy's local currency),
+    // so converting to the patient's currency gives the correct equivalent amount.
+    const countryCode = patientCountryCode || "NG";
+    let currency, resolvedProvider;
+    if (requestedProvider) {
+      resolvedProvider = requestedProvider;
+      const localCurrency = CurrencyService.getCurrencyForCountry(countryCode);
+      const supported = await CurrencyService.isCurrencySupportedByProvider(localCurrency, resolvedProvider);
+      currency = supported ? localCurrency : "NGN";
+    } else {
+      const resolved = await resolvePaymentCurrency(countryCode);
+      currency         = resolved.currency;
+      resolvedProvider = resolved.provider;
+    }
+
+    // Convert the USD-stored amount to the patient's payment currency.
+    // If the patient's currency matches the pharmacy's quoted currency, use the locked rate
+    // so they pay exactly what was quoted. Otherwise use the live rate.
+    const amountUsd = parseFloat(invoice.totalAmountUsd);
+    let amountLocal, rate;
+    if (currency === invoice.displayCurrency && invoice.exchangeRateToUsd) {
+      rate        = parseFloat(invoice.exchangeRateToUsd);
+      amountLocal = Math.round(amountUsd * rate * 100) / 100;
+    } else {
+      const rates = await CurrencyService.getExchangeRates();
+      rate        = rates[currency] || 1;
+      amountLocal = Math.round(amountUsd * rate * 100) / 100;
+    }
+
+    // Idempotency — reuse an existing pending payment only if it matches the current
+    // currency and provider. A mismatch means the pharmacy fixed their settings after
+    // the bad payment was created; void it so a correct one can be issued.
     const existing = await pharmacyPaymentRepo.findPendingByInvoice(invoiceId);
     if (existing) {
-      return {
-        paymentId:        existing.id,
-        invoiceId:        existing.invoiceId,
-        amount:           parseFloat(existing.amountLocal),
-        currency:         existing.currency,
-        status:           existing.status,
-        authorizationUrl: existing.authorizationUrl,
-        reference:        existing.reference,
-      };
+      const currencyMatches  = existing.currency === currency;
+      const providerMatches  = !requestedProvider || existing.provider === requestedProvider;
+      const amountMatches    = Math.abs(parseFloat(existing.amountLocal) - amountLocal) < 1;
+
+      if (currencyMatches && providerMatches && amountMatches) {
+        return {
+          paymentId:        existing.id,
+          invoiceId:        existing.invoiceId,
+          amount:           parseFloat(existing.amountLocal),
+          currency:         existing.currency,
+          status:           existing.status,
+          authorizationUrl: existing.authorizationUrl,
+          reference:        existing.reference,
+        };
+      }
+
+      // Stale payment — void it so we can create a correct one
+      await pharmacyPaymentRepo.update(existing.id, { status: "failed" });
     }
 
     // Rate limit: max 5 attempts per invoice per hour
@@ -145,21 +195,10 @@ const pharmacyPaymentService = {
       );
     }
 
-    // Resolve payment currency based on patient's location
-    const countryCode = patientCountryCode || "US";
-    const { currency, provider, fallback } = await resolvePaymentCurrency(countryCode);
-
-    // Convert USD amount → patient's local currency
-    const amountUsd = parseFloat(invoice.totalAmountUsd);
-    const rates     = await CurrencyService.getExchangeRates();
-    const rate      = rates[currency] || 1;
-    const amountLocal = Math.round(amountUsd * rate * 100) / 100;
-
     const reference = generatePaymentReference();
 
     // Build Paystack/Flutterwave payload
     let authorizationUrl = null;
-    let providerReference = reference;
 
     const metadata = {
       invoiceId:      invoice.id,
@@ -170,7 +209,7 @@ const pharmacyPaymentService = {
     };
 
     try {
-      if (provider === PaymentProvider.PAYSTACK) {
+      if (resolvedProvider === PaymentProvider.PAYSTACK) {
         authorizationUrl = await pharmacyPaymentService._initPaystack(
           patientId, invoice, amountLocal, currency, reference, metadata
         );
@@ -180,8 +219,12 @@ const pharmacyPaymentService = {
         );
       }
     } catch (err) {
-      console.error("Payment gateway initiation failed:", err.message);
-      throw Object.assign(new Error("Payment gateway error. Please try again."), { status: 502 });
+      const gatewayDetail = err.response?.data?.message ?? err.response?.data ?? err.message;
+      console.error("Payment gateway initiation failed:", gatewayDetail, err.response?.data);
+      throw Object.assign(
+        new Error(`Payment gateway error: ${typeof gatewayDetail === "string" ? gatewayDetail : JSON.stringify(gatewayDetail)}`),
+        { status: 502 }
+      );
     }
 
     // Save payment record
@@ -195,7 +238,7 @@ const pharmacyPaymentService = {
       exchangeRate:     rate,
       amountUsd,
       status:           PharmacyPaymentStatus.PENDING,
-      provider,
+      provider:         resolvedProvider,
       authorizationUrl,
       providerReference: reference,
       metadata,
@@ -295,42 +338,53 @@ const pharmacyPaymentService = {
 
     // Verify with gateway
     let gatewaySuccess = false;
+    let gatewayStatus  = null;
     try {
       if (payment.provider === PaymentProvider.PAYSTACK) {
-        gatewaySuccess = await pharmacyPaymentService._verifyPaystack(reference);
+        const result = await pharmacyPaymentService._verifyPaystack(reference);
+        gatewaySuccess = result.success;
+        gatewayStatus  = result.gatewayStatus;
       } else {
         gatewaySuccess = await pharmacyPaymentService._verifyFlutterwave(reference);
+        gatewayStatus  = gatewaySuccess ? "successful" : "not_successful";
       }
     } catch (err) {
-      console.error("Gateway verification error:", err.message);
+      const detail = err.response?.data ?? err.message;
+      console.error("Gateway verification error:", JSON.stringify(detail));
+      throw Object.assign(
+        new Error(`Payment verification failed: ${typeof detail === "string" ? detail : JSON.stringify(detail)}`),
+        { status: 502 }
+      );
     }
 
     if (gatewaySuccess && payment.status !== PharmacyPaymentStatus.SUCCESS) {
-      // Trigger the same atomic logic as the webhook
       await pharmacyPaymentService.handlePaymentSuccess(payment.invoiceId, payment);
     }
 
     const updated = await pharmacyPaymentRepo.findByReference(reference);
     return {
-      paymentId: updated.id,
-      invoiceId: updated.invoiceId,
-      amount:    parseFloat(updated.amountLocal),
-      currency:  updated.currency,
-      status:    updated.status === PharmacyPaymentStatus.SUCCESS ? "success" : "pending",
-      reference: updated.reference,
+      paymentId:     updated.id,
+      invoiceId:     updated.invoiceId,
+      amount:        parseFloat(updated.amountLocal),
+      currency:      updated.currency,
+      status:        updated.status === PharmacyPaymentStatus.SUCCESS ? "success" : "pending",
+      gatewayStatus,
+      reference:     updated.reference,
     };
   },
 
   async _verifyPaystack(reference) {
     const secret = process.env.PAYSTACK_SECRET_KEY;
-    if (!secret) return false;
+    if (!secret) return { success: false, gatewayStatus: "no_key" };
 
     const resp = await axios.get(
       `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
       { headers: { Authorization: `Bearer ${secret}` } }
     );
 
-    return resp.data?.data?.status === "success";
+    const gatewayStatus = resp.data?.data?.status ?? "unknown";
+    console.log(`[Paystack verify] reference=${reference} status=${gatewayStatus}`);
+    return { success: gatewayStatus === "success", gatewayStatus };
   },
 
   async _verifyFlutterwave(reference) {
@@ -368,9 +422,10 @@ const pharmacyPaymentService = {
         paidAt: new Date(),
       });
 
-      // 2. Prescription in_progress
+      // 2. Prescription in_progress + paymentStatus paid
       await trx.update("Prescription", { id: invoice.prescriptionId }, {
-        status: PrescriptionStatus.IN_PROGRESS,
+        status:        PrescriptionStatus.IN_PROGRESS,
+        paymentStatus: "paid",
       });
 
       // 3. Credit pharmacy wallet (escrow — pendingClearance for online payments)
@@ -409,26 +464,48 @@ const pharmacyPaymentService = {
       }
     });
 
-    // Notify both sides (push + email for patient)
+    // Notify both sides (real-time socket + DB notification + email)
     try {
       const pharmacy = await AppDataSource.getRepository("PharmacyProfile").findOne({
         where: { id: invoice.pharmacyId },
       });
 
+      // Real-time: prescription moved to in_progress, payment confirmed
+      const statusPayload = {
+        prescriptionId: invoice.prescriptionId,
+        reference:      invoice.reference,
+        status:         PrescriptionStatus.IN_PROGRESS,
+        paymentStatus:  "paid",
+        updatedAt:      new Date().toISOString(),
+      };
+      try {
+        const io = getIO();
+        io.to(`user_${invoice.patientId}`).emit("prescription_status_changed", statusPayload);
+        io.to(`pharmacy_${invoice.pharmacyId}`).emit("prescription_status_changed", statusPayload);
+        io.to(`pharmacy_${invoice.pharmacyId}`).emit("payment_received", {
+          invoiceId:      invoice.id,
+          reference:      invoice.reference,
+          prescriptionId: invoice.prescriptionId,
+        });
+      } catch {
+        // Real-time notifications are best-effort
+      }
+
+      // DB notifications (correct positional args: userId, type, message, metadata)
       await Promise.all([
-        notificationService.createNotification(invoice.patientId, {
-          title:   "Payment Confirmed",
-          message: `Your payment for invoice ${invoice.reference} was successful.`,
-          type:    "payment_confirmed",
-          data:    { invoiceId: invoice.id },
-        }),
-        pharmacy
-          ? notificationService.createNotification(pharmacy.userId, {
-              title:   "Payment Received",
-              message: `Invoice ${invoice.reference} has been paid.`,
-              type:    "payment_received",
-              data:    { invoiceId: invoice.id },
-            })
+        notificationService.createNotification(
+          invoice.patientId,
+          "payment_confirmed",
+          `Your payment for invoice ${invoice.reference} was successful.`,
+          { invoiceId: invoice.id }
+        ),
+        pharmacy?.userId
+          ? notificationService.createNotification(
+              pharmacy.userId,
+              "payment_received",
+              `Invoice ${invoice.reference} has been paid.`,
+              { invoiceId: invoice.id }
+            )
           : Promise.resolve(),
       ]);
 
@@ -489,12 +566,12 @@ const pharmacyPaymentService = {
         relations: ["user"],
       });
       if (pharmacy) {
-        await notificationService.createNotification(pharmacy.userId, {
-          title:   "Payout Completed",
-          message: `Your payout (${payout.reference}) has been completed.`,
-          type:    "payout_completed",
-          data:    { payoutId: payout.id },
-        });
+        await notificationService.createNotification(
+          pharmacy.userId,
+          "payout_completed",
+          `Your payout (${payout.reference}) has been completed.`,
+          { payoutId: payout.id }
+        );
 
         if (pharmacy.user?.email) {
           await pharmacyEmailHelper.sendPayoutCompletedEmail({
@@ -553,12 +630,12 @@ const pharmacyPaymentService = {
         relations: ["user"],
       });
       if (pharmacy) {
-        await notificationService.createNotification(pharmacy.userId, {
-          title:   "Payout Failed",
-          message: `Your payout (${payout.reference}) failed. Funds have been restored.`,
-          type:    "payout_failed",
-          data:    { payoutId: payout.id, reason },
-        });
+        await notificationService.createNotification(
+          pharmacy.userId,
+          "payout_failed",
+          `Your payout (${payout.reference}) failed. Funds have been restored.`,
+          { payoutId: payout.id, reason }
+        );
 
         if (pharmacy.user?.email) {
           await pharmacyEmailHelper.sendPayoutFailedEmail({

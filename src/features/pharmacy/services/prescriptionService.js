@@ -7,6 +7,7 @@ const { PrescriptionStatus, PaymentStatus } = require("../entities/Prescription"
 
 const NotificationService = require("../../notifications/services/notificationService");
 const pharmacyEmailHelper = require("../../../shared/services/email/helper/pharmacy");
+const { getIO }           = require("../../../config/websocket");
 
 const appointmentRepo = new AppointmentRepository();
 const notificationService = new NotificationService();
@@ -15,6 +16,26 @@ const legacyLabRoutesEnabled = process.env.ENABLE_LEGACY_LAB_ROUTES === "true";
 // Helper: fire-and-forget email (never throw)
 function sendEmail(fn, ...args) {
   fn(...args).catch(err => console.error("Email send failed:", err.message));
+}
+
+// Emit prescription_status_changed to patient + all pharmacy staff.
+// Patient room: user_${patientId}  |  Pharmacy room: pharmacy_${pharmacyId} (profile ID, not userId)
+function emitStatusChange(prescription, newStatus) {
+  try {
+    const io = getIO();
+    const payload = {
+      prescriptionId: prescription.id,
+      reference:      prescription.reference,
+      status:         newStatus,
+      updatedAt:      new Date().toISOString(),
+    };
+    io.to(`user_${prescription.patientId}`).emit("prescription_status_changed", payload);
+    if (prescription.pharmacyId) {
+      io.to(`pharmacy_${prescription.pharmacyId}`).emit("prescription_status_changed", payload);
+    }
+  } catch {
+    // Socket emission is best-effort
+  }
 }
 
 class PrescriptionService {
@@ -29,25 +50,25 @@ class PrescriptionService {
 
     // Validation
     if (!patientId || !medications || !Array.isArray(medications) || medications.length === 0) {
-      throw new Error("Patient ID and medications are required");
+      throw Object.assign(new Error("Patient ID and medications are required"), { status: 400 });
     }
 
     // Verify doctor exists and has proper role
     const doctor = await userRepo.findById(doctorId);
     if (!doctor || doctor.role !== "doctor") {
-      throw new Error("Invalid doctor");
+      throw Object.assign(new Error("Invalid doctor"), { status: 403 });
     }
 
     // Verify patient exists
     const patient = await userRepo.findById(patientId);
     if (!patient) {
-      throw new Error("Patient not found");
+      throw Object.assign(new Error("Patient not found"), { status: 404 });
     }
 
     // Validate medications structure
     for (const med of medications) {
       if (!med.name || !med.dosage || !med.frequency || !med.duration || !med.quantity || !med.route) {
-        throw new Error("Each medication must have name, dosage, frequency, duration, route, and quantity");
+        throw Object.assign(new Error("Each medication must have name, dosage, frequency, duration, route, and quantity"), { status: 400 });
       }
     }
 
@@ -95,15 +116,15 @@ class PrescriptionService {
   async uploadPrescription(prescriptionId, patientId) {
     const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) {
-      throw new Error("Prescription not found");
+      throw Object.assign(new Error("Prescription not found"), { status: 404 });
     }
 
     if (prescription.patientId !== patientId) {
-      throw new Error("Unauthorized: Not your prescription");
+      throw Object.assign(new Error("Prescription does not belong to this user"), { status: 403 });
     }
 
     if (prescription.status !== PrescriptionStatus.PENDING) {
-      throw new Error("Prescription has already been uploaded");
+      throw Object.assign(new Error("Prescription has already been uploaded"), { status: 422 });
     }
 
     // Update status
@@ -128,25 +149,23 @@ class PrescriptionService {
   async assignPharmacy(prescriptionId, pharmacyId, patientId, deliveryDetails = {}) {
     const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) {
-      throw new Error("Prescription not found");
+      throw Object.assign(new Error("Prescription not found"), { status: 404 });
     }
 
     if (prescription.patientId !== patientId) {
-      throw new Error("Unauthorized: Not your prescription");
+      throw Object.assign(new Error("Unauthorized: Not your prescription"), { status: 403 });
     }
 
     // Verify pharmacy exists and is approved (isActive is set by approval flow going forward)
     const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
     if (!pharmacy || pharmacy.verificationStatus !== 'approved') {
-      const err = new Error("Pharmacy not found or not yet approved");
-      err.status = 400;
-      throw err;
+      throw Object.assign(new Error("Pharmacy not found or not yet approved"), { status: 400 });
     }
 
     // Check if prescription can be assigned
     const validStatuses = [PrescriptionStatus.PENDING, PrescriptionStatus.PATIENT_UPLOADED];
     if (!validStatuses.includes(prescription.status)) {
-      throw new Error("Prescription cannot be reassigned at this stage");
+      throw Object.assign(new Error("Prescription cannot be reassigned at this stage"), { status: 422 });
     }
 
     // Get patient info for notification
@@ -174,6 +193,20 @@ class PrescriptionService {
         `New prescription request from ${patient?.fullName || "a patient"} (Ref: ${prescription.reference}).`,
         { prescriptionId, reference: prescription.reference, type: "prescription_assigned" }
       ).catch(err => console.error("Notification failed:", err.message));
+
+      // Dedicated event so all pharmacy staff see new prescription immediately
+      try {
+        const io = getIO();
+        io.to(`pharmacy_${pharmacyId}`).emit("new_prescription", {
+          prescriptionId,
+          reference:   prescription.reference,
+          patientName: patient?.fullName || "A patient",
+          status:      PrescriptionStatus.PHARMACY_ASSIGNED,
+          createdAt:   new Date().toISOString(),
+        });
+      } catch {
+        // Socket emission is best-effort
+      }
     }
 
     if (pharmacy.email) {
@@ -198,21 +231,21 @@ class PrescriptionService {
   async startProcessing(prescriptionId, pharmacyId, pharmacistId) {
     const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) {
-      throw new Error("Prescription not found");
+      throw Object.assign(new Error("Prescription not found"), { status: 404 });
     }
 
     if (prescription.pharmacyId !== pharmacyId) {
-      throw new Error("Unauthorized: Not assigned to your pharmacy");
+      throw Object.assign(new Error("Unauthorized: Prescription is not assigned to your pharmacy"), { status: 403 });
     }
 
     if (prescription.status !== PrescriptionStatus.PHARMACY_ASSIGNED) {
-      throw new Error("Prescription is not ready for processing");
+      throw Object.assign(new Error("Prescription is not ready for processing"), { status: 422 });
     }
 
     // Verify pharmacist exists
     const pharmacist = await userRepo.findById(pharmacistId);
     if (!pharmacist) {
-      throw new Error("Pharmacist not found");
+      throw Object.assign(new Error("Pharmacist not found"), { status: 404 });
     }
 
     // Get pharmacy info for notification message
@@ -252,11 +285,11 @@ class PrescriptionService {
 
     const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) {
-      throw new Error("Prescription not found");
+      throw Object.assign(new Error("Prescription not found"), { status: 404 });
     }
 
     if (prescription.pharmacyId !== pharmacyId) {
-      throw new Error("Unauthorized: Not assigned to your pharmacy");
+      throw Object.assign(new Error("Unauthorized: Not assigned to your pharmacy"), { status: 403 });
     }
 
     // Calculate total
@@ -312,15 +345,15 @@ class PrescriptionService {
 
     const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) {
-      throw new Error("Prescription not found");
+      throw Object.assign(new Error("Prescription not found"), { status: 404 });
     }
 
     // Verify sender has access to this prescription
     if (senderType === 'patient' && prescription.patientId !== senderId) {
-      throw new Error("Unauthorized: Not your prescription");
+      throw Object.assign(new Error("Unauthorized: Not your prescription"), { status: 403 });
     }
     if (senderType === 'pharmacy' && prescription.pharmacyId !== senderId) {
-      throw new Error("Unauthorized: Not assigned to your pharmacy");
+      throw Object.assign(new Error("Unauthorized: Not assigned to your pharmacy"), { status: 403 });
     }
 
     const chatMessage = {
@@ -361,19 +394,20 @@ class PrescriptionService {
   async markReady(prescriptionId, pharmacyId, readyType, expectedDate = null) {
     const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) {
-      throw new Error("Prescription not found");
+      throw Object.assign(new Error("Prescription not found"), { status: 404 });
     }
 
     if (prescription.pharmacyId !== pharmacyId) {
-      throw new Error("Unauthorized: Not assigned to your pharmacy");
+      throw Object.assign(new Error("Unauthorized: Not assigned to your pharmacy"), { status: 403 });
     }
 
-    if (prescription.status !== PrescriptionStatus.PHARMACY_PROCESSING) {
-      throw new Error("Prescription is not being processed");
+    const readyAllowed = [PrescriptionStatus.PHARMACY_PROCESSING, PrescriptionStatus.IN_PROGRESS];
+    if (!readyAllowed.includes(prescription.status)) {
+      throw Object.assign(new Error("Prescription is not being processed"), { status: 422 });
     }
 
     const newStatus = readyType === 'delivery'
-      ? PrescriptionStatus.READY_FOR_DELIVERY
+      ? PrescriptionStatus.OUT_FOR_DELIVERY
       : PrescriptionStatus.READY_FOR_PICKUP;
 
     // Update status
@@ -393,6 +427,7 @@ class PrescriptionService {
       status: newStatus,
       note: `Prescription ready for ${readyType}`
     });
+    emitStatusChange(prescription, newStatus);
 
     // Get patient and pharmacy info
     const patient = await userRepo.findById(prescription.patientId);
@@ -434,16 +469,16 @@ class PrescriptionService {
   async completePrescription(prescriptionId, pharmacyId) {
     const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) {
-      throw new Error("Prescription not found");
+      throw Object.assign(new Error("Prescription not found"), { status: 404 });
     }
 
     if (prescription.pharmacyId !== pharmacyId) {
-      throw new Error("Unauthorized: Not assigned to your pharmacy");
+      throw Object.assign(new Error("Unauthorized: Not assigned to your pharmacy"), { status: 403 });
     }
 
-    const validStatuses = [PrescriptionStatus.READY_FOR_DELIVERY, PrescriptionStatus.READY_FOR_PICKUP];
+    const validStatuses = [PrescriptionStatus.OUT_FOR_DELIVERY, PrescriptionStatus.READY_FOR_PICKUP];
     if (!validStatuses.includes(prescription.status)) {
-      throw new Error("Prescription is not ready for completion");
+      throw Object.assign(new Error("Prescription is not ready for completion"), { status: 422 });
     }
 
     // Update status and completion date
@@ -458,6 +493,7 @@ class PrescriptionService {
       status: PrescriptionStatus.COMPLETED,
       note: "Prescription fulfilled successfully"
     });
+    emitStatusChange(prescription, PrescriptionStatus.COMPLETED);
 
     // Get patient and pharmacy info
     const patient = await userRepo.findById(prescription.patientId);
@@ -494,7 +530,7 @@ class PrescriptionService {
   async cancelPrescription(prescriptionId, userId, reason) {
     const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) {
-      throw new Error("Prescription not found");
+      throw Object.assign(new Error("Prescription not found"), { status: 404 });
     }
 
     // Verify user has permission to cancel
@@ -503,15 +539,15 @@ class PrescriptionService {
       prescription.pharmacyId === userId;
 
     if (!canCancel) {
-      throw new Error("Unauthorized: Cannot cancel this prescription");
+      throw Object.assign(new Error("Unauthorized: Cannot cancel this prescription"), { status: 403 });
     }
 
     // Don't allow cancellation if already completed or cancelled
     if (prescription.status === PrescriptionStatus.COMPLETED) {
-      throw new Error("Cannot cancel completed prescription");
+      throw Object.assign(new Error("Cannot cancel a completed prescription"), { status: 422 });
     }
     if (prescription.status === PrescriptionStatus.CANCELLED) {
-      throw new Error("Prescription is already cancelled");
+      throw Object.assign(new Error("Prescription is already cancelled"), { status: 409 });
     }
 
     // Determine who is cancelling
@@ -530,6 +566,7 @@ class PrescriptionService {
       status: PrescriptionStatus.CANCELLED,
       note: `Cancelled by ${cancelledBy}: ${reason}`
     });
+    emitStatusChange(prescription, PrescriptionStatus.CANCELLED);
 
     const cancellationMsg = `Prescription ${prescription.reference} has been cancelled by the ${cancelledBy}. Reason: ${reason || "Not specified"}.`;
 
@@ -606,6 +643,16 @@ class PrescriptionService {
       }
     }
 
+    // Extract proposed alternatives from internalNotes for patient/doctor visibility
+    const allNotes = prescription.internalNotes || [];
+    const latestProposal = [...allNotes].reverse().find(n => n.type === "alternative_proposal");
+    prescription.proposedAlternatives = latestProposal?.alternatives ?? [];
+
+    // Strip internalNotes from non-pharmacy roles — it contains private pharmacy staff notes
+    if (role && role !== "pharmacy") {
+      delete prescription.internalNotes;
+    }
+
     // Enrich with appointment data (Patient Complaint)
     if (prescription.consultationId) {
       try {
@@ -649,7 +696,7 @@ class PrescriptionService {
       activeOrders: prescriptions.filter(p => [
         PrescriptionStatus.PHARMACY_PROCESSING,
         PrescriptionStatus.READY_FOR_PICKUP,
-        PrescriptionStatus.READY_FOR_DELIVERY
+        PrescriptionStatus.OUT_FOR_DELIVERY
       ].includes(p.status)).length,
       completedToday: prescriptions.filter(p =>
         p.status === PrescriptionStatus.COMPLETED &&
@@ -686,8 +733,12 @@ class PrescriptionService {
    */
   async confirmAvailability(prescriptionId, pharmacyId) {
     const prescription = await prescriptionRepo.findById(prescriptionId);
-    if (!prescription || prescription.pharmacyId !== pharmacyId) {
-      throw new Error("Prescription not found or unauthorized");
+    if (!prescription) throw Object.assign(new Error("Prescription not found"), { status: 404 });
+    if (prescription.pharmacyId !== pharmacyId) throw Object.assign(new Error("Unauthorized: Not assigned to your pharmacy"), { status: 403 });
+
+    // Idempotency guard — if already confirmed, return without adding duplicate history
+    if (prescription.availabilityStatus === "confirmed") {
+      return this.getPrescriptionById(prescriptionId);
     }
 
     // Confirm availability and auto-start processing in one step
@@ -736,12 +787,11 @@ class PrescriptionService {
    */
   async proposeAlternative(prescriptionId, pharmacyId, alternatives, pharmacistId = null) {
     const prescription = await prescriptionRepo.findById(prescriptionId);
-    if (!prescription || prescription.pharmacyId !== pharmacyId) {
-      throw new Error("Prescription not found or unauthorized");
-    }
+    if (!prescription) throw Object.assign(new Error("Prescription not found"), { status: 404 });
+    if (prescription.pharmacyId !== pharmacyId) throw Object.assign(new Error("Unauthorized: Not assigned to your pharmacy"), { status: 403 });
 
     if (!Array.isArray(alternatives) || alternatives.length === 0) {
-      throw new Error("At least one alternative medication must be provided");
+      throw Object.assign(new Error("At least one alternative medication must be provided"), { status: 400 });
     }
 
     // Store alternatives in internalNotes with a special type marker
@@ -813,15 +863,115 @@ class PrescriptionService {
   }
 
   /**
+   * Doctor (or patient) approves the pharmacy's proposed alternative medications.
+   * Prescription moves forward — pharmacy is notified to continue processing.
+   */
+  async approveAlternative(prescriptionId, userId) {
+    const prescription = await prescriptionRepo.findById(prescriptionId);
+    if (!prescription) throw Object.assign(new Error("Prescription not found"), { status: 404 });
+
+    if (prescription.doctorId !== userId) {
+      throw Object.assign(new Error("Unauthorized: Only the doctor can approve alternatives"), { status: 403 });
+    }
+
+    if (prescription.availabilityStatus !== "alternatives_proposed") {
+      throw Object.assign(new Error("No pending alternative proposal to approve"), { status: 422 });
+    }
+
+    await prescriptionRepo.updateFields(prescriptionId, {
+      availabilityStatus: "confirmed",
+    });
+
+    await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
+      status: prescription.status,
+      note: "Alternative medications approved — pharmacy continuing processing",
+    });
+
+    // Notify pharmacy
+    const pharmacy = await pharmacyProfileRepo.findById(prescription.pharmacyId);
+    if (pharmacy) {
+      const approverLabel = "The doctor";
+      notificationService.createNotification(
+        pharmacy.userId,
+        "notification",
+        `${approverLabel} approved the alternative medications for prescription ${prescription.reference}. Please proceed.`,
+        { prescriptionId, reference: prescription.reference, type: "alternative_approved" }
+      ).catch(err => console.error("Notification failed:", err.message));
+
+      try {
+        const io = getIO();
+        io.to(`pharmacy_${prescription.pharmacyId}`).emit("alternative_approved", {
+          prescriptionId,
+          reference: prescription.reference,
+        });
+      } catch {
+        // Socket emission is best-effort
+      }
+    }
+
+    return this.getPrescriptionById(prescriptionId);
+  }
+
+  /**
+   * Doctor (or patient) rejects the pharmacy's proposed alternative medications.
+   * Pharmacy is notified to find another option.
+   */
+  async rejectAlternative(prescriptionId, userId, reason) {
+    const prescription = await prescriptionRepo.findById(prescriptionId);
+    if (!prescription) throw Object.assign(new Error("Prescription not found"), { status: 404 });
+
+    if (prescription.doctorId !== userId) {
+      throw Object.assign(new Error("Unauthorized: Only the doctor can reject alternatives"), { status: 403 });
+    }
+
+    if (prescription.availabilityStatus !== "alternatives_proposed") {
+      throw Object.assign(new Error("No pending alternative proposal to reject"), { status: 422 });
+    }
+
+    await prescriptionRepo.updateFields(prescriptionId, {
+      availabilityStatus: "pending",
+    });
+
+    await prescriptionRepo.addFulfillmentHistory(prescriptionId, {
+      status: prescription.status,
+      note: `Alternative medications rejected: ${reason || "No reason given"}`,
+    });
+
+    // Notify pharmacy
+    const pharmacy = await pharmacyProfileRepo.findById(prescription.pharmacyId);
+    if (pharmacy) {
+      const rejecterLabel = "The doctor";
+      notificationService.createNotification(
+        pharmacy.userId,
+        "notification",
+        `${rejecterLabel} rejected the alternative medications for prescription ${prescription.reference}. Please find another option.`,
+        { prescriptionId, reference: prescription.reference, type: "alternative_rejected", reason }
+      ).catch(err => console.error("Notification failed:", err.message));
+
+      try {
+        const io = getIO();
+        io.to(`pharmacy_${prescription.pharmacyId}`).emit("alternative_rejected", {
+          prescriptionId,
+          reference: prescription.reference,
+          reason,
+        });
+      } catch {
+        // Socket emission is best-effort
+      }
+    }
+
+    return this.getPrescriptionById(prescriptionId);
+  }
+
+  /**
    * Pharmacy adds an internal note
    */
   async addInternalNote(prescriptionId, pharmacyId, noteData) {
     const { note, pharmacistId } = noteData;
     const prescription = await prescriptionRepo.findById(prescriptionId);
 
-    if (!prescription || prescription.pharmacyId !== pharmacyId) {
-      throw new Error("Prescription not found or unauthorized");
-    }
+    if (!prescription) throw Object.assign(new Error("Prescription not found"), { status: 404 });
+    if (prescription.pharmacyId !== pharmacyId) throw Object.assign(new Error("Unauthorized: Not assigned to your pharmacy"), { status: 403 });
 
     const internalNotes = prescription.internalNotes || [];
     internalNotes.push({
@@ -935,6 +1085,10 @@ class PrescriptionService {
       err.status = 404;
       throw err;
     }
+    if (prescription.dispatchedAt) {
+      throw Object.assign(new Error("Prescription has already been dispatched — dispatch timestamp is immutable"), { status: 409 });
+    }
+
     if (prescription.status !== PrescriptionStatus.READY_FOR_PICKUP) {
       const err = new Error('Prescription is not in ready_for_pickup status');
       err.status = 422;
@@ -952,6 +1106,7 @@ class PrescriptionService {
       status: PrescriptionStatus.OUT_FOR_DELIVERY,
       note:   note || 'Order dispatched for delivery',
     });
+    emitStatusChange(prescription, PrescriptionStatus.OUT_FOR_DELIVERY);
 
     notificationService.createNotification(
       prescription.patientId,
@@ -997,6 +1152,7 @@ class PrescriptionService {
       status: PrescriptionStatus.COMPLETED,
       note:   'Order delivered successfully',
     });
+    emitStatusChange(prescription, PrescriptionStatus.COMPLETED);
 
     // Notify patient
     notificationService.createNotification(

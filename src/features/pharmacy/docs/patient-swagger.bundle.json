@@ -1,0 +1,1158 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Patient API (Pharmacy)",
+    "version": "1.0.0",
+    "description": "All pharmacy-related endpoints available to the **patient** role.\n\n**Auth:** All endpoints require a Bearer JWT in the `Authorization` header.\n\n**Base URL:** `/api`  — paths below are relative to it.\n\n**Currency:** Invoice amounts are returned in the patient's local currency\n(derived from their country at invoice creation time). The `currency` field\nin every invoice/payment response tells you which currency is being used.\n\n**WebSocket events the patient receives:**\n| Event | Trigger |\n|---|---|\n| `prescription_status_changed` | Any status change on the patient's prescription (includes `paymentStatus` when payment confirmed) |\n| `new_notification` | Any push notification |\n| `invoice_sent` | Pharmacy sends an invoice |\n"
+  },
+  "tags": [
+    {
+      "name": "Prescriptions (Patient)",
+      "description": "Manage and view prescriptions"
+    },
+    {
+      "name": "Invoices (Patient)",
+      "description": "View and act on invoices sent by the pharmacy"
+    },
+    {
+      "name": "Payments (Patient)",
+      "description": "Pay invoices via Paystack or Flutterwave"
+    },
+    {
+      "name": "Wallet (Patient)",
+      "description": "Patient wallet balance, transactions, and top-up"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/pharmacy/prescriptions/patient/prescriptions": {
+      "get": {
+        "summary": "List my prescriptions",
+        "description": "Returns all prescriptions for the authenticated patient, newest first.",
+        "tags": [
+          "Prescriptions (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by status (e.g. `pending`, `awaiting_payment`, `in_progress`)"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of prescriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not a patient"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/patient/prescriptions/{prescriptionId}/upload": {
+      "post": {
+        "summary": "Upload prescription",
+        "description": "Patient uploads a prescription that was already created by a doctor.\n- Prescription must be in `pending` status.\n- Transitions status → `patient_uploaded`.\n",
+        "tags": [
+          "Prescriptions (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescription uploaded"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not your prescription"
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "422": {
+            "description": "Prescription already uploaded"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/patient/prescriptions/{prescriptionId}/assign-pharmacy": {
+      "post": {
+        "summary": "Assign pharmacy to prescription",
+        "description": "Patient picks a pharmacy to fulfill the prescription.\n- Pharmacy must be approved (`verificationStatus: approved`).\n- Prescription must be in `pending` or `patient_uploaded` status.\n- Transitions status → `pharmacy_assigned`.\n- Pharmacy is notified via WebSocket (`new_prescription`) and email.\n",
+        "tags": [
+          "Prescriptions (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pharmacyId"
+                ],
+                "properties": {
+                  "pharmacyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the approved pharmacy"
+                  },
+                  "deliveryDetails": {
+                    "type": "object",
+                    "properties": {
+                      "address": {
+                        "type": "string",
+                        "example": "12 Marina Road, Lagos"
+                      },
+                      "instructions": {
+                        "type": "string",
+                        "example": "Call on arrival"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pharmacy assigned"
+          },
+          "400": {
+            "description": "Pharmacy not found or not approved"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not your prescription"
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "422": {
+            "description": "Prescription cannot be reassigned at this stage"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}": {
+      "get": {
+        "summary": "Get prescription details",
+        "description": "Returns full prescription detail including medications, chat, and fulfillment history.",
+        "tags": [
+          "Prescriptions (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescription details"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not your prescription"
+          },
+          "404": {
+            "description": "Prescription not found"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/cancel": {
+      "post": {
+        "summary": "Cancel a prescription",
+        "description": "Patient cancels a prescription. Cannot cancel a completed prescription.\n",
+        "tags": [
+          "Prescriptions (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "example": "No longer needed"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prescription cancelled"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not your prescription"
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "409": {
+            "description": "Already cancelled"
+          },
+          "422": {
+            "description": "Cannot cancel a completed prescription"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/chat": {
+      "post": {
+        "summary": "Send chat message to pharmacy",
+        "description": "Patient sends a message on a prescription thread. Set `senderType` to `\"patient\"`.",
+        "tags": [
+          "Prescriptions (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "message",
+                  "senderType"
+                ],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "example": "Will the delivery arrive today?"
+                  },
+                  "senderType": {
+                    "type": "string",
+                    "enum": [
+                      "patient"
+                    ],
+                    "example": "patient"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not your prescription"
+          },
+          "404": {
+            "description": "Prescription not found"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/approve-alternative": {
+      "post": {
+        "summary": "Approve alternative medications",
+        "description": "Approve alternatives proposed by the pharmacy.\n- `availabilityStatus` must be `alternatives_proposed`.\n- Pharmacy is notified via WebSocket (`alternative_approved`).\n",
+        "tags": [
+          "Prescriptions (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alternatives approved"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Only the patient or doctor can approve"
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "422": {
+            "description": "No pending proposal to approve"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/reject-alternative": {
+      "post": {
+        "summary": "Reject alternative medications",
+        "description": "Reject alternatives proposed by the pharmacy.\n- `availabilityStatus` must be `alternatives_proposed`.\n- Pharmacy is notified via WebSocket (`alternative_rejected`).\n",
+        "tags": [
+          "Prescriptions (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "example": "Prefer the original brand"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alternatives rejected"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Only the patient or doctor can reject"
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "422": {
+            "description": "No pending proposal to reject"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/search": {
+      "get": {
+        "summary": "Search prescriptions",
+        "tags": [
+          "Prescriptions (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search term (reference, medication name, etc.)"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching prescriptions"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/patient/invoices": {
+      "get": {
+        "summary": "List my invoices",
+        "description": "Returns all invoices sent to the patient, newest first.\n- Amounts are returned in the patient's local currency.\n- Excludes cancelled invoices by default (pass `status=cancelled` to include them).\n",
+        "tags": [
+          "Invoices (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "sent",
+                "viewed",
+                "awaiting_payment",
+                "paid",
+                "overdue",
+                "cancelled"
+              ]
+            },
+            "description": "Filter by invoice status"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated invoice list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invoices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/patient/invoices/{id}": {
+      "get": {
+        "summary": "Get invoice details",
+        "description": "Returns full invoice with line items, amounts in patient's currency.",
+        "tags": [
+          "Invoices (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice details"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        }
+      }
+    },
+    "/patient/invoices/{id}/viewed": {
+      "patch": {
+        "summary": "Mark invoice as viewed",
+        "description": "Transitions invoice status from `sent` → `viewed`.\nCall this when the patient opens the invoice screen.\n",
+        "tags": [
+          "Invoices (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice marked as viewed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        }
+      }
+    },
+    "/patient/invoices/{id}/dispute": {
+      "post": {
+        "summary": "Raise a dispute",
+        "description": "Raises a dispute on a **paid** invoice within 7 days of payment.\n- Requires a `reason` and optionally `evidence` (text or URL).\n- Pharmacy is notified immediately via WebSocket (`dispute_raised`).\n",
+        "tags": [
+          "Invoices (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "example": "Received wrong medication"
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "example": "Photo at delivery showed incorrect brand"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dispute raised"
+          },
+          "400": {
+            "description": "Dispute window expired (>7 days) or invoice not paid"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Invoice not found"
+          },
+          "409": {
+            "description": "Dispute already exists for this invoice"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/patient/invoices": {
+      "get": {
+        "summary": "Get prescription invoices (legacy)",
+        "description": "Returns prescriptions that have invoice cost data attached.\n**Prefer `/patient/invoices` for the full invoice object.**\nThis endpoint returns the prescription with embedded cost fields.\n",
+        "tags": [
+          "Invoices (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescriptions with invoice data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/patient/payments/initiate": {
+      "post": {
+        "summary": "Initiate invoice payment",
+        "description": "Creates a payment record and returns a gateway redirect URL.\n- Automatically selects **Paystack** (preferred) or **Flutterwave** based on the patient's currency.\n- Amount is calculated from the invoice's USD value at the live exchange rate.\n- Idempotent: returns the existing pending payment if one already exists for this invoice.\n- Rate limited: max 5 attempts per invoice per hour.\n",
+        "tags": [
+          "Payments (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "invoiceId"
+                ],
+                "properties": {
+                  "invoiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the invoice to pay"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "paystack",
+                      "flutterwave"
+                    ],
+                    "description": "Override gateway provider (optional — auto-selected by default)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paymentId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "invoiceId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "example": 14750.5
+                    },
+                    "currency": {
+                      "type": "string",
+                      "example": "NGN"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "pending"
+                    },
+                    "authorizationUrl": {
+                      "type": "string",
+                      "example": "https://checkout.paystack.com/..."
+                    },
+                    "reference": {
+                      "type": "string",
+                      "example": "COSMIC-PAY-1724581234-ABC123"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing invoiceId or invalid provider"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Invoice not found"
+          },
+          "409": {
+            "description": "Invoice already paid"
+          },
+          "429": {
+            "description": "Too many payment attempts"
+          },
+          "502": {
+            "description": "Payment gateway error"
+          }
+        }
+      }
+    },
+    "/patient/payments/verify/{reference}": {
+      "get": {
+        "summary": "Verify payment after gateway redirect",
+        "description": "Call this when the patient returns from the payment gateway.\n- Verifies with the gateway and triggers the same atomic success handler as the webhook.\n- If already verified, returns the current status immediately (idempotent).\n- On success: invoice → `paid`, prescription → `in_progress` + `paymentStatus: paid`,\n  pharmacy wallet credited (escrow), patient and pharmacy notified via WebSocket.\n",
+        "tags": [
+          "Payments (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reference",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "COSMIC-PAY-1724581234-ABC123"
+            },
+            "description": "Payment reference returned from initiatePayment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment verification result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paymentId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "invoiceId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "success",
+                        "pending"
+                      ]
+                    },
+                    "reference": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Payment record not found"
+          }
+        }
+      }
+    },
+    "/patient/wallet/summary": {
+      "get": {
+        "summary": "Wallet overview",
+        "description": "Returns the patient's wallet balance, total spent, and total top-ups.",
+        "tags": [
+          "Wallet (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wallet summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "balance": {
+                      "type": "number",
+                      "example": 5000
+                    },
+                    "currency": {
+                      "type": "string",
+                      "example": "NGN"
+                    },
+                    "totalSpent": {
+                      "type": "number",
+                      "example": 25000
+                    },
+                    "totalTopUps": {
+                      "type": "number",
+                      "example": 30000
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/patient/wallet/transactions": {
+      "get": {
+        "summary": "List wallet transactions",
+        "description": "Returns paginated wallet transactions with optional filters.",
+        "tags": [
+          "Wallet (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credit",
+                "debit"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string"
+            },
+            "description": "e.g. `top_up`, `payment`"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction list"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/patient/wallet/top-up": {
+      "post": {
+        "summary": "Top up wallet",
+        "description": "Initiates a wallet top-up — returns a gateway authorization URL.",
+        "tags": [
+          "Wallet (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "amount"
+                ],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "description": "Amount in the patient's local currency",
+                    "example": 10000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Top-up initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authorizationUrl": {
+                      "type": "string"
+                    },
+                    "reference": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid amount"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+  }
+}
