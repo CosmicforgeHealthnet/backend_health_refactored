@@ -361,20 +361,44 @@ class PrescriptionService {
 
     await prescriptionRepo.addChatMessage(prescriptionId, chatMessage);
 
-    // Notify the other party via WebSocket
-    if (senderType === 'patient' && prescription.pharmacy?.userId) {
-      notificationService.createNotification(
-        prescription.pharmacy.userId,
-        "notification",
-        `New message from patient on prescription ${prescription.reference}.`,
-        { prescriptionId, reference: prescription.reference, type: "new_chat_message" }
-      ).catch(err => console.error("Notification failed:", err.message));
-    } else if (senderType === 'pharmacy') {
+    const chatPayload = {
+      prescriptionId,
+      reference:  prescription.reference,
+      senderId,
+      senderType,
+      message,
+      timestamp:  chatMessage.timestamp,
+      type:       "new_chat_message",
+    };
+
+    try {
+      const io = getIO();
+      if (senderType === 'patient') {
+        // Send to pharmacy room (all staff see it instantly)
+        io.to(`pharmacy_${prescription.pharmacyId}`).emit("new_chat_message", chatPayload);
+      } else {
+        // Send to patient room
+        io.to(`user_${prescription.patientId}`).emit("new_chat_message", chatPayload);
+      }
+    } catch (_) {}
+
+    // DB notification for the other party
+    if (senderType === 'patient') {
+      const pharmacy = await pharmacyProfileRepo.findById(prescription.pharmacyId);
+      if (pharmacy?.userId) {
+        notificationService.createNotification(
+          pharmacy.userId,
+          "notification",
+          `New message from patient on prescription ${prescription.reference}.`,
+          chatPayload
+        ).catch(err => console.error("Notification failed:", err.message));
+      }
+    } else {
       notificationService.createNotification(
         prescription.patientId,
         "notification",
         `New message from pharmacy on prescription ${prescription.reference}.`,
-        { prescriptionId, reference: prescription.reference, type: "new_chat_message" }
+        chatPayload
       ).catch(err => console.error("Notification failed:", err.message));
     }
 

@@ -8,6 +8,8 @@ const DocumentFolderMiddleware   = require("../../documents/middlewares/document
 // Public routes
 router.post("/register", pharmacyAuthController.registerPharmacy);
 router.post("/login", pharmacyAuthController.loginPharmacy);
+router.post("/forgot-password", pharmacyAuthController.forgotPassword);
+router.post("/reset-password", pharmacyAuthController.resetPassword);
 
 // Protected routes
 router.get("/profile", authenticateJWT, pharmacyAuthController.getPharmacyProfile);
