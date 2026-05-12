@@ -8,7 +8,8 @@
       "Bash(npm run build:main-swagger:*)",
       "Bash(grep -r \"CPANEL_EMAIL\\\\|NODEMAILER\\\\|SMTP\" c:UsershpDesktopCFbackend_health_refactored/.env*)",
       "Bash(xargs grep -l \"entities\\\\|EntitySchema\\\\|DataSource\")",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(npm run *)"
     ]
   }
 }

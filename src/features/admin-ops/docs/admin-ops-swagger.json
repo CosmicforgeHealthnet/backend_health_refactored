@@ -1,0 +1,250 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Admin Ops API",
+    "version": "1.0.0",
+    "description": "Centralized admin operations: service registry, job monitoring, dead-letter tracking, webhook management, incident tracking, system alerts, feature flags, health history, and environment configs."
+  },
+  "tags": [
+    { "name": "Service Registry", "description": "Register and monitor internal/external services" },
+    { "name": "Job Monitoring", "description": "Track cron and background job executions" },
+    { "name": "Dead Letter Jobs", "description": "View and resolve failed jobs" },
+    { "name": "Webhook Management", "description": "Manage webhook endpoints" },
+    { "name": "Webhook Delivery Logs", "description": "Inspect webhook delivery attempts" },
+    { "name": "Incidents", "description": "Track and resolve system incidents" },
+    { "name": "System Alerts", "description": "Monitor and resolve system alerts" },
+    { "name": "Feature Flags", "description": "Manage feature flags" },
+    { "name": "Health History", "description": "Health check snapshots over time" },
+    { "name": "Environment Configs", "description": "Admin-managed runtime configuration entries" }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "schemas": {
+      "ServiceRegistry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "displayName": { "type": "string" },
+          "baseUrl": { "type": "string" },
+          "healthEndpoint": { "type": "string" },
+          "status": { "type": "string", "enum": ["up", "down", "degraded", "unknown"] },
+          "version": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "lastCheckedAt": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "JobExecution": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "jobName": { "type": "string" },
+          "jobType": { "type": "string", "enum": ["cron", "background", "scheduled", "manual"] },
+          "status": { "type": "string", "enum": ["pending", "running", "completed", "failed", "dead_letter"] },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "completedAt": { "type": "string", "format": "date-time" },
+          "durationMs": { "type": "integer" },
+          "error": { "type": "string" },
+          "attempts": { "type": "integer" }
+        }
+      },
+      "DeadLetterJob": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "jobName": { "type": "string" },
+          "errorMessage": { "type": "string" },
+          "retryCount": { "type": "integer" },
+          "maxRetries": { "type": "integer" },
+          "status": { "type": "string", "enum": ["pending_retry", "exhausted", "manually_resolved"] },
+          "failedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WebhookEndpoint": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "url": { "type": "string" },
+          "events": { "type": "array", "items": { "type": "string" } },
+          "isActive": { "type": "boolean" },
+          "provider": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "WebhookDeliveryLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "event": { "type": "string" },
+          "statusCode": { "type": "integer" },
+          "status": { "type": "string", "enum": ["success", "failed", "pending"] },
+          "attempt": { "type": "integer" },
+          "provider": { "type": "string" },
+          "deliveredAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Incident": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+          "status": { "type": "string", "enum": ["open", "investigating", "identified", "monitoring", "resolved", "closed"] },
+          "affectedServices": { "type": "array", "items": { "type": "string" } },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SystemAlert": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "type": { "type": "string", "enum": ["job_failure", "health_degraded", "dead_letter", "webhook_failure", "custom"] },
+          "severity": { "type": "string", "enum": ["critical", "warning", "info"] },
+          "message": { "type": "string" },
+          "source": { "type": "string" },
+          "isRead": { "type": "boolean" },
+          "isResolved": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FeatureFlag": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "key": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "isEnabled": { "type": "boolean" },
+          "rolloutPercentage": { "type": "integer" },
+          "environment": { "type": "string" }
+        }
+      },
+      "HealthCheckHistory": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string" },
+          "version": { "type": "string" },
+          "environment": { "type": "string" },
+          "uptime": { "type": "number" },
+          "responseTimeMs": { "type": "integer" },
+          "checkedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "EnvironmentConfig": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "key": { "type": "string" },
+          "value": { "type": "string", "description": "Masked as *** if isPublic is false" },
+          "description": { "type": "string" },
+          "isPublic": { "type": "boolean" },
+          "environment": { "type": "string" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/admin/ops/services": {
+      "get": { "tags": ["Service Registry"], "summary": "List all registered services", "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Service Registry"], "summary": "Register a new service", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["name", "displayName"], "properties": { "name": { "type": "string" }, "displayName": { "type": "string" }, "baseUrl": { "type": "string" }, "healthEndpoint": { "type": "string" }, "version": { "type": "string" }, "tags": { "type": "array", "items": { "type": "string" } }, "metadata": { "type": "object" } } } } } }, "responses": { "201": { "description": "Created" } } }
+    },
+    "/api/admin/ops/services/{id}": {
+      "get": { "tags": ["Service Registry"], "summary": "Get a service by ID", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } },
+      "put": { "tags": ["Service Registry"], "summary": "Update a service", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ServiceRegistry" } } } }, "responses": { "200": { "description": "Updated" } } },
+      "delete": { "tags": ["Service Registry"], "summary": "Deregister a service", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Deleted" } } }
+    },
+    "/api/admin/ops/services/{id}/ping": {
+      "post": { "tags": ["Service Registry"], "summary": "Ping a service health endpoint", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Ping result" } } }
+    },
+    "/api/admin/ops/jobs": {
+      "get": { "tags": ["Job Monitoring"], "summary": "List job executions", "parameters": [{ "in": "query", "name": "status", "schema": { "type": "string" } }, { "in": "query", "name": "jobName", "schema": { "type": "string" } }, { "in": "query", "name": "limit", "schema": { "type": "integer" } }, { "in": "query", "name": "offset", "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/jobs/{id}": {
+      "get": { "tags": ["Job Monitoring"], "summary": "Get a job execution", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/jobs/track": {
+      "post": { "tags": ["Job Monitoring"], "summary": "Manually record a job execution", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["jobName"], "properties": { "jobName": { "type": "string" }, "jobType": { "type": "string" }, "status": { "type": "string" }, "durationMs": { "type": "integer" }, "error": { "type": "string" } } } } } }, "responses": { "201": { "description": "Created" } } }
+    },
+    "/api/admin/ops/dead-letters": {
+      "get": { "tags": ["Dead Letter Jobs"], "summary": "List dead letter jobs", "parameters": [{ "in": "query", "name": "status", "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/dead-letters/{id}": {
+      "get": { "tags": ["Dead Letter Jobs"], "summary": "Get a dead letter job", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/dead-letters/{id}/resolve": {
+      "put": { "tags": ["Dead Letter Jobs"], "summary": "Mark dead letter job as manually resolved", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/webhooks": {
+      "get": { "tags": ["Webhook Management"], "summary": "List webhook endpoints", "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Webhook Management"], "summary": "Create webhook endpoint", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["name", "url"], "properties": { "name": { "type": "string" }, "url": { "type": "string" }, "secret": { "type": "string" }, "events": { "type": "array", "items": { "type": "string" } }, "provider": { "type": "string" }, "description": { "type": "string" } } } } } }, "responses": { "201": { "description": "Created" } } }
+    },
+    "/api/admin/ops/webhooks/{id}": {
+      "get": { "tags": ["Webhook Management"], "summary": "Get webhook endpoint", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } },
+      "put": { "tags": ["Webhook Management"], "summary": "Update webhook endpoint", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WebhookEndpoint" } } } }, "responses": { "200": { "description": "Updated" } } },
+      "delete": { "tags": ["Webhook Management"], "summary": "Delete webhook endpoint", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Deleted" } } }
+    },
+    "/api/admin/ops/webhook-logs": {
+      "get": { "tags": ["Webhook Delivery Logs"], "summary": "List webhook delivery logs", "parameters": [{ "in": "query", "name": "event", "schema": { "type": "string" } }, { "in": "query", "name": "status", "schema": { "type": "string" } }, { "in": "query", "name": "webhookEndpointId", "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/webhook-logs/{id}": {
+      "get": { "tags": ["Webhook Delivery Logs"], "summary": "Get a webhook delivery log", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/incidents": {
+      "get": { "tags": ["Incidents"], "summary": "List incidents", "parameters": [{ "in": "query", "name": "status", "schema": { "type": "string" } }, { "in": "query", "name": "severity", "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Incidents"], "summary": "Create an incident", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["title"], "properties": { "title": { "type": "string" }, "description": { "type": "string" }, "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] }, "affectedServices": { "type": "array", "items": { "type": "string" } } } } } } }, "responses": { "201": { "description": "Created" } } }
+    },
+    "/api/admin/ops/incidents/{id}": {
+      "get": { "tags": ["Incidents"], "summary": "Get incident", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } },
+      "put": { "tags": ["Incidents"], "summary": "Update incident", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Incident" } } } }, "responses": { "200": { "description": "Updated" } } }
+    },
+    "/api/admin/ops/incidents/{id}/resolve": {
+      "post": { "tags": ["Incidents"], "summary": "Resolve an incident", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Resolved" } } }
+    },
+    "/api/admin/ops/alerts": {
+      "get": { "tags": ["System Alerts"], "summary": "List system alerts", "parameters": [{ "in": "query", "name": "isResolved", "schema": { "type": "boolean" } }, { "in": "query", "name": "severity", "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["System Alerts"], "summary": "Create a system alert", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["message"], "properties": { "type": { "type": "string" }, "severity": { "type": "string" }, "message": { "type": "string" }, "source": { "type": "string" }, "details": { "type": "object" } } } } } }, "responses": { "201": { "description": "Created" } } }
+    },
+    "/api/admin/ops/alerts/{id}": {
+      "get": { "tags": ["System Alerts"], "summary": "Get alert", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/alerts/{id}/read": {
+      "put": { "tags": ["System Alerts"], "summary": "Mark alert as read", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/alerts/{id}/resolve": {
+      "put": { "tags": ["System Alerts"], "summary": "Resolve alert", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/flags": {
+      "get": { "tags": ["Feature Flags"], "summary": "List all feature flags", "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Feature Flags"], "summary": "Create a feature flag", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["key", "name"], "properties": { "key": { "type": "string" }, "name": { "type": "string" }, "description": { "type": "string" }, "isEnabled": { "type": "boolean" }, "rolloutPercentage": { "type": "integer" }, "environment": { "type": "string" } } } } } }, "responses": { "201": { "description": "Created" } } }
+    },
+    "/api/admin/ops/flags/{key}": {
+      "get": { "tags": ["Feature Flags"], "summary": "Get feature flag by key", "parameters": [{ "in": "path", "name": "key", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "OK" } } },
+      "put": { "tags": ["Feature Flags"], "summary": "Update feature flag", "parameters": [{ "in": "path", "name": "key", "required": true, "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FeatureFlag" } } } }, "responses": { "200": { "description": "Updated" } } },
+      "delete": { "tags": ["Feature Flags"], "summary": "Delete feature flag", "parameters": [{ "in": "path", "name": "key", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Deleted" } } }
+    },
+    "/api/admin/ops/flags/{key}/check": {
+      "get": { "tags": ["Feature Flags"], "summary": "Check if a feature flag is enabled (admin auth required)", "parameters": [{ "in": "path", "name": "key", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "{ enabled: boolean, exists: boolean }" } } }
+    },
+    "/api/admin/ops/health-history": {
+      "get": { "tags": ["Health History"], "summary": "List health check history", "parameters": [{ "in": "query", "name": "limit", "schema": { "type": "integer" } }, { "in": "query", "name": "offset", "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/health-history/latest": {
+      "get": { "tags": ["Health History"], "summary": "Get the latest health check snapshot", "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/admin/ops/env-configs": {
+      "get": { "tags": ["Environment Configs"], "summary": "List runtime config entries (secrets masked)", "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Environment Configs"], "summary": "Add a runtime config entry", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["key"], "properties": { "key": { "type": "string" }, "value": { "type": "string" }, "description": { "type": "string" }, "isPublic": { "type": "boolean" }, "environment": { "type": "string" } } } } } }, "responses": { "201": { "description": "Created" } } }
+    },
+    "/api/admin/ops/env-configs/{id}": {
+      "put": { "tags": ["Environment Configs"], "summary": "Update a config entry", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentConfig" } } } }, "responses": { "200": { "description": "Updated" } } },
+      "delete": { "tags": ["Environment Configs"], "summary": "Delete a config entry", "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Deleted" } } }
+    }
+  }
+}
