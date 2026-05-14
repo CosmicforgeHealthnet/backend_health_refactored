@@ -12,7 +12,7 @@ const { Client } = require('pg');
 const client = new Client({
   host: '72.61.20.94',
   port: 5432,
-  database: 'cosmicforge_clean',
+  database: 'cosmicforge_test',
   user: 'postgres',
   password: 'wvlAZUDdnEdjpuxEVSZEJkYFwAYJhDEf',
   ssl: false,
