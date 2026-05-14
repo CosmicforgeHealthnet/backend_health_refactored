@@ -61,8 +61,8 @@ async function run() {
     `, [HASHES.patient]);
 
     await client.query(`
-      INSERT INTO patient_profiles ("userId", "profileType", gender, nationality)
-      VALUES ($1, 'individual', 'male', 'Nigerian')
+      INSERT INTO patient_profiles ("userId", "profileType", gender, nationality, "dateOfBirth")
+      VALUES ($1, 'individual', 'male', 'Nigerian', '1990-01-01')
     `, [patientUser.id]);
 
     await client.query(`
