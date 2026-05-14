@@ -1,8 +1,8 @@
 /**
  * Seed script: creates 3 fully-verified test accounts
- *   - test.patient@cosmicforge.dev   / TestPatient@123   (gold_elite)
- *   - test.doctor@cosmicforge.dev    / TestDoctor@123    (professional, verified)
- *   - test.pharmacy@cosmicforge.dev  / TestPharmacy@123  (gold_elite, verified)
+ *   - cf.patient@cosmicforge.dev    / TestPatient@123   (gold_elite)
+ *   - cf.doctor@cosmicforge.dev     / TestDoctor@123    (professional, verified)
+ *   - cf.pharmacy@cosmicforge.dev   / TestPharmacy@123  (gold_elite, verified)
  *
  * Run:  node scripts/seed-test-accounts.js
  */
@@ -36,9 +36,9 @@ async function run() {
     await client.query(`
       DELETE FROM users
       WHERE email IN (
-        'test.patient@cosmicforge.dev',
-        'test.doctor@cosmicforge.dev',
-        'test.pharmacy@cosmicforge.dev'
+        'cf.patient@cosmicforge.dev',
+        'cf.doctor@cosmicforge.dev',
+        'cf.pharmacy@cosmicforge.dev'
       )
     `);
     console.log('🗑️  Cleared existing test accounts');
@@ -53,7 +53,7 @@ async function run() {
         "averageRating", "totalRatings"
       ) VALUES (
         'Test Patient',
-        'test.patient@cosmicforge.dev',
+        'cf.patient@cosmicforge.dev',
         $1,
         'patient', 'active', 'gold_elite', 'local',
         '+2348000000001', false, false, 0, 0, 0
@@ -87,7 +87,7 @@ async function run() {
         "totalReferrals", "averageRating", "totalRatings"
       ) VALUES (
         'Dr. Test Doctor',
-        'test.doctor@cosmicforge.dev',
+        'cf.doctor@cosmicforge.dev',
         $1,
         'doctor', 'doctor_active', 'professional', 'local',
         '+2348000000002', 'General Practice', false, false, 0, 0, 0
@@ -170,7 +170,7 @@ async function run() {
         "averageRating", "totalRatings"
       ) VALUES (
         'CosmicForge Test Pharmacy',
-        'test.pharmacy@cosmicforge.dev',
+        'cf.pharmacy@cosmicforge.dev',
         $1,
         'pharmacy', 'pharmacy_active', 'gold_elite', 'local',
         '+2348000000003', false, false, 0, 0, 0
@@ -184,10 +184,10 @@ async function run() {
         "licenseNumber", "verificationStatus", "isActive", "documentsSubmitted",
         "defaultCurrency", "serviceRadius"
       ) VALUES (
-        $1, 'CosmicForge Test Pharmacy', 'PHARMA-TEST-001',
+        $1, 'CosmicForge Test Pharmacy', 'PHARMA-CF-001',
         '123 Test Street, Lagos, Nigeria', '+2348000000003',
-        'CosmicForge Test Pharmacy', 'test.pharmacy@cosmicforge.dev',
-        'testpharmacy', 'PCN-TEST-001', 'approved', true, true,
+        'CosmicForge Test Pharmacy', 'cf.pharmacy@cosmicforge.dev',
+        'cfpharmacy', 'PCN-CF-001', 'approved', true, true,
         'NGN', 0
       ) RETURNING id
     `, [pharmacyUser.id]);
@@ -226,17 +226,17 @@ async function run() {
     console.log('   TEST ACCOUNTS CREATED SUCCESSFULLY');
     console.log('════════════════════════════════════════════');
     console.log('PATIENT');
-    console.log('  email   : test.patient@cosmicforge.dev');
+    console.log('  email   : cf.patient@cosmicforge.dev');
     console.log('  password: TestPatient@123');
     console.log('  tier    : gold_elite');
     console.log('');
     console.log('DOCTOR');
-    console.log('  email   : test.doctor@cosmicforge.dev');
+    console.log('  email   : cf.doctor@cosmicforge.dev');
     console.log('  password: TestDoctor@123');
     console.log('  tier    : professional (fully verified)');
     console.log('');
     console.log('PHARMACY');
-    console.log('  email   : test.pharmacy@cosmicforge.dev');
+    console.log('  email   : cf.pharmacy@cosmicforge.dev');
     console.log('  password: TestPharmacy@123');
     console.log('  tier    : gold_elite (fully verified)');
     console.log('════════════════════════════════════════════\n');

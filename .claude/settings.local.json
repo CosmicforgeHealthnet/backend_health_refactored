@@ -9,7 +9,19 @@
       "Bash(grep -r \"CPANEL_EMAIL\\\\|NODEMAILER\\\\|SMTP\" c:UsershpDesktopCFbackend_health_refactored/.env*)",
       "Bash(xargs grep -l \"entities\\\\|EntitySchema\\\\|DataSource\")",
       "mcp__ide__getDiagnostics",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(node scripts/seed-test-accounts.js)",
+      "Read(//c/Users/TriumphAdeniran/OneDrive - Market and Regulatory Consultants Ltd/Desktop/Outside/cosmic/backend_health_refactored/src/features/admin-ops/**)",
+      "Bash(node scripts/migrate-admin-ops.js)",
+      "Bash(tasklist)",
+      "Bash(netstat -ano)",
+      "PowerShell(foreach \\($pid in @\\(15940, 36948, 7144, 60276, 43916\\)\\) { $p = Get-WmiObject Win32_Process -Filter \"ProcessId=$pid\"; Write-Host \"PID $pid : $\\($p.CommandLine\\)\" })",
+      "PowerShell(foreach \\($procId in @\\(15940, 36948, 7144, 60276, 43916\\)\\) { $p = Get-WmiObject Win32_Process -Filter \"ProcessId=$procId\"; Write-Host \"PID $procId : $\\($p.CommandLine\\)\" })",
+      "PowerShell(foreach \\($procId in @\\(15940, 36948, 7144, 60276, 43916\\)\\) { Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue; Write-Host \"Killed $procId\" })",
+      "PowerShell(Stop-Process -Id 53972 -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Id 48816 -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(foreach \\($procId in @\\(47296\\)\\) { Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue }; Write-Host \"Cleared\")",
+      "PowerShell(Get-Process node | Where-Object { $_.Id -ne \\(Get-Process -Name node | Sort-Object StartTime | Select-Object -Last 1\\).Id } | ForEach-Object { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue; Write-Host \"Killed $\\($_.Id\\)\" }; Get-Process node | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Host \"All node processes stopped\")"
     ]
   }
 }
