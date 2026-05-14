@@ -2,7 +2,6 @@ const AppDataSource = require("../../../config/database");
 
 const invoiceRepo           = require("../repositories/invoiceRepository");
 const pharmacyWalletRepo    = require("../repositories/pharmacyWalletRepository");
-const walletTxnRepo         = require("../repositories/pharmacyWalletTransactionRepository");
 const prescriptionRepo      = require("../repositories/prescriptionRepository");
 const pharmacyProfileRepo   = require("../repositories/pharmacyProfileRepository");
 const userRepo              = require("../../auth/repositories/userRepository");
@@ -356,7 +355,9 @@ const invoiceService = {
           totalAmount:    displayTotal,
           currency:       dispCurrency,
         });
-      } catch (_) {}
+      } catch {
+        // Real-time notifications are best-effort
+      }
 
       // DB notification (correct positional args: userId, type, message, metadata)
       await notificationService.createNotification(
@@ -510,7 +511,9 @@ const invoiceService = {
           reference:      invoice.reference,
           prescriptionId: invoice.prescriptionId,
         });
-      } catch (_) {}
+      } catch {
+        // Real-time notifications are best-effort
+      }
 
       // DB notifications (correct positional args: userId, type, message, metadata)
       await notificationService.createNotification(

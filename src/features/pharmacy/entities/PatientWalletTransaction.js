@@ -40,6 +40,7 @@ const PatientWalletTransactionSchema = new EntitySchema({
     // Gateway fields (used for top-ups)
     authorizationUrl: { type: "varchar", length: 1000, nullable: true },
     provider:         { type: "varchar", length: 20, nullable: true },
+    metadata:         { type: "jsonb", nullable: true },
 
     createdAt: { type: "timestamp", createDate: true },
     updatedAt: { type: "timestamp", updateDate: true },

@@ -256,7 +256,7 @@ class PharmacyAuthController {
     }
   }
 
-  async getPricingFeeTypes(req, res, next) {
+  async getPricingFeeTypes(req, res) {
     return res.json({
       success: true,
       data: [
@@ -272,7 +272,7 @@ class PharmacyAuthController {
     });
   }
 
-  async getStaffRoles(req, res, next) {
+  async getStaffRoles(req, res) {
     return res.json({
       success: true,
       data: [

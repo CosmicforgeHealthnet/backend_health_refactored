@@ -2,10 +2,6 @@ const AppDataSource           = require("../../../config/database");
 
 const invoiceRepo             = require("../repositories/invoiceRepository");
 const pharmacyPaymentRepo     = require("../repositories/pharmacyPaymentRepository");
-const pharmacyWalletRepo      = require("../repositories/pharmacyWalletRepository");
-const walletTxnRepo           = require("../repositories/pharmacyWalletTransactionRepository");
-const prescriptionRepo        = require("../repositories/prescriptionRepository");
-const pharmacyDisputeRepo     = require("../repositories/pharmacyDisputeRepository");
 
 const InvoiceSchema           = require("../entities/Invoice");
 const PaymentSchema           = require("../entities/PharmacyPayment");
@@ -65,10 +61,10 @@ const pharmacyPaymentService = {
     const safePage  = parseInt(page) || 1;
 
     // Default: hide cancelled invoices from patient view unless explicitly requested
-    const effectiveStatus = status || { $not: "cancelled" };
+    const statusFilter = status || { $not: "cancelled" };
 
     const { invoices, total } = await invoiceRepo.findByPatient({
-      patientId, status, excludeCancelled: !status, page: safePage, limit: safeLimit,
+      patientId, status: statusFilter, excludeCancelled: !status, page: safePage, limit: safeLimit,
     });
 
     // For patients, show amounts in their preferred/local currency
@@ -203,7 +199,6 @@ const pharmacyPaymentService = {
 
     // Build Paystack/Flutterwave payload
     let authorizationUrl = null;
-    let providerReference = reference;
 
     const metadata = {
       invoiceId:      invoice.id,
@@ -492,7 +487,9 @@ const pharmacyPaymentService = {
           reference:      invoice.reference,
           prescriptionId: invoice.prescriptionId,
         });
-      } catch (_) {}
+      } catch {
+        // Real-time notifications are best-effort
+      }
 
       // DB notifications (correct positional args: userId, type, message, metadata)
       await Promise.all([

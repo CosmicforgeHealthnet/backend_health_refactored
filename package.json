@@ -12,6 +12,8 @@
     "migration:create": "cross-env NODE_ENV=development npx typeorm migration:create --outputJs",
     "migration:run": "cross-env NODE_ENV=development npx typeorm migration:run --dataSource src/config/database.js",
     "migration:show": "cross-env NODE_ENV=development npx typeorm migration:show --dataSource src/config/database.js",
+    "db:audit:conflicts": "bash scripts/db-conflict-audit.sh",
+    "db:hotfix:last-login-at": "cross-env RUN_MIGRATIONS=false node scripts/hotfix-last-login-at.js",
     "swagger:bundle": "node src/docs/mergeSwaggerComponents.js",
     "swagger-components-merge": "node src/docs/mergeSwaggerComponents.js",
     "build:pharmacy-swagger": "node src/features/pharmacy/docs/pharmacySwaggerMerger.js",

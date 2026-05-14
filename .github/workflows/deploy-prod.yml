@@ -107,8 +107,9 @@ jobs:
             fuser -k 80/tcp 2>/dev/null || true
             fuser -k 443/tcp 2>/dev/null || true
 
-            # Identify only production containers or those explicitly holding prod ports
-            PROD_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep -E "cosmic_.*_prod" | awk '{print $1}')
+            # Identify only health production containers or those explicitly holding prod ports.
+            # Do not remove lab production containers; they are deployed by lab_backend.
+            PROD_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | awk '$2 ~ /^(cosmic_gateway_prod|cosmic_backend_prod|cosmic_brain_prod|cosmic_redis_prod)$/ {print $1}')
             GATEWAY_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep "cosmic_gateway_prod" | awk '{print $1}')
             PORT_IDS=$(docker ps -a -q --filter "publish=80" --filter "publish=443")
 
@@ -117,6 +118,11 @@ jobs:
                     NAME=$(docker inspect --format '{{.Name}}' $ID | sed 's/\///')
                     if [[ "$NAME" == *_dev ]]; then
                         echo "Skipping $NAME (Development container)"
+                        continue
+                    fi
+
+                    if [[ "$NAME" == cosmic_lab_* ]]; then
+                        echo "Skipping $NAME (Lab container)"
                         continue
                     fi
 
@@ -173,13 +179,15 @@ jobs:
               -v $DEPLOY_PATH/certbot:/var/www/certbot:ro \
               nginx:alpine
 
-            # Connect to dev network so we can proxy to dev containers if it exists
-            if docker network inspect cosmic_network_dev >/dev/null 2>&1; then
-                echo "Connecting production gateway to dev network..."
-                docker network connect cosmic_network_dev cosmic_gateway_prod 2>/dev/null || true
-            else
-                echo "⚠️ Skip connecting to cosmic_network_dev (network not found)"
-            fi
+            # Connect gateway to any app networks it may need to proxy.
+            for NETWORK in cosmic_network_dev cosmic_lab_network_staging cosmic_lab_network_prod; do
+                if docker network inspect "$NETWORK" >/dev/null 2>&1; then
+                    echo "Connecting production gateway to $NETWORK..."
+                    docker network connect "$NETWORK" cosmic_gateway_prod 2>/dev/null || true
+                else
+                    echo "⚠️ Skip connecting to $NETWORK (network not found)"
+                fi
+            done
 
             echo "Cleaning images..."
             docker image prune -f

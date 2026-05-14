@@ -2,7 +2,6 @@ const AppDataSource         = require("../../../config/database");
 
 const pharmacyDisputeRepo   = require("../repositories/pharmacyDisputeRepository");
 const invoiceRepo           = require("../repositories/invoiceRepository");
-const pharmacyWalletRepo    = require("../repositories/pharmacyWalletRepository");
 
 const InvoiceSchema         = require("../entities/Invoice");
 const DisputeSchema         = require("../entities/PharmacyDispute");
@@ -132,7 +131,9 @@ const pharmacyDisputeService = {
             invoiceId,
             reference:  invoice.reference,
           });
-        } catch (_) {}
+        } catch {
+          // Real-time notifications are best-effort
+        }
 
         await notificationService.createNotification(
           pharmacy.userId,

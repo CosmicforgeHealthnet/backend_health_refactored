@@ -3,7 +3,6 @@ const prescriptionRepo = require("../repositories/prescriptionRepository");
 const userRepo = require("../../auth/repositories/userRepository");
 const pharmacyProfileRepo = require("../repositories/pharmacyProfileRepository");
 const AppointmentRepository = require("../../appointments/repositories/appointmentRepository");
-const labOrderRepo = require("../../LAB/repositories/lab_order");
 const { PrescriptionStatus, PaymentStatus } = require("../entities/Prescription");
 
 const NotificationService = require("../../notifications/services/notificationService");
@@ -12,6 +11,7 @@ const { getIO }           = require("../../../config/websocket");
 
 const appointmentRepo = new AppointmentRepository();
 const notificationService = new NotificationService();
+const legacyLabRoutesEnabled = process.env.ENABLE_LEGACY_LAB_ROUTES === "true";
 
 // Helper: fire-and-forget email (never throw)
 function sendEmail(fn, ...args) {
@@ -33,7 +33,9 @@ function emitStatusChange(prescription, newStatus) {
     if (prescription.pharmacyId) {
       io.to(`pharmacy_${prescription.pharmacyId}`).emit("prescription_status_changed", payload);
     }
-  } catch (_) {}
+  } catch {
+    // Socket emission is best-effort
+  }
 }
 
 class PrescriptionService {
@@ -202,7 +204,9 @@ class PrescriptionService {
           status:      PrescriptionStatus.PHARMACY_ASSIGNED,
           createdAt:   new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch {
+        // Socket emission is best-effort
+      }
     }
 
     if (pharmacy.email) {
@@ -687,14 +691,18 @@ class PrescriptionService {
       }
     }
 
-    // Enrich with lab orders (Ordered Tests) — silently skip if lab module not yet set up
-    try {
-      const labOrders = await labOrderRepo.findByPatientId(prescription.patientId, 5);
-      prescription.orderedTests = labOrders
-        .filter(order => Math.abs(new Date(order.createdAt) - new Date(prescription.createdAt)) < 24 * 60 * 60 * 1000)
-        .flatMap(order => order.testNames || []);
-    } catch {
-      // Lab module may not be available yet — skip enrichment silently
+    // LAB is now an external microservice; only use legacy enrichment when explicitly enabled.
+    if (legacyLabRoutesEnabled) {
+      try {
+        const labOrderRepo = require("../../LAB/repositories/lab_order");
+        const labOrders = await labOrderRepo.findByPatientId(prescription.patientId, 5);
+        prescription.orderedTests = labOrders
+          .filter(order => Math.abs(new Date(order.createdAt) - new Date(prescription.createdAt)) < 24 * 60 * 60 * 1000)
+          .flatMap(order => order.testNames || []);
+      } catch {
+        prescription.orderedTests = [];
+      }
+    } else {
       prescription.orderedTests = [];
     }
 
@@ -920,7 +928,9 @@ class PrescriptionService {
           prescriptionId,
           reference: prescription.reference,
         });
-      } catch (_) {}
+      } catch {
+        // Socket emission is best-effort
+      }
     }
 
     return this.getPrescriptionById(prescriptionId);
@@ -969,7 +979,9 @@ class PrescriptionService {
           reference: prescription.reference,
           reason,
         });
-      } catch (_) {}
+      } catch {
+        // Socket emission is best-effort
+      }
     }
 
     return this.getPrescriptionById(prescriptionId);
