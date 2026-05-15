@@ -54,11 +54,11 @@ module.exports = class ConstraintBaseline1900000000004 {
     await queryRunner.query(`
       DO $$
       BEGIN
-        IF EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'FK_notification_userId' AND table_name = 'notifications') THEN
-          ALTER TABLE "notifications" DROP CONSTRAINT "FK_notification_userId";
+        IF EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'FK_notification_userId' AND table_name = 'notification') THEN
+          ALTER TABLE "notification" DROP CONSTRAINT "FK_notification_userId";
         END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'FK_notifications_users' AND table_name = 'notifications') THEN
-          ALTER TABLE "notifications" ADD CONSTRAINT "FK_notifications_users" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'FK_notifications_users' AND table_name = 'notification') THEN
+          ALTER TABLE "notification" ADD CONSTRAINT "FK_notifications_users" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE;
         END IF;
       END $$
     `);
@@ -102,6 +102,6 @@ module.exports = class ConstraintBaseline1900000000004 {
   }
 
   async down(queryRunner) {
-    await queryRunner.query(`ALTER TABLE "notifications" DROP CONSTRAINT IF EXISTS "FK_notifications_users"`);
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT IF EXISTS "FK_notifications_users"`);
   }
 };

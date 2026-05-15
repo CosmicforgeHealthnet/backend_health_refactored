@@ -60,11 +60,8 @@ const pharmacyPaymentService = {
     const safeLimit = Math.min(parseInt(limit) || 20, 100);
     const safePage  = parseInt(page) || 1;
 
-    // Default: hide cancelled invoices from patient view unless explicitly requested
-    const statusFilter = status || { $not: "cancelled" };
-
     const { invoices, total } = await invoiceRepo.findByPatient({
-      patientId, status: statusFilter, excludeCancelled: !status, page: safePage, limit: safeLimit,
+      patientId, status: status || null, excludeCancelled: !status, page: safePage, limit: safeLimit,
     });
 
     // For patients, show amounts in their preferred/local currency

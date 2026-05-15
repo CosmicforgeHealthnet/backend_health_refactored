@@ -111,9 +111,9 @@ async function run() {
     await client.query(`
       INSERT INTO professional_certificates (
         "doctorProfileId", institution, degree, "fieldOfStudy",
-        "startYear", "endYear", "certificateName", "issuingBody"
+        "startYear", "endYear", "certificateName", "issuingBody", "issueDate"
       ) VALUES ($1, 'University of Lagos', 'MBBS', 'Medicine and Surgery', 2005, 2011,
-                'Bachelor of Medicine and Surgery', 'University of Lagos')
+                'Bachelor of Medicine and Surgery', 'University of Lagos', '2011-06-01')
     `, [doctorProfile.id]);
 
     await client.query(`
