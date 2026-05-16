@@ -114,13 +114,13 @@ jobs:
                 fuser -k ${port}/tcp 2>/dev/null || true
             done
 
-            # 3. Destroy ALL cosmic containers and network (forces port binding cleanup)
-            echo "Stopping and removing all cosmic containers..."
-            docker ps -aq --filter "name=cosmic_" | xargs -r docker update --restart=no 2>/dev/null || true
-            docker ps -aq --filter "name=cosmic_" | xargs -r docker stop -t 15 2>/dev/null || true
+            # 3. Restart Docker daemon to force-clear all stuck containers and port bindings
+            echo "Restarting Docker daemon to clear stuck containers..."
+            systemctl restart docker
+            sleep 5
+            echo "Removing all leftover cosmic containers..."
             docker ps -aq --filter "name=cosmic_" | xargs -r docker rm -f 2>/dev/null || true
             docker network rm cosmic_network_dev 2>/dev/null || true
-            sleep 3
             echo "Containers cleared."
 
             echo "Setting up Network..."
