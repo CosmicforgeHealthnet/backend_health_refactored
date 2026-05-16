@@ -113,17 +113,12 @@ jobs:
             fuser -k 80/tcp 2>/dev/null || true
             fuser -k 443/tcp 2>/dev/null || true
 
-            # 3. Destroy ANY container matching our names by ID (Fixes Ghost Containers)
-            echo "Identifying and destroying cosmic containers by ID..."
-            for name in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
-                IDs=$(docker ps -a -q --filter "name=^/${name}$")
-                for ID in $IDs; do
-                    echo "Destroying $name (ID: $ID)..."
-                    docker update --restart=no $ID 2>/dev/null || true
-                    docker stop -t 10 $ID 2>/dev/null || true
-                    docker rm -f $ID 2>/dev/null || true
-                done
-            done
+            # 3. Destroy ALL cosmic containers
+            echo "Stopping and removing all cosmic containers..."
+            docker update --restart=no cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev 2>/dev/null || true
+            docker stop -t 10 cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev 2>/dev/null || true
+            docker rm -f cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev 2>/dev/null || true
+            echo "Containers removed."
 
             echo "Setting up Network..."
             docker network create cosmic_network_dev 2>/dev/null || true
