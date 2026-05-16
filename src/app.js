@@ -74,6 +74,7 @@ const waitlistRoute = require("./features/marketing/routes/waitlistRoutes"); // 
 const whatsappRoutesNotification = require("./features/notifications/whatsapp/routes");
 const adminVerificationRoutes = require("./features/auth/routes/adminVerificationRoutes");
 const adminOpsFeature = require("./features/admin-ops");
+const analyticsFeature = require("./features/analytics");
 
 // Legacy Compatibility Routes
 
@@ -181,6 +182,7 @@ const labSwaggerDoc = legacyLabRoutesEnabled
 const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundle.json", "SOS");
 const serviceManagementSwaggerDoc = loadSwaggerDoc("./features/service-management/docs/service-management-swagger.json", "Service Management");
 const adminOpsSwaggerDoc = loadSwaggerDoc("./features/admin-ops/docs/admin-ops-swagger.json", "Admin Ops");
+const analyticsSwaggerDoc = loadSwaggerDoc("./features/analytics/docs/analytics-swagger.json", "Analytics");
 
 const patientSwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/patient-swagger.bundle.json", "Patient");
 patientSwaggerDoc.servers = [
@@ -296,6 +298,20 @@ app.use('/admin-ops-docs', swaggerUi.serveFiles(adminOpsSwaggerDoc, {}), swagger
     swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
 }));
 
+analyticsSwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server"
+    }
+];
+app.use('/analytics-docs', swaggerUi.serveFiles(analyticsSwaggerDoc, {}), swaggerUi.setup(analyticsSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Analytics API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
 // ============================================
 // HEALTH CHECK
 // ============================================
@@ -388,6 +404,7 @@ app.use("/api/services", serviceManagementFeature.router);
 app.use("/api/admin/verification", adminVerificationRoutes);
 app.use("/api/admin/logs", require("./features/admin/routes/logsRoute"));
 app.use("/api/admin/ops", adminOpsFeature.router);
+app.use("/api/analytics", analyticsFeature.router);
 
 
 // ============================================
