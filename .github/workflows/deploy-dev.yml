@@ -116,15 +116,12 @@ jobs:
             # 3. Destroy ANY container matching our names by ID (Fixes Ghost Containers)
             echo "Identifying and destroying cosmic containers by ID..."
             for name in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
-                IDs=$(docker ps -a -q --filter "name=$name")
+                IDs=$(docker ps -a -q --filter "name=^/${name}$")
                 for ID in $IDs; do
                     echo "Destroying $name (ID: $ID)..."
-                    PID=$(docker inspect --format '{{.State.Pid}}' $ID 2>/dev/null || echo "0")
-                    if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
-                        echo "Killing process $PID..."
-                        kill -9 $PID || true
-                    fi
-                    docker rm -f $ID || true
+                    docker update --restart=no $ID 2>/dev/null || true
+                    docker stop -t 10 $ID 2>/dev/null || true
+                    docker rm -f $ID 2>/dev/null || true
                 done
             done
 
