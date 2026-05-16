@@ -114,11 +114,13 @@ jobs:
                 fuser -k ${port}/tcp 2>/dev/null || true
             done
 
-            # 3. Restart Docker daemon to force-clear all stuck containers and port bindings
-            echo "Restarting Docker daemon to clear stuck containers..."
+            # 3. Restart Docker daemon then immediately stop auto-restarted containers
+            echo "Restarting Docker daemon..."
             systemctl restart docker
             sleep 5
-            echo "Removing all leftover cosmic containers..."
+            echo "Stopping auto-restarted cosmic containers..."
+            docker ps -aq --filter "name=cosmic_" | xargs -r docker update --restart=no 2>/dev/null || true
+            docker ps -aq --filter "name=cosmic_" | xargs -r docker stop -t 10 2>/dev/null || true
             docker ps -aq --filter "name=cosmic_" | xargs -r docker rm -f 2>/dev/null || true
             docker network rm cosmic_network_dev 2>/dev/null || true
             echo "Containers cleared."
