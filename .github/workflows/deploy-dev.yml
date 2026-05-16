@@ -129,6 +129,8 @@ jobs:
             docker network create cosmic_network_dev 2>/dev/null || true
 
             echo "Starting Redis..."
+            fuser -k 6380/tcp 2>/dev/null || true
+            sleep 1
             # Redis on dev port 6380:6379
             docker run -d \
               --name cosmic_redis_dev \
