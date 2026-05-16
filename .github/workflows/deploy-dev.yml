@@ -115,10 +115,13 @@ jobs:
 
             # 3. Destroy ALL cosmic containers
             echo "Stopping and removing all cosmic containers..."
-            docker update --restart=no cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev 2>/dev/null || true
-            docker stop -t 10 cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev 2>/dev/null || true
-            docker rm -f cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev 2>/dev/null || true
-            echo "Containers removed."
+            for name in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
+                docker update --restart=no $name 2>/dev/null || true
+                docker stop -t 15 $name 2>/dev/null || true
+                docker rm -f $name 2>/dev/null || \
+                    docker rename $name "${name}_dead_$(date +%s)" 2>/dev/null || true
+            done
+            echo "Containers cleared."
 
             echo "Setting up Network..."
             docker network create cosmic_network_dev 2>/dev/null || true
