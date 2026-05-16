@@ -113,14 +113,11 @@ jobs:
             fuser -k 80/tcp 2>/dev/null || true
             fuser -k 443/tcp 2>/dev/null || true
 
-            # 3. Destroy ALL cosmic containers
+            # 3. Destroy ALL cosmic containers (including any previously renamed dead ones)
             echo "Stopping and removing all cosmic containers..."
-            for name in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
-                docker update --restart=no $name 2>/dev/null || true
-                docker stop -t 15 $name 2>/dev/null || true
-                docker rm -f $name 2>/dev/null || \
-                    docker rename $name "${name}_dead_$(date +%s)" 2>/dev/null || true
-            done
+            docker ps -aq --filter "name=cosmic_" | xargs -r docker update --restart=no 2>/dev/null || true
+            docker ps -aq --filter "name=cosmic_" | xargs -r docker stop -t 15 2>/dev/null || true
+            docker ps -aq --filter "name=cosmic_" | xargs -r docker rm -f 2>/dev/null || true
             echo "Containers cleared."
 
             echo "Setting up Network..."
