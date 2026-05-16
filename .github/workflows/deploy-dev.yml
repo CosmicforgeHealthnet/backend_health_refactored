@@ -109,9 +109,10 @@ jobs:
             # 1. Stop host-level web servers that might be hogging ports
             systemctl stop nginx apache2 2>/dev/null || true
 
-            # 2. Clear Port 80 and 443 (for consistency)
-            fuser -k 80/tcp 2>/dev/null || true
-            fuser -k 443/tcp 2>/dev/null || true
+            # 2. Clear all ports used by this deployment
+            for port in 80 443 6380 5001 8002 8081; do
+                fuser -k ${port}/tcp 2>/dev/null || true
+            done
 
             # 3. Destroy ALL cosmic containers (including any previously renamed dead ones)
             echo "Stopping and removing all cosmic containers..."
