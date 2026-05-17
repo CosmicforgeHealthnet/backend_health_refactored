@@ -99,6 +99,9 @@ jobs:
             md5sum .env
             echo "------------------------------------------"
 
+            echo "Logging into Docker Hub..."
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
             echo "Pulling latest images from Registry..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:dev-latest
