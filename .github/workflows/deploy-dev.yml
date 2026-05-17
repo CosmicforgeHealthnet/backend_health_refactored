@@ -114,14 +114,18 @@ jobs:
                 fuser -k ${port}/tcp 2>/dev/null || true
             done
 
-            # 3. Restart Docker daemon then immediately stop auto-restarted containers
+            # 3. Restart Docker daemon then clean up all cosmic containers
             echo "Restarting Docker daemon..."
             systemctl restart docker
             sleep 5
-            echo "Stopping auto-restarted cosmic containers..."
-            docker ps -aq --filter "name=cosmic_" | xargs -r docker update --restart=no 2>/dev/null || true
-            docker ps -aq --filter "name=cosmic_" | xargs -r docker stop -t 10 2>/dev/null || true
-            docker ps -aq --filter "name=cosmic_" | xargs -r docker rm -f 2>/dev/null || true
+            echo "Clearing cosmic containers..."
+            for name in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
+                docker network disconnect -f cosmic_network_dev $name 2>/dev/null || true
+                docker update --restart=no $name 2>/dev/null || true
+                docker stop -t 10 $name 2>/dev/null || true
+                docker rm -f $name 2>/dev/null || \
+                    docker rename $name "${name}_dead_$(date +%s)" 2>/dev/null || true
+            done
             docker network rm cosmic_network_dev 2>/dev/null || true
             echo "Containers cleared."
 
