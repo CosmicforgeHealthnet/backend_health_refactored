@@ -178,19 +178,19 @@ jobs:
             docker image prune -f
 
             echo "Development deployment completed! Waiting for backend to become healthy..."
-            for i in {1..12}; do
-              if curl -s --connect-timeout 5 --max-time 10 http://localhost:8081/health | grep -q "version"; then
+            for i in {1..15}; do
+              if docker exec cosmic_backend_dev curl -s http://localhost:5000/health 2>/dev/null | grep -q "version"; then
                 echo "✅ Dev Backend is LIVE and healthy! The deployment is successful."
                 docker ps --filter "name=cosmic_" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
                 exit 0
               fi
-              echo "Waiting for dev backend... attempt $i/12"
-              docker ps -a --filter "name=cosmic_" --format "table {{.Names}}\t{{.Status}}"
-              docker logs --tail 10 cosmic_backend_dev 2>/dev/null || true
+              echo "Waiting for dev backend... attempt $i/15"
+              docker ps --filter "name=cosmic_dev" --format "table {{.Names}}\t{{.Status}}" 2>/dev/null || true
               sleep 10
             done
 
             echo "❌ Dev Backend failed health check!"
             docker ps -a --filter "name=cosmic_"
             docker logs cosmic_backend_dev --tail 50
+            docker logs cosmic_gateway_dev --tail 20
             exit 1
