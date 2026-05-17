@@ -179,7 +179,7 @@ jobs:
 
             echo "Development deployment completed! Waiting for backend to become healthy..."
             for i in {1..15}; do
-              if docker exec cosmic_backend_dev curl -s http://localhost:5000/health 2>/dev/null | grep -q "version"; then
+              if docker exec cosmic_backend_dev wget -qO- http://localhost:5000/health 2>/dev/null | grep -q "version"; then
                 echo "✅ Dev Backend is LIVE and healthy! The deployment is successful."
                 docker ps --filter "name=cosmic_" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
                 exit 0
