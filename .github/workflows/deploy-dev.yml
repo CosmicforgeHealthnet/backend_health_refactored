@@ -129,15 +129,12 @@ jobs:
             docker network create cosmic_network_dev 2>/dev/null || true
 
             echo "Starting Redis..."
-            fuser -k 6380/tcp 2>/dev/null || true
-            sleep 1
-            # Redis on dev port 6380:6379
+            # No external port — backend reaches Redis via Docker network alias redis:6379
             docker run -d \
               --name cosmic_redis_dev \
               --network cosmic_network_dev \
               --restart unless-stopped \
               --network-alias redis \
-              -p 6380:6379 \
               redis:alpine
 
             echo "Starting AI Service..."
