@@ -179,20 +179,18 @@ jobs:
 
             echo "Development deployment completed! Waiting for backend to become healthy..."
             for i in {1..12}; do
-              if curl -s -k --connect-timeout 5 --max-time 10 https://dev-api.cosmicforge-healthnet.com/health | grep -q "version"; then
+              if curl -s --connect-timeout 5 --max-time 10 http://localhost:8081/health | grep -q "version"; then
                 echo "✅ Dev Backend is LIVE and healthy! The deployment is successful."
                 docker ps --filter "name=cosmic_" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
                 exit 0
               fi
               echo "Waiting for dev backend... attempt $i/12"
-              echo "Current container status:"
               docker ps -a --filter "name=cosmic_" --format "table {{.Names}}\t{{.Status}}"
-              echo "Recent logs for cosmic_backend_dev:"
-              docker logs --tail 20 cosmic_backend_dev || echo "Could not get logs for cosmic_backend_dev"
+              docker logs --tail 10 cosmic_backend_dev 2>/dev/null || true
               sleep 10
             done
 
-            echo "❌ Dev Backend failed to start or is not accessible!"
+            echo "❌ Dev Backend failed health check!"
             docker ps -a --filter "name=cosmic_"
-            docker logs cosmic_backend_dev --tail 100
+            docker logs cosmic_backend_dev --tail 50
             exit 1
