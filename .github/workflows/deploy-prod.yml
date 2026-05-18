@@ -96,6 +96,9 @@ jobs:
             md5sum .env
             echo "------------------------------------"
 
+            echo "Logging into Docker Hub..."
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
             echo "Pulling images..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:latest
@@ -104,36 +107,24 @@ jobs:
 
             echo "Cleanup phase started..."
             systemctl stop nginx apache2 2>/dev/null || true
-            fuser -k 80/tcp 2>/dev/null || true
-            fuser -k 443/tcp 2>/dev/null || true
-
-            # Identify only health production containers or those explicitly holding prod ports.
-            # Do not remove lab production containers; they are deployed by lab_backend.
-            PROD_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | awk '$2 ~ /^(cosmic_gateway_prod|cosmic_backend_prod|cosmic_brain_prod|cosmic_redis_prod)$/ {print $1}')
-            GATEWAY_IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep "cosmic_gateway_prod" | awk '{print $1}')
-            PORT_IDS=$(docker ps -a -q --filter "publish=80" --filter "publish=443")
-
-            for ID in $(echo "$PROD_IDS $GATEWAY_IDS $PORT_IDS" | tr ' ' '\n' | sort -u); do
-                if [ -n "$ID" ]; then
-                    NAME=$(docker inspect --format '{{.Name}}' $ID | sed 's/\///')
-                    if [[ "$NAME" == *_dev ]]; then
-                        echo "Skipping $NAME (Development container)"
-                        continue
-                    fi
-
-                    if [[ "$NAME" == cosmic_lab_* ]]; then
-                        echo "Skipping $NAME (Lab container)"
-                        continue
-                    fi
-
-                    echo "Destroying production-related container $NAME ($ID)..."
-                    PID=$(docker inspect --format '{{.State.Pid}}' $ID 2>/dev/null || echo "0")
-                    if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
-                        kill -9 $PID || true
-                    fi
-                    docker rm -f $ID || true
-                fi
+            for port in 80 443 5000; do
+                fuser -k ${port}/tcp 2>/dev/null || true
             done
+
+            echo "Restarting Docker daemon to clear stale port bindings..."
+            systemctl restart docker
+            sleep 5
+
+            echo "Removing production containers..."
+            for name in cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod; do
+                docker network disconnect -f cosmic_network_prod $name 2>/dev/null || true
+                docker update --restart=no $name 2>/dev/null || true
+                docker stop -t 10 $name 2>/dev/null || true
+                docker rm -f $name 2>/dev/null || \
+                    docker rename $name "${name}_dead_$(date +%s)" 2>/dev/null || true
+            done
+            docker network rm cosmic_network_prod 2>/dev/null || true
+            echo "Containers cleared."
 
             echo "Starting network..."
             docker network create cosmic_network_prod 2>/dev/null || true
