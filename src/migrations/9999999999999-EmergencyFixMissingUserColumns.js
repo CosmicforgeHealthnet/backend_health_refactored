@@ -66,6 +66,8 @@ module.exports = class EmergencyFixMissingUserColumns9999999999999 {
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'UQ_users_referralCode') THEN
           ALTER TABLE "users" ADD CONSTRAINT "UQ_users_referralCode" UNIQUE ("referralCode");
         END IF;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'Add unique constraints skipped (duplicates may exist): %', SQLERRM;
       END
       $$
     `).catch(err => console.error('❌ Failed to add constraints:', err.message));

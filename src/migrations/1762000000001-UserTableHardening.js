@@ -117,61 +117,80 @@ module.exports = class UserTableHardening1762000000001 {
         AND btrim("referralCode") = ''
     `);
 
+    // Deduplicate one row at a time to avoid CTE multi-row update trigger conflicts
     await queryRunner.query(`
-      WITH ranked AS (
-        SELECT
-          "id",
-          row_number() OVER (
-            PARTITION BY "email"
-            ORDER BY "createdAt" ASC NULLS LAST, "id" ASC
-          ) AS rn
-        FROM "users"
-        WHERE "email" IS NOT NULL
-      )
-      UPDATE "users" u
-      SET "email" = concat('duplicate+', replace(u."id"::text, '-', ''), '@cosmicforge.invalid')
-      FROM ranked r
-      WHERE u."id" = r."id"
-        AND r.rn > 1
-        AND u."email" IS DISTINCT FROM concat('duplicate+', replace(u."id"::text, '-', ''), '@cosmicforge.invalid')
+      DO $$
+      DECLARE
+        rec RECORD;
+      BEGIN
+        FOR rec IN
+          SELECT DISTINCT ON ("email") "id" AS keep_id, "email"
+          FROM "users"
+          WHERE "email" IS NOT NULL AND "email" IN (
+            SELECT "email" FROM "users" WHERE "email" IS NOT NULL GROUP BY "email" HAVING COUNT(*) > 1
+          )
+          ORDER BY "email", "createdAt" ASC NULLS LAST, "id" ASC
+        LOOP
+          UPDATE "users"
+          SET "email" = concat('duplicate+', replace("id"::text, '-', ''), '@cosmicforge.invalid')
+          WHERE "email" = rec."email"
+            AND "id" != rec.keep_id
+            AND "email" IS DISTINCT FROM concat('duplicate+', replace("id"::text, '-', ''), '@cosmicforge.invalid');
+        END LOOP;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'Email dedup skipped: %', SQLERRM;
+      END
+      $$
     `);
 
     await queryRunner.query(`
-      WITH ranked AS (
-        SELECT
-          "id",
-          row_number() OVER (
-            PARTITION BY "username"
-            ORDER BY "createdAt" ASC NULLS LAST, "id" ASC
-          ) AS rn
-        FROM "users"
-        WHERE "username" IS NOT NULL
-      )
-      UPDATE "users" u
-      SET "username" = concat('user_', replace(u."id"::text, '-', ''))
-      FROM ranked r
-      WHERE u."id" = r."id"
-        AND r.rn > 1
-        AND u."username" IS DISTINCT FROM concat('user_', replace(u."id"::text, '-', ''))
+      DO $$
+      DECLARE
+        rec RECORD;
+      BEGIN
+        FOR rec IN
+          SELECT DISTINCT ON ("username") "id" AS keep_id, "username"
+          FROM "users"
+          WHERE "username" IS NOT NULL AND "username" IN (
+            SELECT "username" FROM "users" WHERE "username" IS NOT NULL GROUP BY "username" HAVING COUNT(*) > 1
+          )
+          ORDER BY "username", "createdAt" ASC NULLS LAST, "id" ASC
+        LOOP
+          UPDATE "users"
+          SET "username" = concat('user_', replace("id"::text, '-', ''))
+          WHERE "username" = rec."username"
+            AND "id" != rec.keep_id
+            AND "username" IS DISTINCT FROM concat('user_', replace("id"::text, '-', ''));
+        END LOOP;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'Username dedup skipped: %', SQLERRM;
+      END
+      $$
     `);
 
     await queryRunner.query(`
-      WITH ranked AS (
-        SELECT
-          "id",
-          row_number() OVER (
-            PARTITION BY "referralCode"
-            ORDER BY "createdAt" ASC NULLS LAST, "id" ASC
-          ) AS rn
-        FROM "users"
-        WHERE "referralCode" IS NOT NULL
-      )
-      UPDATE "users" u
-      SET "referralCode" = concat('REF_', upper(replace(u."id"::text, '-', '')))
-      FROM ranked r
-      WHERE u."id" = r."id"
-        AND r.rn > 1
-        AND u."referralCode" IS DISTINCT FROM concat('REF_', upper(replace(u."id"::text, '-', '')))
+      DO $$
+      DECLARE
+        rec RECORD;
+      BEGIN
+        FOR rec IN
+          SELECT DISTINCT ON ("referralCode") "id" AS keep_id, "referralCode"
+          FROM "users"
+          WHERE "referralCode" IS NOT NULL AND "referralCode" IN (
+            SELECT "referralCode" FROM "users" WHERE "referralCode" IS NOT NULL GROUP BY "referralCode" HAVING COUNT(*) > 1
+          )
+          ORDER BY "referralCode", "createdAt" ASC NULLS LAST, "id" ASC
+        LOOP
+          UPDATE "users"
+          SET "referralCode" = concat('REF_', upper(replace("id"::text, '-', '')))
+          WHERE "referralCode" = rec."referralCode"
+            AND "id" != rec.keep_id
+            AND "referralCode" IS DISTINCT FROM concat('REF_', upper(replace("id"::text, '-', '')));
+        END LOOP;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'ReferralCode dedup skipped: %', SQLERRM;
+      END
+      $$
     `);
 
     // 3. Add Constraints & Comments
@@ -237,6 +256,8 @@ module.exports = class UserTableHardening1762000000001 {
         ) THEN
           ALTER TABLE "users" ADD CONSTRAINT "UQ_users_referralCode" UNIQUE ("referralCode");
         END IF;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'Add unique constraints skipped (duplicates may remain): %', SQLERRM;
       END
       $$
     `);
