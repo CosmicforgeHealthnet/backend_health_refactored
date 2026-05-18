@@ -991,19 +991,16 @@ class AppointmentCronJobs {
 
           // Check if appointment duration has elapsed
           if (isAfter(now, appointmentEndUTC)) {
-            const success = await this.endMeeting(appointment);
-            if (success) {
-              this.processedMeetingEnds.add(appointment.id);
-              meetingsEnded++;
+            await this.endMeeting(appointment); // best-effort; don't block completion on it
+            this.processedMeetingEnds.add(appointment.id);
+            meetingsEnded++;
 
-              // Update appointment status to completed if not already
-              if (appointment.status !== "completed") {
-                await this.appointmentRepository.update(appointment.id, {
-                  status: "completed",
-                  completedAt: now,
-                  notes: "Appointment automatically completed after duration elapsed",
-                });
-              }
+            if (appointment.status !== "completed") {
+              await this.appointmentRepository.update(appointment.id, {
+                status: "completed",
+                completedAt: now,
+                notes: "Appointment automatically completed after duration elapsed",
+              });
             }
           }
         } catch (error) {
@@ -1188,7 +1185,8 @@ class AppointmentCronJobs {
           if (appointment.zoomMeetingId) {
             result = await this.zoomMeetingService.endMeetingWithWarning(
               appointment.zoomMeetingId,
-              "Meeting duration elapsed - automatically ended"
+              "Meeting duration elapsed - automatically ended",
+              0
             );
           }
           break;
@@ -1245,6 +1243,10 @@ class AppointmentCronJobs {
             endReason: "Duration elapsed",
           },
         });
+      } else if (result.meetingStatus === "waiting") {
+        console.log(
+          `ℹ️ Meeting for appointment ${appointment.id} was never started (waiting) — skipping end`
+        );
       } else {
         console.error(
           `❌ Failed to end meeting for appointment ${appointment.id}:`,
@@ -1361,6 +1363,82 @@ class AppointmentCronJobs {
         success: false,
         error: error.message,
       };
+    }
+  }
+
+  async sendMeetingPreparationNotification(appointment) {
+    try {
+      const appointmentUTC = appointment.appointmentTimeUTC
+        ? new Date(appointment.appointmentTimeUTC)
+        : TimezoneService.convertToUTC(
+            appointment.appointmentDate,
+            appointment.appointmentTime,
+            appointment.patientTimezone || appointment.doctorTimezone || "UTC"
+          );
+
+      const patientDisplayTime = TimezoneService.formatTimeForDisplay(
+        appointmentUTC,
+        appointment.patientTimezone || "UTC"
+      );
+      const doctorDisplayTime = TimezoneService.formatTimeForDisplay(
+        appointmentUTC,
+        appointment.doctorTimezone || "UTC"
+      );
+
+      const appointmentDetails = {
+        id: appointment.id,
+        time: patientDisplayTime.userTime.time,
+        meetingLink: appointment.meetingLink,
+        meetingProvider: appointment.meetingProvider,
+        meetingPassword: appointment.meetingPassword,
+      };
+
+      if (appointment.doctor?.email) {
+        await this.appointmentEmailHelpers.sendDoctorMeetingPreparation({
+          email: appointment.doctor.email,
+          doctorName: appointment.doctor.fullName,
+          patientName: appointment.patient.fullName,
+          appointmentDetails: { ...appointmentDetails, time: doctorDisplayTime.userTime.time },
+        });
+      }
+
+      if (appointment.patient?.email) {
+        await this.appointmentEmailHelpers.sendPatientMeetingPreparation({
+          email: appointment.patient.email,
+          patientName: appointment.patient.fullName,
+          doctorName: appointment.doctor.fullName,
+          appointmentDetails,
+        });
+      }
+
+      await this.notificationService.createNotification(
+        appointment.patientId,
+        "alert",
+        `Your appointment with Dr. ${appointment.doctor.fullName} starts in 15 minutes! Join now.`,
+        {
+          action: "meeting_starting_soon",
+          appointmentId: appointment.id,
+          meetingLink: appointment.meetingLink,
+          link: "/patients/dashboard/appointments/overview",
+        }
+      );
+
+      await this.notificationService.createNotification(
+        appointment.doctorId,
+        "alert",
+        `Your appointment with ${appointment.patient.fullName} starts in 15 minutes! Join now.`,
+        {
+          action: "meeting_starting_soon",
+          appointmentId: appointment.id,
+          meetingLink: appointment.meetingLink,
+          link: "doctors/dashboard/appointments",
+        }
+      );
+    } catch (error) {
+      console.error(
+        `❌ Error sending preparation notification for appointment ${appointment.id}:`,
+        error
+      );
     }
   }
 

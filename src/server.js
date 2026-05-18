@@ -27,18 +27,25 @@ async function connectRedis() {
 
 async function startServer() {
   try {
+    const shouldRunMigrations = config.runMigrations;
+
     // Initialize database
     await AppDataSource.initialize();
     console.log("✔️  Database connected");
 
     // Try to connect to Redis (non-blocking)
-    await connectRedis();
+    // await connectRedis();
 
-    try {
-      await AppDataSource.runMigrations();
-      console.log("✔️  Migrations run successfully");
-    } catch (err) {
-      console.error("❌ Migration error:", err);
+    if (shouldRunMigrations) {
+      try {
+        await AppDataSource.runMigrations();
+        console.log("✔️  Migrations run successfully");
+      } catch (err) {
+        console.error("❌ Migration error:", err);
+        throw err;
+      }
+    } else {
+      console.log("Migrations skipped. Set RUN_MIGRATIONS=true to run them explicitly.");
     }
 
     //runing jobs```
@@ -58,7 +65,6 @@ async function startServer() {
       if (!redisConnected) {
         console.log("⚠️  Running without Redis - some features may be limited");
       }
-      console.log("⚠️  Running without Redis - some features may be limited");
     });
 
     // Graceful shutdown handlers
@@ -112,6 +118,15 @@ if (redisClient) {
     redisConnected = false;
   });
 }
+
+// Prevent unhandled promise rejections from crashing the process
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("⚠️ Unhandled promise rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("⚠️ Uncaught exception:", error);
+});
 
 // Start the server
 startServer();

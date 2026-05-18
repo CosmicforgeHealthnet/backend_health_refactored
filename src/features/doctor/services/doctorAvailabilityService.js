@@ -200,8 +200,9 @@ class DoctorAvailabilityService {
 
             const isToday = this.isToday(date, targetTimezone);
             const currentTime = isToday ? this.getCurrentTime(targetTimezone) : null;
+            const BOOKING_BUFFER_MINUTES = 60; // Appointments must be booked 1 hour in advance
 
-            // Filter out unavailable/booked slots and past time slots
+            // Filter out unavailable/booked slots and past time slots (with 1-hour buffer for today)
             const availableSlots = Array.from(allSlots)
                 .filter((slot) => {
                     const isNotBooked = !bookedSlots.includes(slot);
@@ -213,10 +214,10 @@ class DoctorAvailabilityService {
                         doctorTimezone
                     );
 
-                    // Filter out past time slots for today
+                    // Filter out past time slots and those within the 1-hour buffer for today
                     const isNotPastTime =
                         !isToday ||
-                        this.timeToMinutes(slot) > this.timeToMinutes(currentTime);
+                        this.timeToMinutes(slot) >= (this.timeToMinutes(currentTime) + BOOKING_BUFFER_MINUTES);
 
                     return isNotBooked && isNotUnavailable && isNotPastTime;
                 })
@@ -391,14 +392,13 @@ class DoctorAvailabilityService {
                 );
             }
 
-            // Delete existing availability for these days
+            // Delete ALL existing active availability for this doctor
             const existingAvailability =
                 await this.availabilityRepository.findByDoctorId(doctorId);
             for (const existing of existingAvailability) {
-                if (days.includes(existing.dayOfWeek)) {
-                    await this.availabilityRepository.delete(existing.id);
-                }
+                await this.availabilityRepository.delete(existing.id);
             }
+
 
             // Create new availability records with timezone info
             const results = [];

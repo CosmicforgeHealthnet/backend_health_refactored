@@ -1,0 +1,572 @@
+[
+  {
+    "file": "src/features/firstaid/entities/emergency/EmergencyStep.js",
+    "name": "EmergencyStep",
+    "tableName": "emergency_steps"
+  },
+  {
+    "file": "src/features/firstaid/entities/emergency/Condition.js",
+    "name": "Condition",
+    "tableName": "conditions"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyPayoutRequest.js",
+    "name": "PharmacyPayoutRequest",
+    "tableName": "pharmacy_payout_requests"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyWallet.js",
+    "name": "PharmacyWallet",
+    "tableName": "pharmacy_wallets"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyDocument.js",
+    "name": "PharmacyDocument",
+    "tableName": "pharmacy_documents"
+  },
+  {
+    "file": "src/features/pharmacy/entities/InvoiceLineItem.js",
+    "name": "InvoiceLineItem",
+    "tableName": "invoice_line_items"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyDispute.js",
+    "name": "PharmacyDispute",
+    "tableName": "pharmacy_disputes"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PatientWallet.js",
+    "name": "PatientWallet",
+    "tableName": "patient_wallets"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyProfile.js",
+    "name": "PharmacyProfile",
+    "tableName": "pharmacy_profiles"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyPricing.js",
+    "name": "PharmacyPricing",
+    "tableName": "pharmacy_pricing"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyBranch.js",
+    "name": "PharmacyBranch",
+    "tableName": "pharmacy_branches"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PatientWalletTransaction.js",
+    "name": "PatientWalletTransaction",
+    "tableName": "patient_wallet_transactions"
+  },
+  {
+    "file": "src/features/pharmacy/entities/Invoice.js",
+    "name": "Invoice",
+    "tableName": "invoices"
+  },
+  {
+    "file": "src/features/pharmacy/entities/Prescription.js",
+    "name": "Prescription",
+    "tableName": "prescriptions"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyWalletTransaction.js",
+    "name": "PharmacyWalletTransaction",
+    "tableName": "pharmacy_wallet_transactions"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyPayment.js",
+    "name": "PharmacyPayment",
+    "tableName": "pharmacy_payments"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyVerificationRequest.js",
+    "name": "PharmacyVerificationRequest",
+    "tableName": "pharmacy_verification_requests"
+  },
+  {
+    "file": "src/features/pharmacy/entities/PharmacyBankAccount.js",
+    "name": "PharmacyBankAccount",
+    "tableName": "pharmacy_bank_accounts"
+  },
+  {
+    "file": "src/features/pharmacy/entities/LabPharmWaitlist.js",
+    "name": "LabPharmWaitlist",
+    "tableName": "lab_pharm_waitlist"
+  },
+  {
+    "file": "src/features/payments/entities/Transaction.js",
+    "name": "Transaction",
+    "tableName": "transactions"
+  },
+  {
+    "file": "src/features/payments/entities/TransactionSplit.js",
+    "name": "TransactionSplit",
+    "tableName": "transaction_splits"
+  },
+  {
+    "file": "src/features/payments/entities/Dispute.js",
+    "name": "Dispute",
+    "tableName": "disputes"
+  },
+  {
+    "file": "src/features/payments/entities/UserPaymentMethod.js",
+    "name": "UserPaymentMethod",
+    "tableName": "user_payment_methods"
+  },
+  {
+    "file": "src/features/payments/entities/DoctorWallet.js",
+    "name": "DoctorWallet",
+    "tableName": "doctor_wallets"
+  },
+  {
+    "file": "src/features/payments/entities/WalletWithdrawal.js",
+    "name": "WalletWithdrawal",
+    "tableName": "wallet_withdrawals"
+  },
+  {
+    "file": "src/features/chat/entities/ChatbotMessage.js",
+    "name": "ChatbotMessage",
+    "tableName": "chatbot_messages"
+  },
+  {
+    "file": "src/features/chat/entities/ChatbotSession.js",
+    "name": "ChatbotSession",
+    "tableName": "chatbot_sessions"
+  },
+  {
+    "file": "src/features/chat/entities/AppointmentChat.js",
+    "name": "AppointmentChat",
+    "tableName": "appointment_chats"
+  },
+  {
+    "file": "src/features/chat/entities/ChatRoom.js",
+    "name": "ChatRoom",
+    "tableName": "chat_rooms"
+  },
+  {
+    "file": "src/features/chat/entities/ChatParticipant.js",
+    "name": "ChatParticipant",
+    "tableName": "chat_participants"
+  },
+  {
+    "file": "src/features/chat/entities/ChatMessage.js",
+    "name": "ChatMessage",
+    "tableName": "chat_messages"
+  },
+  {
+    "file": "src/features/appointments/entities/Appointment.js",
+    "name": "Appointment",
+    "tableName": "appointments"
+  },
+  {
+    "file": "src/features/auth/entities/PasswordResetToken.js",
+    "name": "PasswordResetToken",
+    "tableName": "password_reset_tokens"
+  },
+  {
+    "file": "src/features/auth/entities/UserReferral.js",
+    "name": "UserReferral",
+    "tableName": "user_referrals"
+  },
+  {
+    "file": "src/features/auth/entities/EmailVerification.js",
+    "name": "EmailVerification",
+    "tableName": "email_verifications"
+  },
+  {
+    "file": "src/features/auth/entities/User.js",
+    "name": "User",
+    "tableName": "users"
+  },
+  {
+    "file": "src/features/auth/entities/RefreshToken.js",
+    "name": "RefreshToken",
+    "tableName": "refresh_tokens"
+  },
+  {
+    "file": "src/features/auth/entities/MagicLinkToken.js",
+    "name": "MagicLinkToken",
+    "tableName": "magic_link_tokens"
+  },
+  {
+    "file": "src/features/auth/entities/ReferralDrawStats.js",
+    "name": "ReferralDrawStats",
+    "tableName": "referral_draw_stats"
+  },
+  {
+    "file": "src/features/auth/entities/AuthEvent.js",
+    "name": "AuthEvent",
+    "tableName": "auth_events"
+  },
+  {
+    "file": "src/features/auth/entities/ReferralDraw.js",
+    "name": "ReferralDraw",
+    "tableName": "referral_draws"
+  },
+  {
+    "file": "src/features/doctor/entities/VerificationDocument.js",
+    "name": "VerificationDocument",
+    "tableName": "verification_documents"
+  },
+  {
+    "file": "src/features/doctor/entities/DigitalHealthTools.js",
+    "name": "DigitalHealthTools",
+    "tableName": "digital_health_tools"
+  },
+  {
+    "file": "src/features/doctor/entities/ClinicalPractice.js",
+    "name": "ClinicalPractice",
+    "tableName": "clinical_practices"
+  },
+  {
+    "file": "src/features/doctor/entities/VerificationStatusHistory.js",
+    "name": "VerificationStatusHistory",
+    "tableName": "verification_status_history"
+  },
+  {
+    "file": "src/features/doctor/entities/CountryVerificationConfig.js",
+    "name": "CountryVerificationConfig",
+    "tableName": "country_verification_configs"
+  },
+  {
+    "file": "src/features/doctor/entities/VerificationRequest.js",
+    "name": "VerificationRequest",
+    "tableName": "verification_requests"
+  },
+  {
+    "file": "src/features/doctor/entities/DoctorProfile.js",
+    "name": "DoctorProfile",
+    "tableName": "doctor_profiles"
+  },
+  {
+    "file": "src/features/doctor/entities/VerificationApiLog.js",
+    "name": "VerificationApiLog",
+    "tableName": "verification_api_logs"
+  },
+  {
+    "file": "src/features/doctor/entities/DoctorPricing.js",
+    "name": "DoctorPricing",
+    "tableName": "doctor_pricing"
+  },
+  {
+    "file": "src/features/doctor/entities/UserRatings.js",
+    "name": "UserRating",
+    "tableName": "user_ratings"
+  },
+  {
+    "file": "src/features/doctor/entities/DoctorWallet.js",
+    "name": "Wallet",
+    "tableName": "wallets"
+  },
+  {
+    "file": "src/features/doctor/entities/DoctorAvailability.js",
+    "name": "DoctorAvailability",
+    "tableName": "doctor_availability"
+  },
+  {
+    "file": "src/features/doctor/entities/DoctorUnavailability.js",
+    "name": "DoctorUnavailability",
+    "tableName": "doctor_unavailability"
+  },
+  {
+    "file": "src/features/doctor/entities/ProfessionalCertificate.js",
+    "name": "ProfessionalCertificate",
+    "tableName": "professional_certificates"
+  },
+  {
+    "file": "src/features/doctor/entities/VerificationReviewQueue.js",
+    "name": "VerificationReviewQueue",
+    "tableName": "verification_review_queue"
+  },
+  {
+    "file": "src/features/doctor/entities/ProfessionalLicense.js",
+    "name": "ProfessionalLicense",
+    "tableName": "professional_licenses"
+  },
+  {
+    "file": "src/features/LAB/entities/lab_facility.js",
+    "name": "LabFacility",
+    "tableName": "lab_facilities"
+  },
+  {
+    "file": "src/features/LAB/entities/lab_order_item.js",
+    "name": "LabOrderItem",
+    "tableName": "lab_order_items"
+  },
+  {
+    "file": "src/features/LAB/entities/lab_personnel.js",
+    "name": "LabPersonnel",
+    "tableName": "lab_personnel"
+  },
+  {
+    "file": "src/features/LAB/entities/wallet/wallet_top_up.js",
+    "name": "LabWalletTopUp",
+    "tableName": "lab_wallet_topups"
+  },
+  {
+    "file": "src/features/LAB/entities/wallet/wallet.js",
+    "name": "LabWallet",
+    "tableName": "lab_wallets"
+  },
+  {
+    "file": "src/features/LAB/entities/wallet/wallet_transaction.js",
+    "name": "LabWalletTransaction",
+    "tableName": "lab_wallet_transactions"
+  },
+  {
+    "file": "src/features/LAB/entities/lab_order.js",
+    "name": "LabOrder",
+    "tableName": "lab_orders"
+  },
+  {
+    "file": "src/features/compliance/entities/ComprehensiveAuditLog.js",
+    "name": "ComprehensiveAuditLog",
+    "tableName": "comprehensive_audit_logs"
+  },
+  {
+    "file": "src/features/compliance/entities/ConsentAccessLog.js",
+    "name": "ConsentAccessLog",
+    "tableName": "consent_access_logs"
+  },
+  {
+    "file": "src/features/compliance/entities/PatientAccessLog.js",
+    "name": "PatientAccessLog",
+    "tableName": "patient_access_logs"
+  },
+  {
+    "file": "src/features/compliance/entities/PatientConsent.js",
+    "name": "PatientConsent",
+    "tableName": "patient_consents"
+  },
+  {
+    "file": "src/features/compliance/entities/ResourceAccessLog.js",
+    "name": "ResourceAccessLog",
+    "tableName": "resource_access_logs"
+  },
+  {
+    "file": "src/features/compliance/entities/DataLineage.js",
+    "name": "DataLineage",
+    "tableName": "data_lineage"
+  },
+  {
+    "file": "src/features/compliance/entities/DataGovernancePolicy.js",
+    "name": "DataGovernancePolicy",
+    "tableName": "data_governance_policies"
+  },
+  {
+    "file": "src/features/compliance/entities/FHIRSearchLog.js",
+    "name": "FHIRSearchLog",
+    "tableName": "fhir_search_logs"
+  },
+  {
+    "file": "src/features/compliance/entities/EncryptionKey.js",
+    "name": "EncryptionKey",
+    "tableName": "encryption_keys"
+  },
+  {
+    "file": "src/features/subscriptions/entities/Subscription.js",
+    "name": "Subscription",
+    "tableName": "subscriptions"
+  },
+  {
+    "file": "src/features/support/entities/Insurance.js",
+    "name": "InsuranceSupport",
+    "tableName": "support_insurance"
+  },
+  {
+    "file": "src/features/support/entities/FAQAnalytics.js",
+    "name": "FAQAnalytics",
+    "tableName": "faq_analytics"
+  },
+  {
+    "file": "src/features/support/entities/FAQVote.js",
+    "name": "FAQVote",
+    "tableName": "faq_votes"
+  },
+  {
+    "file": "src/features/support/entities/Disputes.js",
+    "name": "DisputeSupport",
+    "tableName": "support_disputes"
+  },
+  {
+    "file": "src/features/support/entities/FAQCategory.js",
+    "name": "FAQCategory",
+    "tableName": "faq_categories"
+  },
+  {
+    "file": "src/features/support/entities/FAQ.js",
+    "name": "FAQ",
+    "tableName": "faqs"
+  },
+  {
+    "file": "src/features/support/entities/Account.js",
+    "name": "AccountSupport",
+    "tableName": "account_support"
+  },
+  {
+    "file": "src/features/support/entities/Report.js",
+    "name": "ReportSupport",
+    "tableName": "support_report"
+  },
+  {
+    "file": "src/features/patient/entities/HealthInsurance.js",
+    "name": "HealthInsurance",
+    "tableName": "health_insurances"
+  },
+  {
+    "file": "src/features/patient/entities/Surgery.js",
+    "name": "Surgery",
+    "tableName": "surgeries"
+  },
+  {
+    "file": "src/features/patient/entities/MedicalCondition.js",
+    "name": "MedicalCondition",
+    "tableName": "medical_conditions"
+  },
+  {
+    "file": "src/features/patient/entities/FamilyHistory.js",
+    "name": "FamilyHistory",
+    "tableName": "family_histories"
+  },
+  {
+    "file": "src/features/patient/entities/Allergy.js",
+    "name": "Allergy",
+    "tableName": "allergies"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile/HealthInsurance.js",
+    "name": "HealthInsurance",
+    "tableName": "health_insurances"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile/Surgery.js",
+    "name": "Surgery",
+    "tableName": "surgeries"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile/MedicalCondition.js",
+    "name": "MedicalCondition",
+    "tableName": "medical_conditions"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile/Index.js",
+    "name": "PatientProfile",
+    "tableName": "patient_profiles"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile/FamilyHistory.js",
+    "name": "FamilyHistory",
+    "tableName": "family_histories"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile/Allergy.js",
+    "name": "Allergy",
+    "tableName": "allergies"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile/Consent.js",
+    "name": "Consent",
+    "tableName": "consents"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile/Disability.js",
+    "name": "Disability",
+    "tableName": "disabilities"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile/Immunization.js",
+    "name": "Immunization",
+    "tableName": "immunizations"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile/Medication.js",
+    "name": "Medication",
+    "tableName": "medications"
+  },
+  {
+    "file": "src/features/patient/entities/Consent.js",
+    "name": "Consent",
+    "tableName": "consents"
+  },
+  {
+    "file": "src/features/patient/entities/PatientRiskAssessment.js",
+    "name": "PatientRiskAssessment",
+    "tableName": "patient_risk_assessments"
+  },
+  {
+    "file": "src/features/patient/entities/Disability.js",
+    "name": "Disability",
+    "tableName": "disabilities"
+  },
+  {
+    "file": "src/features/patient/entities/Immunization.js",
+    "name": "Immunization",
+    "tableName": "immunizations"
+  },
+  {
+    "file": "src/features/patient/entities/Medication.js",
+    "name": "Medication",
+    "tableName": "medications"
+  },
+  {
+    "file": "src/features/patient/entities/PatientProfile.js",
+    "name": "PatientProfile",
+    "tableName": "patient_profiles"
+  },
+  {
+    "file": "src/features/marketing/entities/SpinReward.js",
+    "name": "SpinReward",
+    "tableName": "marketing_spin_rewards"
+  },
+  {
+    "file": "src/features/marketing/entities/UserSpinHistory.js",
+    "name": "UserSpinHistory",
+    "tableName": "marketing_user_spin_history"
+  },
+  {
+    "file": "src/features/documents/entities/FileAccessLog.js",
+    "name": "FileAccessLog",
+    "tableName": "file_access_logs"
+  },
+  {
+    "file": "src/features/documents/entities/FolderAccessLog.js",
+    "name": "FolderAccessLog",
+    "tableName": "folder_access_logs"
+  },
+  {
+    "file": "src/features/documents/entities/DocumentFile.js",
+    "name": "DocumentFile",
+    "tableName": "document_files"
+  },
+  {
+    "file": "src/features/documents/entities/File.js",
+    "name": "File",
+    "tableName": "files"
+  },
+  {
+    "file": "src/features/documents/entities/DocumentFolder.js",
+    "name": "DocumentFolder",
+    "tableName": "document_folders"
+  },
+  {
+    "file": "src/features/service-management/entities/ServiceStatusHistory.js",
+    "name": "ServiceStatusHistory",
+    "tableName": "service_status_history"
+  },
+  {
+    "file": "src/features/service-management/entities/ServiceAvailability.js",
+    "name": "ServiceAvailability",
+    "tableName": "service_availability"
+  },
+  {
+    "file": "src/features/notifications/entities/Notification.js",
+    "name": "Notification",
+    "tableName": "notification"
+  },
+  {
+    "file": "src/shared/entities/ProfileOption.js",
+    "name": "ProfileOption",
+    "tableName": "profile_options"
+  }
+]

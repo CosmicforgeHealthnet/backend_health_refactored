@@ -5,6 +5,7 @@ const authService = require("../../auth/services/authService");
 const userRepo = require("../../auth/repositories/userRepository");
 const bcrypt = require('bcryptjs');
 const mfaService = require('../../auth/services/mfa/mfaService');
+const passwordResetService = require("../../auth/services/passwordResetService");
 
 class PharmacyAuthController {
   async registerPharmacy(req, res, next) {
@@ -37,7 +38,8 @@ class PharmacyAuthController {
         address,
         phone,
         primaryContactPerson,
-        preferredUsername
+        preferredUsername,
+        countryCode: req.location?.countryCode ?? null,
       });
 
       return res.status(201).json({
@@ -225,6 +227,8 @@ class PharmacyAuthController {
           operatingHours: pharmacyProfile.operatingHours,
           documentsSubmitted: pharmacyProfile.documentsSubmitted,
           logoUrl: pharmacyProfile.logoUrl || null,
+          serviceRadius: pharmacyProfile.serviceRadius,
+          defaultCurrency: pharmacyProfile.defaultCurrency,
           createdAt: pharmacyProfile.createdAt,
           updatedAt: pharmacyProfile.updatedAt,
           // Include related data
@@ -252,7 +256,7 @@ class PharmacyAuthController {
     }
   }
 
-  async getPricingFeeTypes(req, res, next) {
+  async getPricingFeeTypes(req, res) {
     return res.json({
       success: true,
       data: [
@@ -268,7 +272,7 @@ class PharmacyAuthController {
     });
   }
 
-  async getStaffRoles(req, res, next) {
+  async getStaffRoles(req, res) {
     return res.json({
       success: true,
       data: [
@@ -303,6 +307,17 @@ class PharmacyAuthController {
         success: true,
         data: pricing
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deletePricing(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const { id } = req.params;
+      await pharmacyRegistrationService.deletePricing(userId, id);
+      return res.json({ success: true, message: "Pricing configuration deleted" });
     } catch (error) {
       next(error);
     }
@@ -463,6 +478,32 @@ class PharmacyAuthController {
         message: "Logo uploaded successfully",
         data: { logoUrl },
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async forgotPassword(req, res, next) {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ success: false, message: "Email is required" });
+      await passwordResetService.requestReset(email);
+      return res.status(200).json({ success: true, message: "If that email is registered, a reset link has been sent." });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resetPassword(req, res, next) {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) {
+        return res.status(400).json({ success: false, message: "token and newPassword are required" });
+      }
+      if (newPassword.length < 8) {
+        return res.status(400).json({ success: false, message: "Password must be at least 8 characters" });
+      }
+      await passwordResetService.resetPassword(token, newPassword);
+      return res.status(200).json({ success: true, message: "Password reset successful. You can now log in." });
     } catch (error) {
       next(error);
     }

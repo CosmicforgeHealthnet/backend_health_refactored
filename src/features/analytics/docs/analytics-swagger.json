@@ -1,0 +1,333 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Analytics API",
+    "version": "1.0.0",
+    "description": "Landing page event tracking (public) and admin analytics dashboard (admin-only)."
+  },
+  "tags": [
+    { "name": "Tracking", "description": "Public endpoint — receives events from the landing page" },
+    { "name": "Admin Analytics", "description": "Admin-only — dashboard stats, visitor journeys, waitlist" }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "schemas": {
+      "TrackEventPayload": {
+        "type": "object",
+        "required": ["session_id", "event_type"],
+        "properties": {
+          "session_id": { "type": "string", "example": "a1b2c3d4-uuid-v4" },
+          "is_new_session": { "type": "boolean", "example": true },
+          "is_returning_visitor": { "type": "boolean", "example": false },
+          "timestamp": { "type": "string", "format": "date-time", "example": "2026-05-16T14:30:00.000Z" },
+          "event_type": {
+            "type": "string",
+            "enum": ["page_view", "cta_click", "plan_view", "plan_select", "currency_switch", "tab_switch", "waitlist_submit", "contact_submit", "scroll_to_section", "carousel_slide"],
+            "example": "page_view"
+          },
+          "page": { "type": "string", "example": "/pricing" },
+          "referrer": { "type": "string", "example": "https://google.com" },
+          "user_type_intent": {
+            "type": "string",
+            "enum": ["patient", "doctor", "pharmacy", "lab", "unknown"],
+            "example": "doctor"
+          },
+          "event_data": {
+            "type": "object",
+            "description": "Varies by event_type. See description for full schema.",
+            "example": { "label": "Join as Doctor", "destination": "https://dashboard.cosmicforge.health" }
+          },
+          "utm": {
+            "type": "object",
+            "properties": {
+              "source": { "type": "string", "example": "instagram" },
+              "medium": { "type": "string", "example": "social" },
+              "campaign": { "type": "string", "example": "doctor_launch_2026" },
+              "term": { "type": "string", "nullable": true },
+              "content": { "type": "string", "nullable": true }
+            }
+          },
+          "device": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "example": "mobile" },
+              "browser": { "type": "string", "example": "Chrome" },
+              "os": { "type": "string", "example": "Android" },
+              "screen_width": { "type": "integer", "example": 390 }
+            }
+          },
+          "geo": {
+            "type": "object",
+            "properties": {
+              "country": { "type": "string", "example": "NG" },
+              "city": { "type": "string", "example": "Lagos" },
+              "ip_hash": { "type": "string", "example": "hashed-for-privacy" }
+            }
+          }
+        }
+      },
+      "StatsResponse": {
+        "type": "object",
+        "properties": {
+          "total_visitors": { "type": "integer" },
+          "unique_sessions": { "type": "integer" },
+          "returning_visitors": { "type": "integer" },
+          "by_user_type": {
+            "type": "object",
+            "properties": {
+              "patient": { "type": "integer" },
+              "doctor": { "type": "integer" },
+              "pharmacy": { "type": "integer" },
+              "lab": { "type": "integer" },
+              "unknown": { "type": "integer" }
+            }
+          },
+          "top_pages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "page": { "type": "string" },
+                "views": { "type": "integer" }
+              }
+            }
+          },
+          "top_traffic_sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": { "type": "string" },
+                "count": { "type": "integer" }
+              }
+            }
+          },
+          "by_country": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "country": { "type": "string" },
+                "count": { "type": "integer" }
+              }
+            }
+          },
+          "by_device": {
+            "type": "object",
+            "properties": {
+              "mobile": { "type": "integer" },
+              "desktop": { "type": "integer" },
+              "tablet": { "type": "integer" }
+            }
+          },
+          "plan_interest": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "plan": { "type": "string" },
+                "user_type": { "type": "string" },
+                "views": { "type": "integer" },
+                "selects": { "type": "integer" }
+              }
+            }
+          },
+          "conversions": {
+            "type": "object",
+            "properties": {
+              "patient_register_clicks": { "type": "integer" },
+              "doctor_register_clicks": { "type": "integer" },
+              "pharmacy_waitlist_joins": { "type": "integer" },
+              "lab_waitlist_joins": { "type": "integer" },
+              "contact_form_submissions": { "type": "integer" }
+            }
+          }
+        }
+      },
+      "VisitorSession": {
+        "type": "object",
+        "properties": {
+          "session_id": { "type": "string" },
+          "first_seen": { "type": "string", "format": "date-time" },
+          "last_seen": { "type": "string", "format": "date-time" },
+          "is_returning_visitor": { "type": "boolean" },
+          "user_type_intent": { "type": "string" },
+          "country": { "type": "string" },
+          "city": { "type": "string" },
+          "device": { "type": "string" },
+          "referrer": { "type": "string" },
+          "utm_campaign": { "type": "string" },
+          "pages_visited": { "type": "array", "items": { "type": "string" } },
+          "events_count": { "type": "integer" },
+          "converted": { "type": "boolean" },
+          "conversion_event": { "type": "string", "nullable": true }
+        }
+      },
+      "WaitlistEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "session_id": { "type": "string" },
+          "role": { "type": "string", "enum": ["pharmacy", "lab"] },
+          "full_name": { "type": "string", "nullable": true },
+          "facility_name": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string", "nullable": true },
+          "country": { "type": "string" },
+          "signed_up_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/analytics/events": {
+      "post": {
+        "tags": ["Tracking"],
+        "summary": "Track a landing page event",
+        "description": "Public endpoint. No auth required. The landing page POSTs every user interaction here.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TrackEventPayload" }
+            }
+          }
+        },
+        "responses": {
+          "202": { "description": "Event accepted" },
+          "400": { "description": "Missing session_id or event_type" }
+        }
+      },
+      "get": {
+        "tags": ["Admin Analytics"],
+        "summary": "List raw events (drill into a session)",
+        "description": "Admin only. Use session_id to see one visitor's full journey.",
+        "parameters": [
+          { "in": "query", "name": "session_id", "schema": { "type": "string" }, "description": "Filter by session" },
+          { "in": "query", "name": "event_type", "schema": { "type": "string" }, "description": "Filter by event type" },
+          { "in": "query", "name": "from", "schema": { "type": "string", "format": "date-time" } },
+          { "in": "query", "name": "to", "schema": { "type": "string", "format": "date-time" } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 50 } },
+          { "in": "query", "name": "offset", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "total": { "type": "integer" },
+                    "page": { "type": "integer" },
+                    "limit": { "type": "integer" },
+                    "data": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/stats": {
+      "get": {
+        "tags": ["Admin Analytics"],
+        "summary": "Dashboard summary stats",
+        "description": "Admin only. Returns aggregated totals, top pages, traffic sources, devices, plan interest, and conversions.",
+        "parameters": [
+          { "in": "query", "name": "from", "schema": { "type": "string", "format": "date-time" }, "description": "Start date filter" },
+          { "in": "query", "name": "to", "schema": { "type": "string", "format": "date-time" }, "description": "End date filter" },
+          { "in": "query", "name": "user_type", "schema": { "type": "string", "enum": ["patient", "doctor", "pharmacy", "lab", "unknown"] }, "description": "Filter sessions by user intent" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stats object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "$ref": "#/components/schemas/StatsResponse" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/visitors": {
+      "get": {
+        "tags": ["Admin Analytics"],
+        "summary": "Individual visitor sessions",
+        "description": "Admin only. Paginated list of visitor sessions with journey summary.",
+        "parameters": [
+          { "in": "query", "name": "from", "schema": { "type": "string", "format": "date-time" } },
+          { "in": "query", "name": "to", "schema": { "type": "string", "format": "date-time" } },
+          { "in": "query", "name": "user_type", "schema": { "type": "string", "enum": ["patient", "doctor", "pharmacy", "lab", "unknown"] } },
+          { "in": "query", "name": "country", "schema": { "type": "string" }, "description": "ISO country code e.g. NG" },
+          { "in": "query", "name": "page", "schema": { "type": "string" }, "description": "Filter sessions that visited this page e.g. /pricing" },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 50 } },
+          { "in": "query", "name": "offset", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated visitor sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "total": { "type": "integer" },
+                    "page": { "type": "integer" },
+                    "limit": { "type": "integer" },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/VisitorSession" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/waitlist": {
+      "get": {
+        "tags": ["Admin Analytics"],
+        "summary": "Pharmacy & lab waitlist signups",
+        "description": "Admin only. All waitlist_submit entries, filterable by role.",
+        "parameters": [
+          { "in": "query", "name": "role", "schema": { "type": "string", "enum": ["pharmacy", "lab"] } },
+          { "in": "query", "name": "from", "schema": { "type": "string", "format": "date-time" } },
+          { "in": "query", "name": "to", "schema": { "type": "string", "format": "date-time" } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 50 } },
+          { "in": "query", "name": "offset", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waitlist entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "total": { "type": "integer" },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/WaitlistEntry" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

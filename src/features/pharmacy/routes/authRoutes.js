@@ -8,6 +8,8 @@ const DocumentFolderMiddleware   = require("../../documents/middlewares/document
 // Public routes
 router.post("/register", pharmacyAuthController.registerPharmacy);
 router.post("/login", pharmacyAuthController.loginPharmacy);
+router.post("/forgot-password", pharmacyAuthController.forgotPassword);
+router.post("/reset-password", pharmacyAuthController.resetPassword);
 
 // Protected routes
 router.get("/profile", authenticateJWT, pharmacyAuthController.getPharmacyProfile);
@@ -15,6 +17,7 @@ router.put("/profile", authenticateJWT, pharmacyAuthController.updatePharmacyPro
 router.get("/pricing/fee-types", pharmacyAuthController.getPricingFeeTypes);
 router.get("/pricing", authenticateJWT, pharmacyAuthController.getPricing);
 router.post("/pricing", authenticateJWT, pharmacyAuthController.setPricing);
+router.delete("/pricing/:id", authenticateJWT, pharmacyAuthController.deletePricing);
 
 /**
  * @route   POST /api/pharmacy/auth/profile/logo

@@ -1,14 +1,14 @@
 const AppDataSource = require("../../../config/database");
-const PatientProfile = require("../entities/PatientProfile/Index");
-const MedicalCondition = require("../entities/PatientProfile/MedicalCondition");
-const Surgery = require("../entities/PatientProfile/Surgery");
-const Allergy = require("../entities/PatientProfile/Allergy");
-const FamilyHistory = require("../entities/PatientProfile/FamilyHistory");
-const Medication = require("../entities/PatientProfile/Medication");
-const Immunization = require("../entities/PatientProfile/Immunization");
-const HealthInsurance = require("../entities/PatientProfile/HealthInsurance");
-const Disability = require("../entities/PatientProfile/Disability");
-const Consent = require("../entities/PatientProfile/Consent");
+const PatientProfile = require("../entities/PatientProfile");
+const MedicalCondition = require("../entities/MedicalCondition");
+const Surgery = require("../entities/Surgery");
+const Allergy = require("../entities/Allergy");
+const FamilyHistory = require("../entities/FamilyHistory");
+const Medication = require("../entities/Medication");
+const Immunization = require("../entities/Immunization");
+const HealthInsurance = require("../entities/HealthInsurance");
+const Disability = require("../entities/Disability");
+const Consent = require("../entities/Consent");
 
 class PatientProfileRepository {
   constructor() {

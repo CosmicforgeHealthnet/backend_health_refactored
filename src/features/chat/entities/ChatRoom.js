@@ -28,6 +28,18 @@ module.exports = new EntitySchema({
       type: 'boolean',
       default: false
     },
+    isActive: {
+      type: 'boolean',
+      default: true
+    },
+    isArchived: {
+      type: 'boolean',
+      default: false
+    },
+    archivedAt: {
+      type: 'timestamp',
+      nullable: true
+    },
     maxParticipants: {
       type: 'int',
       default: 50

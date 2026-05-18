@@ -23,7 +23,7 @@ const VerificationHelpers = require("../utils/verificationHelpers");
 const apiConnectorService = require("./apiConnectorService");
 const documentProcessingService = require("./documentProcessingService");
 
-const { VerificationStatus, VerificationMethod, VerificationTier } = require("../entities/VerificationRequest");
+const { VerificationStatus } = require("../entities/VerificationRequest");
 const { getNotificationSocket } = require("../../../shared/utils/notificationUtils");
 
 class DoctorVerificationService {
@@ -161,8 +161,11 @@ class DoctorVerificationService {
         }
       );
 
-      // 10. Start automated verification if applicable
-      if (verificationMethod.method === 'automated' || verificationMethod.method === 'hybrid') {
+      // 10. Start automated verification only if the country has an active API endpoint
+      // For 'hybrid' countries without an API (e.g. Nigeria tier_2, hasApi: false),
+      // we DON'T call processApiVerification — the doctor must upload documents first.
+      if (verificationMethod.method === 'automated' ||
+          (verificationMethod.method === 'hybrid' && verificationMethod.apiProvider)) {
         // Queue for immediate API verification
         setImmediate(() => {
           this.processApiVerification(verificationRequest.id).catch(console.error);
@@ -185,6 +188,22 @@ class DoctorVerificationService {
       const verificationRequest = await verificationRequestRepo.findById(verificationRequestId, ['doctor']);
       if (!verificationRequest) {
         throw new Error("Verification request not found");
+      }
+
+      // If the request is already waiting for documents or is in a terminal/manual state,
+      // skip the API verification step — it is not applicable.
+      const skipStatuses = [
+        VerificationStatus.PENDING_DOCUMENTS,
+        VerificationStatus.MANUAL_REVIEW,
+        VerificationStatus.APPROVED,
+        VerificationStatus.REJECTED,
+      ];
+      if (skipStatuses.includes(verificationRequest.status)) {
+        console.log(
+          `[processApiVerification] Skipping API verification for request ${verificationRequestId} ` +
+          `— current status is '${verificationRequest.status}' which does not require API verification.`
+        );
+        return;
       }
 
       // Update status to API verification
@@ -431,6 +450,9 @@ class DoctorVerificationService {
         user.status = 'doctor_active';
         await userRepository.save(user);
       }
+
+      // NEW: Sync verified license data and calculate years of experience
+      await this.syncVerifiedDataToProfile(verificationRequest);
 
       // ENHANCED: Automatic wallet and subscription setup
       const setupResult = await this.setupDoctorFinancialProfile(verificationRequest.doctorId);
@@ -1115,6 +1137,79 @@ class DoctorVerificationService {
 
   /**
    * Update doctor profile verification status
+   */
+
+  /**
+   * Sync verified license data from the verification request to the public profile
+   * This includes calculating years of experience from the issue date
+   * @param {Object} verificationRequest - The approved verification request
+   */
+  async syncVerifiedDataToProfile(verificationRequest) {
+    try {
+      const doctorId = verificationRequest.doctorId;
+      console.log(`🔄 Syncing verified data to profile for doctor: ${doctorId}`);
+      
+      // 1. Find the doctor profile with professional license relation
+      const doctorProfile = await doctorProfileRepo.repo.findOne({
+        where: { user: { id: doctorId } },
+        relations: ['professionalLicense']
+      });
+      
+      if (!doctorProfile) {
+        console.warn(`⚠️ Doctor profile not found for ${doctorId} during sync`);
+        return;
+      }
+      
+      // 2. Calculate years of experience from the license issue date
+      let yearsOfExperience = 0;
+      if (verificationRequest.issueDate) {
+        const issueYear = new Date(verificationRequest.issueDate).getFullYear();
+        const currentYear = new Date().getFullYear();
+        yearsOfExperience = Math.max(0, currentYear - issueYear);
+        console.log(`📅 Calculated experience: ${yearsOfExperience} years (Issue Date: ${verificationRequest.issueDate})`);
+      } else {
+        console.log(`📅 No issue date found in verification, skipping experience calculation`);
+      }
+      
+      // 3. Prepare the license data to be synced
+      const licenseData = {
+        medicalLicenseNumber: verificationRequest.licenseNumber,
+        countryOfLicense: verificationRequest.countryCode,
+        licenseAuthority: verificationRequest.issuingAuthority,
+        licenseExpiryDate: verificationRequest.expiryDate,
+        updatedAt: new Date()
+      };
+
+      // Only update yearsOfExperience if we successfully calculated it
+      if (yearsOfExperience > 0 || verificationRequest.issueDate) {
+        licenseData.yearsOfExperience = yearsOfExperience;
+      }
+      
+      // 4. Update existing license or create a new one
+      if (doctorProfile.professionalLicense) {
+        console.log(`📝 Updating existing ProfessionalLicense ID: ${doctorProfile.professionalLicense.id}`);
+        await doctorProfileRepo.professionalLicenseRepo.update(
+          doctorProfile.professionalLicense.id, 
+          licenseData
+        );
+      } else {
+        console.log(`📝 Creating new ProfessionalLicense for profile ID: ${doctorProfile.id}`);
+        const newLicense = doctorProfileRepo.professionalLicenseRepo.create({
+          ...licenseData,
+          doctorProfile: { id: doctorProfile.id }
+        });
+        await doctorProfileRepo.professionalLicenseRepo.save(newLicense);
+      }
+      
+      console.log(`✅ Successfully synced verified license data and experience for doctor ${doctorId}`);
+      
+    } catch (error) {
+      console.error(`❌ Error syncing verified data to profile for doctor ${verificationRequest.doctorId}:`, error);
+    }
+  }
+
+  /**
+   * Update doctor's profile verification status metadata
    */
   async updateDoctorProfileVerificationStatus(doctorId, status, verificationRequestId, tier = null, confidenceScore = null) {
     try {

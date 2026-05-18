@@ -203,6 +203,11 @@ class ReferralService {
       throw new Error('User not found');
     }
 
+    // Auto-generate referral code if the user doesn't have one yet
+    if (!user.referralCode) {
+      user.referralCode = await this.createUserReferralCode(userId);
+    }
+
     const totalReferrals = await this.referralRepository.count({
       where: { referrerId: userId, status: 'verified' }
     });
@@ -216,16 +221,16 @@ class ReferralService {
         where: { drawId: activeDraw.id, userId }
       });
 
-      // Get leaderboard position
       const leaderboard = await this.getDrawLeaderboard(activeDraw.id, 100);
       const userPosition = leaderboard.findIndex(entry => entry.userId === userId);
       leaderboardPosition = userPosition >= 0 ? userPosition + 1 : null;
     }
 
+    const baseUrl = process.env.FRONTEND_URL || 'https://dashboard.cosmicforge-healthnet.com';
     return {
       totalReferrals,
       referralCode: user.referralCode,
-      referralLink: await this.getUserReferralLink(userId),
+      referralLink: `${baseUrl}/auth/register?ref=${user.referralCode}`,
       currentDraw: activeDraw,
       currentDrawReferrals: currentDrawStats?.referralCount || 0,
       leaderboardPosition

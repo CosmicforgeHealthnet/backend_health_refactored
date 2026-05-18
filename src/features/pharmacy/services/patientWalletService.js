@@ -87,7 +87,7 @@ const patientWalletService = {
    * POST /patient/wallet/top-up
    * Initializes a payment gateway session. Wallet is credited when webhook fires.
    */
-  async initiateTopUp(patientId, { amount, paymentMethod }, countryCode) {
+  async initiateTopUp(patientId, { amount }, countryCode) {
     if (!amount || amount <= 0) {
       throw Object.assign(new Error("amount must be a positive number"), { status: 400 });
     }

@@ -47,11 +47,11 @@ const validateCreateAppointment = [
       );
       const now = new Date();
       const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-      if (appointmentDateTime < oneHourFromNow) {
-        throw new Error(
-          "Appointment must be scheduled at least 1 hour in advance"
-        );
-      }
+      // if (appointmentDateTime < oneHourFromNow) {
+      //   throw new Error(
+      //     "Appointment must be scheduled at least 1 hour in advance"
+      //   );
+      // }
 
       // const hour = appointmentDateTime.getHours();
       // if (hour < 9 || hour >= 17) {

@@ -24,6 +24,16 @@ class AppointmentChatService {
       throw new Error('End time must be after start time');
     }
 
+    // 🔥 CRITICAL FIX: Check if a chat already exists for this SPECIFIC appointment
+    // This prevents the "duplicate key value" crash when this method is called multiple times
+    if (appointmentId) {
+      const existingApptChat = await this.appointmentChatRepo.findByAppointmentId(appointmentId);
+      if (existingApptChat) {
+        console.log(`ℹ️ Appointment chat already exists for appointment ${appointmentId}. Returning existing.`);
+        return existingApptChat;
+      }
+    }
+
     // Check for an existing chat room between this doctor and patient
     const existingAppointmentChat = await this.appointmentChatRepo.findExistingRoomByDoctorAndPatient(doctorId, patientId);
 

@@ -7,8 +7,8 @@
   },
   "servers": [
     {
-      "url": "https://api.cosmicforge.com",
-      "description": "Production server"
+      "url": "http://localhost:3000",
+      "description": "Development server"
     }
   ],
   "paths": {
@@ -18191,6 +18191,56 @@
         }
       }
     },
+    "/pharmacy/auth/pricing/{id}": {
+      "delete": {
+        "summary": "Delete a pricing configuration",
+        "tags": [
+          "PharmacyPricing"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The pricing config ID to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pricing configuration deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Pricing configuration deleted"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pricing not found"
+          }
+        }
+      }
+    },
     "/pharmacy/auth/staff": {
       "get": {
         "summary": "Get pharmacy staff members",
@@ -18289,69 +18339,6 @@
                       "type": "string"
                     }
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/pharmacy/documents/upload": {
-      "post": {
-        "summary": "Upload pharmacy documents",
-        "tags": [
-          "PharmacyDocuments"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentUpload"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Documents uploaded successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentUploadResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "No documents uploaded"
-          }
-        }
-      }
-    },
-    "/pharmacy/documents": {
-      "get": {
-        "summary": "Get pharmacy documents",
-        "tags": [
-          "PharmacyDocuments"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Documents list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentListResponse"
                 }
               }
             }
@@ -18465,6 +18452,409 @@
         }
       }
     },
+    "/pharmacy/prescriptions/search": {
+      "get": {
+        "summary": "Search prescriptions",
+        "description": "Searches for prescriptions based on query parameters.\n- Accessible by doctors, patients, or pharmacies.\n- Supports filtering by various criteria (e.g., status, date).\n",
+        "tags": [
+          "Prescription"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query string"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Page number for pagination"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "description": "Number of prescriptions per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of matching prescriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrescriptionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - User not authorized"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}": {
+      "get": {
+        "summary": "Get prescription by ID",
+        "description": "Retrieves a specific prescription by its ID with all related details.\n- Accessible by doctors, patients, or pharmacies associated with the prescription.\n",
+        "tags": [
+          "Prescription"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the prescription"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescription details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrescriptionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - User not authorized"
+          },
+          "404": {
+            "description": "Prescription not found"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/cancel": {
+      "post": {
+        "summary": "Cancel a prescription",
+        "description": "Allows a doctor, patient, or pharmacy to cancel a prescription.\n- Requires a cancellation reason.\n- Cannot cancel a completed prescription.\n",
+        "tags": [
+          "Prescription"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the prescription"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelPrescriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prescription cancelled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrescriptionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - User not authorized to cancel"
+          },
+          "404": {
+            "description": "Prescription not found"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/approve-alternative": {
+      "post": {
+        "summary": "Approve alternative medications",
+        "description": "Doctor or patient approves the pharmacy's proposed alternative medications.\n- Prescription `availabilityStatus` moves from `alternatives_proposed` → `confirmed`.\n- Pharmacy is notified via WebSocket (`alternative_approved`) and push notification.\n- Returns 422 if no proposal is pending.\n",
+        "tags": [
+          "Prescription Operations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the prescription"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alternatives approved — pharmacy notified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrescriptionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden — only the patient or the prescribing doctor can approve"
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "422": {
+            "description": "No pending alternative proposal to approve"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/reject-alternative": {
+      "post": {
+        "summary": "Reject alternative medications",
+        "description": "Doctor or patient rejects the pharmacy's proposed alternative medications.\n- Prescription `availabilityStatus` moves from `alternatives_proposed` → `pending`.\n- Pharmacy is notified via WebSocket (`alternative_rejected`) and push notification.\n- Returns 422 if no proposal is pending.\n",
+        "tags": [
+          "Prescription Operations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the prescription"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "example": "Prefer the originally prescribed brand"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alternatives rejected — pharmacy notified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrescriptionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden — only the patient or the prescribing doctor can reject"
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "422": {
+            "description": "No pending alternative proposal to reject"
+          }
+        }
+      }
+    },
+    "/pharmacy/documents/upload": {
+      "post": {
+        "summary": "Upload pharmacy documents",
+        "tags": [
+          "PharmacyDocuments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentUpload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Documents uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentUploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No documents uploaded"
+          }
+        }
+      }
+    },
+    "/pharmacy/documents": {
+      "get": {
+        "summary": "Get pharmacy documents",
+        "tags": [
+          "PharmacyDocuments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documents list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/patient/prescriptions": {
+      "get": {
+        "summary": "Get patient's prescriptions",
+        "description": "Retrieves a list of prescriptions for the authenticated patient.\n- Supports pagination and filtering via query parameters.\n",
+        "tags": [
+          "Prescription"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Page number for pagination"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "description": "Number of prescriptions per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of patient's prescriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrescriptionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Not a patient"
+          }
+        }
+      }
+    },
     "/pharmacy/prescriptions/patient/prescriptions/{prescriptionId}/upload": {
       "post": {
         "summary": "Upload prescription by patient",
@@ -18569,10 +18959,286 @@
         }
       }
     },
-    "/pharmacy/prescriptions/patient/prescriptions": {
+    "/pharmacy/prescriptions/{prescriptionId}/chat": {
+      "post": {
+        "summary": "Add chat message",
+        "description": "Allows a patient or pharmacy to add a chat message related to a prescription.\n- Verifies the sender's access to the prescription.\n",
+        "tags": [
+          "Prescription"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the prescription"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chat message added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrescriptionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - User not authorized to chat"
+          },
+          "404": {
+            "description": "Prescription not found"
+          }
+        }
+      }
+    },
+    "/patient/invoices": {
       "get": {
-        "summary": "Get patient's prescriptions",
-        "description": "Retrieves a list of prescriptions for the authenticated patient.\n- Supports pagination and filtering via query parameters.\n",
+        "summary": "List my invoices",
+        "description": "Returns all invoices sent to the patient, newest first.\n- Amounts are returned in the patient's local currency.\n- Excludes cancelled invoices by default (pass `status=cancelled` to include them).\n",
+        "tags": [
+          "Invoices (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "sent",
+                "viewed",
+                "awaiting_payment",
+                "paid",
+                "overdue",
+                "cancelled"
+              ]
+            },
+            "description": "Filter by invoice status"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated invoice list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invoices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/patient/invoices/{id}": {
+      "get": {
+        "summary": "Get invoice details",
+        "description": "Returns full invoice with line items, amounts in patient's currency.",
+        "tags": [
+          "Invoices (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice details"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        }
+      }
+    },
+    "/patient/invoices/{id}/viewed": {
+      "patch": {
+        "summary": "Mark invoice as viewed",
+        "description": "Transitions invoice status from `sent` → `viewed`.\nCall this when the patient opens the invoice screen.\n",
+        "tags": [
+          "Invoices (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice marked as viewed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        }
+      }
+    },
+    "/patient/invoices/{id}/dispute": {
+      "post": {
+        "summary": "Raise a dispute",
+        "description": "Raises a dispute on a **paid** invoice within 7 days of payment.\n- Requires a `reason` and optionally `evidence` (text or URL).\n- Pharmacy is notified immediately via WebSocket (`dispute_raised`).\n",
+        "tags": [
+          "Invoices (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "example": "Received wrong medication"
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "example": "Photo at delivery showed incorrect brand"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dispute raised"
+          },
+          "400": {
+            "description": "Dispute window expired (>7 days) or invoice not paid"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Invoice not found"
+          },
+          "409": {
+            "description": "Dispute already exists for this invoice"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/patient/invoices": {
+      "get": {
+        "summary": "Get patient invoices",
+        "description": "Retrieves all prescriptions with invoice data for the authenticated patient.\n- Only returns prescriptions where cost information has been provided (`totalDue IS NOT NULL`).\n- Supports pagination via query parameters.\n",
         "tags": [
           "Prescription"
         ],
@@ -18599,28 +19265,364 @@
               "minimum": 1,
               "maximum": 100
             },
-            "description": "Number of prescriptions per page"
+            "description": "Number of invoices per page"
           }
         ],
         "responses": {
           "200": {
-            "description": "List of patient's prescriptions",
+            "description": "List of patient invoices",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PrescriptionResponse"
+                  "$ref": "#/components/schemas/PatientInvoicesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Not a patient"
+          }
+        }
+      }
+    },
+    "/patient/payments/initiate": {
+      "post": {
+        "summary": "Initiate invoice payment",
+        "description": "Creates a payment record and returns a gateway redirect URL.\n- Automatically selects **Paystack** (preferred) or **Flutterwave** based on the patient's currency.\n- Amount is calculated from the invoice's USD value at the live exchange rate.\n- Idempotent: returns the existing pending payment if one already exists for this invoice.\n- Rate limited: max 5 attempts per invoice per hour.\n",
+        "tags": [
+          "Payments (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "invoiceId"
+                ],
+                "properties": {
+                  "invoiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the invoice to pay"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "paystack",
+                      "flutterwave"
+                    ],
+                    "description": "Override gateway provider (optional — auto-selected by default)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paymentId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "invoiceId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "example": 14750.5
+                    },
+                    "currency": {
+                      "type": "string",
+                      "example": "NGN"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "pending"
+                    },
+                    "authorizationUrl": {
+                      "type": "string",
+                      "example": "https://checkout.paystack.com/..."
+                    },
+                    "reference": {
+                      "type": "string",
+                      "example": "COSMIC-PAY-1724581234-ABC123"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing invoiceId or invalid provider"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Invoice not found"
+          },
+          "409": {
+            "description": "Invoice already paid"
+          },
+          "429": {
+            "description": "Too many payment attempts"
+          },
+          "502": {
+            "description": "Payment gateway error"
+          }
+        }
+      }
+    },
+    "/patient/payments/verify/{reference}": {
+      "get": {
+        "summary": "Verify payment after gateway redirect",
+        "description": "Call this when the patient returns from the payment gateway.\n- Verifies with the gateway and triggers the same atomic success handler as the webhook.\n- If already verified, returns the current status immediately (idempotent).\n- On success: invoice → `paid`, prescription → `in_progress` + `paymentStatus: paid`,\n  pharmacy wallet credited (escrow), patient and pharmacy notified via WebSocket.\n",
+        "tags": [
+          "Payments (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reference",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "COSMIC-PAY-1724581234-ABC123"
+            },
+            "description": "Payment reference returned from initiatePayment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment verification result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paymentId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "invoiceId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "success",
+                        "pending"
+                      ]
+                    },
+                    "reference": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized - Invalid or missing token"
+            "description": "Unauthorized"
           },
-          "403": {
-            "description": "Forbidden - Not a patient"
+          "404": {
+            "description": "Payment record not found"
+          }
+        }
+      }
+    },
+    "/patient/wallet/summary": {
+      "get": {
+        "summary": "Wallet overview",
+        "description": "Returns the patient's wallet balance, total spent, and total top-ups.",
+        "tags": [
+          "Wallet (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wallet summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "balance": {
+                      "type": "number",
+                      "example": 5000
+                    },
+                    "currency": {
+                      "type": "string",
+                      "example": "NGN"
+                    },
+                    "totalSpent": {
+                      "type": "number",
+                      "example": 25000
+                    },
+                    "totalTopUps": {
+                      "type": "number",
+                      "example": 30000
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/patient/wallet/transactions": {
+      "get": {
+        "summary": "List wallet transactions",
+        "description": "Returns paginated wallet transactions with optional filters.",
+        "tags": [
+          "Wallet (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credit",
+                "debit"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string"
+            },
+            "description": "e.g. `top_up`, `payment`"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction list"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/patient/wallet/top-up": {
+      "post": {
+        "summary": "Top up wallet",
+        "description": "Initiates a wallet top-up — returns a gateway authorization URL.",
+        "tags": [
+          "Wallet (Patient)"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "amount"
+                ],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "description": "Amount in the patient's local currency",
+                    "example": 10000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Top-up initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authorizationUrl": {
+                      "type": "string"
+                    },
+                    "reference": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid amount"
+          },
+          "401": {
+            "description": "Unauthorized"
           }
         }
       }
@@ -18742,7 +19744,7 @@
     "/pharmacy/prescriptions/pharmacy/prescriptions/{prescriptionId}/mark-ready": {
       "post": {
         "summary": "Mark prescription as ready",
-        "description": "Allows a pharmacy to mark a prescription as ready for delivery or pickup.\n- Updates status to READY_FOR_DELIVERY or READY_FOR_PICKUP.\n",
+        "description": "Allows a pharmacy to mark a prescription as ready for delivery or pickup.\n- Updates status to `out_for_delivery` (delivery) or `ready_for_pickup` (pickup).\n- `readyType` must be `\"delivery\"` or `\"pickup\"`.\n",
         "tags": [
           "Prescription"
         ],
@@ -18924,59 +19926,6 @@
           },
           "403": {
             "description": "Forbidden - Not a pharmacy"
-          }
-        }
-      }
-    },
-    "/pharmacy/prescriptions/patient/invoices": {
-      "get": {
-        "summary": "Get patient invoices",
-        "description": "Retrieves all prescriptions with invoice data for the authenticated patient.\n- Only returns prescriptions where cost information has been provided (`totalDue IS NOT NULL`).\n- Supports pagination via query parameters.\n",
-        "tags": [
-          "Prescription"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "description": "Page number for pagination"
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
-            },
-            "description": "Number of invoices per page"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of patient invoices",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PatientInvoicesResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - Not a patient"
           }
         }
       }
@@ -19287,173 +20236,12 @@
         }
       }
     },
-    "/pharmacy/prescriptions/{prescriptionId}/cancel": {
-      "post": {
-        "summary": "Cancel a prescription",
-        "description": "Allows a doctor, patient, or pharmacy to cancel a prescription.\n- Requires a cancellation reason.\n- Cannot cancel a completed prescription.\n",
-        "tags": [
-          "Prescription"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "prescriptionId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID of the prescription"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CancelPrescriptionRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Prescription cancelled successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PrescriptionResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing token"
-          },
-          "403": {
-            "description": "Forbidden - User not authorized to cancel"
-          },
-          "404": {
-            "description": "Prescription not found"
-          }
-        }
-      }
-    },
-    "/pharmacy/prescriptions/{prescriptionId}/chat": {
-      "post": {
-        "summary": "Add chat message",
-        "description": "Allows a patient or pharmacy to add a chat message related to a prescription.\n- Verifies the sender's access to the prescription.\n",
-        "tags": [
-          "Prescription"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "prescriptionId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID of the prescription"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChatMessageRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Chat message added successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PrescriptionResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing token"
-          },
-          "403": {
-            "description": "Forbidden - User not authorized to chat"
-          },
-          "404": {
-            "description": "Prescription not found"
-          }
-        }
-      }
-    },
-    "/pharmacy/prescriptions/{prescriptionId}": {
+    "/pharmacy/prescriptions/dispatch": {
       "get": {
-        "summary": "Get prescription by ID",
-        "description": "Retrieves a specific prescription by its ID with all related details.\n- Accessible by doctors, patients, or pharmacies associated with the prescription.\n",
+        "summary": "Get dispatch items",
+        "description": "Returns a paginated list of prescriptions eligible for dispatch (pharmacy only).\n- Eligible statuses: `ready_for_pickup`, `out_for_delivery`, `completed`.\n- Filter by a single status using the `status` query param.\n",
         "tags": [
-          "Prescription"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "prescriptionId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID of the prescription"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Prescription details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PrescriptionResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing token"
-          },
-          "403": {
-            "description": "Forbidden - User not authorized"
-          },
-          "404": {
-            "description": "Prescription not found"
-          }
-        }
-      }
-    },
-    "/pharmacy/prescriptions/search": {
-      "get": {
-        "summary": "Search prescriptions",
-        "description": "Searches for prescriptions based on query parameters.\n- Accessible by doctors, patients, or pharmacies.\n- Supports filtering by various criteria (e.g., status, date).\n",
-        "tags": [
-          "Prescription"
+          "Pharmacy Dashboard"
         ],
         "security": [
           {
@@ -19463,20 +20251,26 @@
         "parameters": [
           {
             "in": "query",
-            "name": "query",
+            "name": "status",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "ready_for_pickup",
+                "out_for_delivery",
+                "completed"
+              ]
             },
-            "description": "Search query string"
+            "description": "Filter by dispatch status"
           },
           {
             "in": "query",
             "name": "page",
             "schema": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 1
             },
-            "description": "Page number for pagination"
+            "description": "Page number"
           },
           {
             "in": "query",
@@ -19484,30 +20278,252 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 100,
+              "default": 20
             },
-            "description": "Number of prescriptions per page"
+            "description": "Items per page"
           }
         ],
         "responses": {
           "200": {
-            "description": "List of matching prescriptions",
+            "description": "Paginated dispatch items",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PrescriptionResponse"
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DispatchItem"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "example": 42
+                    },
+                    "page": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "limit": {
+                      "type": "integer",
+                      "example": 20
+                    }
                   }
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized - Invalid or missing token"
+            "description": "Unauthorized"
           },
           "403": {
-            "description": "Forbidden - User not authorized"
+            "description": "Forbidden — not a pharmacy"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/dispatch": {
+      "post": {
+        "summary": "Initiate dispatch",
+        "description": "Transitions a prescription from `ready_for_pickup` → `out_for_delivery` and records `dispatchedAt`.\n- `dispatchedAt` is **immutable** — calling this again on the same prescription returns 409.\n- Patient is notified via WebSocket (`prescription_status_changed`) and push notification.\n- Optional: supply `estimatedDelivery` (ISO 8601) and `note`.\n",
+        "tags": [
+          "Pharmacy Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "estimatedDelivery": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2025-08-25T14:00:00Z",
+                    "description": "Expected delivery timestamp (ISO 8601)"
+                  },
+                  "note": {
+                    "type": "string",
+                    "example": "Dispatched via courier"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prescription dispatched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden — not assigned to this pharmacy"
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "409": {
+            "description": "Already dispatched — dispatchedAt is immutable"
+          },
+          "422": {
+            "description": "Prescription is not in ready_for_pickup status"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/delivered": {
+      "post": {
+        "summary": "Mark prescription as delivered",
+        "description": "Transitions a prescription from `out_for_delivery` → `completed`.\n- Records `actualDeliveryDate`.\n- Notifies patient via WebSocket + push notification.\n- Notifies pharmacy dashboard via WebSocket (`prescription_status_changed`).\n",
+        "tags": [
+          "Pharmacy Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescription marked as delivered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden — not assigned to this pharmacy"
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "422": {
+            "description": "Prescription is not in out_for_delivery status"
+          }
+        }
+      }
+    },
+    "/pharmacy/prescriptions/{prescriptionId}/status": {
+      "patch": {
+        "summary": "Update prescription status (generic override)",
+        "description": "Generic status override for pharmacy staff.\n- Accepts any valid `PrescriptionStatus` value.\n- Adds a fulfillment history entry.\n- Use specific action endpoints (start-processing, mark-ready, dispatch, etc.) where possible.\n",
+        "tags": [
+          "Prescription Operations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescriptionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "patient_uploaded",
+                      "pharmacy_assigned",
+                      "pharmacy_processing",
+                      "under_review",
+                      "awaiting_payment",
+                      "in_progress",
+                      "ready_for_pickup",
+                      "out_for_delivery",
+                      "completed",
+                      "cancelled"
+                    ],
+                    "example": "in_progress"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrescriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status value"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden — not assigned to this pharmacy"
+          },
+          "404": {
+            "description": "Prescription not found"
           }
         }
       }
@@ -45694,6 +46710,251 @@
           }
         }
       },
+      "CreatePrescriptionRequest": {
+        "type": "object",
+        "required": [
+          "patientId",
+          "medications"
+        ],
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "ID of the patient"
+          },
+          "medications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Medication"
+            },
+            "description": "List of medications in the prescription"
+          },
+          "consultationId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "789e4567-e89b-12d3-a456-426614174000",
+            "description": "ID of the associated consultation"
+          },
+          "doctorNotes": {
+            "type": "string",
+            "example": "Take medication with food",
+            "description": "Additional notes from the doctor"
+          },
+          "diagnosis": {
+            "type": "string",
+            "example": "Acute Respiratory Infection",
+            "description": "Diagnosis from the doctor"
+          },
+          "doctorSignature": {
+            "type": "string",
+            "example": "data:image/png;base64,...",
+            "description": "Base64 or URL of the doctor's signature"
+          }
+        }
+      },
+      "PrescriptionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "ID of the prescription"
+          },
+          "reference": {
+            "type": "string",
+            "example": "RX-2025-0001",
+            "description": "Unique reference number for the prescription"
+          },
+          "doctorId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "456e4567-e89b-12d3-a456-426614174000",
+            "description": "ID of the prescribing doctor"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "789e4567-e89b-12d3-a456-426614174000",
+            "description": "ID of the patient"
+          },
+          "consultationId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "012e4567-e89b-12d3-a456-426614174000",
+            "description": "ID of the associated consultation"
+          },
+          "pharmacyId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "345e4567-e89b-12d3-a456-426614174000",
+            "description": "ID of the assigned pharmacy"
+          },
+          "assignedPharmacistId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "678e4567-e89b-12d3-a456-426614174000",
+            "description": "ID of the assigned pharmacist"
+          },
+          "medications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Medication"
+            },
+            "description": "List of medications in the prescription"
+          },
+          "doctorNotes": {
+            "type": "string",
+            "example": "Take medication with food",
+            "description": "Additional notes from the doctor"
+          },
+          "diagnosis": {
+            "type": "string",
+            "example": "Acute Respiratory Infection",
+            "description": "Diagnosis from the doctor"
+          },
+          "doctorSignature": {
+            "type": "string",
+            "example": "https://example.com/signatures/doc123.png",
+            "description": "URL or Base64 of the doctor's signature"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PATIENT_UPLOADED",
+              "PHARMACY_ASSIGNED",
+              "PHARMACY_PROCESSING",
+              "READY_FOR_DELIVERY",
+              "READY_FOR_PICKUP",
+              "COMPLETED",
+              "CANCELLED"
+            ],
+            "example": "PENDING",
+            "description": "Current status of the prescription"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "unpaid",
+              "paid",
+              "cancelled"
+            ],
+            "example": "unpaid",
+            "description": "Payment status of the prescription"
+          },
+          "deliveryAddress": {
+            "type": "string",
+            "example": "123 Wellness Ave, Lagos, Nigeria",
+            "description": "Delivery address for the prescription"
+          },
+          "deliveryInstructions": {
+            "type": "string",
+            "example": "Leave at front desk",
+            "description": "Delivery instructions"
+          },
+          "expectedDeliveryDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-08-30T10:00:00Z",
+            "description": "Expected delivery date"
+          },
+          "actualDeliveryDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-08-30T12:00:00Z",
+            "description": "Actual delivery or pickup date"
+          },
+          "fulfillmentHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FulfillmentHistory"
+            },
+            "description": "History of status changes"
+          },
+          "chatMessages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "description": "List of chat messages related to the prescription"
+          },
+          "invoiceItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceItem"
+            },
+            "description": "List of invoice items for the prescription"
+          },
+          "deliveryFee": {
+            "type": "number",
+            "example": 10,
+            "description": "Delivery fee for the prescription"
+          },
+          "totalDue": {
+            "type": "number",
+            "example": 80,
+            "description": "Total amount due for the prescription"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "example": "credit_card",
+            "description": "Payment method for the prescription"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-08-26T12:00:00Z",
+            "description": "Creation date of the prescription"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-08-26T12:30:00Z",
+            "description": "Last update date of the prescription"
+          },
+          "availabilityStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "unavailable",
+              "alternatives_proposed"
+            ],
+            "example": "pending"
+          },
+          "internalNotes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InternalNote"
+            }
+          },
+          "patientComplaint": {
+            "type": "string",
+            "example": "Persistent cough and mild fever for 4 days."
+          },
+          "orderedTests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Chest X-ray",
+              "Complete Blood Count"
+            ]
+          },
+          "appointmentRef": {
+            "type": "string",
+            "example": "A1B2C3D4"
+          },
+          "appointmentDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2025-08-26"
+          }
+        }
+      },
       "DocumentUpload": {
         "type": "object",
         "properties": {
@@ -45764,49 +47025,6 @@
             "items": {
               "type": "object"
             }
-          }
-        }
-      },
-      "CreatePrescriptionRequest": {
-        "type": "object",
-        "required": [
-          "patientId",
-          "medications"
-        ],
-        "properties": {
-          "patientId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
-            "description": "ID of the patient"
-          },
-          "medications": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Medication"
-            },
-            "description": "List of medications in the prescription"
-          },
-          "consultationId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "789e4567-e89b-12d3-a456-426614174000",
-            "description": "ID of the associated consultation"
-          },
-          "doctorNotes": {
-            "type": "string",
-            "example": "Take medication with food",
-            "description": "Additional notes from the doctor"
-          },
-          "diagnosis": {
-            "type": "string",
-            "example": "Acute Respiratory Infection",
-            "description": "Diagnosis from the doctor"
-          },
-          "doctorSignature": {
-            "type": "string",
-            "example": "data:image/png;base64,...",
-            "description": "Base64 or URL of the doctor's signature"
           }
         }
       },
@@ -46035,224 +47253,25 @@
           }
         }
       },
-      "PrescriptionResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
-            "description": "ID of the prescription"
-          },
-          "reference": {
-            "type": "string",
-            "example": "RX-2025-0001",
-            "description": "Unique reference number for the prescription"
-          },
-          "doctorId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "456e4567-e89b-12d3-a456-426614174000",
-            "description": "ID of the prescribing doctor"
-          },
-          "patientId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "789e4567-e89b-12d3-a456-426614174000",
-            "description": "ID of the patient"
-          },
-          "consultationId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "012e4567-e89b-12d3-a456-426614174000",
-            "description": "ID of the associated consultation"
-          },
-          "pharmacyId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "345e4567-e89b-12d3-a456-426614174000",
-            "description": "ID of the assigned pharmacy"
-          },
-          "assignedPharmacistId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "678e4567-e89b-12d3-a456-426614174000",
-            "description": "ID of the assigned pharmacist"
-          },
-          "medications": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Medication"
-            },
-            "description": "List of medications in the prescription"
-          },
-          "doctorNotes": {
-            "type": "string",
-            "example": "Take medication with food",
-            "description": "Additional notes from the doctor"
-          },
-          "diagnosis": {
-            "type": "string",
-            "example": "Acute Respiratory Infection",
-            "description": "Diagnosis from the doctor"
-          },
-          "doctorSignature": {
-            "type": "string",
-            "example": "https://example.com/signatures/doc123.png",
-            "description": "URL or Base64 of the doctor's signature"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "PENDING",
-              "PATIENT_UPLOADED",
-              "PHARMACY_ASSIGNED",
-              "PHARMACY_PROCESSING",
-              "READY_FOR_DELIVERY",
-              "READY_FOR_PICKUP",
-              "COMPLETED",
-              "CANCELLED"
-            ],
-            "example": "PENDING",
-            "description": "Current status of the prescription"
-          },
-          "paymentStatus": {
-            "type": "string",
-            "enum": [
-              "UNPAID",
-              "PAID",
-              "CANCELLED"
-            ],
-            "example": "UNPAID",
-            "description": "Payment status of the prescription"
-          },
-          "deliveryAddress": {
-            "type": "string",
-            "example": "123 Wellness Ave, Lagos, Nigeria",
-            "description": "Delivery address for the prescription"
-          },
-          "deliveryInstructions": {
-            "type": "string",
-            "example": "Leave at front desk",
-            "description": "Delivery instructions"
-          },
-          "expectedDeliveryDate": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-08-30T10:00:00Z",
-            "description": "Expected delivery date"
-          },
-          "actualDeliveryDate": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-08-30T12:00:00Z",
-            "description": "Actual delivery or pickup date"
-          },
-          "fulfillmentHistory": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FulfillmentHistory"
-            },
-            "description": "History of status changes"
-          },
-          "chatMessages": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ChatMessage"
-            },
-            "description": "List of chat messages related to the prescription"
-          },
-          "invoiceItems": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InvoiceItem"
-            },
-            "description": "List of invoice items for the prescription"
-          },
-          "deliveryFee": {
-            "type": "number",
-            "example": 10,
-            "description": "Delivery fee for the prescription"
-          },
-          "totalDue": {
-            "type": "number",
-            "example": 80,
-            "description": "Total amount due for the prescription"
-          },
-          "paymentMethod": {
-            "type": "string",
-            "example": "credit_card",
-            "description": "Payment method for the prescription"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-08-26T12:00:00Z",
-            "description": "Creation date of the prescription"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-08-26T12:30:00Z",
-            "description": "Last update date of the prescription"
-          },
-          "availabilityStatus": {
-            "type": "string",
-            "enum": [
-              "pending",
-              "confirmed",
-              "unavailable",
-              "alternatives_proposed"
-            ],
-            "example": "pending"
-          },
-          "internalNotes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InternalNote"
-            }
-          },
-          "patientComplaint": {
-            "type": "string",
-            "example": "Persistent cough and mild fever for 4 days."
-          },
-          "orderedTests": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "example": [
-              "Chest X-ray",
-              "Complete Blood Count"
-            ]
-          },
-          "appointmentRef": {
-            "type": "string",
-            "example": "A1B2C3D4"
-          },
-          "appointmentDate": {
-            "type": "string",
-            "format": "date",
-            "example": "2025-08-26"
-          }
-        }
-      },
       "FulfillmentHistory": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
             "enum": [
-              "PENDING",
-              "PATIENT_UPLOADED",
-              "PHARMACY_ASSIGNED",
-              "PHARMACY_PROCESSING",
-              "READY_FOR_DELIVERY",
-              "READY_FOR_PICKUP",
-              "COMPLETED",
-              "CANCELLED"
+              "pending",
+              "patient_uploaded",
+              "pharmacy_assigned",
+              "pharmacy_processing",
+              "under_review",
+              "awaiting_payment",
+              "in_progress",
+              "ready_for_pickup",
+              "out_for_delivery",
+              "completed",
+              "cancelled"
             ],
-            "example": "PENDING",
+            "example": "pending",
             "description": "Status at the time of the history entry"
           },
           "timestamp": {
@@ -46420,6 +47439,137 @@
                 "example": 5
               }
             }
+          }
+        }
+      },
+      "DispatchItem": {
+        "type": "object",
+        "description": "A prescription item in the dispatch queue",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "abc12345-0000-0000-0000-000000000001"
+          },
+          "reference": {
+            "type": "string",
+            "example": "RX-20250821-001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready_for_pickup",
+              "out_for_delivery",
+              "completed"
+            ],
+            "example": "ready_for_pickup"
+          },
+          "patient": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "fullName": {
+                "type": "string",
+                "example": "Adaeze Okafor"
+              },
+              "phone": {
+                "type": "string",
+                "example": "+2348012345678"
+              }
+            }
+          },
+          "medications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "dosage": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "deliveryAddress": {
+            "type": "string",
+            "example": "12 Marina Road, Lagos"
+          },
+          "deliveryInstructions": {
+            "type": "string",
+            "example": "Call on arrival"
+          },
+          "deliveryFee": {
+            "type": "number",
+            "example": 1500
+          },
+          "dispatchedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2025-08-25T10:30:00Z"
+          },
+          "estimatedDelivery": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2025-08-25T14:00:00Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DispatchResult": {
+        "type": "object",
+        "description": "Response shape for dispatch and delivered actions",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "abc12345-0000-0000-0000-000000000001"
+          },
+          "reference": {
+            "type": "string",
+            "example": "RX-20250821-001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "out_for_delivery",
+              "completed"
+            ],
+            "example": "out_for_delivery"
+          },
+          "dispatchedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Set once when dispatch is initiated — never overwritten",
+            "example": "2025-08-25T10:30:00Z"
+          },
+          "estimatedDelivery": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2025-08-25T14:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-08-25T10:30:00Z"
           }
         }
       },

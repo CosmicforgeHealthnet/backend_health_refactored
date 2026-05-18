@@ -3,6 +3,23 @@ const router = express.Router();
 const PaymentController = require('../controllers/paymentController');
 const crypto = require('crypto');
 const captureRawBody = require('../../../shared/middlewares/captureRawBody');
+const { logWebhookDelivery } = require('../../admin-ops/services/jobTracker');
+
+const webhookLogger = (req, res, next) => {
+    const originalJson = res.json.bind(res);
+    res.json = function (data) {
+        const event = req.body?.event || req.body?.event?.type || 'unknown';
+        logWebhookDelivery({
+            event,
+            provider: req.params.provider || 'unknown',
+            statusCode: res.statusCode,
+            payload: req.body,
+            responseBody: JSON.stringify(data).substring(0, 500),
+        }).catch(() => {});
+        return originalJson(data);
+    };
+    next();
+};
 
 // Flutterwave webhook signature verification
 const verifyFlutterwaveSignature = (req, res, next) => {
@@ -108,6 +125,7 @@ const handleWebhookProvider = (req, res, next) => {
 // Define routes
 router.post('/:provider',
     handleWebhookProvider,
+    webhookLogger,
     PaymentController.handleWebhook
 );
 

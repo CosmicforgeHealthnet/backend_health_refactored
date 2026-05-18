@@ -261,43 +261,45 @@ const patientProfileSchema = Joi.object({
 
 // Doctor profile specific schemas
 const professionalLicenseSchema = Joi.object({
-  medicalLicenseNumber: Joi.string().trim().max(50).optional().messages({
-    'string.empty': 'medicalLicenseNumber is required',
+  medicalLicenseNumber: Joi.string().trim().max(50).allow('', null).optional().messages({
     'string.max': 'medicalLicenseNumber must not exceed 50 characters',
   }),
-  countryOfLicense: Joi.string().trim().max(100).optional().messages({
-    'string.empty': 'countryOfLicense is required',
+  countryOfLicense: Joi.string().trim().max(100).allow('', null).optional().messages({
     'string.max': 'countryOfLicense must not exceed 100 characters',
   }),
-  licenseAuthority: Joi.string().trim().max(100).optional().messages({
-    'string.empty': 'licenseAuthority is required',
+  licenseAuthority: Joi.string().trim().max(100).allow('', null).optional().messages({
     'string.max': 'licenseAuthority must not exceed 100 characters',
   }),
-  licenseExpiryDate: Joi.date().iso().optional().messages({
+  licenseExpiryDate: Joi.date().iso().allow('', null).optional().messages({
     'date.base': 'licenseExpiryDate must be a valid date (YYYY-MM-DD)',
-    'any.required': 'licenseExpiryDate is required',
   }),
-  licenseDocument: Joi.string().uri().optional().messages({
+  licenseDocument: Joi.string().uri().allow('', null).optional().messages({
     'string.uri': 'licenseDocument must be a valid URL',
   }),
-  yearsOfExperience: Joi.number().integer().positive().optional().messages({
-    'number.integer': 'yearsOfExperience must be an integer',
-    'number.positive': 'yearsOfExperience must be a positive number',
-  }),
+  yearsOfExperience: Joi.alternatives()
+    .try(
+      Joi.number().integer().min(0).messages({
+        'number.integer': 'yearsOfExperience must be an integer',
+        'number.min': 'yearsOfExperience must be 0 or greater',
+      }),
+      Joi.valid(null, '')
+    )
+    .optional(),
   areasOfSpecialization: Joi.array().items(
     Joi.string().trim().max(100).custom((value, helpers) => {
       return value.toLowerCase(); // Normalize to lowercase
     })
-  ).optional().messages({
+  ).allow(null).optional().messages({
     'string.max': 'Each area of specialization must not exceed 100 characters',
   }),
   subspecialty: Joi.string().trim().max(100).optional().allow('', null).messages({
     'string.max': 'subspecialty must not exceed 100 characters',
   }),
-  medicalInstitution: Joi.string().trim().max(100).optional().messages({
+  medicalInstitution: Joi.string().trim().max(100).allow('', null).optional().messages({
     'string.max': 'medicalInstitution must not exceed 100 characters',
   }),
 });
+
 
 const professionalCertificateSchema = Joi.object({
   institution: Joi.string().trim().max(100).required().messages({
@@ -593,16 +595,22 @@ const doctorProfileUpdateSchema = Joi.object({
   contactNumber: Joi.string().trim().pattern(/^\+?[1-9]\d{1,14}([-]?\d+)*$/).optional(),
   residentialAddress: Joi.string().trim().max(500).optional(),
   professionalLicense: Joi.object({
-    medicalLicenseNumber: Joi.string().trim().max(50).optional(),
-    countryOfLicense: Joi.string().trim().max(100).optional(),
-    licenseAuthority: Joi.string().trim().max(100).optional(),
-    licenseExpiryDate: Joi.date().iso().optional(),
-    licenseDocument: Joi.string().uri().optional(),
-    yearsOfExperience: Joi.number().integer().positive().optional(),
-    areasOfSpecialization: Joi.array().items(Joi.string().trim().max(100)).optional(),
+    medicalLicenseNumber: Joi.string().trim().max(50).allow('', null).optional(),
+    countryOfLicense: Joi.string().trim().max(100).allow('', null).optional(),
+    licenseAuthority: Joi.string().trim().max(100).allow('', null).optional(),
+    licenseExpiryDate: Joi.date().iso().allow('', null).optional(),
+    licenseDocument: Joi.string().uri().allow('', null).optional(),
+    yearsOfExperience: Joi.alternatives()
+      .try(
+        Joi.number().integer().min(0),
+        Joi.valid(null, '')
+      )
+      .optional(),
+    areasOfSpecialization: Joi.array().items(Joi.string().trim().max(100)).allow(null).optional(),
     subspecialty: Joi.string().trim().max(100).allow('', null).optional(),
-    medicalInstitution: Joi.string().trim().max(100).optional(),
+    medicalInstitution: Joi.string().trim().max(100).allow('', null).optional(),
   }).optional(),
+
   professionalCertificate: Joi.array().items(
     Joi.object({
       institution: Joi.string().trim().max(100).optional(),

@@ -99,6 +99,9 @@ jobs:
             md5sum .env
             echo "------------------------------------------"
 
+            echo "Logging into Docker Hub..."
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
             echo "Pulling latest images from Registry..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:dev-latest
@@ -109,50 +112,49 @@ jobs:
             # 1. Stop host-level web servers that might be hogging ports
             systemctl stop nginx apache2 2>/dev/null || true
 
-            # 2. Clear Port 80 and 443 (for consistency)
-            fuser -k 80/tcp 2>/dev/null || true
-            fuser -k 443/tcp 2>/dev/null || true
-
-            # 3. Destroy ANY container matching our names by ID (Fixes Ghost Containers)
-            echo "Identifying and destroying cosmic containers by ID..."
-            for name in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
-                IDs=$(docker ps -a -q --filter "name=$name")
-                for ID in $IDs; do
-                    echo "Destroying $name (ID: $ID)..."
-                    PID=$(docker inspect --format '{{.State.Pid}}' $ID 2>/dev/null || echo "0")
-                    if [ -n "$PID" ] && [ "$PID" -gt 0 ] 2>/dev/null; then
-                        echo "Killing process $PID..."
-                        kill -9 $PID || true
-                    fi
-                    docker rm -f $ID || true
-                done
+            # 2. Clear all ports used by this deployment
+            for port in 80 443 6380 5001 8002 8081; do
+                fuser -k ${port}/tcp 2>/dev/null || true
             done
+
+            # 3. Restart Docker daemon then clean up all cosmic containers
+            echo "Restarting Docker daemon..."
+            systemctl restart docker
+            sleep 5
+            echo "Clearing cosmic containers..."
+            for name in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
+                docker network disconnect -f cosmic_network_dev $name 2>/dev/null || true
+                docker update --restart=no $name 2>/dev/null || true
+                docker stop -t 10 $name 2>/dev/null || true
+                docker rm -f $name 2>/dev/null || \
+                    docker rename $name "${name}_dead_$(date +%s)" 2>/dev/null || true
+            done
+            docker network rm cosmic_network_dev 2>/dev/null || true
+            echo "Containers cleared."
 
             echo "Setting up Network..."
             docker network create cosmic_network_dev 2>/dev/null || true
 
             echo "Starting Redis..."
-            # Redis on dev port 6380:6379
+            # No external port — backend reaches Redis via Docker network alias redis:6379
             docker run -d \
               --name cosmic_redis_dev \
               --network cosmic_network_dev \
               --restart unless-stopped \
               --network-alias redis \
-              -p 6380:6379 \
               redis:alpine
 
             echo "Starting AI Service..."
-            # AI on dev port 8002:8001
+            # No external port — backend reaches AI via Docker network
             docker run -d \
               --name cosmic_brain_dev \
               --network cosmic_network_dev \
               --restart unless-stopped \
               --env-file .env.dev \
-              -p 8002:8001 \
               ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-ai:dev-latest
 
             echo "Starting Backend Service..."
-            # Backend on dev port 5001:5000
+            # No external port — Nginx reaches backend via Docker network
             docker run -d \
               --name cosmic_backend_dev \
               --network cosmic_network_dev \
@@ -160,7 +162,6 @@ jobs:
                --env-file .env.dev \
                -e NODE_ENV=development \
                -e PORT=5000 \
-               -p 5001:5000 \
                -v $(pwd)/uploads:/app/uploads \
                ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:dev-latest \
                npm run dev
@@ -176,25 +177,27 @@ jobs:
               -v $(pwd)/uploads:/app/uploads:ro \
               nginx:alpine
 
+            echo "Connecting prod Nginx to dev network so dev-api.cosmicforge-healthnet.com routes correctly..."
+            docker network connect cosmic_network_dev cosmic_gateway_prod 2>/dev/null || true
+            docker exec cosmic_gateway_prod nginx -s reload 2>/dev/null || true
+
             echo "Cleaning up..."
             docker image prune -f
 
             echo "Development deployment completed! Waiting for backend to become healthy..."
-            for i in {1..12}; do
-              if curl -s -k --connect-timeout 5 --max-time 10 https://dev-api.cosmicforge-healthnet.com/health | grep -q "version"; then
+            for i in {1..15}; do
+              if docker exec cosmic_backend_dev wget -qO- http://localhost:5000/health 2>/dev/null | grep -q "version"; then
                 echo "✅ Dev Backend is LIVE and healthy! The deployment is successful."
                 docker ps --filter "name=cosmic_" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
                 exit 0
               fi
-              echo "Waiting for dev backend... attempt $i/12"
-              echo "Current container status:"
-              docker ps -a --filter "name=cosmic_" --format "table {{.Names}}\t{{.Status}}"
-              echo "Recent logs for cosmic_backend_dev:"
-              docker logs --tail 20 cosmic_backend_dev || echo "Could not get logs for cosmic_backend_dev"
+              echo "Waiting for dev backend... attempt $i/15"
+              docker ps --filter "name=cosmic_dev" --format "table {{.Names}}\t{{.Status}}" 2>/dev/null || true
               sleep 10
             done
 
-            echo "❌ Dev Backend failed to start or is not accessible!"
+            echo "❌ Dev Backend failed health check!"
             docker ps -a --filter "name=cosmic_"
-            docker logs cosmic_backend_dev --tail 100
+            docker logs cosmic_backend_dev --tail 50
+            docker logs cosmic_gateway_dev --tail 20
             exit 1

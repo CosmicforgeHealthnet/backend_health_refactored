@@ -9,6 +9,7 @@ const path = require('node:path');
 const archiver = require('archiver');
 const swaggerUi = require("swagger-ui-express");
 const morgan = require("morgan");
+const logger = require("./config/logger");
 
 // ============================================
 // SHARED IMPORTS
@@ -37,7 +38,7 @@ const documentsFeature = require("./features/documents");
 const firstaidFeature = require("./features/firstaid");
 
 // Legacy feature locations (to be moved)
-const labRoutes = require("./features/LAB/routes");
+const legacyLabRoutesEnabled = process.env.ENABLE_LEGACY_LAB_ROUTES === "true";
 // const pharmacyRoutes = require("./shared/services/email/helper/index");
 // const firstaidRoutes = require('./shared/services/email/helper/index');
 // const sosRoutes = require('./features/firstaid/routes/content/sosRoutes');
@@ -72,6 +73,8 @@ const serviceManagementFeature = require('./features/service-management');
 const waitlistRoute = require("./features/marketing/routes/waitlistRoutes"); // Keep independent for legacy /lab_pharm
 const whatsappRoutesNotification = require("./features/notifications/whatsapp/routes");
 const adminVerificationRoutes = require("./features/auth/routes/adminVerificationRoutes");
+const adminOpsFeature = require("./features/admin-ops");
+const analyticsFeature = require("./features/analytics");
 
 // Legacy Compatibility Routes
 
@@ -173,14 +176,40 @@ pharmacySwaggerDoc.servers = [
         description: process.env.NODE_ENV === "production" ? "Production server" : "Development server"
     }
 ];
-const labSwaggerDoc = loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.json", "Lab");
+const labSwaggerDoc = legacyLabRoutesEnabled
+    ? loadSwaggerDoc("./features/LAB/docs/lab-swagger.bundle.json", "Lab")
+    : null;
 const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundle.json", "SOS");
 const serviceManagementSwaggerDoc = loadSwaggerDoc("./features/service-management/docs/service-management-swagger.json", "Service Management");
+const adminOpsSwaggerDoc = loadSwaggerDoc("./features/admin-ops/docs/admin-ops-swagger.json", "Admin Ops");
+const analyticsSwaggerDoc = loadSwaggerDoc("./features/analytics/docs/analytics-swagger.json", "Analytics");
+
+const patientSwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/patient-swagger.bundle.json", "Patient");
+patientSwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server"
+    }
+];
+
+const doctorSwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/doctor-swagger.bundle.json", "Doctor");
+doctorSwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server"
+    }
+];
 
 // ============================================
 // GLOBAL MIDDLEWARE
 // ============================================
-app.use(morgan("dev"));
+app.use(morgan("combined", {
+  stream: { write: (msg) => logger.info(msg.trim()) },
+}));
 app.use(cors({
     origin: config.corsOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -232,11 +261,13 @@ app.use('/pharmacy-docs', swaggerUi.serveFiles(pharmacySwaggerDoc, {}), swaggerU
 }));
 
 
-app.use('/lab-docs', swaggerUi.serveFiles(labSwaggerDoc, {}), swaggerUi.setup(labSwaggerDoc, {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: "CosmicForge Lab API",
-    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
-}));
+if (legacyLabRoutesEnabled) {
+    app.use('/lab-docs', swaggerUi.serveFiles(labSwaggerDoc, {}), swaggerUi.setup(labSwaggerDoc, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: "CosmicForge Lab API",
+        swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+    }));
+}
 
 app.use('/sos-docs', swaggerUi.serveFiles(sosSwaggerDoc, {}), swaggerUi.setup(sosSwaggerDoc, {
     customCss: '.swagger-ui .topbar { display: none }',
@@ -246,6 +277,38 @@ app.use('/sos-docs', swaggerUi.serveFiles(sosSwaggerDoc, {}), swaggerUi.setup(so
 app.use('/service-docs', swaggerUi.serveFiles(serviceManagementSwaggerDoc, {}), swaggerUi.setup(serviceManagementSwaggerDoc, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: "CosmicForge Service Management API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
+app.use('/patient-docs', swaggerUi.serveFiles(patientSwaggerDoc, {}), swaggerUi.setup(patientSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Patient API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
+app.use('/doctor-docs', swaggerUi.serveFiles(doctorSwaggerDoc, {}), swaggerUi.setup(doctorSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Doctor API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
+app.use('/admin-ops-docs', swaggerUi.serveFiles(adminOpsSwaggerDoc, {}), swaggerUi.setup(adminOpsSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Admin Ops API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
+analyticsSwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server"
+    }
+];
+app.use('/analytics-docs', swaggerUi.serveFiles(analyticsSwaggerDoc, {}), swaggerUi.setup(analyticsSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Analytics API",
     swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
 }));
 
@@ -273,9 +336,12 @@ app.get("/", (req, res) => {
         swagger: {
             main: "/api-docs",
             pharmacy: "/pharmacy-docs",
-            lab: "/lab-docs",
+            patient: "/patient-docs",
+            doctor: "/doctor-docs",
+            ...(legacyLabRoutesEnabled ? { lab: "/lab-docs" } : {}),
             sos: "/sos-docs",
-            serviceManagement: "/service-docs"
+            serviceManagement: "/service-docs",
+            adminOps: "/admin-ops-docs"
         },
         routes: {
             new: {
@@ -336,6 +402,9 @@ app.use("/api/firstaid", firstaidFeature.router);
 app.use("/api/marketing", marketingFeature.router);
 app.use("/api/services", serviceManagementFeature.router);
 app.use("/api/admin/verification", adminVerificationRoutes);
+app.use("/api/admin/logs", require("./features/admin/routes/logsRoute"));
+app.use("/api/admin/ops", adminOpsFeature.router);
+app.use("/api/analytics", analyticsFeature.router);
 
 
 // ============================================
@@ -359,7 +428,9 @@ app.use("/api/admin/verification", adminVerificationRoutes);
 // app.use("/appointments", authenticateJWT, appointmentRoutes);
 // app.use("/support", authenticateJWT, supportRoutes);
 // app.use("/pharmacy", pharmacyRoutes);
-app.use("/lab", labRoutes);
+if (legacyLabRoutesEnabled) {
+    app.use("/lab", require("./features/LAB/routes"));
+}
 // app.use("/api/firstaid", firstaidRoutes);
 // app.use('/api/sos', sosRoutes);
 // app.use("/governance", dataGovernanceRoutes);

@@ -33,12 +33,12 @@ async function runOverdueJob() {
 
         // Notify patient (push + email)
         try {
-          await notificationService.createNotification(invoice.patientId, {
-            title:   "Invoice Overdue",
-            message: `Your invoice ${invoice.reference} is overdue. Please make payment as soon as possible.`,
-            type:    "invoice_overdue",
-            data:    { invoiceId: invoice.id },
-          });
+          await notificationService.createNotification(
+            invoice.patientId,
+            "invoice_overdue",
+            `Your invoice ${invoice.reference} is overdue. Please make payment as soon as possible.`,
+            { invoiceId: invoice.id }
+          );
 
           // Email — invoice from findOverdue() may include patient relation
           const patientEmail = invoice.patient?.email;

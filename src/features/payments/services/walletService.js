@@ -99,13 +99,20 @@ class WalletService {
    * so if country changes on their profile, wallet currency updates automatically.
    */
   async getDoctorWallet(doctorId, locationCountry = null) {
-    const [wallet, doctor] = await Promise.all([
-      doctorWalletRepository.findByDoctorId(doctorId),
-      userRepository.findById(doctorId)
-    ]);
+    let wallet = await doctorWalletRepository.findByDoctorId(doctorId);
+    const doctor = await userRepository.findById(doctorId);
+
+    if (!wallet && (doctor?.role === "doctor" || doctor?.role === "specialist")) {
+      console.log(`🔧 Self-healing: Creating missing wallet for doctor ${doctorId}`);
+      try {
+        wallet = await this.createDoctorWallet(doctorId);
+      } catch (createErr) {
+        console.error(`❌ Self-healing failed for doctor ${doctorId}:`, createErr.message);
+      }
+    }
 
     if (!wallet) {
-      throw new Error("Wallet not found for this doctor");
+      throw new Error("Wallet not found for this doctor and self-healing failed.");
     }
 
     // Auto-sync: resolve correct currency — DB country wins, location middleware is fallback.
@@ -1465,7 +1472,7 @@ class WalletService {
       }
 
       // Generate secure reset token
-      const crypto = require('crypto');
+      const crypto = require('node:crypto');
       const resetToken = crypto.randomBytes(32).toString('hex');
       const resetTokenExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 

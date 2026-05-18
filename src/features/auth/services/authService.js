@@ -6,7 +6,7 @@ const refreshTokenService = require('./refreshTokenService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 // const ACCESS_EXPIRES = '15m';
-const ACCESS_EXPIRES = '30d';
+const ACCESS_EXPIRES = '1h';
 const REFRESH_EXPIRES = '30d';
 
 class AuthService {

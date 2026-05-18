@@ -1,8 +1,7 @@
-const { AppDataSource } = require("../../../config/database");
+const AppDataSource = require("../../../config/database");
 
 const invoiceRepo           = require("../repositories/invoiceRepository");
 const pharmacyWalletRepo    = require("../repositories/pharmacyWalletRepository");
-const walletTxnRepo         = require("../repositories/pharmacyWalletTransactionRepository");
 const prescriptionRepo      = require("../repositories/prescriptionRepository");
 const pharmacyProfileRepo   = require("../repositories/pharmacyProfileRepository");
 const userRepo              = require("../../auth/repositories/userRepository");
@@ -14,6 +13,7 @@ const { PrescriptionStatus } = require("../entities/Prescription");
 const CurrencyService       = require("../../payments/services/currencyService");
 const NotificationService   = require("../../notifications/services/notificationService");
 const pharmacyEmailHelper   = require("../../../shared/services/email/helper/pharmacy");
+const { getIO }             = require("../../../config/websocket");
 
 const notificationService = new NotificationService();
 
@@ -138,6 +138,16 @@ const invoiceService = {
     }
     if (prescription.pharmacyId !== pharmacyId) {
       throw Object.assign(new Error("Prescription does not belong to this pharmacy"), { status: 403 });
+    }
+
+    // Block duplicate invoices — only one active (draft or sent) invoice per prescription
+    const { invoices: existing } = await invoiceRepo.findByPharmacy({ pharmacyId, prescriptionId, page: 1, limit: 10 });
+    const activeInvoice = existing.find(inv => ["draft", "sent", "viewed", "awaiting_payment"].includes(inv.status));
+    if (activeInvoice) {
+      throw Object.assign(
+        new Error(`An active invoice (${activeInvoice.reference}) already exists for this prescription. Cancel it before creating a new one.`),
+        { status: 409 }
+      );
     }
 
     // Get pharmacy profile for display currency
@@ -308,26 +318,54 @@ const invoiceService = {
 
     await invoiceRepo.update(invoiceId, { status: InvoiceStatus.SENT, dueAt });
 
-    // Advance prescription status
-    await prescriptionRepo.update(invoice.prescriptionId, {
-      status: PrescriptionStatus.AWAITING_PAYMENT,
+    // Sync delivery fee + total back onto the prescription so patient/doctor screens show correct values
+    const rate = parseFloat(invoice.exchangeRateToUsd) || 1;
+    const deliveryFeeDisplay = Math.round(parseFloat(invoice.deliveryFeeUsd) * rate * 100) / 100;
+    const totalDueDisplay    = Math.round(parseFloat(invoice.totalAmountUsd) * rate * 100) / 100;
+    await prescriptionRepo.updateFields(invoice.prescriptionId, {
+      deliveryFee:   deliveryFeeDisplay,
+      totalDue:      totalDueDisplay,
     });
+
+    // Advance prescription status
+    await prescriptionRepo.updateStatus(invoice.prescriptionId, PrescriptionStatus.AWAITING_PAYMENT);
 
     const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
 
-    // Notify patient (push + email)
+    // Notify patient (real-time + push + email)
     try {
       const updatedForNotif = await invoiceRepo.findByIdAndPharmacy(invoiceId, pharmacyId);
       const dispCurrency    = pharmacy.defaultCurrency || "NGN";
       const rates           = await CurrencyService.getExchangeRates();
       const displayTotal    = Math.round(parseFloat(updatedForNotif.totalAmountUsd) * (rates[dispCurrency] || 1) * 100) / 100;
 
-      await notificationService.createNotification(invoice.patientId, {
-        title:   "New Invoice from Pharmacy",
-        message: `You have a new invoice ${invoice.reference} for your prescription.`,
-        type:    "invoice_sent",
-        data:    { invoiceId: invoice.id },
-      });
+      // Real-time: patient's prescription moved to awaiting_payment
+      try {
+        const io = getIO();
+        io.to(`user_${invoice.patientId}`).emit("prescription_status_changed", {
+          prescriptionId: invoice.prescriptionId,
+          reference:      invoice.reference,
+          status:         PrescriptionStatus.AWAITING_PAYMENT,
+          updatedAt:      new Date().toISOString(),
+        });
+        io.to(`user_${invoice.patientId}`).emit("invoice_sent", {
+          invoiceId:      invoice.id,
+          reference:      invoice.reference,
+          prescriptionId: invoice.prescriptionId,
+          totalAmount:    displayTotal,
+          currency:       dispCurrency,
+        });
+      } catch {
+        // Real-time notifications are best-effort
+      }
+
+      // DB notification (correct positional args: userId, type, message, metadata)
+      await notificationService.createNotification(
+        invoice.patientId,
+        "invoice_sent",
+        `You have a new invoice ${invoice.reference} for your prescription.`,
+        { invoiceId: invoice.id }
+      );
 
       const patient = await userRepo.findById(invoice.patientId);
       if (patient?.email) {
@@ -368,9 +406,7 @@ const invoiceService = {
     // Revert prescription if it was waiting for this invoice's payment
     const prescription = await prescriptionRepo.findById(invoice.prescriptionId);
     if (prescription?.status === PrescriptionStatus.AWAITING_PAYMENT) {
-      await prescriptionRepo.update(invoice.prescriptionId, {
-        status: PrescriptionStatus.UNDER_REVIEW,
-      });
+      await prescriptionRepo.updateStatus(invoice.prescriptionId, PrescriptionStatus.UNDER_REVIEW);
     }
 
     const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
@@ -398,6 +434,19 @@ const invoiceService = {
       throw Object.assign(new Error("Cannot mark a cancelled invoice as paid"), { status: 422 });
     }
 
+    // Fetch pharmacy + ensure wallet exists BEFORE the transaction so wallet.id is always valid
+    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+    let wallet = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
+    if (!wallet) {
+      wallet = await pharmacyWalletRepo.save({
+        pharmacyId,
+        availableBalanceUsd:      0,
+        pendingClearanceUsd:      0,
+        totalEarningsUsd:         0,
+        preferredDisplayCurrency: pharmacy?.defaultCurrency || "NGN",
+      });
+    }
+
     await AppDataSource.transaction(async (trx) => {
       // Mark invoice paid
       await trx.update("Invoice", { id: invoiceId }, {
@@ -405,13 +454,13 @@ const invoiceService = {
         paidAt: new Date(),
       });
 
-      // Advance prescription
+      // Advance prescription + mark payment paid
       await trx.update("Prescription", { id: invoice.prescriptionId }, {
-        status: PrescriptionStatus.IN_PROGRESS,
+        status:        PrescriptionStatus.IN_PROGRESS,
+        paymentStatus: "paid",
       });
 
       // Credit wallet immediately — no escrow hold for cash
-      const wallet = await pharmacyWalletRepo.findByPharmacyId(pharmacyId);
       const amountUsd = parseFloat(invoice.totalAmountUsd);
 
       await trx.update("PharmacyWallet", { id: wallet.id }, {
@@ -439,20 +488,40 @@ const invoiceService = {
       });
     });
 
-    const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
-
-    // Notify patient (push + email)
+    // Notify patient + pharmacy (real-time + DB notification + email)
     try {
       const dispCurrency = pharmacy.defaultCurrency || "NGN";
       const rates        = await CurrencyService.getExchangeRates();
       const displayTotal = Math.round(parseFloat(invoice.totalAmountUsd) * (rates[dispCurrency] || 1) * 100) / 100;
 
-      await notificationService.createNotification(invoice.patientId, {
-        title:   "Payment Confirmed",
-        message: `Your payment for invoice ${invoice.reference} has been confirmed.`,
-        type:    "payment_confirmed",
-        data:    { invoiceId: invoice.id },
-      });
+      // Real-time: prescription moved to in_progress, payment confirmed
+      const statusPayload = {
+        prescriptionId: invoice.prescriptionId,
+        reference:      invoice.reference,
+        status:         PrescriptionStatus.IN_PROGRESS,
+        paymentStatus:  "paid",
+        updatedAt:      new Date().toISOString(),
+      };
+      try {
+        const io = getIO();
+        io.to(`user_${invoice.patientId}`).emit("prescription_status_changed", statusPayload);
+        io.to(`pharmacy_${pharmacyId}`).emit("prescription_status_changed", statusPayload);
+        io.to(`pharmacy_${pharmacyId}`).emit("payment_received", {
+          invoiceId:      invoice.id,
+          reference:      invoice.reference,
+          prescriptionId: invoice.prescriptionId,
+        });
+      } catch {
+        // Real-time notifications are best-effort
+      }
+
+      // DB notifications (correct positional args: userId, type, message, metadata)
+      await notificationService.createNotification(
+        invoice.patientId,
+        "payment_confirmed",
+        `Your payment for invoice ${invoice.reference} has been confirmed.`,
+        { invoiceId: invoice.id }
+      );
 
       const patient = await userRepo.findById(invoice.patientId);
       if (patient?.email) {

@@ -2,11 +2,7 @@
 const paymentService = require("../services/paymentService");
 const userRepository = require("../../auth/repositories/userRepository");
 const transactionRepository = require("../repositories/transactionRepository");
-const paymentJobs = require('../jobs/paymentJobs');
-const ValidationMiddleware = require("../../../shared/middlewares/validation");
 const PaymentAuthMiddleware = require("../middlewares/paymentAuth");
-const RateLimiterMiddleware = require("../../../shared/middlewares/rateLimiter");
-const SanitizerMiddleware = require("../../../shared/middlewares/sanitizer");
 
 class PaymentController {
   // ================================
@@ -1332,11 +1328,20 @@ class PaymentController {
         });
       }
 
-      const patientName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Patient';
+      // Payment providers require a valid email — catch missing/invalid emails early
+      const userEmail = (user.email || '').trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!userEmail || !emailRegex.test(userEmail)) {
+        return res.status(400).json({
+          success: false,
+          message: "Your account does not have a valid email address. Please update your profile with a valid email before making a payment."
+        });
+      }
+
+      // User entity uses fullName, not firstName/lastName
+      const patientName = user.fullName || 'Patient';
       const apptDateStr = new Date(appointmentDate).toISOString().split('T')[0];
-      const doctorName = doctor
-        ? `Dr. ${[doctor.firstName, doctor.lastName].filter(Boolean).join(' ')}`
-        : 'Doctor';
+      const doctorName = doctor ? `Dr. ${doctor.fullName || ''}`.trim() : 'Doctor';
 
       // Create appointment payment transaction
       const paymentData = {
@@ -1353,16 +1358,26 @@ class PaymentController {
 
       const transaction = await paymentService.initiatePayment(paymentData);
 
-      // Create callback URL for provider to redirect back to
-      const callbackUrl = returnUrl
-        ? `${process.env.FRONTEND_URL}/payment/callback?returnUrl=${encodeURIComponent(returnUrl)}`
-        : `${process.env.FRONTEND_URL}/payment/callback`;
+      // Build the final destination URL — strip any origin from the client so localhost never leaks.
+      // The service layer already wraps this in /api/payments/callback?returnUrl=..., so we must
+      // pass the raw destination here (not a pre-wrapped /payment/callback URL).
+      let safeReturnPath = '';
+      if (returnUrl) {
+        try {
+          safeReturnPath = new URL(returnUrl).pathname + (new URL(returnUrl).search || '');
+        } catch {
+          safeReturnPath = returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`;
+        }
+      }
+      const callbackUrl = safeReturnPath
+        ? `${process.env.FRONTEND_URL}${safeReturnPath}`
+        : null;
 
       // Prepare payment data for provider
       const providerPaymentData = {
-        email: user.email,
-        name: `${user.firstName} ${user.lastName}`,
-        phone: user.phone,
+        email: userEmail,
+        name: patientName,
+        phone: user.phoneNumber || undefined,
         callbackUrl,
         title: "Medical Appointment Payment",
         description: `Payment for appointment with ${doctorName}`
@@ -1421,8 +1436,9 @@ class PaymentController {
    * Handle payment callback from provider
    */
   static async handlePaymentCallback(req, res) {
+    const FRONTEND = process.env.FRONTEND_URL || process.env.APP_BASE_URL || process.env.APP_URL || '';
     try {
-      const { reference, tx_ref, transaction_id } = req.query;
+      const { reference, tx_ref, transaction_id, returnUrl } = req.query;
 
       // Determine provider and reference
       let provider, transactionRef;
@@ -1433,7 +1449,8 @@ class PaymentController {
         provider = 'paystack';
         transactionRef = reference;
       } else {
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=Invalid+callback+parameters`);
+        const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
+        return res.redirect(`${FRONTEND}/payment/error?message=Invalid+callback+parameters${baseReturnUrl}`);
       }
 
       // Find transaction — first by provider reference, then by UUID parsed from the ref
@@ -1449,12 +1466,13 @@ class PaymentController {
       }
 
       if (!transaction) {
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=Transaction+not+found`);
+        return res.redirect(`${FRONTEND}/payment/error?message=Transaction+not+found`);
       }
 
       // Idempotency: if already completed, just redirect to success
       if (transaction.status === 'completed') {
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/success?transactionId=${transaction.id}`);
+        const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
+        return res.redirect(`${FRONTEND}/payment/callback?reference=${transactionRef}&status=successful${baseReturnUrl}`);
       }
 
       // Verify payment with provider
@@ -1486,12 +1504,26 @@ class PaymentController {
             );
           } else if (transaction.doctorId && transaction.serviceType === 'appointment') {
             await paymentService.processFundsForAppointmentPayment(transaction);
+
+            try {
+              const AppointmentService = require('../../appointments/services/appointmentService');
+              const appointmentService = new AppointmentService();
+              await appointmentService.updatePaymentStatus(transaction.serviceId, {
+                paymentStatus: 'completed',
+                paymentId: transaction.id,
+                paymentMethod: transaction.paymentProvider || 'paystack'
+              });
+              console.log(`✅ Automatically updated appointment ${transaction.serviceId} to paid status`);
+            } catch (syncError) {
+              console.error(`❌ Failed to automatically sync appointment status:`, syncError);
+            }
           } else if (transaction.doctorId) {
             await paymentService.processFundsImmediate(transaction);
           }
         }
 
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/success?transactionId=${transaction.id}`);
+        const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
+        return res.redirect(`${FRONTEND}/payment/callback?reference=${transactionRef}&status=successful${baseReturnUrl}`);
       } else {
         // Atomic conditional update to failed
         await transactionRepository.repo.createQueryBuilder()
@@ -1500,12 +1532,13 @@ class PaymentController {
           .where('id = :id AND status = :status', { id: transaction.id, status: 'processing' })
           .execute();
 
-        return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?transactionId=${transaction.id}`);
+        const baseReturnUrl = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : '';
+        return res.redirect(`${FRONTEND}/payment/callback?reference=${transactionRef}&status=failed${baseReturnUrl}`);
       }
 
     } catch (error) {
       console.error('Payment callback error:', error);
-      return res.redirect(`${process.env.FRONTEND_URL}/payment/error?message=${encodeURIComponent(error.message)}`);
+      return res.redirect(`${FRONTEND}/payment/error?message=${encodeURIComponent(error.message)}`);
     }
   }
 
@@ -1647,16 +1680,22 @@ class PaymentController {
         });
       }
 
-      // Create callback URL
-      const callbackUrl = returnUrl
-        ? `${process.env.FRONTEND_URL}/payment/callback?returnUrl=${encodeURIComponent(returnUrl)}`
-        : `${process.env.FRONTEND_URL}/payment/callback`;
+      // Pass raw destination — service layer wraps it in /api/payments/callback?returnUrl=...
+      let safeRetryPath = '';
+      if (returnUrl) {
+        try {
+          safeRetryPath = new URL(returnUrl).pathname + (new URL(returnUrl).search || '');
+        } catch {
+          safeRetryPath = returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`;
+        }
+      }
+      const callbackUrl = safeRetryPath ? `${process.env.FRONTEND_URL}${safeRetryPath}` : null;
 
       // Prepare payment data
       const providerPaymentData = {
         email: user.email,
-        name: `${user.firstName} ${user.lastName}`,
-        phone: user.phone,
+        name: user.fullName || 'Patient',
+        phone: user.phoneNumber || undefined,
         callbackUrl,
         title: "Medical Appointment Payment (Retry)",
         description: `Retry payment for appointment`

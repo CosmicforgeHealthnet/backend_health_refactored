@@ -1,8 +1,7 @@
-const { AppDataSource }     = require("../../../config/database");
+const AppDataSource         = require("../../../config/database");
 
 const pharmacyDisputeRepo   = require("../repositories/pharmacyDisputeRepository");
 const invoiceRepo           = require("../repositories/invoiceRepository");
-const pharmacyWalletRepo    = require("../repositories/pharmacyWalletRepository");
 
 const InvoiceSchema         = require("../entities/Invoice");
 const DisputeSchema         = require("../entities/PharmacyDispute");
@@ -11,6 +10,7 @@ const WalletTxnSchema       = require("../entities/PharmacyWalletTransaction");
 const NotificationService   = require("../../notifications/services/notificationService");
 const pharmacyEmailHelper   = require("../../../shared/services/email/helper/pharmacy");
 const userRepo              = require("../../auth/repositories/userRepository");
+const { getIO }             = require("../../../config/websocket");
 
 const notificationService   = new NotificationService();
 
@@ -123,12 +123,24 @@ const pharmacyDisputeService = {
       });
 
       if (pharmacy) {
-        await notificationService.createNotification(pharmacy.userId, {
-          title:   "Dispute Raised",
-          message: `A dispute has been raised for invoice ${invoice.reference}.`,
-          type:    "dispute_raised",
-          data:    { disputeId: dispute.id, invoiceId },
-        });
+        // Real-time: all pharmacy staff see new dispute immediately
+        try {
+          const io = getIO();
+          io.to(`pharmacy_${invoice.pharmacyId}`).emit("dispute_raised", {
+            disputeId:  dispute.id,
+            invoiceId,
+            reference:  invoice.reference,
+          });
+        } catch {
+          // Real-time notifications are best-effort
+        }
+
+        await notificationService.createNotification(
+          pharmacy.userId,
+          "dispute_raised",
+          `A dispute has been raised for invoice ${invoice.reference}.`,
+          { disputeId: dispute.id, invoiceId }
+        );
 
         if (pharmacy.user?.email) {
           const patient = await userRepo.findById(patientId);
@@ -230,19 +242,19 @@ const pharmacyDisputeService = {
       ]);
 
       await Promise.all([
-        notificationService.createNotification(dispute.patientId, {
-          title:   "Dispute Resolved",
-          message: `Your dispute has been resolved (${resolution.replace("_", " ")}).`,
-          type:    "dispute_resolved",
-          data:    { disputeId },
-        }),
+        notificationService.createNotification(
+          dispute.patientId,
+          "dispute_resolved",
+          `Your dispute has been resolved (${resolution.replace("_", " ")}).`,
+          { disputeId }
+        ),
         pharmacy
-          ? notificationService.createNotification(pharmacy.userId, {
-              title:   "Dispute Resolved",
-              message: `Dispute ${disputeId} has been resolved (${resolution.replace("_", " ")}).`,
-              type:    "dispute_resolved",
-              data:    { disputeId },
-            })
+          ? notificationService.createNotification(
+              pharmacy.userId,
+              "dispute_resolved",
+              `Dispute ${disputeId} has been resolved (${resolution.replace("_", " ")}).`,
+              { disputeId }
+            )
           : Promise.resolve(),
       ]);
 

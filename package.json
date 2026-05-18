@@ -4,6 +4,7 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon src/server.js",
+    "repair": "node src/scripts/repair_users.js",
     "start": "cross-env NODE_ENV=production node src/server.js",
     "typeorm": "typeorm",
     "migration:generate": "cross-env NODE_ENV=development npx typeorm migration:generate --dataSource src/config/database.js --outputJs",
@@ -11,6 +12,8 @@
     "migration:create": "cross-env NODE_ENV=development npx typeorm migration:create --outputJs",
     "migration:run": "cross-env NODE_ENV=development npx typeorm migration:run --dataSource src/config/database.js",
     "migration:show": "cross-env NODE_ENV=development npx typeorm migration:show --dataSource src/config/database.js",
+    "db:audit:conflicts": "bash scripts/db-conflict-audit.sh",
+    "db:hotfix:last-login-at": "cross-env RUN_MIGRATIONS=false node scripts/hotfix-last-login-at.js",
     "swagger:bundle": "node src/docs/mergeSwaggerComponents.js",
     "swagger-components-merge": "node src/docs/mergeSwaggerComponents.js",
     "build:pharmacy-swagger": "node src/features/pharmacy/docs/pharmacySwaggerMerger.js",
@@ -70,6 +73,8 @@
     "swagger-ui-express": "^4.6.3",
     "tesseract.js": "^6.0.1",
     "typeorm": "^0.3.24",
+    "uuid": "^11.1.0",
+    "winston": "^3.19.0",
     "xlsx": "^0.18.5",
     "xss": "^1.0.15",
     "yamljs": "^0.3.0"

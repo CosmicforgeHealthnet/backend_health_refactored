@@ -4,8 +4,11 @@ const transactionSplitRepository = require("../repositories/transactionSplitRepo
 const userPaymentMethodRepository = require("../repositories/userPaymentMethodRepository");
 const doctorWalletRepository = require("../repositories/doctorWalletRepository");
 const { sendAppointmentPaymentReceiptEmail, sendSubscriptionPaymentReceiptEmail } = require('../../../shared/services/email/emailHelpers');
-const disputeRepository = require("../repositories/disputeRepository");
 const userRepository = require("../../auth/repositories/userRepository");
+const {
+  sendAppointmentPaymentReceiptWhatsApp,
+  sendSubscriptionPaymentReceiptWhatsApp,
+} = require("../../notifications/whatsapp/helper");
 const axios = require("axios");
 
 class PaymentService {
@@ -590,7 +593,7 @@ class PaymentService {
    * @returns {Promise<Object>} - Payment options with fees and recommendations
    */
   async getPaymentOptions(data) {
-    const { amount, currency, userId, paymentMethodId } = data;
+    const { amount, currency, paymentMethodId } = data;
 
     // Get user's payment method performance if provided
     let paymentMethod = null;
@@ -1317,6 +1320,11 @@ class PaymentService {
   async processFlutterwavePayment(transaction, paymentData) {
     try {
       const txRef = `FLW-${transaction.id}-${Date.now()}`;
+      const baseReturnUrlFLW = (paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl)
+        ? `?returnUrl=${encodeURIComponent(paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl)}`
+        : '';
+      const backendBase = (process.env.BACKEND_URL || process.env.APP_BASE_URL || '').replace(/\/api\/?$/, '');
+        
       const payload = {
         tx_ref: txRef,
         amount: transaction.originalAmount,
@@ -1332,9 +1340,8 @@ class PaymentService {
           description: transaction.description || `Payment for ${transaction.serviceType}`,
           logo: process.env.COMPANY_LOGO_URL
         },
-        redirect_url: paymentData.redirectUrl || paymentData.returnUrl || `${process.env.FRONTEND_URL}/payment/callback`,
-        // 🔥 ADD THIS WEBHOOK URL - This was missing!
-        webhook_url: `${process.env.BACKEND_URL}/webhooks/payments/flutterwave`,
+        redirect_url: `${backendBase}/api/payments/callback${baseReturnUrlFLW}`,
+        webhook_url: `${backendBase}/webhooks/payments/flutterwave`,
         meta: {
           transaction_id: transaction.id,
           service_type: transaction.serviceType,
@@ -1401,21 +1408,22 @@ class PaymentService {
   async processPaystackPayment(transaction, paymentData) {
     try {
       const reference = `PST-${transaction.id}-${Date.now()}`;
+      const baseReturnUrlPST = (paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl)
+        ? `?returnUrl=${encodeURIComponent(paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl)}`
+        : '';
+      const backendBase = (process.env.BACKEND_URL || process.env.APP_BASE_URL || '').replace(/\/api\/?$/, '');
 
       const payload = {
         email: paymentData.email,
         amount: transaction.originalAmount * 100, // Convert to kobo/pesewas
         currency: transaction.originalCurrency,
         reference: reference,
-        callback_url: paymentData.callbackUrl || paymentData.redirectUrl || paymentData.returnUrl || `${process.env.FRONTEND_URL}/payment/callback`,
-        // 🔥 NOTE: Paystack uses callback_url for webhooks too
-        // But you should ALSO set webhook URL in your Paystack Dashboard
+        callback_url: `${backendBase}/api/payments/callback${baseReturnUrlPST}`,
         metadata: {
           transaction_id: transaction.id,
           service_type: transaction.serviceType,
           service_id: transaction.serviceId,
-          // Add webhook URL in metadata as backup
-          webhook_url: `${process.env.BACKEND_URL}/webhooks/payments/paystack`,
+          webhook_url: `${backendBase}/webhooks/payments/paystack`,
           custom_fields: [
             {
               display_name: "Service Type",
@@ -1688,10 +1696,25 @@ class PaymentService {
         } else if (ourTransaction.doctorId && ourTransaction.serviceType === 'appointment') {
           console.log('💰 Processing appointment funds...');
           await this.processFundsForAppointmentPayment(ourTransaction);
+          
+          // 🔥 AUTOMATIC SYNC: Update appointment payment status immediately
+          try {
+            const AppointmentService = require('../../appointments/services/appointmentService');
+            const appointmentService = new AppointmentService();
+            await appointmentService.updatePaymentStatus(ourTransaction.serviceId, {
+              paymentStatus: 'completed',
+              paymentId: ourTransaction.id,
+              paymentMethod: ourTransaction.paymentProvider || provider
+            });
+            console.log(`✅ Automatically updated appointment ${ourTransaction.serviceId} to paid status via webhook`);
+          } catch (syncError) {
+            console.error(`❌ Failed to automatically sync appointment status via webhook:`, syncError);
+          }
         } else if (ourTransaction.doctorId) {
           console.log('💰 Processing immediate funds...');
           await this.processFundsImmediate(ourTransaction);
         }
+
 
         // 📧 NEW: Send payment receipt emails
         console.log('📧 Sending payment receipt email...');
@@ -1713,6 +1736,7 @@ class PaymentService {
 
             if (appointment && patient) {
               await sendAppointmentPaymentReceiptEmail(patient, ourTransaction, appointment, splits);
+              await sendAppointmentPaymentReceiptWhatsApp(patient, ourTransaction, appointment);
               console.log('✅ Appointment receipt email sent successfully');
             }
           } else if (ourTransaction.serviceType === 'subscription' || ourTransaction.serviceType === 'subscription_upgrade') {
@@ -1723,6 +1747,7 @@ class PaymentService {
 
             if (subscription && patient) {
               await sendSubscriptionPaymentReceiptEmail(patient, ourTransaction, subscription);
+              await sendSubscriptionPaymentReceiptWhatsApp(patient, ourTransaction, subscription);
               console.log('✅ Subscription receipt email sent successfully');
             }
           }
@@ -2106,7 +2131,7 @@ class PaymentService {
    * @returns {Promise<Object>} - Saved payment method
    */
   async savePaymentMethod(data) {
-    const { userId, cardLast4 } = data;
+    const { userId } = data;
 
     // Check if we should set as default (first payment method)
     const existingMethods = await userPaymentMethodRepository.findByUserId(userId);
@@ -2178,7 +2203,6 @@ class PaymentService {
    * @returns {Promise<Array>} - Transaction history
    */
   async getUserTransactions(userId, role, page = 1, limit = 20) {
-    const offset = (page - 1) * limit;
     if (role === 'patient') {
       return await transactionRepository.findByPatientId(userId);
     } else if (role === 'doctor') {

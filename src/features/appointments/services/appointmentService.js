@@ -16,6 +16,13 @@ const { USER_ROLES } = require("../../../shared/utils/constants");
 const AppointmentChatService = require("../../chat/services/appointmentChatService");
 const appointmentEmailHelpers = require("../../../shared/services/email/emailHelpers");
 const NotificationService = require("../../notifications/services/notificationService");
+const {
+  sendPatientAppointmentApprovedWhatsApp,
+  sendDoctorAppointmentCancellationWhatsApp,
+  sendPatientAppointmentCancellationWhatsApp,
+  sendDoctorAppointmentRescheduledWhatsApp,
+  sendPatientAppointmentRescheduledWhatsApp,
+} = require("../../notifications/whatsapp/helper");
 
 const TimezoneService = require("../../compliance/services/timezoneService");
 
@@ -92,12 +99,18 @@ class AppointmentService {
         appointmentTimeUTC.getTime() + (appointmentData.duration || 30) * 60000
       );
 
-      // Validate appointment is not in the past
-      if (
-        TimezoneService.isAppointmentInPast(appointmentTimeUTC, patientTimezone)
-      ) {
+      // Validate appointment is not in the past and is at least 1 hour in advance
+      const now = new Date();
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+
+      if (appointmentTimeUTC < now) {
         throw new Error("Cannot create appointment in the past");
       }
+
+      if (appointmentTimeUTC < oneHourFromNow) {
+        throw new Error("Appointment must be scheduled at least 1 hour in advance");
+      }
+
 
       // Existing validation logic...
       const isPatient = await userRepository.hasRole(
@@ -301,9 +314,22 @@ class AppointmentService {
           },
         });
       }
+
+      if (patientData?.phoneNumber) {
+        await sendPatientAppointmentApprovedWhatsApp({
+          phoneNumber: patientData.phoneNumber,
+          patientName: patientData.fullName,
+          doctorName: doctorData?.fullName || "your doctor",
+          appointmentDetails: {
+            id: appointment.id,
+            date: appointment.appointmentDate,
+            time: appointment.appointmentTime,
+          },
+        });
+      }
     } catch (emailError) {
       console.error(
-        `Failed to send approval email for appointment ${appointmentId}:`,
+        `Failed to send approval email/WhatsApp for appointment ${appointmentId}:`,
         emailError
       );
     }
@@ -392,6 +418,11 @@ class AppointmentService {
       throw new Error("Appointment not found");
     }
 
+    // Map currency code to symbol
+    const currencySymbols = { NGN: '₦', USD: '$', GBP: '£', EUR: '€', GHS: '₵', KES: 'KSh', ZAR: 'R' };
+    const currencyCode = appointment.consultationFeeCurrency || 'NGN';
+    const currencySymbol = currencySymbols[currencyCode] || currencyCode + ' ';
+
     // Cancel meeting based on provider
     if (appointment.meetingProvider == "zoom") {
       await this.cancelZoomMeetingAppointment(id, cancellationData.reason);
@@ -414,15 +445,10 @@ class AppointmentService {
       updateData
     );
 
-    // Send cancellation emails to both doctor and patient
-    try {
-      const doctorData = appointment.doctor;
-      const patientData = appointment.patient;
-
-      // Map currency code to symbol
-      const currencySymbols = { NGN: '₦', USD: '$', GBP: '£', EUR: '€', GHS: '₵', KES: 'KSh', ZAR: 'R' };
-      const currencyCode = appointment.consultationFeeCurrency || 'NGN';
-      const currencySymbol = currencySymbols[currencyCode] || currencyCode + ' ';
+      // Send cancellation emails to both doctor and patient
+      try {
+        const doctorData = appointment.doctor;
+        const patientData = appointment.patient;
 
       const cancellationDetails = {
         id: appointment.id,
@@ -453,9 +479,27 @@ class AppointmentService {
           appointmentDetails: cancellationDetails,
         });
       }
+
+      if (doctorData?.phoneNumber) {
+        await sendDoctorAppointmentCancellationWhatsApp({
+          phoneNumber: doctorData.phoneNumber,
+          doctorName: doctorData.fullName,
+          patientName: patientData?.fullName || "your patient",
+          appointmentDetails: cancellationDetails,
+        });
+      }
+
+      if (patientData?.phoneNumber) {
+        await sendPatientAppointmentCancellationWhatsApp({
+          phoneNumber: patientData.phoneNumber,
+          patientName: patientData.fullName,
+          doctorName: doctorData?.fullName || "your doctor",
+          appointmentDetails: cancellationDetails,
+        });
+      }
     } catch (emailError) {
       console.error(
-        `❌ Error sending cancellation emails for appointment ${id}:`,
+        `❌ Error sending cancellation emails/WhatsApp for appointment ${id}:`,
         emailError
       );
       // Don't fail the cancellation if email sending fails
@@ -555,6 +599,14 @@ class AppointmentService {
       throw new Error("Appointment not found");
     }
 
+    const rescheduledById = rescheduleData.rescheduledBy || req?.user?.sub;
+    const isDoctor = rescheduledById === appointment.doctorId;
+    const isPatient = rescheduledById === appointment.patientId;
+
+    if (isDoctor && appointment.type !== "follow-up") {
+      throw new Error("Doctors can only reschedule follow-up appointments.");
+    }
+
     // Store old appointment details for email
     const oldAppointmentDetails = {
       date: appointment.appointmentDate,
@@ -595,24 +647,34 @@ class AppointmentService {
       appointment.patientTimezone
     );
 
+    // Validate new slot availability server-side
+    await this.validateDoctorAvailabilityWithTimezone(
+      appointment.doctorId,
+      rescheduleData.newDate,
+      rescheduleData.newTime,
+      appointment.duration,
+      appointment.patientTimezone,
+      appointment.doctorTimezone
+    );
+
     const updateData = {
       appointmentDate: rescheduleData.newDate,
       appointmentTime: rescheduleData.newTime,
       appointmentTimeUTC: newAppointmentUTC,
       doctorLocalTime: doctorLocalTime.time,
       patientLocalTime: patientLocalTime.time,
-      duration: rescheduleData.duration || appointment.duration,
-      status: "rescheduled",
+      duration: appointment.duration,
+      status: isPatient ? "pending" : "rescheduled",
+      isDoctorApproved: isPatient ? false : appointment.isDoctorApproved,
       endTime: this.calculateEndTime(
         rescheduleData.newTime,
-        rescheduleData.duration || appointment.duration
+        appointment.duration
       ),
       endTimeUTC: new Date(
-        newAppointmentUTC.getTime() +
-        (rescheduleData.duration || appointment.duration) * 60000
+        newAppointmentUTC.getTime() + appointment.duration * 60000
       ),
       rescheduledAt: new Date(),
-      rescheduledBy: rescheduleData.rescheduledBy,
+      rescheduledBy: rescheduledById,
       rescheduleReason: rescheduleData.reason,
     };
 
@@ -667,31 +729,90 @@ class AppointmentService {
         });
       }
 
+      if (doctorData?.phoneNumber) {
+        await sendDoctorAppointmentRescheduledWhatsApp({
+          phoneNumber: doctorData.phoneNumber,
+          doctorName: doctorData.fullName,
+          patientName: patientData?.fullName || "your patient",
+          appointmentDetails: rescheduleDetails,
+        });
+      }
+
+      if (patientData?.phoneNumber) {
+        await sendPatientAppointmentRescheduledWhatsApp({
+          phoneNumber: patientData.phoneNumber,
+          patientName: patientData.fullName,
+          doctorName: doctorData?.fullName || "your doctor",
+          appointmentDetails: rescheduleDetails,
+        });
+      }
+
       console.log(`✅ Reschedule emails sent for appointment ${id}`);
     } catch (emailError) {
       console.error(
-        `❌ Error sending reschedule emails for appointment ${id}:`,
+        `❌ Error sending reschedule emails/WhatsApp for appointment ${id}:`,
         emailError
       );
       // Don't fail the reschedule if email sending fails
     }
 
-    await this.notificationService.createNotification(
-      appointment.doctorId,
-      "notification",
-      `Appointment with ${appointment.patient?.fullName} has been rescheduled from ${oldAppointmentDetails.date} at ${oldAppointmentDetails.time} to ${rescheduleData.newDate} at ${rescheduleData.newTime}.`,
-      {
-        action: "appointment_rescheduled",
-        appointmentId: appointment.id,
-        oldDate: oldAppointmentDetails.date,
-        oldTime: oldAppointmentDetails.time,
-        newDate: rescheduleData.newDate,
-        newTime: rescheduleData.newTime,
-        link: "/doctors/dashboard/appointments",
-      }
-    );
+    if (isPatient || !isDoctor) {
+      await this.notificationService.createNotification(
+        appointment.doctorId,
+        "notification",
+        `Appointment with ${appointment.patient?.fullName} has been rescheduled from ${oldAppointmentDetails.date} at ${oldAppointmentDetails.time} to ${rescheduleData.newDate} at ${rescheduleData.newTime} and requires approval.`,
+        {
+          action: "appointment_rescheduled",
+          appointmentId: appointment.id,
+          oldDate: oldAppointmentDetails.date,
+          oldTime: oldAppointmentDetails.time,
+          newDate: rescheduleData.newDate,
+          newTime: rescheduleData.newTime,
+          link: "/doctors/dashboard/appointments",
+        }
+      );
+    }
+
+    if (isDoctor) {
+      await this.notificationService.createNotification(
+        appointment.patientId,
+        "alert",
+        `Your appointment with Dr. ${appointment.doctor?.fullName} has been rescheduled from ${oldAppointmentDetails.date} at ${oldAppointmentDetails.time} to ${rescheduleData.newDate} at ${rescheduleData.newTime}.`,
+        {
+          action: "appointment_rescheduled",
+          appointmentId: appointment.id,
+          oldDate: oldAppointmentDetails.date,
+          oldTime: oldAppointmentDetails.time,
+          newDate: rescheduleData.newDate,
+          newTime: rescheduleData.newTime,
+          link: "/patients/dashboard/appointments/overview",
+        }
+      );
+    }
     // Note: External service integrations will be called here:
     // - Meeting service for meeting update (already handled above)
+
+    // Emit websocket event for real-time dashboard updates
+    try {
+      const { getIO } = require("../../../config/websocket");
+      const io = getIO();
+      if (io) {
+        io.to(`user_${appointment.patientId}`).emit("APPOINTMENT_RESCHEDULED", {
+          appointmentId: appointment.id,
+          status: updatedAppointment.status,
+          newDate: rescheduleData.newDate,
+          newTime: rescheduleData.newTime
+        });
+        io.to(`user_${appointment.doctorId}`).emit("APPOINTMENT_RESCHEDULED", {
+          appointmentId: appointment.id,
+          status: updatedAppointment.status,
+          newDate: rescheduleData.newDate,
+          newTime: rescheduleData.newTime
+        });
+      }
+    } catch (socketError) {
+      console.error("❌ Failed to emit APPOINTMENT_RESCHEDULED socket event:", socketError);
+    }
 
     return updatedAppointment;
   }
@@ -713,13 +834,15 @@ class AppointmentService {
     };
 
     // Notify patient about completion
-    await this.notificationService.createNotification(
+    const notification = await this.notificationService.createNotification(
       appointment.patientId,
       "notification",
-      `Your consultation with Dr. ${appointment.doctor?.fullName
-      } has been completed. ${completionData.followUpRequired
-        ? "A follow-up appointment may be needed."
-        : ""
+      `Your consultation with Dr. ${
+        appointment.doctor?.fullName
+      } has been completed. ${
+        completionData.followUpRequired
+          ? "A follow-up appointment may be needed."
+          : ""
       }`,
       {
         action: "appointment_completed",
@@ -729,6 +852,23 @@ class AppointmentService {
         link: "/patients/dashboard/appointments/overview",
       }
     );
+
+    // Emit websocket event for real-time rating popup
+    try {
+      const { getIO } = require("../../../config/websocket");
+      const io = getIO();
+      if (io) {
+        io.to(`user_${appointment.patientId}`).emit("APPOINTMENT_COMPLETED", {
+          appointmentId: appointment.id,
+          doctorId: appointment.doctorId,
+          doctorName: appointment.doctor?.fullName || "Doctor",
+          notificationId: notification.id
+        });
+        console.log(`✉️ Emitted APPOINTMENT_COMPLETED to patient ${appointment.patientId}`);
+      }
+    } catch (socketError) {
+      console.error("❌ Failed to emit APPOINTMENT_COMPLETED socket event:", socketError);
+    }
 
     return await this.appointmentRepository.update(id, updateData);
   }
@@ -1419,7 +1559,7 @@ class AppointmentService {
       paymentData.paymentStatus === "completed" &&
       appointment.status === "pending"
     ) {
-      // updateData.status = "scheduled";
+      updateData.status = "scheduled";
 
       // Send email notification to doctor about payment and approval request
       try {

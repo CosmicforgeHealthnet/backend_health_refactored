@@ -6,6 +6,7 @@
 
 const router = require("express").Router();
 const profileController = require("../controllers/profileController");
+const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
 
 /**
  * @swagger
@@ -192,6 +193,6 @@ router.get("/prescriptions", prescriptionController.getPatientPrescriptions);
  *       
  *       **Legacy route**: `PUT /user/update-auth` (deprecated)
  */
-router.put("/auth-info", profileController.updateAuthInfo);
+router.put("/auth-info", DocumentUploadMiddleware.uploadDocuments(), DocumentUploadMiddleware.handleUploadError, profileController.updateAuthInfo);
 
 module.exports = router;

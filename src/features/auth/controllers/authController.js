@@ -1,7 +1,9 @@
 // src/features/auth/controllers/authController.js
 // Auth Controller - Feature based
 const authService = require("../services/authService");
-const referralService = require("../services/referralService"); // Internal to auth feature now
+const referralService = require("../services/referralService");
+const walletService = require("../../payments/services/walletService");
+const User = require("../entities/User");
 const emailVerRepo = require("../repositories/emailVerificationRepository");
 const userRepo = require("../repositories/userRepository");
 const passwordResetRepository = require("../repositories/passwordResetRepository");
@@ -185,6 +187,18 @@ exports.signupOtp = async (req, res, next) => {
                 await referralService.verifyReferral(referral.referredUserId);
         }
 
+        // 🌟 Create wallet for new doctors
+        if (role === "doctor") {
+            try {
+                // Ensure wallet creation doesn't block the rest of registration
+                await walletService.createDoctorWallet(user.id);
+                console.log(`✅ Wallet created for new doctor: ${user.id}`);
+            } catch (walletErr) {
+                console.error(`❌ Failed to create initial wallet for doctor ${user.id}:`, walletErr.message);
+                // We don't block registration if wallet fails, self-healing logic in getDoctorWallet will catch it later.
+            }
+        }
+
         const responseBody = {
             message: emailSent
                 ? "Account created successfully; check your email for a 6-digit verification code."
@@ -298,15 +312,17 @@ exports.logout = async (req, res, next) => {
 
 // Redirect to Google consent screen
 exports.googleAuth = (req, res) => {
-    const { role, deviceFingerprint, platform } = req.query;
+    console.log('🚀 [GoogleAuth] query params:', req.query);
+    const { role, deviceFingerprint, platform, departmentSpecialty, phoneNumber } = req.query;
     if (!role || !deviceFingerprint) {
         return res
             .status(400)
             .json({ error: "Both `role` and `deviceFingerprint` are required" });
     }
 
-    // Encode role + fingerprint (+ platform for redirect) into state
-    const stateObj = { role, deviceFingerprint, platform };
+    // Encode role + fingerprint (+ specialty + phone + platform for redirect) into state
+    const stateObj = { role, deviceFingerprint, platform, departmentSpecialty, phoneNumber };
+    console.log('🚀 [GoogleAuth] stateObj to encode:', stateObj);
     const state = Buffer.from(JSON.stringify(stateObj)).toString("base64");
 
     const url = googleAuthService.getAuthUrl(state);
@@ -333,6 +349,7 @@ exports.googleCallback = async (req, res, next) => {
         let stateObj;
         try {
             stateObj = JSON.parse(Buffer.from(state, "base64").toString());
+            console.log('🚀 [GoogleCallback] decoded stateObj:', stateObj);
         } catch {
             return res.status(400).json({ error: "Invalid state parameter." });
         }
@@ -361,7 +378,7 @@ exports.googleCallback = async (req, res, next) => {
                 code,
                 deviceFingerprint,
                 userAgent,
-                role
+                stateObj // Pass the entire stateObj as extraData
             );
 
         if (stateObj.platform === 'mobile') {
@@ -397,11 +414,14 @@ exports.googleMobileLogin = async (req, res, next) => {
         }
 
         const userAgent = req.headers["user-agent"] || "";
+        const { role: extraRole, departmentSpecialty, phoneNumber } = req.body;
+        const extraData = { role: extraRole || role || 'patient', departmentSpecialty, phoneNumber };
+
         const result = await googleAuthService.verifyMobileIdToken(
             idToken,
             deviceFingerprint,
             userAgent,
-            role || 'patient'
+            extraData
         );
 
         return res.json(result);
@@ -735,3 +755,43 @@ exports.verifyMobileMagicLink = async (req, res, next) => {
 };
 
 
+
+exports.getCurrentUser = async (req, res, next) => {
+    try {
+        const userId = req.user.sub;
+        console.log("🔍 [DEBUG] getCurrentUser called for userId:", userId);
+        const user = await userRepo.findById(userId);
+
+        if (!user) {
+            console.log("❌ [DEBUG] User not found for ID:", userId);
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        console.log("✅ [DEBUG] User found. departmentSpecialty in DB:", user.departmentSpecialty);
+
+        // Sanitize response (remove sensitive fields)
+        const sanitizedUser = {
+            id: user.id,
+            sub: user.id, // For backward compatibility with some frontend logic
+            fullName: user.fullName,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            profileImageUrl: user.profileImageUrl,
+            bannerUrl: user.bannerUrl,
+            phoneNumber: user.phoneNumber,
+            departmentSpecialty: user.departmentSpecialty,
+            mfaEnabled: user.mfaEnabled,
+            country: user.country,
+            isOnline: user.isOnline,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
+
+        console.log("📤 [DEBUG] Sending sanitized user with specialty:", sanitizedUser.departmentSpecialty);
+        res.json({ success: true, user: sanitizedUser });
+    } catch (err) {
+        console.error("💥 [DEBUG] Error in getCurrentUser:", err);
+        next(err);
+    }
+};

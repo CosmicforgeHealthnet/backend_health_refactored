@@ -93,6 +93,12 @@ module.exports = new EntitySchema({
     profileImageUrl: { type: "varchar", nullable: true },
     mfaEnabled: { type: "boolean", default: false },
     mfaSecret: { type: "varchar", nullable: true },
+    refreshTokenHash: { type: "varchar", nullable: true },
+    resetPasswordOTP: { type: "varchar", nullable: true },
+    resetPasswordOTPExpires: { type: "timestamp", nullable: true },
+    mustChangePassword: { type: "boolean", default: false },
+    passwordChangedAt: { type: "timestamp", nullable: true },
+    lastLoginAt: { type: "timestamp", nullable: true },
     createdAt: { type: "timestamp", createDate: true },
     updatedAt: { type: "timestamp", updateDate: true },
 

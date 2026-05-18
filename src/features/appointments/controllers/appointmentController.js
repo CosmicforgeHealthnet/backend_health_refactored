@@ -678,7 +678,8 @@ class AppointmentController {
   async generateGoogleMeetingLink(req, res) {
     try {
       const { id } = req.params;
-      const { doctorId } = req.body;
+      const doctorId = req.body.doctorId || req.user?.sub;
+
       const appointment = await this.appointmentService.generateGoogleMeetLink(id, doctorId);
       res.json({
         success: true,
@@ -697,9 +698,10 @@ class AppointmentController {
   async generateZoomMeetingLink(req, res) {
     try {
       const { id } = req.params;
-      const { doctorId } = req.body;
+      const doctorId = req.body.doctorId || req.user?.sub;
 
       const result = await this.appointmentService.generateZoomMeetingLink(id, doctorId);
+
 
       if (result.success) {
         res.json({
@@ -720,9 +722,10 @@ class AppointmentController {
   async generateJitsiMeetingLink(req, res) {
     try {
       const { id } = req.params;
-      const { doctorId } = req.body;
+      const doctorId = req.body.doctorId || req.user?.sub;
 
       const result = await this.appointmentService.generateJitsiMeetingLink(id, doctorId);
+
 
       if (result.success) {
         res.json({

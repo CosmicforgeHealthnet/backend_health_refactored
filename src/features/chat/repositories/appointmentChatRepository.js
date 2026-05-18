@@ -123,6 +123,14 @@ class AppointmentChatRepository {
         return this.repo.update(id, { status });
     }
 
+    /** Find appointment chat by appointment ID */
+    findByAppointmentId(appointmentId) {
+        return this.repo.findOne({
+            where: { appointment: { id: appointmentId } },
+            relations: ["room", "doctor", "patient", "appointment"],
+        });
+    }
+
     /** Find an existing appointment chat room between a doctor and patient */
     findExistingRoomByDoctorAndPatient(doctorId, patientId) {
         return this.repo
