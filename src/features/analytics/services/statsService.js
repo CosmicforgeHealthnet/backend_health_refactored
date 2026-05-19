@@ -1,7 +1,7 @@
 const { AppDataSource } = require('../../../config/database');
 
 const VALID_USER_TYPES = ['patient', 'doctor', 'pharmacy', 'lab', 'unknown'];
-const VALID_ROLES = ['pharmacy', 'lab'];
+const VALID_ROLES = ['lab'];
 
 function safeDate(val) {
     if (!val) return null;
@@ -114,7 +114,8 @@ async function getStats({ from, to, user_type } = {}) {
         `SELECT
             SUM(CASE WHEN event_type = 'cta_click' AND (event_data->>'label' ILIKE '%patient%') THEN 1 ELSE 0 END) AS patient_register_clicks,
             SUM(CASE WHEN event_type = 'cta_click' AND (event_data->>'label' ILIKE '%doctor%') THEN 1 ELSE 0 END) AS doctor_register_clicks,
-            SUM(CASE WHEN event_type = 'waitlist_submit' AND event_data->>'role' = 'pharmacy' THEN 1 ELSE 0 END) AS pharmacy_waitlist_joins,
+            SUM(CASE WHEN event_type = 'cta_click' AND event_data->>'label' = 'Pharmacy Sign Up' THEN 1 ELSE 0 END) AS pharmacy_signup_clicks,
+            SUM(CASE WHEN event_type = 'cta_click' AND event_data->>'label' = 'Pharmacy Sign In' THEN 1 ELSE 0 END) AS pharmacy_signin_clicks,
             SUM(CASE WHEN event_type = 'waitlist_submit' AND event_data->>'role' = 'lab' THEN 1 ELSE 0 END) AS lab_waitlist_joins,
             SUM(CASE WHEN event_type = 'contact_submit' THEN 1 ELSE 0 END) AS contact_form_submissions
          FROM analytics_events WHERE ${eWhere.where}`,
@@ -149,7 +150,8 @@ async function getStats({ from, to, user_type } = {}) {
         conversions: {
             patient_register_clicks: parseInt(conversions.patient_register_clicks || 0, 10),
             doctor_register_clicks: parseInt(conversions.doctor_register_clicks || 0, 10),
-            pharmacy_waitlist_joins: parseInt(conversions.pharmacy_waitlist_joins || 0, 10),
+            pharmacy_signup_clicks: parseInt(conversions.pharmacy_signup_clicks || 0, 10),
+            pharmacy_signin_clicks: parseInt(conversions.pharmacy_signin_clicks || 0, 10),
             lab_waitlist_joins: parseInt(conversions.lab_waitlist_joins || 0, 10),
             contact_form_submissions: parseInt(conversions.contact_form_submissions || 0, 10),
         },

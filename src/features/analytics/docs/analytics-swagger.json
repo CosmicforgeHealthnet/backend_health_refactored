@@ -140,7 +140,8 @@
             "properties": {
               "patient_register_clicks": { "type": "integer" },
               "doctor_register_clicks": { "type": "integer" },
-              "pharmacy_waitlist_joins": { "type": "integer" },
+              "pharmacy_signup_clicks": { "type": "integer", "description": "cta_click where label = 'Pharmacy Sign Up'" },
+              "pharmacy_signin_clicks": { "type": "integer", "description": "cta_click where label = 'Pharmacy Sign In'" },
               "lab_waitlist_joins": { "type": "integer" },
               "contact_form_submissions": { "type": "integer" }
             }
