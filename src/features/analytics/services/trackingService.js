@@ -2,6 +2,15 @@ const { AppDataSource } = require('../../../config/database');
 
 const CONVERSION_EVENTS = new Set(['plan_select', 'waitlist_submit', 'contact_submit']);
 
+function isConversion(event_type, event_data = {}) {
+    if (CONVERSION_EVENTS.has(event_type)) return true;
+    if (event_type === 'cta_click') {
+        const label = (event_data.label || '').toLowerCase();
+        return label === 'pharmacy sign up' || label === 'join waitlist - lab';
+    }
+    return false;
+}
+
 async function trackEvent(payload) {
     const {
         session_id,
@@ -68,8 +77,8 @@ async function trackEvent(payload) {
             utm_campaign: utm.campaign || null,
             pages_visited: page ? [page] : [],
             events_count: 1,
-            converted: CONVERSION_EVENTS.has(event_type),
-            conversion_event: CONVERSION_EVENTS.has(event_type) ? event_type : null,
+            converted: isConversion(event_type, event_data),
+            conversion_event: isConversion(event_type, event_data) ? event_type : null,
         });
         await sessionRepo.save(session);
     } else {
@@ -84,17 +93,17 @@ async function trackEvent(payload) {
         if (user_type_intent && user_type_intent !== 'unknown') {
             updates.user_type_intent = user_type_intent;
         }
-        if (!existing.converted && CONVERSION_EVENTS.has(event_type)) {
+        if (!existing.converted && isConversion(event_type, event_data)) {
             updates.converted = true;
             updates.conversion_event = event_type;
         }
         await sessionRepo.update({ session_id }, updates);
     }
 
-    if (event_type === 'waitlist_submit' && event_data) {
+    if (event_type === 'waitlist_submit' && event_data && event_data.role === 'lab') {
         const entry = waitlistRepo.create({
             session_id,
-            role: event_data.role || null,
+            role: 'lab',
             full_name: event_data.full_name || null,
             facility_name: event_data.facility_name || null,
             email: event_data.email || null,
