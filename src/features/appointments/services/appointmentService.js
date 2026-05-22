@@ -25,6 +25,7 @@ const {
 } = require("../../notifications/whatsapp/helper");
 
 const TimezoneService = require("../../compliance/services/timezoneService");
+const { getSetting } = require("../../../shared/services/adminSettingsService");
 
 class AppointmentService {
   constructor() {
@@ -150,6 +151,44 @@ class AppointmentService {
         patientTimezone,
         doctorTimezone
       );
+
+      // ── Admin-configured system limits ────────────────────────────────────
+      const [rtcLimitSetting, dailyLimitSetting] = await Promise.all([
+        getSetting('limits', 'max_rtc_sessions_per_doctor',  { enabled: false, value: 0 }),
+        getSetting('limits', 'max_consultations_per_day',    { enabled: false, value: 0 }),
+      ]);
+
+      if (rtcLimitSetting?.enabled && rtcLimitSetting.value > 0) {
+        const AppDS = require('../../../config/database');
+        const [{ count: activeCount }] = await AppDS.query(`
+          SELECT COUNT(*) AS count
+          FROM   appointment_chats
+          WHERE  "doctorId" = $1 AND status = 'active'
+        `, [appointmentData.doctorId]);
+        if (Number(activeCount) >= rtcLimitSetting.value) {
+          throw Object.assign(
+            new Error(`Doctor has reached the maximum of ${rtcLimitSetting.value} active consultation session(s).`),
+            { status: 429 }
+          );
+        }
+      }
+
+      if (dailyLimitSetting?.enabled && dailyLimitSetting.value > 0) {
+        const AppDS = require('../../../config/database');
+        const [{ count: todayCount }] = await AppDS.query(`
+          SELECT COUNT(*) AS count
+          FROM   appointments
+          WHERE  "appointmentDate" = $1
+            AND  status NOT IN ('cancelled')
+        `, [appointmentData.appointmentDate]);
+        if (Number(todayCount) >= dailyLimitSetting.value) {
+          throw Object.assign(
+            new Error(`Platform daily appointment limit of ${dailyLimitSetting.value} has been reached.`),
+            { status: 429 }
+          );
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
 
       // Enhanced appointment data with timezone info
       const enhancedAppointmentData = {
@@ -1747,17 +1786,26 @@ class AppointmentService {
       const newStartMinutes = this.timeToMinutes(appointmentTime);
       const newEndMinutes = newStartMinutes + duration;
 
+      // Pending-appointment lock window from admin_settings (defaults to 10 min)
+      const pendingWindowSetting = await getSetting(
+        'behavior.telemedicine', 'consultation_timeout',
+        { enabled: true, value: 10, unit: 'Minutes' }
+      );
+      const pendingWindowMs = (pendingWindowSetting?.enabled !== false && pendingWindowSetting?.value)
+        ? pendingWindowSetting.value * 60 * 1000
+        : 10 * 60 * 1000;
+
       // Check for conflicts with existing appointments
       for (const appointment of existingAppointments) {
         if (appointment.status === "cancelled") continue;
 
-        // For pending appointments, only block if created within last 10 minutes
+        // For pending appointments, only block if created within the configured window
         if (appointment.status === "pending") {
           const createdAt = new Date(appointment.createdAt);
-          const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+          const windowStart = new Date(Date.now() - pendingWindowMs);
 
-          // If pending appointment is older than 10 minutes, don't block the slot
-          if (createdAt <= tenMinutesAgo) continue;
+          // If pending appointment is older than the window, don't block the slot
+          if (createdAt <= windowStart) continue;
         }
 
         const existingStartMinutes = this.timeToMinutes(
@@ -1939,15 +1987,24 @@ class AppointmentService {
       const newStartUTC = appointmentUTC.getTime();
       const newEndUTC = newStartUTC + duration * 60 * 1000;
 
+      // Pending-appointment lock window from admin_settings (defaults to 10 min)
+      const pendingWindowSettingUTC = await getSetting(
+        'behavior.telemedicine', 'consultation_timeout',
+        { enabled: true, value: 10, unit: 'Minutes' }
+      );
+      const pendingWindowMsUTC = (pendingWindowSettingUTC?.enabled !== false && pendingWindowSettingUTC?.value)
+        ? pendingWindowSettingUTC.value * 60 * 1000
+        : 10 * 60 * 1000;
+
       // Check for conflicts using UTC times
       for (const appointment of existingAppointments) {
         if (appointment.status === "cancelled") continue;
 
-        // For pending appointments, only block if created within last 10 minutes
+        // For pending appointments, only block if created within the configured window
         if (appointment.status === "pending") {
           const createdAt = new Date(appointment.createdAt);
-          const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-          if (createdAt <= tenMinutesAgo) continue;
+          const windowStartUTC = new Date(Date.now() - pendingWindowMsUTC);
+          if (createdAt <= windowStartUTC) continue;
         }
 
         const existingStartUTC = appointment.appointmentTimeUTC
