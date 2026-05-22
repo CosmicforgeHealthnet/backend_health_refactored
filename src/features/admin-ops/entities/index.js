@@ -8,6 +8,8 @@ const SystemAlert = require('./SystemAlert');
 const FeatureFlag = require('./FeatureFlag');
 const HealthCheckHistory = require('./HealthCheckHistory');
 const EnvironmentConfig = require('./EnvironmentConfig');
+const AdminSetting = require('./AdminSetting');
+const AdminSettingHistory = require('./AdminSettingHistory');
 
 module.exports = {
     ServiceRegistry,
@@ -20,4 +22,6 @@ module.exports = {
     FeatureFlag,
     HealthCheckHistory,
     EnvironmentConfig,
+    AdminSetting,
+    AdminSettingHistory,
 };

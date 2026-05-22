@@ -1,6 +1,18 @@
 // src/services/apiConnectorService.js
 const axios = require('axios');
 const verificationApiLogRepo = require('../../features/doctor/repositories/verificationApiLogRepository');
+const { getSetting } = require('./adminSettingsService');
+
+// Resolved once per process and cached; updated by admin settings cache TTL
+let _timeoutMs = null;
+async function getApiTimeoutMs() {
+    if (_timeoutMs !== null) return _timeoutMs;
+    const s = await getSetting('limits', 'timeout_threshold', { enabled: true, value: 30000 });
+    _timeoutMs = (s?.enabled !== false && s?.value) ? s.value : 30000;
+    // Reset cache after 5 min so admin changes propagate
+    setTimeout(() => { _timeoutMs = null; }, 5 * 60 * 1000);
+    return _timeoutMs;
+}
 
 class ApiConnectorService {
 
@@ -87,12 +99,10 @@ class ApiConnectorService {
       profession: 'medical'
     };
 
+    const timeout = await getApiTimeoutMs();
     const response = await axios.post(endpoint, requestData, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000 // 30 seconds
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      timeout,
     });
 
     return this.parseHPCSAResponse(response.data);
@@ -114,12 +124,10 @@ class ApiConnectorService {
       doctor_name: verificationRequest.doctor?.fullName
     };
 
+    const timeout = await getApiTimeoutMs();
     const response = await axios.post(endpoint, requestData, {
-      headers: {
-        'X-API-Key': apiKey,
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000
+      headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+      timeout,
     });
 
     return this.parseKMPDCResponse(response.data);
@@ -129,22 +137,19 @@ class ApiConnectorService {
    * Nigeria MDCN API verification (if available)
    */
   async verifyMDCN(verificationRequest) {
-    // Note: MDCN doesn't have public API yet, but this is for future integration
     const endpoint = process.env.MDCN_API_ENDPOINT;
 
     if (!endpoint) {
       throw new Error('MDCN API not available - fallback to manual verification');
     }
 
-    // Placeholder for when MDCN API becomes available
     const requestData = {
       license_number: verificationRequest.licenseNumber,
       doctor_name: verificationRequest.doctor?.fullName
     };
 
-    const response = await axios.post(endpoint, requestData, {
-      timeout: 30000
-    });
+    const timeout = await getApiTimeoutMs();
+    const response = await axios.post(endpoint, requestData, { timeout });
 
     return this.parseMDCNResponse(response.data);
   }
@@ -153,7 +158,6 @@ class ApiConnectorService {
    * Ghana Medical and Dental Council verification
    */
   async verifyGhanaMDC(verificationRequest) {
-    // Placeholder for Ghana MDC API
     throw new Error('Ghana MDC API not available - fallback to manual verification');
   }
 
@@ -174,12 +178,10 @@ class ApiConnectorService {
       year_of_registration: verificationRequest.issueDate ? new Date(verificationRequest.issueDate).getFullYear() : null
     };
 
+    const timeout = await getApiTimeoutMs();
     const response = await axios.post(endpoint, requestData, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      timeout,
     });
 
     return this.parseSurePassResponse(response.data);
@@ -202,12 +204,10 @@ class ApiConnectorService {
       year_of_registration: verificationRequest.issueDate ? new Date(verificationRequest.issueDate).getFullYear() : null
     };
 
+    const timeout = await getApiTimeoutMs();
     const response = await axios.post(endpoint, requestData, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      timeout,
     });
 
     return this.parseIdfyResponse(response.data);

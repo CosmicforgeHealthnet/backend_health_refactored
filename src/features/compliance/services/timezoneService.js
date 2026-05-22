@@ -4,26 +4,36 @@
 
 const { fromZonedTime, toZonedTime, format } = require("date-fns-tz");
 const { parseISO, isValid, parse } = require("date-fns");
+const { getDefaultTimezone } = require('../../../shared/services/localizationService');
 
 class TimezoneService {
   /**
-   * Get user's effective timezone
-   * Priority: User saved timezone > req.location.timezone > UTC fallback
+   * Get user's effective timezone.
+   * Priority: User saved timezone > req.location.timezone > admin localization.default_timezone > 'UTC'
+   * NOTE: This method is synchronous for backward compatibility. The admin default is resolved
+   * lazily (cached) and falls back to 'UTC' if the DB call has not resolved yet.
+   * For full async resolution call TimezoneService.getUserTimezoneAsync(user, req).
    */
   static getUserTimezone(user, req) {
-    // 1. User's saved timezone preference (highest priority)
-    if (user?.timezone) {
-      return user.timezone;
-    }
+    if (user?.timezone)          return user.timezone;
+    if (req?.location?.timezone) return req.location.timezone;
 
-    // 2. Auto-detected timezone from location middleware
-    if (req?.location?.timezone) {
-      return req.location.timezone;
-    }
+    // Return the cached platform default (populated on first async call) or 'UTC'
+    console.warn(`No timezone found for user ${user?.id}, using platform default or UTC`);
+    return TimezoneService._platformDefault || 'UTC';
+  }
 
-    // 3. Fallback to UTC
-    console.warn(`No timezone found for user ${user?.id}, using UTC fallback`);
-    return "UTC";
+  /**
+   * Async variant — resolves admin localization.default_timezone before returning.
+   * Use this wherever the calling context is already async.
+   */
+  static async getUserTimezoneAsync(user, req) {
+    if (user?.timezone)          return user.timezone;
+    if (req?.location?.timezone) return req.location.timezone;
+
+    const tz = await getDefaultTimezone();
+    TimezoneService._platformDefault = tz; // warm the sync cache
+    return tz;
   }
 
   /**

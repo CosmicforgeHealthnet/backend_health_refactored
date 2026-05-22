@@ -8,6 +8,8 @@ const { PrescriptionStatus, PaymentStatus } = require("../entities/Prescription"
 const NotificationService = require("../../notifications/services/notificationService");
 const pharmacyEmailHelper = require("../../../shared/services/email/helper/pharmacy");
 const { getIO }           = require("../../../config/websocket");
+const AppDataSource        = require("../../../config/database");
+const { getSetting }       = require("../../../shared/services/adminSettingsService");
 
 const appointmentRepo = new AppointmentRepository();
 const notificationService = new NotificationService();
@@ -1203,6 +1205,57 @@ class PrescriptionService {
       dispatchedAt: prescription.dispatchedAt ? prescription.dispatchedAt.toISOString() : null,
       updatedAt:    now.toISOString(),
     };
+  }
+
+  /**
+   * Assign a driver to a prescription for delivery.
+   * Enforces limits.max_delivery_assignments_per_driver from admin_settings.
+   *
+   * @param {string} prescriptionId
+   * @param {string} driverId  UUID of the user acting as driver
+   */
+  async assignDriver(prescriptionId, driverId) {
+    const prescription = await prescriptionRepo.findOne({ where: { id: prescriptionId } });
+    if (!prescription) {
+      throw Object.assign(new Error("Prescription not found"), { status: 404 });
+    }
+
+    const assignableStatuses = [PrescriptionStatus.READY_FOR_PICKUP, PrescriptionStatus.OUT_FOR_DELIVERY];
+    if (!assignableStatuses.includes(prescription.status)) {
+      throw Object.assign(
+        new Error(`Cannot assign driver to prescription with status '${prescription.status}'`),
+        { status: 422 }
+      );
+    }
+
+    // Enforce max active deliveries per driver
+    const limitSetting = await getSetting('limits', 'max_delivery_assignments_per_driver', { enabled: false, value: 0 });
+    if (limitSetting?.enabled && limitSetting.value > 0) {
+      const [{ count }] = await AppDataSource.query(`
+        SELECT COUNT(*) AS count
+        FROM   prescriptions
+        WHERE  "driverId" = $1
+          AND  status IN ('ready_for_pickup', 'out_for_delivery')
+      `, [driverId]);
+
+      if (Number(count) >= limitSetting.value) {
+        throw Object.assign(
+          new Error(`Driver has reached the maximum of ${limitSetting.value} active delivery assignment(s).`),
+          { status: 429 }
+        );
+      }
+    }
+
+    await prescriptionRepo.update(prescriptionId, {
+      driverId,
+      status:      PrescriptionStatus.OUT_FOR_DELIVERY,
+      dispatchedAt: prescription.dispatchedAt ?? new Date(),
+      updatedAt:   new Date(),
+    });
+
+    emitStatusChange({ ...prescription, patientId: prescription.patientId, pharmacyId: prescription.pharmacyId }, PrescriptionStatus.OUT_FOR_DELIVERY);
+
+    return { prescriptionId, driverId, status: PrescriptionStatus.OUT_FOR_DELIVERY };
   }
 }
 

@@ -5,6 +5,10 @@ const verificationRequestRepo = require('./features/doctor/repositories/verifica
 const PaymentJobScheduler = require('./features/payments/jobs/paymentJobScheduler');
 const { trackJob } = require('./features/admin-ops/services/jobTracker');
 const { recordHealthCheck } = require('./features/admin-ops/services/adminOpsService');
+const AppDataSource = require('./config/database');
+const { getSetting } = require('./shared/services/adminSettingsService');
+const { runConsultationMaintenance } = require('./features/appointments/jobs/consultationMaintenanceJob');
+const { runPrescriptionMaintenance } = require('./features/pharmacy/jobs/prescriptionMaintenanceJob');
 
 class VerificationReminderJob {
 
@@ -108,6 +112,41 @@ class VerificationReminderJob {
       console.log("📋 Running pharmacy invoice overdue check...");
       const { runOverdueJob } = require("./features/pharmacy/jobs/pharmacyOverdueJob");
       await runOverdueJob();
+    }));
+
+    // Consultation & RTC session maintenance — every 5 minutes
+    // Enforces: telemedicine auto_end_inactive/unfinished, rtc session_timeout/max_session_duration, followup_rules
+    cron.schedule("*/5 * * * *", trackJob('consultation-maintenance', 'cron', async () => {
+      await runConsultationMaintenance();
+    }));
+
+    // Prescription & delivery maintenance — every 15 minutes
+    // Enforces: prescription_expiry, auto_driver_assignment_delay, reassignment_trigger_time, delivery_timeout_rules
+    cron.schedule("*/15 * * * *", trackJob('prescription-maintenance', 'cron', async () => {
+      await runPrescriptionMaintenance();
+    }));
+
+    // Audit log retention purge — daily at 3:30 AM
+    // Reads limits.log_retention_days from admin_settings; defaults to 90 days.
+    cron.schedule("30 3 * * *", trackJob('audit-log-retention-purge', 'cron', async () => {
+      const retentionSetting = await getSetting('limits', 'log_retention_days', { enabled: true, value: 90 });
+      if (retentionSetting?.enabled === false) return;
+      const retentionDays = retentionSetting?.value ?? 90;
+      const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+
+      const qr = AppDataSource.createQueryRunner();
+      try {
+        await qr.connect();
+        const [auditResult, comprehensiveResult] = await Promise.all([
+          qr.query(`DELETE FROM "audit_logs" WHERE "createdAt" < $1`, [cutoff]),
+          qr.query(`DELETE FROM "comprehensive_audit_logs" WHERE "createdAt" < $1`, [cutoff]),
+        ]);
+        const deletedAudit        = auditResult[1]        ?? auditResult?.rowCount        ?? '?';
+        const deletedComprehensive = comprehensiveResult[1] ?? comprehensiveResult?.rowCount ?? '?';
+        console.log(`🗑️ Audit log purge complete — older than ${retentionDays} days: ${deletedAudit} audit_logs, ${deletedComprehensive} comprehensive_audit_logs deleted`);
+      } finally {
+        await qr.release();
+      }
     }));
 
     // Health check snapshot every 15 minutes
