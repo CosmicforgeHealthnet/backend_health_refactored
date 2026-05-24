@@ -178,11 +178,9 @@ jobs:
                -v $DEPLOY_PATH/uploads:/app/uploads \
                ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
               
-            echo "Freeing port 80/443 from dev gateway..."
-            docker update --restart=no cosmic_gateway_dev 2>/dev/null || true
-            docker stop -t 10 cosmic_gateway_dev 2>/dev/null || true
-            for port in 80 443; do fuser -k ${port}/tcp 2>/dev/null || true; done
-            sleep 2
+            echo "Freeing port 80/443 — removing dev gateway (watchdog will restore it)..."
+            docker rm -f cosmic_gateway_dev 2>/dev/null || true
+            sleep 5
 
             echo "Starting Gateway..."
             mkdir -p $DEPLOY_PATH/certbot
@@ -209,10 +207,6 @@ jobs:
 
             echo "Cleaning images..."
             docker image prune -f
-
-            echo "Restoring dev gateway..."
-            docker update --restart=unless-stopped cosmic_gateway_dev 2>/dev/null || true
-            docker start cosmic_gateway_dev 2>/dev/null || true
 
             echo "Deployment finished. Waiting for backend to become healthy..."
             for i in {1..12}; do
