@@ -44,6 +44,7 @@ module.exports = new EntitySchema({
     patientId: { type: "uuid", nullable: false },
     pharmacyId: { type: "uuid", nullable: true }, // Set when patient selects pharmacy
     consultationId: { type: "uuid", nullable: true }, // Link to consultation if applicable
+    driverId: { type: "uuid", nullable: true, comment: "Assigned delivery driver (user with driver role)" },
 
     // Prescription Content
     medications: {
@@ -153,6 +154,13 @@ module.exports = new EntitySchema({
       target: "User",
       joinColumn: { name: "assignedPharmacistId" },
       onDelete: "SET NULL"
+    },
+    driver: {
+      type: "many-to-one",
+      target: "User",
+      joinColumn: { name: "driverId" },
+      onDelete: "SET NULL",
+      nullable: true
     }
   },
 
@@ -164,7 +172,8 @@ module.exports = new EntitySchema({
     { columns: ["status"] },
     { columns: ["paymentStatus"] },
     { columns: ["createdAt"] },
-    { columns: ["consultationId"] }
+    { columns: ["consultationId"] },
+    { columns: ["driverId"] }
   ]
 });
 

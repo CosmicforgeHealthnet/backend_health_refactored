@@ -8,6 +8,7 @@ const fs = require('node:fs').promises;
 const FHIRResourceDetectionService = require('../services/fhirResourceDetectionService');
 
 const config = require('../../../config/verificationConfig');
+const { getSetting } = require('../../../shared/services/adminSettingsService');
 
 // Environment-based upload paths
 const getUploadPath = (subPath = '') => {
@@ -57,6 +58,12 @@ class DocumentUploadMiddleware {
         return res.status(400).json({ error: 'No files uploaded' });
       }
 
+      // Resolve admin-configured file size limit (fallback: static config)
+      const fileSizeSetting = await getSetting('limits', 'max_file_upload_size', null);
+      const adminMaxBytes = (fileSizeSetting?.enabled !== false && fileSizeSetting?.value)
+        ? fileSizeSetting.value * 1024 * 1024
+        : config.FILE_LIMITS.MAX_FILE_SIZE;
+
       const processedFiles = [];
 
       // Create better document categories
@@ -83,8 +90,8 @@ class DocumentUploadMiddleware {
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
 
-        // Validate file
-        const validation = DocumentUploadMiddleware.validateFile(file);
+        // Validate file (passes admin-resolved max size)
+        const validation = DocumentUploadMiddleware.validateFile(file, adminMaxBytes);
         if (!validation.isValid) {
           return res.status(400).json({ error: validation.error });
         }
@@ -267,12 +274,12 @@ class DocumentUploadMiddleware {
   /**
    * Validate individual file
    */
-  static validateFile(file) {
-    // Check file size
-    if (file.size > config.FILE_LIMITS.MAX_FILE_SIZE) {
+  static validateFile(file, maxSize = config.FILE_LIMITS.MAX_FILE_SIZE) {
+    // Check file size against admin-configured limit (falls back to static config)
+    if (file.size > maxSize) {
       return {
         isValid: false,
-        error: `File ${file.originalname} exceeds maximum size of ${config.FILE_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB`
+        error: `File ${file.originalname} exceeds maximum size of ${maxSize / (1024 * 1024)}MB`
       };
     }
 
@@ -533,9 +540,14 @@ class DocumentUploadMiddleware {
     if (error instanceof multer.MulterError) {
       switch (error.code) {
         case 'LIMIT_FILE_SIZE':
-          return res.status(400).json({
-            error: `File too large. Maximum size is ${config.FILE_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB`
+          // Best-effort async lookup; falls back to static config in the message
+          getSetting('limits', 'max_file_upload_size', null).then(s => {
+            const mb = (s?.enabled !== false && s?.value) ? s.value : config.FILE_LIMITS.MAX_FILE_SIZE / (1024 * 1024);
+            res.status(400).json({ error: `File too large. Maximum size is ${mb}MB` });
+          }).catch(() => {
+            res.status(400).json({ error: `File too large. Maximum size is ${config.FILE_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB` });
           });
+          return;
         case 'LIMIT_FILE_COUNT':
           return res.status(400).json({
             error: `Too many files. Maximum is ${config.FILE_LIMITS.MAX_FILES_PER_REQUEST}`

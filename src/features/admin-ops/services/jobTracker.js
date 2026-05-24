@@ -1,4 +1,5 @@
 const logger = require('../../../config/logger');
+const { getSetting } = require('../../../shared/services/adminSettingsService');
 
 let _service = null;
 const getService = () => {
@@ -61,13 +62,17 @@ function trackJob(jobName, jobType = 'cron', fn) {
                 }).catch(() => {});
             }
 
-            // Push to dead-letter
+            // Push to dead-letter — maxRetries from admin_settings (limits.event_retry_attempts)
             try {
+                const retrySetting = await getSetting('limits', 'event_retry_attempts', { enabled: true, value: 3 });
+                const maxRetries = (retrySetting?.enabled !== false && retrySetting?.value) ? retrySetting.value : 3;
+
                 await svc.createDeadLetterJob({
                     jobExecutionId: execId,
                     jobName,
                     errorMessage: err.message,
                     payload: { args: args.length ? args : undefined },
+                    maxRetries,
                 });
 
                 // Fire a system alert

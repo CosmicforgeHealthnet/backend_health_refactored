@@ -1,5 +1,6 @@
 // src/services/currencyService.js
 const cache = require('../../../shared/utils/cache');
+const { getDefaultCurrency } = require('../../../shared/services/localizationService');
 
 class CurrencyService {
 
@@ -343,11 +344,18 @@ class CurrencyService {
    */
   static getCurrencyForCountry(countryCode) {
     if (!countryCode) return this.COUNTRY_CURRENCY_MAP.DEFAULT;
-
     const upperCountryCode = countryCode.toUpperCase();
-
-    // Use the proper country-currency mapping
     return this.COUNTRY_CURRENCY_MAP[upperCountryCode] || this.COUNTRY_CURRENCY_MAP.DEFAULT;
+  }
+
+  /**
+   * Async variant that uses the admin-configured default currency when no country
+   * code is provided, instead of the hardcoded 'USD' fallback.
+   */
+  static async getCurrencyForCountryAsync(countryCode) {
+    if (!countryCode) return await getDefaultCurrency();
+    const upperCountryCode = countryCode.toUpperCase();
+    return this.COUNTRY_CURRENCY_MAP[upperCountryCode] || await getDefaultCurrency();
   }
 
   /**

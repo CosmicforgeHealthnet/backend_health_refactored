@@ -167,6 +167,19 @@ module.exports = new EntitySchema({
       nullable: false,
       comment: 'Total number of ratings submitted',
     },
+
+    loginAttempts: {
+      type: 'int',
+      default: 0,
+      nullable: false,
+      comment: 'Consecutive failed login attempts — reset on success',
+    },
+
+    lockedUntil: {
+      type: 'timestamp',
+      nullable: true,
+      comment: 'If set, account is temporarily locked until this datetime',
+    },
   },
   relations: {
     doctorProfile: {
