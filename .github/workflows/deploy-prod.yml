@@ -105,33 +105,10 @@ jobs:
             docker pull redis:alpine
             docker pull nginx:alpine
 
-            echo "Cleanup phase started..."
+            echo "Cleanup phase started (no daemon restart — preserves shared-postgres)..."
             systemctl stop nginx apache2 2>/dev/null || true
             for port in 80 443 5000; do
                 fuser -k ${port}/tcp 2>/dev/null || true
-            done
-
-            echo "Gracefully stopping shared-postgres before daemon restart..."
-            docker stop -t 60 shared-postgres 2>/dev/null || true
-
-            echo "Restarting Docker daemon to clear stale port bindings..."
-            systemctl restart docker
-            sleep 5
-
-            echo "Restarting shared-postgres after daemon restart..."
-            docker start shared-postgres 2>/dev/null || true
-            echo "Waiting for PostgreSQL to accept connections..."
-            for i in {1..24}; do
-              if docker exec shared-postgres pg_isready -U postgres -q 2>/dev/null; then
-                echo "PostgreSQL is ready!"
-                break
-              fi
-              echo "PostgreSQL not ready yet... attempt $i/24"
-              if [ $i -eq 24 ]; then
-                echo "❌ PostgreSQL did not become ready — last logs:"
-                docker logs shared-postgres --tail 20
-              fi
-              sleep 5
             done
 
             echo "Removing production containers..."
@@ -161,9 +138,6 @@ jobs:
 
             echo "Starting network..."
             docker network create cosmic_network_prod 2>/dev/null || true
-
-            echo "Connecting shared-postgres to prod network..."
-            docker network connect cosmic_network_prod shared-postgres 2>/dev/null || true
 
             echo "Starting Redis..."
             docker run -d \
