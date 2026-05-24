@@ -178,8 +178,12 @@ jobs:
                -v $DEPLOY_PATH/uploads:/app/uploads \
                ${{ secrets.DOCKERHUB_USERNAME }}/cosmicforge-backend:latest
               
-            echo "Freeing port 80/443 — removing dev gateway (watchdog will restore it)..."
+            echo "Freeing port 80/443 — force-removing any container holding these ports..."
             docker rm -f cosmic_gateway_dev 2>/dev/null || true
+            docker rm -f shared-nginx 2>/dev/null || true
+            docker ps --format '{{.ID}} {{.Ports}}' | grep '0.0.0.0:80' | awk '{print $1}' | xargs -r docker rm -f 2>/dev/null || true
+            docker ps --format '{{.ID}} {{.Ports}}' | grep '0.0.0.0:443' | awk '{print $1}' | xargs -r docker rm -f 2>/dev/null || true
+            for port in 80 443; do fuser -k ${port}/tcp 2>/dev/null || true; done
             sleep 5
 
             echo "Starting Gateway..."
