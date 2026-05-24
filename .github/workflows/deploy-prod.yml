@@ -111,8 +111,15 @@ jobs:
                 fuser -k ${port}/tcp 2>/dev/null || true
             done
 
+            echo "Gracefully stopping shared-postgres before daemon restart..."
+            docker stop -t 60 shared-postgres 2>/dev/null || true
+
             echo "Restarting Docker daemon to clear stale port bindings..."
             systemctl restart docker
+            sleep 5
+
+            echo "Restarting shared-postgres after daemon restart..."
+            docker start shared-postgres 2>/dev/null || true
             sleep 5
 
             echo "Removing production containers..."
@@ -127,7 +134,7 @@ jobs:
             echo "Removing any leftover dead/renamed prod containers..."
             for dead in $(docker ps -a --format '{{.Names}}' | grep -E '^cosmic_(gateway|backend|brain|redis)_prod_dead_'); do
                 docker update --restart=no $dead 2>/dev/null || true
-                docker stop -t 5 $dead 2>/dev/null || true
+                docker stop -t 10 $dead 2>/dev/null || true
                 docker rm -f $dead 2>/dev/null || true
             done
 
