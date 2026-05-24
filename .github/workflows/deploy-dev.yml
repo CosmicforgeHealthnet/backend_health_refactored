@@ -140,6 +140,9 @@ jobs:
             echo "Setting up Network..."
             docker network create cosmic_network_dev 2>/dev/null || true
 
+            echo "Connecting shared-postgres to dev network..."
+            docker network connect cosmic_network_dev shared-postgres 2>/dev/null || true
+
             echo "Starting Redis..."
             # No external port — backend reaches Redis via Docker network alias redis:6379
             docker run -d \
