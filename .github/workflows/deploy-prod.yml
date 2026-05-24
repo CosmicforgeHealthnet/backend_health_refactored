@@ -120,7 +120,19 @@ jobs:
 
             echo "Restarting shared-postgres after daemon restart..."
             docker start shared-postgres 2>/dev/null || true
-            sleep 5
+            echo "Waiting for PostgreSQL to accept connections..."
+            for i in {1..24}; do
+              if docker exec shared-postgres pg_isready -U postgres -q 2>/dev/null; then
+                echo "PostgreSQL is ready!"
+                break
+              fi
+              echo "PostgreSQL not ready yet... attempt $i/24"
+              if [ $i -eq 24 ]; then
+                echo "❌ PostgreSQL did not become ready — last logs:"
+                docker logs shared-postgres --tail 20
+              fi
+              sleep 5
+            done
 
             echo "Removing production containers..."
             for name in cosmic_gateway_prod cosmic_backend_prod cosmic_brain_prod cosmic_redis_prod; do
