@@ -150,6 +150,9 @@ jobs:
             echo "Starting network..."
             docker network create cosmic_network_prod 2>/dev/null || true
 
+            echo "Connecting shared-postgres to prod network..."
+            docker network connect cosmic_network_prod shared-postgres 2>/dev/null || true
+
             echo "Starting Redis..."
             docker run -d \
               --name cosmic_redis_prod \
