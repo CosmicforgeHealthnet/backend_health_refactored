@@ -107,25 +107,9 @@ jobs:
             docker pull redis:alpine
             docker pull nginx:alpine
 
-            echo "Aggressively cleaning up old containers..."
+            echo "Cleaning up old containers (no daemon restart — preserves shared-postgres)..."
             systemctl stop nginx apache2 2>/dev/null || true
 
-            # 2. Clear all ports used by this deployment
-            for port in 80 443 6380 5001 8002 8081; do
-                fuser -k ${port}/tcp 2>/dev/null || true
-            done
-
-            # 3. Restart Docker daemon then clean up all cosmic containers
-            echo "Gracefully stopping shared-postgres before daemon restart..."
-            docker stop -t 60 shared-postgres 2>/dev/null || true
-
-            echo "Restarting Docker daemon..."
-            systemctl restart docker
-            sleep 5
-
-            echo "Restarting shared-postgres after daemon restart..."
-            docker start shared-postgres 2>/dev/null || true
-            sleep 5
             echo "Clearing cosmic containers..."
             for name in cosmic_gateway_dev cosmic_backend_dev cosmic_brain_dev cosmic_redis_dev; do
                 docker network disconnect -f cosmic_network_dev $name 2>/dev/null || true
