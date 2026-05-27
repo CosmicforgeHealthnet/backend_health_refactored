@@ -1,0 +1,325 @@
+const vendorAuthService   = require("../services/vendorAuthService");
+const authService         = require("../../auth/services/authService");
+const userRepository      = require("../../auth/repositories/userRepository");
+const passwordResetService = require("../../auth/services/passwordResetService");
+const bcrypt              = require("bcryptjs");
+const mfaService          = require("../../auth/services/mfa/mfaService");
+
+const VALID_CATEGORIES = [
+    "health_wellness",
+    "medical_supplies",
+    "baby_mother_care",
+    "fitness_lifestyle",
+    "nutrition_healthy_living",
+    "others",
+];
+
+class VendorAuthController {
+    async registerVendor(req, res, next) {
+        try {
+            const {
+                fullName,
+                email,
+                password,
+                phoneNumber,
+                businessName,
+                businessCategory,
+                businessEmail,
+                businessPhone,
+                country,
+                state,
+                city,
+                fullAddress,
+                businessWebsite,
+                businessDescription,
+            } = req.body;
+
+            if (!fullName || !email || !password || !businessName || !businessCategory ||
+                !businessEmail || !businessPhone || !country || !state || !city ||
+                !fullAddress || !businessDescription) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Missing required fields: fullName, email, password, businessName, businessCategory, businessEmail, businessPhone, country, state, city, fullAddress, businessDescription",
+                });
+            }
+
+            if (!VALID_CATEGORIES.includes(businessCategory)) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Invalid businessCategory. Must be one of: ${VALID_CATEGORIES.join(", ")}`,
+                });
+            }
+
+            const result = await vendorAuthService.registerVendor({
+                fullName,
+                email,
+                password,
+                phoneNumber,
+                businessName,
+                businessCategory,
+                businessEmail,
+                businessPhone,
+                country,
+                state,
+                city,
+                fullAddress,
+                businessWebsite,
+                businessDescription,
+                countryCode: req.location?.countryCode ?? null,
+            });
+
+            return res.status(201).json({
+                success: true,
+                message: result.emailSent
+                    ? "Vendor registration successful. Check your email for a verification link."
+                    : "Vendor registration successful, but we couldn't send a verification email. Please retry from your profile.",
+                vendor: {
+                    id: result.vendor.id,
+                    businessName: result.vendor.businessName,
+                    businessCategory: result.vendor.businessCategory,
+                    businessEmail: result.vendor.businessEmail,
+                    businessPhone: result.vendor.businessPhone,
+                    country: result.vendor.country,
+                    state: result.vendor.state,
+                    city: result.vendor.city,
+                    fullAddress: result.vendor.fullAddress,
+                    verificationStatus: result.vendor.verificationStatus,
+                    isActive: result.vendor.isActive,
+                    documentsSubmitted: result.vendor.documentsSubmitted,
+                    createdAt: result.vendor.createdAt,
+                },
+                user: {
+                    id: result.user.id,
+                    fullName: result.user.fullName,
+                    email: result.user.email,
+                    role: result.user.role,
+                    status: result.user.status,
+                    tier: result.user.tier,
+                    createdAt: result.user.createdAt,
+                },
+            });
+        } catch (error) {
+            if (error.message.includes("already")) {
+                return res.status(400).json({ success: false, error: error.message });
+            }
+            next(error);
+        }
+    }
+
+    async loginVendor(req, res, next) {
+        try {
+            const { email, password, deviceFingerprint } = req.body;
+
+            if (!email || !password) {
+                return res.status(400).json({ success: false, error: "Email and password are required" });
+            }
+
+            const user = await userRepository.findByEmail(email.toLowerCase().trim());
+            if (!user || user.role !== "vendor") {
+                return res.status(401).json({ success: false, error: "Invalid credentials" });
+            }
+
+            const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+            if (!passwordMatch) {
+                return res.status(401).json({ success: false, error: "Invalid credentials" });
+            }
+
+            if (user.mfaEnabled) {
+                const tempToken = await mfaService.generateTempToken(user.id);
+                return res.status(206).json({
+                    success: true,
+                    mfaRequired: true,
+                    tempToken,
+                    message: "MFA verification required",
+                });
+            }
+
+            const { vendor } = await vendorAuthService.getVendorProfile(user.id);
+            const tokens = await authService.login(user, deviceFingerprint);
+
+            return res.status(200).json({
+                success: true,
+                message: "Login successful",
+                ...tokens,
+                vendor: {
+                    id: vendor.id,
+                    businessName: vendor.businessName,
+                    businessCategory: vendor.businessCategory,
+                    verificationStatus: vendor.verificationStatus,
+                    isActive: vendor.isActive,
+                    logoUrl: vendor.logoUrl,
+                },
+                user: {
+                    id: user.id,
+                    fullName: user.fullName,
+                    email: user.email,
+                    role: user.role,
+                    status: user.status,
+                    tier: user.tier,
+                    profileImageUrl: user.profileImageUrl,
+                },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async forgotPassword(req, res, next) {
+        try {
+            await passwordResetService.requestReset(req.body.email);
+            return res.status(200).json({ success: true, message: "If that email exists, a reset link has been sent." });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async resetPassword(req, res, next) {
+        try {
+            const { token, newPassword } = req.body;
+            if (!token || !newPassword) {
+                return res.status(400).json({ success: false, error: "token and newPassword are required" });
+            }
+            if (newPassword.length < 8) {
+                return res.status(400).json({ success: false, error: "Password must be at least 8 characters" });
+            }
+            await passwordResetService.resetPassword(token, newPassword);
+            return res.status(200).json({ success: true, message: "Password reset successful" });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getVendorProfile(req, res, next) {
+        try {
+            const { vendor, user } = await vendorAuthService.getVendorProfile(req.user.id);
+            return res.status(200).json({
+                success: true,
+                vendor: {
+                    id: vendor.id,
+                    businessName: vendor.businessName,
+                    businessCategory: vendor.businessCategory,
+                    businessEmail: vendor.businessEmail,
+                    businessPhone: vendor.businessPhone,
+                    country: vendor.country,
+                    state: vendor.state,
+                    city: vendor.city,
+                    fullAddress: vendor.fullAddress,
+                    businessWebsite: vendor.businessWebsite,
+                    businessDescription: vendor.businessDescription,
+                    logoUrl: vendor.logoUrl,
+                    verificationStatus: vendor.verificationStatus,
+                    isActive: vendor.isActive,
+                    documentsSubmitted: vendor.documentsSubmitted,
+                    isHybridPharmacy: vendor.isHybridPharmacy,
+                    notificationPreferences: vendor.notificationPreferences,
+                    documents: vendor.documents,
+                    createdAt: vendor.createdAt,
+                    updatedAt: vendor.updatedAt,
+                },
+                user: {
+                    id: user.id,
+                    fullName: user.fullName,
+                    email: user.email,
+                    role: user.role,
+                    status: user.status,
+                    tier: user.tier,
+                    profileImageUrl: user.profileImageUrl,
+                    phoneNumber: user.phoneNumber,
+                },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async updateVendorProfile(req, res, next) {
+        try {
+            const updated = await vendorAuthService.updateVendorProfile(req.user.id, req.body);
+            return res.status(200).json({ success: true, message: "Profile updated", vendor: updated });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async uploadVendorLogo(req, res, next) {
+        try {
+            const files = req.processedFiles || req.uploadedFiles || [];
+            if (!files.length) {
+                return res.status(400).json({ success: false, error: "No file uploaded" });
+            }
+            const logoUrl = files[0].url || files[0].path;
+            const result = await vendorAuthService.uploadVendorLogo(req.user.id, logoUrl);
+            return res.status(200).json({ success: true, message: "Logo uploaded", logoUrl: result.logoUrl });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async updateAccountSettings(req, res, next) {
+        try {
+            const { fullName, email } = req.body;
+            const userRepo = require("../../auth/repositories/userRepository");
+
+            if (email) {
+                const existing = await userRepo.findByEmail(email.toLowerCase().trim());
+                if (existing && existing.id !== req.user.id) {
+                    return res.status(400).json({ success: false, error: "Email already in use" });
+                }
+            }
+
+            const updates = {};
+            if (fullName) updates.fullName = fullName;
+            if (email)    updates.email = email.toLowerCase().trim();
+
+            await require("../../../config/database").getRepository("User").update(req.user.id, updates);
+            return res.status(200).json({ success: true, message: "Account settings updated" });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async changePassword(req, res, next) {
+        try {
+            const { currentPassword, newPassword } = req.body;
+
+            if (!currentPassword || !newPassword) {
+                return res.status(400).json({ success: false, error: "currentPassword and newPassword are required" });
+            }
+            if (newPassword.length < 8) {
+                return res.status(400).json({ success: false, error: "New password must be at least 8 characters" });
+            }
+
+            const user = await userRepository.findById(req.user.id);
+            const match = await bcrypt.compare(currentPassword, user.passwordHash);
+            if (!match) {
+                return res.status(401).json({ success: false, error: "Current password is incorrect" });
+            }
+
+            const passwordHash = await bcrypt.hash(newPassword, 12);
+            await require("../../../config/database").getRepository("User").update(user.id, {
+                passwordHash,
+                passwordChangedAt: new Date(),
+            });
+
+            return res.status(200).json({ success: true, message: "Password changed successfully" });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getAllVendors(req, res, next) {
+        try {
+            const { page = 1, limit = 20, verificationStatus } = req.query;
+            const result = await vendorAuthService.getAllVendors({
+                page: Number(page),
+                limit: Number(limit),
+                verificationStatus,
+            });
+            return res.status(200).json({ success: true, ...result });
+        } catch (error) {
+            next(error);
+        }
+    }
+}
+
+module.exports = new VendorAuthController();

@@ -1,0 +1,208 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Shop API",
+    "description": "Public patient-facing shop: browse categories, subcategories, products and vendor info",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:3000/api", "description": "Development server" }
+  ],
+  "tags": [
+    { "name": "Shop Categories",  "description": "Browse product categories and subcategories" },
+    { "name": "Shop Products",    "description": "Browse and search approved products" },
+    { "name": "Shop Vendor Info", "description": "View vendor public profiles from the shop" }
+  ],
+  "paths": {
+    "/shop/categories": {
+      "get": {
+        "tags": ["Shop Categories"],
+        "summary": "List all product categories",
+        "description": "Returns all top-level product categories with their subcategory keys. No auth required.",
+        "responses": {
+          "200": {
+            "description": "Category list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success":    { "type": "boolean" },
+                    "categories": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Category" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shop/categories/{category}/subcategories": {
+      "get": {
+        "tags": ["Shop Categories"],
+        "summary": "List subcategories for a category",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "category",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "health_wellness", "medical_supplies", "baby_mother_care",
+                "fitness_lifestyle", "nutrition_healthy_living", "others", "medications"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Subcategory list" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/shop/products": {
+      "get": {
+        "tags": ["Shop Products"],
+        "summary": "Browse approved products",
+        "description": "Returns paginated approved products. Supports filtering by category, subcategory, price range, full-text search, and sorting.",
+        "parameters": [
+          { "in": "query", "name": "category",    "schema": { "type": "string" }, "description": "Filter by category key" },
+          { "in": "query", "name": "subcategory", "schema": { "type": "string" }, "description": "Filter by subcategory key" },
+          { "in": "query", "name": "vendorId",    "schema": { "type": "string", "format": "uuid" }, "description": "Filter by vendor" },
+          { "in": "query", "name": "minPrice",    "schema": { "type": "number" } },
+          { "in": "query", "name": "maxPrice",    "schema": { "type": "number" } },
+          { "in": "query", "name": "search",      "schema": { "type": "string" }, "description": "Full-text search on title and description" },
+          { "in": "query", "name": "sortBy",      "schema": { "type": "string", "enum": ["newest", "price_asc", "price_desc"] }, "default": "newest" },
+          { "in": "query", "name": "page",        "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit",       "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated product list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success":  { "type": "boolean" },
+                    "products": { "type": "array", "items": { "$ref": "#/components/schemas/PublicProduct" } },
+                    "total":    { "type": "integer" },
+                    "page":     { "type": "integer" },
+                    "limit":    { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shop/products/{id}": {
+      "get": {
+        "tags": ["Shop Products"],
+        "summary": "Get product detail",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "product": { "$ref": "#/components/schemas/PublicProduct" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/shop/vendors/{vendorId}": {
+      "get": {
+        "tags": ["Shop Vendor Info"],
+        "summary": "Get vendor public profile",
+        "parameters": [
+          { "in": "path", "name": "vendorId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Vendor public info" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      }
+    },
+    "schemas": {
+      "Category": {
+        "type": "object",
+        "properties": {
+          "key":           { "type": "string", "example": "health_wellness" },
+          "label":         { "type": "string", "example": "Health and Wellness" },
+          "subcategories": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "PublicProduct": {
+        "type": "object",
+        "properties": {
+          "id":            { "type": "string", "format": "uuid" },
+          "title":         { "type": "string" },
+          "description":   { "type": "string" },
+          "price":         { "type": "number" },
+          "stockQuantity": { "type": "integer" },
+          "inStock":       { "type": "boolean" },
+          "category":      { "type": "string" },
+          "subcategory":   { "type": "string" },
+          "media": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "mediaUrl":  { "type": "string" },
+                "mediaType": { "type": "string", "enum": ["image", "video"] },
+                "isPrimary": { "type": "boolean" }
+              }
+            }
+          },
+          "vendor": {
+            "type": "object",
+            "properties": {
+              "id":           { "type": "string", "format": "uuid" },
+              "businessName": { "type": "string" },
+              "logoUrl":      { "type": "string" },
+              "city":         { "type": "string" },
+              "state":        { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error":   { "type": "string" }
+        }
+      }
+    }
+  }
+}

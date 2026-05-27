@@ -75,6 +75,9 @@ const whatsappRoutesNotification = require("./features/notifications/whatsapp/ro
 const adminVerificationRoutes = require("./features/auth/routes/adminVerificationRoutes");
 const adminOpsFeature = require("./features/admin-ops");
 const analyticsFeature = require("./features/analytics");
+const vendorFeature = require("./features/vendor");
+const shopFeature   = require("./features/shop");
+const cartFeature   = require("./features/cart");
 
 // Legacy Compatibility Routes
 
@@ -183,6 +186,12 @@ const sosSwaggerDoc = loadSwaggerDoc("./features/firstaid/docs/sos-swagger.bundl
 const serviceManagementSwaggerDoc = loadSwaggerDoc("./features/service-management/docs/service-management-swagger.json", "Service Management");
 const adminOpsSwaggerDoc = loadSwaggerDoc("./features/admin-ops/docs/admin-ops-swagger.json", "Admin Ops");
 const analyticsSwaggerDoc = loadSwaggerDoc("./features/analytics/docs/analytics-swagger.json", "Analytics");
+const vendorSwaggerDoc        = loadSwaggerDoc("./features/vendor/docs/vendor-swagger.json", "Vendor");
+const vendorPromotionsDoc     = loadSwaggerDoc("./features/vendor/docs/vendor-promotions-swagger.json", "Vendor Promotions");
+const vendorAnalyticsDoc      = loadSwaggerDoc("./features/vendor/docs/vendor-analytics-swagger.json",  "Vendor Analytics");
+const shopSwaggerDoc          = loadSwaggerDoc("./features/shop/docs/shop-swagger.json", "Shop");
+const cartSwaggerDoc          = loadSwaggerDoc("./features/cart/docs/cart-swagger.json", "Cart");
+const hybridPharmacySwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/hybrid-pharmacy-swagger.json", "Hybrid Pharmacy");
 
 const patientSwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/patient-swagger.bundle.json", "Patient");
 patientSwaggerDoc.servers = [
@@ -312,6 +321,90 @@ app.use('/analytics-docs', swaggerUi.serveFiles(analyticsSwaggerDoc, {}), swagge
     swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
 }));
 
+cartSwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server",
+    },
+];
+app.use('/cart-docs', swaggerUi.serveFiles(cartSwaggerDoc, {}), swaggerUi.setup(cartSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Cart API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
+shopSwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server",
+    },
+];
+app.use('/shop-docs', swaggerUi.serveFiles(shopSwaggerDoc, {}), swaggerUi.setup(shopSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Shop API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
+vendorAnalyticsDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server",
+    },
+];
+app.use('/vendor-analytics-docs', swaggerUi.serveFiles(vendorAnalyticsDoc, {}), swaggerUi.setup(vendorAnalyticsDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Vendor Analytics API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
+vendorPromotionsDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server",
+    },
+];
+app.use('/promotions-docs', swaggerUi.serveFiles(vendorPromotionsDoc, {}), swaggerUi.setup(vendorPromotionsDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Promotions API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
+vendorSwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server",
+    },
+];
+app.use('/vendor-docs', swaggerUi.serveFiles(vendorSwaggerDoc, {}), swaggerUi.setup(vendorSwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Vendor API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
+hybridPharmacySwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server",
+    },
+];
+app.use('/hybrid-pharmacy-docs', swaggerUi.serveFiles(hybridPharmacySwaggerDoc, {}), swaggerUi.setup(hybridPharmacySwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Hybrid Pharmacy API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
 // ============================================
 // HEALTH CHECK
 // ============================================
@@ -341,7 +434,13 @@ app.get("/", (req, res) => {
             ...(legacyLabRoutesEnabled ? { lab: "/lab-docs" } : {}),
             sos: "/sos-docs",
             serviceManagement: "/service-docs",
-            adminOps: "/admin-ops-docs"
+            adminOps: "/admin-ops-docs",
+            vendor: "/vendor-docs",
+            shop: "/shop-docs",
+            cart: "/cart-docs",
+            promotions: "/promotions-docs",
+            vendorAnalytics: "/vendor-analytics-docs",
+            hybridPharmacy: "/hybrid-pharmacy-docs"
         },
         routes: {
             new: {
@@ -391,6 +490,7 @@ app.use("/api/payments/callback", paymentFeature.callbackRouter); // Public — 
 app.use("/api/payments", authenticateJWT, paymentFeature.router);
 app.use("/api/webhooks/payments", paymentFeature.webhookRouter); // Public webhook route
 app.use("/api/webhooks/pharmacy", require("./features/pharmacy/routes/pharmacyWebhookRoutes")); // Pharmacy payment webhooks
+app.use("/api/webhooks/vendor/promotions", require("./features/vendor/routes/promotionWebhookRoutes")); // Vendor promotion payment webhooks
 app.use("/api/transactions", authenticateJWT, transactionFeature.router);
 app.use("/api/support", authenticateJWT, supportFeature.router);
 
@@ -405,6 +505,9 @@ app.use("/api/admin/verification", adminVerificationRoutes);
 app.use("/api/admin/logs", require("./features/admin/routes/logsRoute"));
 app.use("/api/admin/ops", adminOpsFeature.router);
 app.use("/api/analytics", analyticsFeature.router);
+app.use("/api/vendor",   vendorFeature.router);
+app.use("/api/shop",     shopFeature.router);
+app.use("/api/cart",     cartFeature.router);
 
 
 // ============================================

@@ -1,0 +1,293 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Cart API",
+    "description": "Patient cart management — add items, submit to vendor, and track cart status. Vendor cart review and pricing confirmation.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:3000/api", "description": "Development server" }
+  ],
+  "tags": [
+    { "name": "Patient Cart",  "description": "Patient cart operations — build, submit, cancel" },
+    { "name": "Vendor Carts",  "description": "Vendor side — view received carts and confirm pricing" }
+  ],
+  "paths": {
+    "/cart": {
+      "get": {
+        "tags": ["Patient Cart"],
+        "summary": "List my carts",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["draft", "submitted", "confirmed", "cancelled"] } },
+          { "in": "query", "name": "page",   "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit",  "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Paginated cart list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CartListResponse" } } } }
+        }
+      }
+    },
+    "/cart/{cartId}": {
+      "get": {
+        "tags": ["Patient Cart"],
+        "summary": "Get a single cart",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "cartId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Cart detail" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/cart/vendor/{vendorId}/items": {
+      "post": {
+        "tags": ["Patient Cart"],
+        "summary": "Add a product to cart",
+        "description": "Adds a product to the patient's draft cart for a given vendor. Creates the cart automatically if one doesn't exist yet. One draft cart per vendor.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "vendorId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["productId"],
+                "properties": {
+                  "productId": { "type": "string", "format": "uuid" },
+                  "quantity":  { "type": "integer", "minimum": 1, "default": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Item added, cart returned" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/cart/{cartId}/items/{itemId}": {
+      "put": {
+        "tags": ["Patient Cart"],
+        "summary": "Update item quantity",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "cartId", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "in": "path", "name": "itemId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["quantity"],
+                "properties": {
+                  "quantity": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Item updated" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "delete": {
+        "tags": ["Patient Cart"],
+        "summary": "Remove item from cart",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "cartId", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "in": "path", "name": "itemId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Item removed" }
+        }
+      }
+    },
+    "/cart/{cartId}/submit": {
+      "post": {
+        "tags": ["Patient Cart"],
+        "summary": "Submit cart to vendor",
+        "description": "Locks the cart for editing and sends it to the vendor for pricing review. By submitting, the patient agrees to share their name and phone number with the vendor.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "cartId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patientNote": { "type": "string", "example": "Please include delivery to Ikeja, Lagos." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cart submitted. Vendor notified." },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/cart/{cartId}/cancel": {
+      "post": {
+        "tags": ["Patient Cart"],
+        "summary": "Cancel cart",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "cartId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Cart cancelled" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/carts": {
+      "get": {
+        "tags": ["Vendor Carts"],
+        "summary": "List received carts",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["draft", "submitted", "confirmed", "cancelled"] } },
+          { "in": "query", "name": "page",   "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit",  "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Paginated list of carts received from customers" }
+        }
+      }
+    },
+    "/vendor/carts/{cartId}": {
+      "get": {
+        "tags": ["Vendor Carts"],
+        "summary": "Get a cart detail (includes patient name and phone)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "cartId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Cart detail with patient contact info" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/vendor/carts/{cartId}/confirm-pricing": {
+      "post": {
+        "tags": ["Vendor Carts"],
+        "summary": "Confirm cart pricing",
+        "description": "Vendor sets the confirmed total (may include delivery, discounts, extra fees). Patient is notified automatically.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "cartId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["confirmedTotal"],
+                "properties": {
+                  "confirmedTotal": { "type": "number", "example": 8500.00, "description": "Final total price including all fees" },
+                  "vendorNote":     { "type": "string", "example": "Includes ₦500 delivery fee. Available for pickup tomorrow." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Pricing confirmed. Patient notified." },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/carts/{cartId}/cancel": {
+      "post": {
+        "tags": ["Vendor Carts"],
+        "summary": "Cancel a cart (vendor side)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "cartId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Cart cancelled. Patient notified." },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "NotFound": {
+        "description": "Not found",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      }
+    },
+    "schemas": {
+      "CartItem": {
+        "type": "object",
+        "properties": {
+          "id":            { "type": "string", "format": "uuid" },
+          "productId":     { "type": "string", "format": "uuid" },
+          "productTitle":  { "type": "string" },
+          "quantity":      { "type": "integer" },
+          "priceSnapshot": { "type": "number", "description": "Price locked at time of adding" },
+          "lineTotal":     { "type": "string", "description": "priceSnapshot × quantity" }
+        }
+      },
+      "Cart": {
+        "type": "object",
+        "properties": {
+          "id":             { "type": "string", "format": "uuid" },
+          "status":         { "type": "string", "enum": ["draft", "submitted", "confirmed", "cancelled"] },
+          "patientNote":    { "type": "string" },
+          "vendorNote":     { "type": "string" },
+          "confirmedTotal": { "type": "number" },
+          "estimatedTotal": { "type": "string", "description": "Client-calculated total based on price snapshots" },
+          "itemCount":      { "type": "integer" },
+          "items":          { "type": "array", "items": { "$ref": "#/components/schemas/CartItem" } },
+          "vendor":         { "type": "object", "properties": { "id": { "type": "string" }, "businessName": { "type": "string" } } },
+          "submittedAt":    { "type": "string", "format": "date-time" },
+          "confirmedAt":    { "type": "string", "format": "date-time" },
+          "createdAt":      { "type": "string", "format": "date-time" }
+        }
+      },
+      "CartListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "carts":   { "type": "array", "items": { "$ref": "#/components/schemas/Cart" } },
+          "total":   { "type": "integer" },
+          "page":    { "type": "integer" },
+          "limit":   { "type": "integer" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error":   { "type": "string" }
+        }
+      }
+    }
+  }
+}

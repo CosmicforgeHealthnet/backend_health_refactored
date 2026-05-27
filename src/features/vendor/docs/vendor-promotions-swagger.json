@@ -1,0 +1,291 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Vendor Promotions API",
+    "description": "Vendor promotions — Boost Account, Get Sales, and Campaign. Includes payment initiation and webhook activation.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:3000/api", "description": "Development server" }
+  ],
+  "tags": [
+    { "name": "Promotions",          "description": "Vendor promotion management" },
+    { "name": "Promotion Payments",  "description": "Payment initiation for promotions" },
+    { "name": "Promotion Webhooks",  "description": "Payment gateway webhook handlers (Paystack / Flutterwave)" }
+  ],
+  "paths": {
+    "/vendor/promotions/pricing": {
+      "get": {
+        "tags": ["Promotions"],
+        "summary": "Get promotion pricing and available types",
+        "description": "Returns pricing per duration and available subTypes for each promotion type. No auth required.",
+        "responses": {
+          "200": {
+            "description": "Pricing info",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PricingInfoResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendor/promotions": {
+      "get": {
+        "tags": ["Promotions"],
+        "summary": "List my promotions",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "type",   "schema": { "type": "string", "enum": ["boost_account", "get_sales", "campaign"] } },
+          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["pending", "active", "completed", "cancelled", "failed"] } },
+          { "in": "query", "name": "page",   "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit",  "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Paginated promotion list" }
+        }
+      },
+      "post": {
+        "tags": ["Promotions"],
+        "summary": "Create a new promotion",
+        "description": "Creates the promotion in pending/unpaid state. Call POST /{id}/pay to get the payment URL and activate it.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePromotionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Promotion created — proceed to payment" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/promotions/trends": {
+      "get": {
+        "tags": ["Promotions"],
+        "summary": "Get promotion performance trends",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "days", "schema": { "type": "integer", "default": 30 }, "description": "Number of days to look back" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily trend data + active promotions summary",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TrendsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendor/promotions/{id}": {
+      "get": {
+        "tags": ["Promotions"],
+        "summary": "Get a promotion by ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Promotion detail" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Promotions"],
+        "summary": "Edit a pending promotion",
+        "description": "Only promotions with status 'pending' (not yet paid) can be edited.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdatePromotionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Promotion updated" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "delete": {
+        "tags": ["Promotions"],
+        "summary": "Delete a pending promotion",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Promotion deleted" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/promotions/{id}/pay": {
+      "post": {
+        "tags": ["Promotion Payments"],
+        "summary": "Initiate payment for a promotion",
+        "description": "Generates a Paystack or Flutterwave payment URL. Redirect the vendor to this URL. On successful payment the webhook automatically activates the promotion.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment URL returned",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PaymentInitResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/promotions/{id}/cancel": {
+      "post": {
+        "tags": ["Promotions"],
+        "summary": "Cancel a promotion",
+        "description": "Cancels a pending or active promotion.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Promotion cancelled" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/webhooks/vendor/promotions/paystack": {
+      "post": {
+        "tags": ["Promotion Webhooks"],
+        "summary": "Paystack webhook — activates promotion on charge.success",
+        "description": "Verified via x-paystack-signature header. Returns 200 regardless to prevent retries.",
+        "responses": { "200": { "description": "Received" } }
+      }
+    },
+    "/webhooks/vendor/promotions/flutterwave": {
+      "post": {
+        "tags": ["Promotion Webhooks"],
+        "summary": "Flutterwave webhook — activates promotion on charge.completed",
+        "description": "Verified via verif-hash header.",
+        "responses": { "200": { "description": "Received" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "responses": {
+      "BadRequest": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "NotFound":   { "description": "Not found",   "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+    },
+    "schemas": {
+      "CreatePromotionRequest": {
+        "type": "object",
+        "required": ["type", "title", "duration", "termsAccepted"],
+        "properties": {
+          "type":      { "type": "string", "enum": ["boost_account", "get_sales", "campaign"] },
+          "subType":   { "type": "string", "example": "more_product_visibility", "description": "Required for boost_account and get_sales" },
+          "title":     { "type": "string", "example": "Summer Health Sale" },
+          "duration":  { "type": "string", "enum": ["one_day", "one_week", "one_month", "custom"] },
+          "customDays": { "type": "integer", "example": 14, "description": "Required when duration is custom" },
+          "termsAccepted": { "type": "boolean", "example": true },
+          "productIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "maxItems": 5,
+            "description": "Required for get_sales type (max 5 approved products)"
+          },
+          "campaignProduct": {
+            "type": "object",
+            "description": "Required for campaign type",
+            "properties": {
+              "title":         { "type": "string" },
+              "category":      { "type": "string" },
+              "description":   { "type": "string" },
+              "price":         { "type": "number" },
+              "stockQuantity": { "type": "integer" },
+              "mediaUrls":     { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      },
+      "UpdatePromotionRequest": {
+        "type": "object",
+        "properties": {
+          "title":      { "type": "string" },
+          "subType":    { "type": "string" },
+          "duration":   { "type": "string", "enum": ["one_day", "one_week", "one_month", "custom"] },
+          "customDays": { "type": "integer" }
+        }
+      },
+      "PaymentInitResponse": {
+        "type": "object",
+        "properties": {
+          "success":    { "type": "boolean" },
+          "message":    { "type": "string" },
+          "paymentUrl": { "type": "string", "description": "Redirect vendor to this URL to complete payment" },
+          "reference":  { "type": "string" },
+          "amount":     { "type": "number" }
+        }
+      },
+      "PricingInfoResponse": {
+        "type": "object",
+        "properties": {
+          "success":  { "type": "boolean" },
+          "currency": { "type": "string", "example": "NGN" },
+          "pricing": {
+            "type": "object",
+            "properties": {
+              "one_day":   { "type": "object", "properties": { "price": { "type": "number", "example": 5000 }, "label": { "type": "string" } } },
+              "one_week":  { "type": "object", "properties": { "price": { "type": "number", "example": 25000 }, "label": { "type": "string" } } },
+              "one_month": { "type": "object", "properties": { "price": { "type": "number", "example": 80000 }, "label": { "type": "string" } } },
+              "custom":    { "type": "object", "properties": { "pricePerDay": { "type": "number", "example": 5000 }, "label": { "type": "string" } } }
+            }
+          }
+        }
+      },
+      "TrendsResponse": {
+        "type": "object",
+        "properties": {
+          "success":          { "type": "boolean" },
+          "activePromotions": { "type": "integer" },
+          "activeDetails":    { "type": "array", "items": { "type": "object" } },
+          "trends": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date":       { "type": "string", "format": "date" },
+                "total":      { "type": "integer" },
+                "active":     { "type": "integer" },
+                "totalSpend": { "type": "number" }
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error":   { "type": "string" }
+        }
+      }
+    }
+  }
+}

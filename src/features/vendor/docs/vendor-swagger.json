@@ -1,0 +1,619 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Vendor API",
+    "description": "Vendor registration, authentication, and profile management for the CosmicForge e-commerce system",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    { "name": "Vendor Auth",     "description": "Vendor registration and authentication" },
+    { "name": "Vendor Profile",  "description": "Vendor profile management" },
+    { "name": "Vendor Products", "description": "Vendor product management (create, update, delete, media upload)" },
+    { "name": "Admin Products",  "description": "Admin product approval and review" }
+  ],
+  "paths": {
+    "/vendor/auth/register": {
+      "post": {
+        "tags": ["Vendor Auth"],
+        "summary": "Register a new vendor",
+        "description": "Creates a vendor account and business profile. Sends an email verification link on success.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VendorRegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vendor registered successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VendorRegisterResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/auth/login": {
+      "post": {
+        "tags": ["Vendor Auth"],
+        "summary": "Vendor login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VendorLoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VendorLoginResponse" }
+              }
+            }
+          },
+          "206": {
+            "description": "MFA required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MfaRequiredResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/vendor/auth/forgot-password": {
+      "post": {
+        "tags": ["Vendor Auth"],
+        "summary": "Request a password reset link",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Reset link sent if email exists" }
+        }
+      }
+    },
+    "/vendor/auth/reset-password": {
+      "post": {
+        "tags": ["Vendor Auth"],
+        "summary": "Reset password using token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token", "newPassword"],
+                "properties": {
+                  "token":       { "type": "string" },
+                  "newPassword": { "type": "string", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password reset successfully" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/auth/profile": {
+      "get": {
+        "tags": ["Vendor Profile"],
+        "summary": "Get vendor profile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Vendor profile returned",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VendorProfileResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "put": {
+        "tags": ["Vendor Profile"],
+        "summary": "Update vendor profile",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VendorProfileUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profile updated successfully" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/vendor/auth/profile/logo": {
+      "post": {
+        "tags": ["Vendor Profile"],
+        "summary": "Upload vendor logo",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Logo uploaded" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/auth/account": {
+      "put": {
+        "tags": ["Vendor Profile"],
+        "summary": "Update account settings (name, email)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fullName": { "type": "string" },
+                  "email":    { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Account settings updated" }
+        }
+      }
+    },
+    "/vendor/auth/change-password": {
+      "post": {
+        "tags": ["Vendor Auth"],
+        "summary": "Change account password",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["currentPassword", "newPassword"],
+                "properties": {
+                  "currentPassword": { "type": "string" },
+                  "newPassword":     { "type": "string", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password changed" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/vendor/products": {
+      "get": {
+        "tags": ["Vendor Products"],
+        "summary": "List my products",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["pending", "approved", "failed"] } },
+          { "in": "query", "name": "page",   "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit",  "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Paginated list of vendor's own products" }
+        }
+      },
+      "post": {
+        "tags": ["Vendor Products"],
+        "summary": "Create a new product",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProductCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Product submitted for approval" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/products/{id}": {
+      "get": {
+        "tags": ["Vendor Products"],
+        "summary": "Get my product by ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Product detail" },
+          "404": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "put": {
+        "tags": ["Vendor Products"],
+        "summary": "Update a product",
+        "description": "Updating a product resets its status to pending for re-approval.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProductUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Product updated and resubmitted for approval" }
+        }
+      },
+      "delete": {
+        "tags": ["Vendor Products"],
+        "summary": "Delete a product",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Product deleted" },
+          "404": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/products/{id}/media": {
+      "post": {
+        "tags": ["Vendor Products"],
+        "summary": "Upload product images or video",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": { "type": "array", "items": { "type": "string", "format": "binary" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Media uploaded" }
+        }
+      }
+    },
+    "/vendor/products/admin/all": {
+      "get": {
+        "tags": ["Admin Products"],
+        "summary": "Get all products for admin review",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "status",   "schema": { "type": "string", "enum": ["pending", "approved", "failed"] } },
+          { "in": "query", "name": "category", "schema": { "type": "string" } },
+          { "in": "query", "name": "page",     "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit",    "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Paginated product list with vendor info" }
+        }
+      }
+    },
+    "/vendor/products/admin/{id}/approve": {
+      "put": {
+        "tags": ["Admin Products"],
+        "summary": "Approve a product",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Product approved and visible in shop" },
+          "404": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/products/admin/{id}/reject": {
+      "put": {
+        "tags": ["Admin Products"],
+        "summary": "Reject a product with a reason",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rejectionReason"],
+                "properties": {
+                  "rejectionReason": { "type": "string", "example": "Product description is incomplete" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Product rejected" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/vendor/auth/all": {
+      "get": {
+        "tags": ["Vendor Auth"],
+        "summary": "Get all vendors (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "page",               "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit",              "schema": { "type": "integer", "default": 20 } },
+          { "in": "query", "name": "verificationStatus", "schema": { "type": "string", "enum": ["pending", "documents_required", "under_review", "approved", "rejected", "suspended"] } }
+        ],
+        "responses": {
+          "200": { "description": "Paginated vendor list" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request — validation failed",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized — invalid or missing token",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "VendorRegisterRequest": {
+        "type": "object",
+        "required": [
+          "fullName", "email", "password",
+          "businessName", "businessCategory",
+          "businessEmail", "businessPhone",
+          "country", "state", "city", "fullAddress", "businessDescription"
+        ],
+        "properties": {
+          "fullName":            { "type": "string", "example": "John Doe" },
+          "email":               { "type": "string", "format": "email", "example": "john@example.com" },
+          "password":            { "type": "string", "minLength": 8, "example": "SecurePass123" },
+          "phoneNumber":         { "type": "string", "example": "+2348012345678" },
+          "businessName":        { "type": "string", "example": "HealthPlus Store" },
+          "businessCategory":    {
+            "type": "string",
+            "enum": ["health_wellness", "medical_supplies", "baby_mother_care", "fitness_lifestyle", "nutrition_healthy_living", "others"],
+            "example": "health_wellness"
+          },
+          "businessEmail":       { "type": "string", "format": "email", "example": "store@healthplus.com" },
+          "businessPhone":       { "type": "string", "example": "+2348098765432" },
+          "country":             { "type": "string", "example": "Nigeria" },
+          "state":               { "type": "string", "example": "Lagos" },
+          "city":                { "type": "string", "example": "Ikeja" },
+          "fullAddress":         { "type": "string", "example": "12 Allen Avenue, Ikeja, Lagos" },
+          "businessWebsite":     { "type": "string", "example": "https://healthplus.com" },
+          "businessDescription": { "type": "string", "example": "We sell quality health and wellness products." }
+        }
+      },
+      "VendorRegisterResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string" },
+          "vendor": {
+            "type": "object",
+            "properties": {
+              "id":                 { "type": "string", "format": "uuid" },
+              "businessName":       { "type": "string" },
+              "businessCategory":   { "type": "string" },
+              "verificationStatus": { "type": "string" },
+              "isActive":           { "type": "boolean" },
+              "documentsSubmitted": { "type": "boolean" },
+              "createdAt":          { "type": "string", "format": "date-time" }
+            }
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id":       { "type": "string", "format": "uuid" },
+              "fullName": { "type": "string" },
+              "email":    { "type": "string" },
+              "role":     { "type": "string" },
+              "status":   { "type": "string" }
+            }
+          }
+        }
+      },
+      "VendorLoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email":             { "type": "string", "format": "email" },
+          "password":          { "type": "string" },
+          "deviceFingerprint": { "type": "string" }
+        }
+      },
+      "VendorLoginResponse": {
+        "type": "object",
+        "properties": {
+          "success":      { "type": "boolean" },
+          "message":      { "type": "string" },
+          "accessToken":  { "type": "string" },
+          "refreshToken": { "type": "string" },
+          "vendor": {
+            "type": "object",
+            "properties": {
+              "id":                 { "type": "string", "format": "uuid" },
+              "businessName":       { "type": "string" },
+              "verificationStatus": { "type": "string" },
+              "isActive":           { "type": "boolean" }
+            }
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id":       { "type": "string", "format": "uuid" },
+              "fullName": { "type": "string" },
+              "email":    { "type": "string" },
+              "role":     { "type": "string" }
+            }
+          }
+        }
+      },
+      "MfaRequiredResponse": {
+        "type": "object",
+        "properties": {
+          "success":     { "type": "boolean" },
+          "mfaRequired": { "type": "boolean" },
+          "tempToken":   { "type": "string" },
+          "message":     { "type": "string" }
+        }
+      },
+      "VendorProfileResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "vendor": {
+            "type": "object",
+            "properties": {
+              "id":                    { "type": "string", "format": "uuid" },
+              "businessName":          { "type": "string" },
+              "businessCategory":      { "type": "string" },
+              "businessEmail":         { "type": "string" },
+              "businessPhone":         { "type": "string" },
+              "country":               { "type": "string" },
+              "state":                 { "type": "string" },
+              "city":                  { "type": "string" },
+              "fullAddress":           { "type": "string" },
+              "businessWebsite":       { "type": "string" },
+              "businessDescription":   { "type": "string" },
+              "logoUrl":               { "type": "string" },
+              "verificationStatus":    { "type": "string" },
+              "isActive":              { "type": "boolean" },
+              "documentsSubmitted":    { "type": "boolean" },
+              "isHybridPharmacy":      { "type": "boolean" },
+              "documents":             { "type": "array", "items": { "type": "object" } }
+            }
+          }
+        }
+      },
+      "VendorProfileUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "fullName":               { "type": "string" },
+          "businessName":           { "type": "string" },
+          "businessPhone":          { "type": "string" },
+          "country":                { "type": "string" },
+          "state":                  { "type": "string" },
+          "city":                   { "type": "string" },
+          "fullAddress":            { "type": "string" },
+          "businessWebsite":        { "type": "string" },
+          "businessDescription":    { "type": "string" },
+          "notificationPreferences": { "type": "object" }
+        }
+      },
+      "ProductCreateRequest": {
+        "type": "object",
+        "required": ["title", "description", "price", "category", "subcategory"],
+        "properties": {
+          "title":         { "type": "string",  "example": "Vitamin C 1000mg" },
+          "description":   { "type": "string",  "example": "High-dose Vitamin C supplement" },
+          "price":         { "type": "number",  "example": 2500.00 },
+          "stockQuantity": { "type": "integer", "example": 50, "default": 0 },
+          "category":      { "type": "string",  "enum": ["health_wellness","medical_supplies","baby_mother_care","fitness_lifestyle","nutrition_healthy_living","others","medications"] },
+          "subcategory":   { "type": "string",  "example": "vitamins_supplements" }
+        }
+      },
+      "ProductUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "title":         { "type": "string" },
+          "description":   { "type": "string" },
+          "price":         { "type": "number" },
+          "stockQuantity": { "type": "integer" },
+          "isActive":      { "type": "boolean" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error":   { "type": "string" }
+        }
+      }
+    }
+  }
+}

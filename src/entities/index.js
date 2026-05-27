@@ -33,6 +33,8 @@ const compliance = require('../features/compliance/entities');
 const documents = require('../features/documents/entities');
 const firstaid = require('../features/firstaid/entities');
 const pharmacy = require('../features/pharmacy/entities');
+const vendor   = require('../features/vendor/entities');
+const cart     = require('../features/cart/entities');
 const serviceManagement = require('../features/service-management/entities');
 const adminOps = require('../features/admin-ops/entities');
 const analytics = require('../features/analytics/entities');
@@ -59,6 +61,8 @@ module.exports = [
     ...Object.values(documents),
     ...Object.values(firstaid),
     ...Object.values(pharmacy),
+    ...Object.values(vendor),
+    ...Object.values(cart),
     ...Object.values(serviceManagement),
     ...Object.values(adminOps),
     ...Object.values(analytics),

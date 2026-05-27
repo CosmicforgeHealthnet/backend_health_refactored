@@ -410,7 +410,15 @@ const pharmacyPaymentService = {
     if (!invoice) throw new Error(`Invoice ${invoiceId} not found`);
     if (invoice.status === InvoiceStatus.PAID) return; // Already processed — idempotent
 
-    const amountUsd = parseFloat(invoice.totalAmountUsd);
+    const PLATFORM_FEE_RATE = 0.07; // 7% platform fee — set by system
+    const totalAmountUsd    = parseFloat(invoice.totalAmountUsd);
+    const platformFeeUsd    = parseFloat((totalAmountUsd * PLATFORM_FEE_RATE).toFixed(6));
+    const amountUsd         = parseFloat((totalAmountUsd - platformFeeUsd).toFixed(6));
+
+    console.log(`💊 Pharmacy Payment Breakdown for invoice ${invoice.reference}:`);
+    console.log(`   Total Paid (USD): ${totalAmountUsd}`);
+    console.log(`   Platform Fee (7%): ${platformFeeUsd}`);
+    console.log(`   Pharmacy Receives: ${amountUsd}`);
 
     await AppDataSource.transaction(async (trx) => {
       // 1. Invoice paid
@@ -425,7 +433,7 @@ const pharmacyPaymentService = {
         paymentStatus: "paid",
       });
 
-      // 3. Credit pharmacy wallet (escrow — pendingClearance for online payments)
+      // 3. Credit pharmacy wallet after 7% platform fee deduction (escrow — pendingClearance)
       const wallet = await trx.findOne("PharmacyWallet", { where: { pharmacyId: invoice.pharmacyId } });
       if (wallet) {
         await trx.update("PharmacyWallet", { id: wallet.id }, {
@@ -435,7 +443,7 @@ const pharmacyPaymentService = {
 
         const updatedWallet = await trx.findOne("PharmacyWallet", { where: { id: wallet.id } });
 
-        // 4. Wallet transaction record
+        // 4. Wallet transaction record — reflects amount after platform fee
         await trx.save("PharmacyWalletTransaction", {
           walletId:        wallet.id,
           pharmacyId:      invoice.pharmacyId,
@@ -444,7 +452,7 @@ const pharmacyPaymentService = {
           category:        WalletTransactionCategory.INVOICE_PAYMENT,
           amountUsd,
           balanceAfterUsd: parseFloat(updatedWallet.pendingClearanceUsd),
-          description:     `Online payment for invoice ${invoice.reference}`,
+          description:     `Online payment for invoice ${invoice.reference} (after 7% platform fee of $${platformFeeUsd})`,
           reference:       payment?.reference ?? invoiceId,
           invoiceId:       invoice.id,
           invoiceRef:      invoice.reference,
