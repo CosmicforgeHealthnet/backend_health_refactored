@@ -9,6 +9,8 @@ const Status = {
   DOCTOR_ACTIVE: "doctor_active",
   PENDING_PHARMACY_VERIFICATION: "pending_pharmacy_verification",
   PHARMACY_ACTIVE: "pharmacy_active",
+  PENDING_VENDOR_VERIFICATION: "pending_vendor_verification",
+  VENDOR_ACTIVE: "vendor_active",
   LOCKED: "locked",
 };
 
@@ -292,6 +294,12 @@ module.exports = new EntitySchema({
     pharmacyProfile: {
       type: "one-to-one",
       target: "PharmacyProfile",
+      inverseSide: "user",
+      cascade: true,
+    },
+    vendorProfile: {
+      type: "one-to-one",
+      target: "VendorProfile",
       inverseSide: "user",
       cascade: true,
     },

@@ -19,7 +19,8 @@ const USER_ROLES = {
     SAMPLE_COLLECTOR: "sample_collector",
     LAB_TECHNICIAN: "lab_technician",
     RADIOLOGIST: "radiologist",
-    RESULT_REVIEWER: "result_reviewer"
+    RESULT_REVIEWER: "result_reviewer",
+    VENDOR: "vendor",
 };
 
 const APPOINTMENT_STATUS = {

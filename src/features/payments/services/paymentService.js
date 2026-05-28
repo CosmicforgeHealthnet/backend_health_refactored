@@ -1044,40 +1044,37 @@ class PaymentService {
     const splits = [];
 
     if (serviceType === 'appointment' && finalDoctorId) {
-      // ✅ NEW: Enhanced appointment payment breakdown
-      // Calculate VAT (7.5% of total amount)
-      const vatAmount = originalAmount * 0.075;
+      const PLATFORM_FEE_RATE = 0.07; // 7% platform fee — set by system
 
-      // Amount after VAT
-      const amountAfterVat = originalAmount - vatAmount;
+      // Step 1: 7% platform fee on the full amount
+      const platformFee    = originalAmount * PLATFORM_FEE_RATE;
+      const afterPlatform  = originalAmount - platformFee;
 
-      // Get doctor's commission rate
-      const commissionRate = await this.getDoctorCommissionRate(finalDoctorId);
+      // Step 2: Doctor commission (10–30% based on subscription tier) on the remainder
+      const commissionRate   = await this.getDoctorCommissionRate(finalDoctorId);
+      const commissionAmount = afterPlatform * (commissionRate / 100);
 
-      // Calculate commission (company keeps this %)
-      const commissionAmount = amountAfterVat * (commissionRate / 100);
-
-      // Doctor gets the remainder
-      const doctorAmount = amountAfterVat - commissionAmount;
+      // Step 3: Doctor receives the rest
+      const doctorAmount = afterPlatform - commissionAmount;
 
       console.log(`💰 Appointment Payment Breakdown for ${originalAmount} ${originalCurrency}:`);
-      console.log(`   VAT (7.5%): ${vatAmount.toFixed(2)}`);
-      console.log(`   After VAT: ${amountAfterVat.toFixed(2)}`);
-      console.log(`   Doctor Tier Commission: ${commissionRate}%`);
-      console.log(`   Commission Amount: ${commissionAmount.toFixed(2)}`);
+      console.log(`   Platform Fee (7%): ${platformFee.toFixed(2)}`);
+      console.log(`   After Platform Fee: ${afterPlatform.toFixed(2)}`);
+      console.log(`   Doctor Commission (${commissionRate}%): ${commissionAmount.toFixed(2)}`);
       console.log(`   Doctor Gets: ${doctorAmount.toFixed(2)}`);
 
-      // Create splits for appointment
+      // Platform fee → company
       splits.push({
         transactionId: savedTransaction.id,
-        type: 'vat',
-        originalAmount: parseFloat(vatAmount.toFixed(2)),
+        type: 'service_fee',
+        originalAmount: parseFloat(platformFee.toFixed(2)),
         originalCurrency,
-        usdAmount: parseFloat((vatAmount * exchangeRate).toFixed(2)),
+        usdAmount: parseFloat((platformFee * exchangeRate).toFixed(2)),
         recipientType: 'company_wallet',
         recipientId: null
       });
 
+      // Commission → company
       splits.push({
         transactionId: savedTransaction.id,
         type: 'service_fee',
@@ -1088,6 +1085,7 @@ class PaymentService {
         recipientId: null
       });
 
+      // Remainder → doctor
       splits.push({
         transactionId: savedTransaction.id,
         type: 'appointment_fee',
@@ -1114,7 +1112,7 @@ class PaymentService {
         });
       }
 
-      // Service fee and VAT always go to company
+      // Service fee goes to company
       if (serviceFee > 0) {
         splits.push({
           transactionId: savedTransaction.id,
@@ -1122,18 +1120,6 @@ class PaymentService {
           originalAmount: serviceFee,
           originalCurrency,
           usdAmount: serviceFee * exchangeRate,
-          recipientType: 'company_wallet',
-          recipientId: null
-        });
-      }
-
-      if (vat > 0) {
-        splits.push({
-          transactionId: savedTransaction.id,
-          type: 'vat',
-          originalAmount: vat,
-          originalCurrency,
-          usdAmount: vat * exchangeRate,
           recipientType: 'company_wallet',
           recipientId: null
         });

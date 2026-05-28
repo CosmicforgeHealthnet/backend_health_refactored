@@ -1,0 +1,176 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Hybrid Pharmacy API",
+    "description": "Enables approved pharmacies to operate as vendors on the CosmicForge shop. Hybrid pharmacies gain access to all vendor features, including the ability to list medications — a category restricted to hybrid pharmacies only.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:3000/api", "description": "Development server" }
+  ],
+  "tags": [
+    { "name": "Hybrid Pharmacy", "description": "Vendor mode management for approved pharmacies" }
+  ],
+  "paths": {
+    "/pharmacy/vendor-mode/status": {
+      "get": {
+        "tags": ["Hybrid Pharmacy"],
+        "summary": "Get vendor mode status",
+        "description": "Returns whether vendor mode is currently enabled for the authenticated pharmacy, along with the linked vendor profile summary.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Vendor mode status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VendorModeStatusResponse" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/pharmacy/vendor-mode/enable": {
+      "post": {
+        "tags": ["Hybrid Pharmacy"],
+        "summary": "Enable vendor mode",
+        "description": "Converts an approved pharmacy into a hybrid pharmacy-vendor. A VendorProfile is created automatically with `isHybridPharmacy: true` and is immediately approved, allowing the pharmacy to list products — including medications. Requires the pharmacy to already be `approved`.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EnableVendorModeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vendor mode enabled",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnableVendorModeResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/pharmacy/vendor-mode/disable": {
+      "post": {
+        "tags": ["Hybrid Pharmacy"],
+        "summary": "Disable vendor mode",
+        "description": "Deactivates the vendor profile linked to this pharmacy. Products will no longer appear in the shop. The VendorProfile is preserved but marked inactive — re-enabling is not supported and would require support intervention.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Vendor mode disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Unauthorized",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "NotFound": {
+        "description": "Not found",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "BadRequest": {
+        "description": "Bad request",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      }
+    },
+    "schemas": {
+      "EnableVendorModeRequest": {
+        "type": "object",
+        "required": ["state", "city"],
+        "properties": {
+          "state":               { "type": "string", "example": "Lagos" },
+          "city":                { "type": "string", "example": "Lagos Island" },
+          "country":             { "type": "string", "example": "Nigeria", "description": "Defaults to Nigeria if omitted" },
+          "businessName":        { "type": "string", "description": "Defaults to pharmacy name if omitted" },
+          "businessCategory":    {
+            "type": "string",
+            "enum": ["health_wellness", "medical_supplies", "baby_mother_care", "fitness_lifestyle", "nutrition_healthy_living", "others"],
+            "default": "health_wellness"
+          },
+          "businessEmail":       { "type": "string", "format": "email", "description": "Defaults to pharmacy email" },
+          "businessPhone":       { "type": "string", "description": "Defaults to pharmacy phone" },
+          "fullAddress":         { "type": "string", "description": "Defaults to pharmacy address" },
+          "businessDescription": { "type": "string", "description": "Defaults to pharmacy description" }
+        }
+      },
+      "EnableVendorModeResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "vendor": { "$ref": "#/components/schemas/VendorSummary" }
+        }
+      },
+      "VendorModeStatusResponse": {
+        "type": "object",
+        "properties": {
+          "success":            { "type": "boolean" },
+          "vendorModeEnabled":  { "type": "boolean" },
+          "pharmacy": {
+            "type": "object",
+            "properties": {
+              "id":                 { "type": "string", "format": "uuid" },
+              "pharmacyName":       { "type": "string" },
+              "verificationStatus": { "type": "string" }
+            }
+          },
+          "vendor": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/VendorSummary" },
+              { "type": "null" }
+            ]
+          }
+        }
+      },
+      "VendorSummary": {
+        "type": "object",
+        "properties": {
+          "id":                 { "type": "string", "format": "uuid" },
+          "businessName":       { "type": "string" },
+          "businessCategory":   { "type": "string" },
+          "verificationStatus": { "type": "string", "example": "approved" },
+          "isActive":           { "type": "boolean" },
+          "createdAt":          { "type": "string", "format": "date-time" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error":   { "type": "string" }
+        }
+      }
+    }
+  }
+}
