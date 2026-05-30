@@ -213,12 +213,12 @@ components:
           type: number
           format: decimal
           description: "Discounted price (what user pays during promo)"
-          example: 39900.00
+          example: 24950.00
         discount:
           type: number
           format: decimal
           description: "Amount saved with discount"
-          example: 10000.00
+          example: 24950.00
         currency:
           type: string
           example: "NGN"
@@ -227,7 +227,7 @@ components:
           example: "NG"
         discountPercentage:
           type: number
-          example: 20
+          example: 50
         hasDiscount:
           type: boolean
           description: "Whether a discount is currently active"
@@ -245,25 +245,110 @@ components:
           description: "Exchange rate used for conversion (if applicable)"
           example: null
         features:
+          type: object
+          description: "Feature flags (boolean access)"
+          properties:
+            chatAccess:
+              type: boolean
+            voiceConsultation:
+              type: boolean
+            videoConsultation:
+              type: boolean
+            generalEmergencySpecialists:
+              type: boolean
+            allSpecialists:
+              type: boolean
+            labAccess:
+              type: boolean
+            pharmacy:
+              type: boolean
+            shopAccess:
+              type: boolean
+            firstAidInstructions:
+              type: boolean
+            familyPlan:
+              type: boolean
+            standardSupport:
+              type: boolean
+            prioritySupport:
+              type: boolean
+            earlyAccessFeatures:
+              type: boolean
+            betaAccess:
+              type: boolean
+        featureList:
           type: array
+          description: "Auto-generated list of enabled features"
           items:
             type: string
-          example: ["Voice Consultation", "Video Consultation", "Priority Support"]
+          example: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
+        displayFeatures:
+          type: array
+          description: "Human-readable feature descriptions for UI display (matches documentation)"
+          items:
+            type: string
+          example:
+            - "Voice & Video Consultations + Chat"
+            - "Unlimited AI Chatbot Responses"
+            - "Unlimited AI Diagnostic Requests"
+            - "All Specialists Access"
+            - "Lab Access"
+            - "Shop Access"
+            - "Family Plan: 2 Adults + 3 Children"
+            - "First Aid Instructions"
+            - "Priority Support"
         monthlyLimits:
           type: object
+          description: "Usage limits per month (-1 means unlimited)"
           properties:
             aiChatbotResponses:
               type: integer
               description: "-1 means unlimited"
             aiDiagnosticRequests:
               type: integer
+              description: "-1 means unlimited"
+            maxPatients:
+              type: integer
+              description: "For doctor plans only, -1 means unlimited"
+            aiResponses:
+              type: integer
+              description: "For doctor plans only, -1 means unlimited"
         familyMembers:
           type: integer
+          description: "Number of family members allowed (-1 means unlimited)"
           example: 5
+        familyConfig:
+          type: object
+          description: "Detailed family plan configuration (patient plans only)"
+          properties:
+            adults:
+              type: integer
+              description: "Number of adults allowed (-1 means unlimited)"
+              example: 2
+            children:
+              type: integer
+              description: "Number of children allowed (-1 means unlimited)"
+              example: 3
+            total:
+              type: integer
+              description: "Total members allowed (-1 means unlimited)"
+              example: 5
+            description:
+              type: string
+              description: "Human-readable description"
+              example: "2 Adults + 3 Children"
         commissionRate:
           type: number
-          description: "Commission rate for doctor plans (percentage)"
-          example: 15
+          description: "Commission rate for doctor plans (percentage), null for patient plans"
+          example: null
+        isFree:
+          type: boolean
+          description: "Whether this is a free plan"
+          example: false
+        isPremium:
+          type: boolean
+          description: "Whether this is a paid plan"
+          example: true
 
     # Core Subscription Schemas
     Subscription:

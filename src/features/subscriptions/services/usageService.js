@@ -67,9 +67,9 @@ const FEATURE_META = {
   },
 
   // Feature access (boolean features)
-  chatOnly: {
-    displayName: "Chat Consultations",
-    description: "Text-based consultations with doctors",
+  chatAccess: {
+    displayName: "Chat Access",
+    description: "Text-based chat consultations with doctors",
     icon: "chat",
     category: "consultations"
   },

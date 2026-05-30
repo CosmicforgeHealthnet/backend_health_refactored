@@ -15,7 +15,7 @@
  */
 
 const subscriptionRepository = require("../repositories/subscriptionRepository");
-const { PLAN_DEFINITIONS, PROMO_EXPIRY, getTimeUntilExpiry } = require("../utils/subscriptionConstants");
+const { PLAN_DEFINITIONS, PROMO_EXPIRY, getTimeUntilExpiry, FAMILY_PLAN_CONFIG } = require("../utils/subscriptionConstants");
 const cache = require("../../../shared/utils/cache");
 
 // Cache TTL constants
@@ -172,8 +172,10 @@ class SubscriptionCompatibilityService {
       commissionRate: plan.commissionRate,
       features: plan.features,
       featureList: this._formatFeatures(plan.features),
+      displayFeatures: plan.displayFeatures || [], // Human-readable feature list from documentation
       monthlyLimits: plan.monthlyLimits,
       familyMembers: plan.familyMembers,
+      familyConfig: planType === "patient" ? FAMILY_PLAN_CONFIG[tier] : null,
 
       // Flags
       isFree: tier === "free",
@@ -378,6 +380,7 @@ class SubscriptionCompatibilityService {
       // Computed fields
       planDefinition: plan,
       featureList: this._formatFeatures(features),
+      displayFeatures: plan.displayFeatures || [], // Human-readable feature list
       isActive: subscription.status === "active",
       isExpired: subscription.status === "expired",
       isPremium: tier !== "free",
@@ -419,6 +422,7 @@ class SubscriptionCompatibilityService {
 
       // Computed
       featureList: this._formatFeatures(features),
+      displayFeatures: plan.displayFeatures || [], // Human-readable feature list
       isActive: subscription.status === "active",
       isPremium: tier !== "free",
       daysRemaining: this._daysRemaining(subscription.endDate),
@@ -508,6 +512,7 @@ class SubscriptionCompatibilityService {
       commissionRate: plan.commissionRate || 0,
       familyMembers: 1,
       featureList: this._formatFeatures(plan.features || {}),
+      displayFeatures: plan.displayFeatures || [], // Human-readable feature list
       isActive: true,
       isExpired: false,
       isPremium: false,
@@ -559,8 +564,10 @@ class SubscriptionCompatibilityService {
         commissionRate: plan.commissionRate,
         features: plan.features,
         featureList: this._formatFeatures(plan.features),
+        displayFeatures: plan.displayFeatures || [], // Human-readable feature list from documentation
         monthlyLimits: plan.monthlyLimits,
         familyMembers: plan.familyMembers,
+        familyConfig: planType === "patient" ? FAMILY_PLAN_CONFIG[tier] : null,
         isFree: tier === "free",
         isPremium: tier !== "free"
       };
@@ -576,7 +583,7 @@ class SubscriptionCompatibilityService {
 
     const names = {
       // Common features
-      chatOnly: "Chat Only",
+      chatAccess: "Chat Access",
       voiceConsultation: "Voice Consultation",
       videoConsultation: "Video Consultation",
       standardSupport: "Standard Support",
@@ -612,9 +619,20 @@ class SubscriptionCompatibilityService {
 
   static formatFeatureName(name) {
     const names = {
-      chatOnly: "Chat Only",
-      videoConsultation: "Video Consultation"
-      // Add more as needed
+      chatAccess: "Chat Access",
+      voiceConsultation: "Voice Consultation",
+      videoConsultation: "Video Consultation",
+      generalEmergencySpecialists: "General & Emergency Specialists",
+      allSpecialists: "All Specialists",
+      labAccess: "Lab Access",
+      pharmacy: "Pharmacy Access",
+      shopAccess: "Shop Access",
+      firstAidInstructions: "First Aid Instructions",
+      familyPlan: "Family Plan",
+      standardSupport: "Standard Support",
+      prioritySupport: "Priority Support",
+      earlyAccessFeatures: "Early Access Features",
+      betaAccess: "Beta Access"
     };
     return names[name] || name.replace(/([A-Z])/g, " $1").trim();
   }
