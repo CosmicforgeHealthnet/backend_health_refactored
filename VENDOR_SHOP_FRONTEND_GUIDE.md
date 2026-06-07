@@ -30,13 +30,13 @@
 |---|---|---|---|
 | Vendor order | subtotal + 7% | subtotal − commission | 7% + commission |
 | Appointment | doctor fee + 7% | doctor fee − subscription commission | 7% + commission |
-| Pharmacy invoice | invoice total | 100% (exempt) | nothing |
-| Prescription cart | cart total | 100% (exempt) | nothing |
+| Prescription cart | cart total + 7% | cart total (100%) | 7% |
 
-- **Platform fee (7%)** is added **ON TOP** of the base amount — the customer pays it, the vendor/doctor is not deducted.
+- **Platform fee (7%)** is added **ON TOP** of the base amount — the customer pays it, the provider's amount is not deducted.
 - **Vendor commission** rate is TBD — currently 0%. The structure is in place.
-- **Pharmacies are always exempt** from platform fee and commission.
+- **Pharmacies have no commission** but are subject to the 7% platform fee — the patient pays it on top, the pharmacy receives 100% of the cart total.
 - **Doctor commission** is 10–30% based on their subscription tier — separate system.
+- **Pharmacy invoice flow is removed** — all pharmacy payments now go through prescription cart sessions (`/api/pharmacy/sessions`).
 
 ---
 
@@ -1247,7 +1247,7 @@ Existing prescription fulfilment flow continues (mark ready, dispatch, complete)
 
 > **Session timeout:** Pharmacy has **30 minutes** to finalise the cart. If they don't, the session expires automatically.  
 > **Multi-pharmacy:** Patient can start sessions with multiple pharmacies simultaneously to compare prices. When one is paid, the others are cancelled automatically.  
-> **Pharmacies are exempt** — patient pays the exact cart total, pharmacy receives 100%.
+> **Platform fee:** Patient pays cart total + 7% platform fee. Pharmacy receives 100% of the cart total — the 7% is added on top, not deducted from the pharmacy.
 
 ---
 
@@ -1335,11 +1335,14 @@ Patient approves the cart and gets a Paystack payment URL.
   "message": "Proceed to the payment URL to complete your purchase.",
   "paymentUrl": "https://checkout.paystack.com/...",
   "reference": "COSMIC-RX-...",
-  "amount": 7500,
+  "cartTotal": 7500,
+  "platformFee": 525,
+  "amount": 8025,
   "currency": "NGN",
   "sessionId": "uuid"
 }
 ```
+> **`amount` is what the patient pays** = `cartTotal` + 7% platform fee. Show this as the total in the UI. The pharmacy receives `cartTotal` (100%) — the fee is added on top.
 
 ---
 
@@ -1474,8 +1477,8 @@ Vendor marks delivered → POST /vendor/shipments/vendor/:orderId/delivered → 
 | Registers separately | Yes | No — uses pharmacy login |
 | Admin approval needed | Yes | No — auto-approved |
 | Can list medications | No | Yes |
-| Platform fee (customer) | +7% on top | Exempt |
-| Commission | TBD (currently 0%) | Exempt |
+| Platform fee (customer) | +7% on top | +7% on top |
+| Commission | TBD (currently 0%) | None |
 | Has orders/wallet/analytics | Yes | Yes |
 
 ### Payment Fee Display

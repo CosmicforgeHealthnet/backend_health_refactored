@@ -1,73 +1,38 @@
-const router                    = require("express").Router();
-const patientInvoiceController  = require("../controllers/patientInvoiceController");
-const patientWalletController   = require("../controllers/patientWalletController");
+const router                  = require("express").Router();
+const patientWalletController = require("../controllers/patientWalletController");
 
 // All routes here are mounted under /api/patient and already authenticated
 // via the global authenticateJWT applied in app.js for /api/patient
 
-/**
- * @route   GET /api/patient/invoices
- * @desc    List all invoices sent to the authenticated patient
- * @access  Patient
- */
-router.get("/invoices", patientInvoiceController.listInvoices);
+// ─── REMOVED: Invoice-based patient payment flow ──────────────────────────────
+// Patients no longer pay via invoices. The prescription cart session system
+// (POST /api/pharmacy/sessions) replaced this flow end-to-end.
+//
+// Disabled routes (return 410 Gone):
+//   GET    /api/patient/invoices
+//   GET    /api/patient/invoices/:id
+//   PATCH  /api/patient/invoices/:id/viewed
+//   POST   /api/patient/invoices/:id/dispute
+//   POST   /api/patient/payments/initiate
+//   GET    /api/patient/payments/verify/:reference
 
-/**
- * @route   GET /api/patient/invoices/:id
- * @desc    Get a single invoice with full details
- * @access  Patient
- */
-router.get("/invoices/:id", patientInvoiceController.getInvoice);
+const gone = (_req, res) => res.status(410).json({
+    success:    false,
+    error:      "Invoice-based payments have been replaced by the prescription cart session system.",
+    useInstead: "Use /api/pharmacy/sessions for the current payment flow.",
+});
 
-/**
- * @route   PATCH /api/patient/invoices/:id/viewed
- * @desc    Mark invoice as viewed by patient
- * @access  Patient
- */
-router.patch("/invoices/:id/viewed", patientInvoiceController.markViewed);
+router.get("/invoices",                    gone);
+router.get("/invoices/:id",                gone);
+router.patch("/invoices/:id/viewed",       gone);
+router.post("/invoices/:id/dispute",       gone);
+router.post("/payments/initiate",          gone);
+router.get("/payments/verify/:reference",  gone);
 
-/**
- * @route   POST /api/patient/invoices/:id/dispute
- * @desc    Raise a dispute on a paid invoice (within 7 days)
- * @access  Patient
- */
-router.post("/invoices/:id/dispute", patientInvoiceController.raiseDispute);
+// ─── KEPT: Patient Wallet ─────────────────────────────────────────────────────
 
-/**
- * @route   POST /api/patient/payments/initiate
- * @desc    Initiate payment for an invoice — returns gateway redirect URL
- * @access  Patient
- */
-router.post("/payments/initiate", patientInvoiceController.initiatePayment);
-
-/**
- * @route   GET /api/patient/payments/verify/:reference
- * @desc    Verify payment after returning from gateway
- * @access  Patient
- */
-router.get("/payments/verify/:reference", patientInvoiceController.verifyPayment);
-
-// ─── Patient Wallet ───────────────────────────────────────────────────────────
-
-/**
- * @route   GET /api/patient/wallet/summary
- * @desc    Get patient wallet overview (balance, total spent, total top-ups)
- * @access  Patient
- */
-router.get("/wallet/summary", patientWalletController.getSummary);
-
-/**
- * @route   GET /api/patient/wallet/transactions
- * @desc    List wallet transactions with filters (type, category, page, limit)
- * @access  Patient
- */
+router.get("/wallet/summary",      patientWalletController.getSummary);
 router.get("/wallet/transactions", patientWalletController.getTransactions);
-
-/**
- * @route   POST /api/patient/wallet/top-up
- * @desc    Initiate a wallet top-up — returns gateway authorization URL
- * @access  Patient
- */
-router.post("/wallet/top-up", patientWalletController.topUp);
+router.post("/wallet/top-up",      patientWalletController.topUp);
 
 module.exports = router;

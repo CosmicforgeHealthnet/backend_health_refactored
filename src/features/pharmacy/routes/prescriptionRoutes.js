@@ -6,7 +6,6 @@ const {
   uploadPrescription,
   assignPharmacy,
   startProcessing,
-  provideCosts,
   addChatMessage,
   markReady,
   completePrescription,
@@ -26,11 +25,19 @@ const {
   rejectAlternative,
   getPharmacyContacts,
   getPharmacyOrders,
-  getPatientInvoices,
   getDispatchItems,
   initiateDispatch,
   markDelivered,
 } = require("../controllers/prescriptionController");
+
+// ─── REMOVED: Invoice-based cost entry and patient invoice list ───────────────
+// provide-costs has been replaced by the session cart system.
+// Patients view their cart/costs through /api/pharmacy/sessions.
+const gone = (_req, res) => res.status(410).json({
+  success:    false,
+  error:      "This route has been replaced by the prescription cart session system.",
+  useInstead: "Use /api/pharmacy/sessions for cost management and patient invoices.",
+});
 
 const requireFeature = require("../../subscriptions/middlewares/requireFeature");
 
@@ -44,7 +51,7 @@ router.get("/doctor/prescriptions", authorizeRoles('doctor'), getDoctorPrescript
 router.post("/patient/prescriptions/:prescriptionId/upload", authorizeRoles('patient'), requireFeature("pharmacy"), uploadPrescription);
 router.post("/patient/prescriptions/:prescriptionId/assign-pharmacy", authorizeRoles('patient'), requireFeature("pharmacy"), assignPharmacy);
 router.get("/patient/prescriptions", authorizeRoles('patient'), getPatientPrescriptions);
-router.get("/patient/invoices", authorizeRoles('patient'), getPatientInvoices);
+router.get("/patient/invoices", authorizeRoles('patient'), gone);
 
 // ── Pharmacy — static routes (MUST come before /:prescriptionId) ──────────────
 router.get("/dashboard/stats", authorizeRoles('pharmacy'), getDashboardStats);
@@ -57,7 +64,7 @@ router.get("/", authorizeRoles('pharmacy'), getPharmacyPrescriptions);
 
 // ── Pharmacy — parameterized routes ──────────────────────────────────────────
 router.post("/:prescriptionId/start-processing", authorizeRoles('pharmacy'), startProcessing);
-router.post("/:prescriptionId/provide-costs", authorizeRoles('pharmacy'), provideCosts);
+router.post("/:prescriptionId/provide-costs", authorizeRoles('pharmacy'), gone);
 router.post("/:prescriptionId/mark-ready", authorizeRoles('pharmacy'), markReady);
 router.post("/:prescriptionId/complete", authorizeRoles('pharmacy'), completePrescription);
 router.post("/:prescriptionId/confirm-availability", authorizeRoles('pharmacy'), confirmAvailability);
