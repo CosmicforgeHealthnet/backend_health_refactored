@@ -32,6 +32,8 @@ module.exports = new EntitySchema({
         },
         rejectionReason: { type: "text", nullable: true },
 
+        prescriptionRequired: { type: "boolean", default: false },
+
         isActive: { type: "boolean", default: true },
 
         createdAt: { type: "timestamp", createDate: true },

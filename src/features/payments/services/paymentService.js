@@ -1044,22 +1044,32 @@ class PaymentService {
     const splits = [];
 
     if (serviceType === 'appointment' && finalDoctorId) {
-      const PLATFORM_FEE_RATE = 0.07; // 7% platform fee — set by system
+      // Read platform fee rate from admin-controlled config (cached, 5-min TTL)
+      const platformConfigService = require('../../admin-ops/services/platformConfigService');
+      const PLATFORM_FEE_RATE = await platformConfigService.getPlatformFeeRate();
 
-      // Step 1: 7% platform fee on the full amount
-      const platformFee    = originalAmount * PLATFORM_FEE_RATE;
-      const afterPlatform  = originalAmount - platformFee;
+      // Step 1: Platform fee is added ON TOP of doctor's base fee
+      const baseAmount     = originalAmount; // doctor's fee (what they set)
+      const platformFee    = baseAmount * PLATFORM_FEE_RATE;
+      const grossAmount    = baseAmount + platformFee; // patient pays this total
 
-      // Step 2: Doctor commission (10–30% based on subscription tier) on the remainder
+      // Override the transaction amount so Paystack charges the gross amount (base + fee)
+      // Update the already-saved transaction record to reflect gross amount
+      await transactionRepository.updateStatus(savedTransaction.id, 'pending', {
+        originalAmount: grossAmount,
+        usdAmount:      grossAmount * exchangeRate,
+      });
+
+      // Step 2: Doctor commission (10–30% based on subscription tier) on BASE amount
       const commissionRate   = await this.getDoctorCommissionRate(finalDoctorId);
-      const commissionAmount = afterPlatform * (commissionRate / 100);
+      const commissionAmount = baseAmount * (commissionRate / 100);
 
-      // Step 3: Doctor receives the rest
-      const doctorAmount = afterPlatform - commissionAmount;
+      // Step 3: Doctor receives base amount minus commission
+      const doctorAmount = baseAmount - commissionAmount;
 
-      console.log(`💰 Appointment Payment Breakdown for ${originalAmount} ${originalCurrency}:`);
-      console.log(`   Platform Fee (7%): ${platformFee.toFixed(2)}`);
-      console.log(`   After Platform Fee: ${afterPlatform.toFixed(2)}`);
+      console.log(`💰 Appointment Payment Breakdown for ${baseAmount} ${originalCurrency}:`);
+      console.log(`   Platform Fee (7% ON TOP): ${platformFee.toFixed(2)}`);
+      console.log(`   Patient Pays (gross):     ${grossAmount.toFixed(2)}`);
       console.log(`   Doctor Commission (${commissionRate}%): ${commissionAmount.toFixed(2)}`);
       console.log(`   Doctor Gets: ${doctorAmount.toFixed(2)}`);
 

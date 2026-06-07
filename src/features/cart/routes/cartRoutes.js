@@ -1,9 +1,10 @@
 const router         = require("express").Router();
 const cartController = require("../controllers/cartController");
-const { authenticateJWT } = require("../../auth/middlewares/authMiddleware");
+const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
 
-// All cart routes require auth (patient must be logged in)
+// All cart routes: authenticated patients only
 router.use(authenticateJWT);
+router.use(authorizeRoles("patient"));
 
 // Patient's cart list
 router.get("/", cartController.getMyCarts);

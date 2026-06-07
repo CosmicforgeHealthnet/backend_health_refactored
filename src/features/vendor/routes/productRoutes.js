@@ -1,15 +1,15 @@
 const router                   = require("express").Router();
 const productController        = require("../controllers/productController");
-const { authenticateJWT }      = require("../../auth/middlewares/authMiddleware");
+const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
 const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
 const DocumentFolderMiddleware = require("../../documents/middlewares/documentFolderMiddleware");
 
-// ─── Vendor product management (all protected) ────────────────────────────────
-router.get("/",    authenticateJWT, productController.getMyProducts);
-router.post("/",   authenticateJWT, productController.createProduct);
-router.get("/:id", authenticateJWT, productController.getMyProductById);
-router.put("/:id", authenticateJWT, productController.updateProduct);
-router.delete("/:id", authenticateJWT, productController.deleteProduct);
+// ─── Vendor product management ────────────────────────────────────────────────
+router.get("/",       authenticateJWT, authorizeRoles("vendor"), productController.getMyProducts);
+router.post("/",      authenticateJWT, authorizeRoles("vendor"), productController.createProduct);
+router.get("/:id",    authenticateJWT, authorizeRoles("vendor"), productController.getMyProductById);
+router.put("/:id",    authenticateJWT, authorizeRoles("vendor"), productController.updateProduct);
+router.delete("/:id", authenticateJWT, authorizeRoles("vendor"), productController.deleteProduct);
 
 router.post(
     "/:id/media",
@@ -23,8 +23,8 @@ router.post(
 );
 
 // ─── Admin product approval ───────────────────────────────────────────────────
-router.get("/admin/all",             authenticateJWT, productController.adminGetAllProducts);
-router.put("/admin/:id/approve",     authenticateJWT, productController.adminApproveProduct);
-router.put("/admin/:id/reject",      authenticateJWT, productController.adminRejectProduct);
+router.get("/admin/all",         authenticateJWT, authorizeRoles("admin"), productController.adminGetAllProducts);
+router.put("/admin/:id/approve", authenticateJWT, authorizeRoles("admin"), productController.adminApproveProduct);
+router.put("/admin/:id/reject",  authenticateJWT, authorizeRoles("admin"), productController.adminRejectProduct);
 
 module.exports = router;

@@ -1,0 +1,289 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Prescription-Assisted Cart API",
+    "description": "Real-time pharmacy session system — patient engages a pharmacy, pharmacy builds a cart with medication items, patient approves and pays.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:3000/api", "description": "Development server" }
+  ],
+  "tags": [
+    { "name": "Sessions (Patient)",  "description": "Patient — start, view, approve and cancel pharmacy sessions" },
+    { "name": "Sessions (Pharmacy)", "description": "Pharmacy — view sessions, build prescription carts, finalise and cancel" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "responses": {
+      "Unauthorized": { "description": "Missing or invalid access token", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "BadRequest":   { "description": "Validation error",               "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound":     { "description": "Resource not found",             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error":   { "type": "string" }
+        }
+      },
+      "CartItem": {
+        "type": "object",
+        "properties": {
+          "id":            { "type": "string", "format": "uuid" },
+          "productName":   { "type": "string", "example": "Amoxicillin 500mg Capsules" },
+          "quantity":      { "type": "integer", "example": 2 },
+          "unitPriceNgn":  { "type": "number",  "example": 1500 },
+          "totalPriceNgn": { "type": "number",  "example": 3000 },
+          "note":          { "type": "string",  "nullable": true, "example": "Generic substituted" },
+          "isSubstitute":  { "type": "boolean", "example": false }
+        }
+      },
+      "Cart": {
+        "type": "object",
+        "properties": {
+          "id":                { "type": "string", "format": "uuid" },
+          "sessionId":         { "type": "string", "format": "uuid" },
+          "status":            { "type": "string", "enum": ["building", "ready", "approved"] },
+          "pharmacyNote":      { "type": "string", "nullable": true },
+          "totalAmountNgn":    { "type": "number", "nullable": true, "example": 7500 },
+          "platformFeeNgn":    { "type": "number", "nullable": true, "example": 525, "description": "7% platform fee" },
+          "pharmacyAmountNgn": { "type": "number", "nullable": true, "example": 6975 },
+          "currency":          { "type": "string", "example": "NGN" },
+          "paymentStatus":     { "type": "string", "enum": ["unpaid", "paid", "refunded"] },
+          "paymentAuthUrl":    { "type": "string", "nullable": true },
+          "paidAt":            { "type": "string", "format": "date-time", "nullable": true },
+          "items":             { "type": "array", "items": { "$ref": "#/components/schemas/CartItem" } }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "id":             { "type": "string", "format": "uuid" },
+          "prescriptionId": { "type": "string", "format": "uuid" },
+          "pharmacyId":     { "type": "string", "format": "uuid" },
+          "patientId":      { "type": "string", "format": "uuid" },
+          "status":         { "type": "string", "enum": ["active", "cart_ready", "approved", "expired", "cancelled"] },
+          "expiresAt":      { "type": "string", "format": "date-time" },
+          "isExpired":      { "type": "boolean" },
+          "cart":           { "$ref": "#/components/schemas/Cart" },
+          "createdAt":      { "type": "string", "format": "date-time" },
+          "updatedAt":      { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/pharmacy/sessions": {
+      "post": {
+        "tags": ["Sessions (Patient)"],
+        "summary": "Start a session with a pharmacy",
+        "description": "Patient starts a session with a specific pharmacy for a prescription. The pharmacy is notified in real-time and has 30 minutes to build the cart. Patient can start sessions with multiple pharmacies simultaneously to compare.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["prescriptionId", "pharmacyId"],
+                "properties": {
+                  "prescriptionId": { "type": "string", "format": "uuid" },
+                  "pharmacyId":     { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Session started", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "session": { "$ref": "#/components/schemas/Session" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/pharmacy/sessions/my": {
+      "get": {
+        "tags": ["Sessions (Patient)"],
+        "summary": "List my sessions",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["active", "cart_ready", "approved", "expired", "cancelled"] } },
+          { "name": "page",   "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit",  "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Session list", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "sessions": { "type": "array", "items": { "$ref": "#/components/schemas/Session" } }, "total": { "type": "integer" } } } } } }
+        }
+      }
+    },
+    "/pharmacy/sessions/my/{sessionId}": {
+      "get": {
+        "tags": ["Sessions (Patient)"],
+        "summary": "Get a session detail (with cart)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Session detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "session": { "$ref": "#/components/schemas/Session" } } } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/pharmacy/sessions/my/{sessionId}/approve": {
+      "post": {
+        "tags": ["Sessions (Patient)"],
+        "summary": "Approve cart and get payment URL",
+        "description": "Patient approves the pharmacy's cart and receives a Paystack payment URL. Redirect the patient to paymentUrl. Payment confirmation activates the order and credits the pharmacy wallet.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": {
+            "description": "Payment URL returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success":    { "type": "boolean" },
+                    "message":    { "type": "string" },
+                    "paymentUrl": { "type": "string", "description": "Redirect patient here" },
+                    "reference":  { "type": "string" },
+                    "amount":     { "type": "number" },
+                    "currency":   { "type": "string" },
+                    "sessionId":  { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/pharmacy/sessions/my/{sessionId}/cancel": {
+      "post": {
+        "tags": ["Sessions (Patient)"],
+        "summary": "Cancel a session",
+        "description": "Patient cancels the session. Only active or cart_ready sessions can be cancelled. Cannot cancel a paid session.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Session cancelled", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "session": { "$ref": "#/components/schemas/Session" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/pharmacy/sessions/pharmacy": {
+      "get": {
+        "tags": ["Sessions (Pharmacy)"],
+        "summary": "List incoming sessions",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["active", "cart_ready", "approved", "expired", "cancelled"] } },
+          { "name": "page",   "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit",  "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Session list", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "sessions": { "type": "array", "items": { "$ref": "#/components/schemas/Session" } }, "total": { "type": "integer" } } } } } }
+        }
+      }
+    },
+    "/pharmacy/sessions/pharmacy/{sessionId}": {
+      "get": {
+        "tags": ["Sessions (Pharmacy)"],
+        "summary": "Get session detail",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Session detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "session": { "$ref": "#/components/schemas/Session" } } } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/pharmacy/sessions/pharmacy/{sessionId}/cart/items": {
+      "post": {
+        "tags": ["Sessions (Pharmacy)"],
+        "summary": "Add medication item to prescription cart",
+        "description": "Pharmacy adds a medication or product to the patient's prescription cart. The patient sees this in real-time via WebSocket (`prescription_cart_item_added` event). Cart total is recalculated automatically.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["productName", "quantity", "unitPriceNgn"],
+                "properties": {
+                  "productName":   { "type": "string",  "example": "Amoxicillin 500mg Capsules x14" },
+                  "quantity":      { "type": "integer", "minimum": 1, "example": 1 },
+                  "unitPriceNgn":  { "type": "number",  "example": 3500 },
+                  "note":          { "type": "string",  "nullable": true, "example": "Dispensed as generic equivalent" },
+                  "isSubstitute":  { "type": "boolean", "example": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Item added, cart returned", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "cart": { "$ref": "#/components/schemas/Cart" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/pharmacy/sessions/pharmacy/{sessionId}/cart/items/{itemId}": {
+      "delete": {
+        "tags": ["Sessions (Pharmacy)"],
+        "summary": "Remove an item from the cart",
+        "description": "Patient sees the removal in real-time via WebSocket (`prescription_cart_item_removed` event).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "itemId",    "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Item removed, cart returned", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "cart": { "$ref": "#/components/schemas/Cart" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/pharmacy/sessions/pharmacy/{sessionId}/cart/finalise": {
+      "post": {
+        "tags": ["Sessions (Pharmacy)"],
+        "summary": "Finalise cart — notify patient to pay",
+        "description": "Pharmacy marks the cart as ready. Patient is notified via WebSocket (`prescription_cart_ready` event) and push notification. Patient can then call the approve endpoint to get a payment URL.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pharmacyNote": { "type": "string", "nullable": true, "example": "All items are in stock. Ready for same-day pickup." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cart finalised", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "session": { "$ref": "#/components/schemas/Session" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/pharmacy/sessions/pharmacy/{sessionId}/cancel": {
+      "post": {
+        "tags": ["Sessions (Pharmacy)"],
+        "summary": "Cancel a session (pharmacy)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Session cancelled", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "session": { "$ref": "#/components/schemas/Session" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    }
+  }
+}

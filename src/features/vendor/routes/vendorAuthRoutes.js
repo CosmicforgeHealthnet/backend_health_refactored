@@ -1,6 +1,6 @@
 const router                   = require("express").Router();
 const vendorAuthController     = require("../controllers/vendorAuthController");
-const { authenticateJWT }      = require("../../auth/middlewares/authMiddleware");
+const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
 const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
 const DocumentFolderMiddleware = require("../../documents/middlewares/documentFolderMiddleware");
 
@@ -27,7 +27,7 @@ router.post(
     vendorAuthController.uploadVendorLogo
 );
 
-// Admin
-router.get("/all", authenticateJWT, vendorAuthController.getAllVendors);
+// Admin only
+router.get("/all", authenticateJWT, authorizeRoles("admin"), vendorAuthController.getAllVendors);
 
 module.exports = router;

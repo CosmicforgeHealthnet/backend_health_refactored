@@ -410,15 +410,15 @@ const pharmacyPaymentService = {
     if (!invoice) throw new Error(`Invoice ${invoiceId} not found`);
     if (invoice.status === InvoiceStatus.PAID) return; // Already processed — idempotent
 
-    const PLATFORM_FEE_RATE = 0.07; // 7% platform fee — set by system
-    const totalAmountUsd    = parseFloat(invoice.totalAmountUsd);
-    const platformFeeUsd    = parseFloat((totalAmountUsd * PLATFORM_FEE_RATE).toFixed(6));
-    const amountUsd         = parseFloat((totalAmountUsd - platformFeeUsd).toFixed(6));
+    // Pharmacies are EXEMPT from platform fee and commission.
+    // They receive 100% of the invoice amount.
+    const totalAmountUsd = parseFloat(invoice.totalAmountUsd);
+    const amountUsd      = totalAmountUsd;
 
     console.log(`💊 Pharmacy Payment Breakdown for invoice ${invoice.reference}:`);
     console.log(`   Total Paid (USD): ${totalAmountUsd}`);
-    console.log(`   Platform Fee (7%): ${platformFeeUsd}`);
-    console.log(`   Pharmacy Receives: ${amountUsd}`);
+    console.log(`   Platform Fee: EXEMPT (pharmacy)`);
+    console.log(`   Pharmacy Receives: ${amountUsd} (100%)`);
 
     await AppDataSource.transaction(async (trx) => {
       // 1. Invoice paid
@@ -452,7 +452,7 @@ const pharmacyPaymentService = {
           category:        WalletTransactionCategory.INVOICE_PAYMENT,
           amountUsd,
           balanceAfterUsd: parseFloat(updatedWallet.pendingClearanceUsd),
-          description:     `Online payment for invoice ${invoice.reference} (after 7% platform fee of $${platformFeeUsd})`,
+          description:     `Online payment for invoice ${invoice.reference}`,
           reference:       payment?.reference ?? invoiceId,
           invoiceId:       invoice.id,
           invoiceRef:      invoice.reference,

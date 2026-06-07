@@ -24,15 +24,16 @@ class ProductService {
         }
 
         const product = await productRepository.save({
-            vendorId:      vendor.id,
-            title:         data.title,
-            description:   data.description,
-            price:         data.price,
-            stockQuantity: data.stockQuantity ?? 0,
-            category:      data.category,
-            subcategory:   data.subcategory,
-            status:        "pending",
-            isActive:      true,
+            vendorId:             vendor.id,
+            title:                data.title,
+            description:          data.description,
+            price:                data.price,
+            stockQuantity:        data.stockQuantity ?? 0,
+            category:             data.category,
+            subcategory:          data.subcategory,
+            prescriptionRequired: data.prescriptionRequired === true,
+            status:               "pending",
+            isActive:             true,
         });
 
         return product;
@@ -79,7 +80,7 @@ class ProductService {
         const product = await productRepository.findByIdAndVendor(productId, vendor.id);
         if (!product) throw new Error("Product not found");
 
-        const allowedFields = ["title", "description", "price", "stockQuantity", "isActive"];
+        const allowedFields = ["title", "description", "price", "stockQuantity", "isActive", "prescriptionRequired"];
         const updates = {};
         for (const field of allowedFields) {
             if (data[field] !== undefined) updates[field] = data[field];

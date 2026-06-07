@@ -20,4 +20,9 @@ module.exports = {
     // Patient wallet system
     PatientWallet:            require('./PatientWallet'),
     PatientWalletTransaction: require('./PatientWalletTransaction'),
+
+    // Prescription-assisted cart (Week 3)
+    PharmacySession:       require('./PharmacySession'),
+    PrescriptionCart:      require('./PrescriptionCart'),
+    PrescriptionCartItem:  require('./PrescriptionCartItem'),
 };

@@ -4,7 +4,7 @@ const { ALL_CATEGORY_KEYS, ALL_SUBCATEGORY_KEYS } = require("../constants/produc
 class ProductController {
     async createProduct(req, res, next) {
         try {
-            const { title, description, price, stockQuantity, category, subcategory } = req.body;
+            const { title, description, price, stockQuantity, category, subcategory, prescriptionRequired } = req.body;
 
             if (!title || !description || price === undefined || !category || !subcategory) {
                 return res.status(400).json({
@@ -17,7 +17,7 @@ class ProductController {
             }
 
             const product = await productService.createProduct(req.user.id, {
-                title, description, price, stockQuantity, category, subcategory,
+                title, description, price, stockQuantity, category, subcategory, prescriptionRequired,
             });
 
             return res.status(201).json({
@@ -137,20 +137,21 @@ class ProductController {
 
 function formatProduct(p) {
     return {
-        id:              p.id,
-        title:           p.title,
-        description:     p.description,
-        price:           p.price,
-        stockQuantity:   p.stockQuantity,
-        category:        p.category,
-        subcategory:     p.subcategory,
-        status:          p.status,
-        rejectionReason: p.rejectionReason,
-        isActive:        p.isActive,
-        media:           p.media || [],
-        vendor:          p.vendor ? { id: p.vendor.id, businessName: p.vendor.businessName, logoUrl: p.vendor.logoUrl } : undefined,
-        createdAt:       p.createdAt,
-        updatedAt:       p.updatedAt,
+        id:                   p.id,
+        title:                p.title,
+        description:          p.description,
+        price:                p.price,
+        stockQuantity:        p.stockQuantity,
+        category:             p.category,
+        subcategory:          p.subcategory,
+        prescriptionRequired: p.prescriptionRequired ?? false,
+        status:               p.status,
+        rejectionReason:      p.rejectionReason,
+        isActive:             p.isActive,
+        media:                p.media || [],
+        vendor:               p.vendor ? { id: p.vendor.id, businessName: p.vendor.businessName, logoUrl: p.vendor.logoUrl } : undefined,
+        createdAt:            p.createdAt,
+        updatedAt:            p.updatedAt,
     };
 }
 

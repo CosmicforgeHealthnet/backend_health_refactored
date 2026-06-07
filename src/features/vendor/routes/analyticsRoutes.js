@@ -1,8 +1,9 @@
 const router               = require("express").Router();
 const analyticsController  = require("../controllers/analyticsController");
-const { authenticateJWT }  = require("../../auth/middlewares/authMiddleware");
+const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
 
 router.use(authenticateJWT);
+router.use(authorizeRoles("vendor"));
 
 router.get("/overview",    analyticsController.getOverview);
 router.get("/sales",       analyticsController.getSalesPerformance);
