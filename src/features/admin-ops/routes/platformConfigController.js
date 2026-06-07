@@ -16,7 +16,7 @@ const platformConfigCtrl = {
                 rules: {
                     platformFee:      "Added ON TOP of order/appointment amount — paid by the customer",
                     vendorCommission: "Deducted FROM vendor earnings — does NOT affect customer-facing price",
-                    pharmacy:         "EXEMPT from platform fee and commission — always receives 100%",
+                    pharmacy:         "Platform fee (7%) is charged to patient on top. Pharmacy receives 100% of their invoice amount. Exempt from commission only.",
                     doctorCommission: "10–30% based on subscription tier — not controlled here",
                 },
             });

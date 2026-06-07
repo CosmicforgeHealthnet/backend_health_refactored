@@ -194,6 +194,13 @@ const pharmacyPaymentService = {
 
     const reference = generatePaymentReference();
 
+    // Platform fee (7%) is added ON TOP — patient pays base + fee
+    const platformConfigService = require('../../admin-ops/services/platformConfigService');
+    const PLATFORM_FEE_RATE  = await platformConfigService.getPlatformFeeRate();
+    const platformFeeLocal   = Math.round(amountLocal * PLATFORM_FEE_RATE * 100) / 100;
+    const grossAmountLocal   = Math.round((amountLocal + platformFeeLocal) * 100) / 100;
+    // Pharmacy still receives amountLocal (base invoice) — fee goes to platform
+
     // Build Paystack/Flutterwave payload
     let authorizationUrl = null;
 
@@ -208,11 +215,11 @@ const pharmacyPaymentService = {
     try {
       if (resolvedProvider === PaymentProvider.PAYSTACK) {
         authorizationUrl = await pharmacyPaymentService._initPaystack(
-          patientId, invoice, amountLocal, currency, reference, metadata
+          patientId, invoice, grossAmountLocal, currency, reference, metadata
         );
       } else {
         authorizationUrl = await pharmacyPaymentService._initFlutterwave(
-          patientId, invoice, amountLocal, currency, reference, metadata
+          patientId, invoice, grossAmountLocal, currency, reference, metadata
         );
       }
     } catch (err) {

@@ -198,11 +198,14 @@ class PharmacySessionService {
 
         // Get payment URL (or return existing one if already initiated)
         if (cart.paymentAuthUrl && cart.paymentStatus === "unpaid") {
+            const grossAmount = parseFloat(cart.totalAmountNgn) + parseFloat(cart.platformFeeNgn || 0);
             return {
-                paymentUrl: cart.paymentAuthUrl,
-                reference:  cart.paymentReference,
-                amount:     parseFloat(cart.totalAmountNgn),
-                currency:   cart.currency,
+                paymentUrl:        cart.paymentAuthUrl,
+                reference:         cart.paymentReference,
+                amount:            parseFloat(cart.totalAmountNgn), // pharmacy's base
+                platformFeeAmount: parseFloat(cart.platformFeeNgn || 0),
+                grossAmount,       // what patient pays
+                currency:          cart.currency,
                 sessionId,
             };
         }
@@ -212,11 +215,14 @@ class PharmacySessionService {
 
     async _initiateCartPayment(patientId, session, cart) {
         const patient = await AppDataSource.getRepository("User").findOne({ where: { id: patientId } });
-        // Pharmacy is exempt — patient pays the EXACT cart total (no platform fee added on top)
-        const rates     = await CurrencyService.getExchangeRates();
-        const ngnRate   = rates?.NGN || 1500; // fallback NGN per USD
-        const amountNgn = parseFloat(cart.totalAmountNgn);
-        const amountUsd = parseFloat((amountNgn / ngnRate).toFixed(6));
+        // Patient pays base + 7% platform fee on top
+        // Pharmacy still receives the base amount (cart total) — fee goes to platform
+        const rates          = await CurrencyService.getExchangeRates();
+        const ngnRate        = rates?.NGN || 1500; // fallback NGN per USD
+        const amountNgn      = parseFloat(cart.totalAmountNgn);      // pharmacy's base
+        const platformFeeNgn = parseFloat(cart.platformFeeNgn || 0); // 7% on top
+        const grossAmountNgn = parseFloat((amountNgn + platformFeeNgn).toFixed(4)); // patient pays this
+        const amountUsd      = parseFloat((amountNgn / ngnRate).toFixed(6));        // pharmacy receives base in USD
 
         const reference = `COSMIC-RX-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
         const provider  = process.env.DEFAULT_PAYMENT_PROVIDER || "paystack";
@@ -236,7 +242,7 @@ class PharmacySessionService {
                 "https://api.flutterwave.com/v3/payments",
                 {
                     tx_ref:       reference,
-                    amount:       amountNgn,
+                    amount:       grossAmountNgn, // base + 7% platform fee
                     currency:     "NGN",
                     redirect_url: process.env.PAYMENT_CALLBACK_URL,
                     customer:     { email: patient.email, name: patient.fullName },
@@ -250,7 +256,7 @@ class PharmacySessionService {
                 "https://api.paystack.co/transaction/initialize",
                 {
                     email:        patient.email,
-                    amount:       Math.round(amountNgn * 100),
+                    amount:       Math.round(grossAmountNgn * 100), // base + 7% platform fee (kobo)
                     currency:     "NGN",
                     reference,
                     metadata,
@@ -261,23 +267,27 @@ class PharmacySessionService {
             authUrl = resp.data.data.authorization_url;
         }
 
-        // Pharmacy is exempt — no platform fee. Pharmacy receives 100% of total.
+        // Pharmacy receives base amount (totalAmountNgn converted to USD)
+        // Platform fee (7%) goes to platform — patient paid it on top
+        const platformFeeUsd    = parseFloat((platformFeeNgn / ngnRate).toFixed(6));
         await cartRepository.update(cart.id, {
             paymentReference:  reference,
             paymentProvider:   provider,
             paymentAuthUrl:    authUrl,
-            totalAmountUsd:    amountUsd,
-            platformFeeUsd:    0,
-            pharmacyAmountUsd: amountUsd, // 100% to pharmacy
+            totalAmountUsd:    amountUsd,         // base amount pharmacy receives
+            platformFeeUsd,                        // 7% platform revenue
+            pharmacyAmountUsd: amountUsd,          // pharmacy gets full base
             exchangeRateToUsd: parseFloat((1 / ngnRate).toFixed(6)),
         });
 
         return {
-            paymentUrl: authUrl,
+            paymentUrl:        authUrl,
             reference,
-            amount:    amountNgn,
-            currency:  "NGN",
-            sessionId: session.id,
+            amount:            amountNgn,      // pharmacy's base price
+            platformFeeAmount: platformFeeNgn, // 7% on top
+            grossAmount:       grossAmountNgn, // what patient pays
+            currency:          "NGN",
+            sessionId:         session.id,
         };
     }
 
@@ -554,12 +564,16 @@ class PharmacySessionService {
         const items = await AppDataSource.getRepository("PrescriptionCartItem").find({ where: { cartId } });
         const total = items.reduce((sum, i) => sum + parseFloat(i.totalPriceNgn), 0);
 
-        // Pharmacies are exempt — no platform fee deducted.
-        // Pharmacy receives 100% of the cart total.
+        // Platform fee added ON TOP — patient pays base + fee
+        // Pharmacy receives full base amount (exempt from commission, not from platform fee)
+        const platformConfigService = require("../../admin-ops/services/platformConfigService");
+        const PLATFORM_FEE_RATE     = await platformConfigService.getPlatformFeeRate();
+        const platformFee           = parseFloat((total * PLATFORM_FEE_RATE).toFixed(4));
+
         await cartRepository.update(cartId, {
-            totalAmountNgn:    parseFloat(total.toFixed(4)),
-            platformFeeNgn:    0,
-            pharmacyAmountNgn: parseFloat(total.toFixed(4)),
+            totalAmountNgn:    parseFloat(total.toFixed(4)),  // pharmacy's base price
+            platformFeeNgn:    platformFee,                    // 7% added on top for patient
+            pharmacyAmountNgn: parseFloat(total.toFixed(4)), // pharmacy receives full base
         });
     }
 }
