@@ -1,4 +1,4 @@
-const { AppDataSource } = require("../../../config/database");
+const AppDataSource = require("../../../config/database");
 
 const VALID_VENDOR_CATEGORIES = [
     "health_wellness",
