@@ -1,9 +1,12 @@
-const vendorAuthService   = require("../services/vendorAuthService");
-const authService         = require("../../auth/services/authService");
-const userRepository      = require("../../auth/repositories/userRepository");
-const passwordResetService = require("../../auth/services/passwordResetService");
-const bcrypt              = require("bcryptjs");
-const mfaService          = require("../../auth/services/mfa/mfaService");
+const vendorAuthService       = require("../services/vendorAuthService");
+const authService             = require("../../auth/services/authService");
+const userRepository          = require("../../auth/repositories/userRepository");
+const passwordResetService    = require("../../auth/services/passwordResetService");
+const verificationService     = require("../../auth/services/verificationService");
+const refreshTokenService     = require("../../auth/services/refreshTokenService");
+const emailVerRepo            = require("../../auth/repositories/emailVerificationRepository");
+const bcrypt                  = require("bcryptjs");
+const mfaService              = require("../../auth/services/mfa/mfaService");
 
 const VALID_CATEGORIES = [
     "health_wellness",
@@ -135,7 +138,7 @@ class VendorAuthController {
             }
 
             const { vendor } = await vendorAuthService.getVendorProfile(user.id);
-            const tokens = await authService.login(user, deviceFingerprint);
+            const tokens = await authService.login({ email, password }, deviceFingerprint, req.headers['user-agent']);
 
             return res.status(200).json({
                 success: true,
@@ -318,6 +321,83 @@ class VendorAuthController {
             return res.status(200).json({ success: true, ...result });
         } catch (error) {
             next(error);
+        }
+    }
+
+    async verifyEmail(req, res, next) {
+        try {
+            const { token } = req.query;
+            if (!token) {
+                return res.status(400).json({ success: false, error: "Verification token is required" });
+            }
+
+            const ev = await emailVerRepo.findByToken(token);
+            if (!ev) {
+                return res.status(400).json({ success: false, error: "Invalid verification token" });
+            }
+
+            const user = await userRepository.findById(ev.user.id);
+            if (!user || user.role !== "vendor") {
+                return res.status(400).json({ success: false, error: "Invalid verification token" });
+            }
+
+            // Already verified — treat as success
+            if (user.status === "vendor_active" || user.status === "pending_vendor_verification") {
+                if (ev.usedAt) {
+                    return res.status(200).json({ success: true, message: "Email already verified. Awaiting admin approval." });
+                }
+            }
+
+            if (ev.expiresAt < new Date()) {
+                return res.status(400).json({ success: false, error: "Verification token has expired. Request a new one." });
+            }
+
+            ev.usedAt = new Date();
+            await emailVerRepo.save(ev);
+
+            // Vendor status stays pending_vendor_verification — admin must approve separately
+            return res.status(200).json({
+                success: true,
+                message: "Email verified successfully. Your vendor application is under review.",
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async resendVerification(req, res, next) {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                return res.status(400).json({ success: false, error: "Email is required" });
+            }
+            await verificationService.resendVerificationEmail(email);
+            return res.status(200).json({ success: true, message: "If unverified, a new verification link has been sent." });
+        } catch (error) {
+            if (error.message.includes("Too many")) {
+                return res.status(429).json({ success: false, error: error.message });
+            }
+            next(error);
+        }
+    }
+
+    async refresh(req, res, next) {
+        try {
+            const { refreshToken, deviceFingerprint } = req.body;
+            if (!refreshToken || !deviceFingerprint) {
+                return res.status(400).json({ success: false, error: "refreshToken and deviceFingerprint are required" });
+            }
+            const tokens = await refreshTokenService.rotateRefreshToken(
+                refreshToken,
+                deviceFingerprint,
+                req.headers["user-agent"]
+            );
+            return res.status(200).json({ success: true, ...tokens });
+        } catch (error) {
+            const msg = error.message === "Invalid or expired refresh token"
+                ? "Your session has expired. Please sign in again."
+                : error.message;
+            return res.status(401).json({ success: false, error: msg });
         }
     }
 }

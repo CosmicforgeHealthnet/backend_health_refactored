@@ -156,6 +156,57 @@
 
 ---
 
+### `GET /api/vendor/verify-email?token=...` — No Auth
+
+Called when vendor clicks the link in their registration email.
+
+**Response `200`:**
+```json
+{ "success": true, "message": "Email verified successfully. Your vendor application is under review." }
+```
+> Email verification does **not** activate the account — the vendor stays in `pending_vendor_verification` until an admin approves them.
+
+**Error responses:**
+- `400` — Invalid or expired token
+- Use `POST /api/vendor/resend-verification` to get a fresh link
+
+---
+
+### `POST /api/vendor/resend-verification` — No Auth
+
+**Request Body:** `{ "email": "john@example.com" }`
+
+**Response `200`:** `{ "success": true, "message": "If unverified, a new verification link has been sent." }`
+
+> Rate limited — max 3 emails per hour. Returns `429` if exceeded.
+
+---
+
+### `POST /api/vendor/refresh` — No Auth
+
+Exchange a refresh token for a new access token + new refresh token (rotating).
+
+**Request Body:**
+```json
+{
+  "refreshToken": "the-refresh-token-from-login",
+  "deviceFingerprint": "same-fingerprint-used-at-login"
+}
+```
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "accessToken": "eyJ...",
+  "refreshToken": "new-refresh-token",
+  "payload": { "sub": "uuid", "email": "...", "role": "vendor" }
+}
+```
+> On `401` — session expired, redirect vendor to login. Always store the **new** `refreshToken` from this response, the old one is revoked.
+
+---
+
 ### `GET /api/vendor/profile` — Auth Required
 
 **Response `200`:**

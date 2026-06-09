@@ -5,10 +5,13 @@ const DocumentUploadMiddleware = require("../../documents/middlewares/documentUp
 const DocumentFolderMiddleware = require("../../documents/middlewares/documentFolderMiddleware");
 
 // Public
-router.post("/register",       vendorAuthController.registerVendor);
-router.post("/login",          vendorAuthController.loginVendor);
-router.post("/forgot-password", vendorAuthController.forgotPassword);
-router.post("/reset-password",  vendorAuthController.resetPassword);
+router.post("/register",            vendorAuthController.registerVendor);
+router.post("/login",               vendorAuthController.loginVendor);
+router.post("/forgot-password",     vendorAuthController.forgotPassword);
+router.post("/reset-password",      vendorAuthController.resetPassword);
+router.get("/verify-email",         vendorAuthController.verifyEmail);
+router.post("/resend-verification", vendorAuthController.resendVerification);
+router.post("/refresh",             vendorAuthController.refresh);
 
 // Protected
 router.get("/profile",  authenticateJWT, vendorAuthController.getVendorProfile);
