@@ -146,7 +146,7 @@ class VendorAnalyticsService {
                 .addSelect("SUM(ci.priceSnapshot * ci.quantity)", "revenue")
                 .where("cart.vendorId = :vendorId AND cart.status = 'confirmed'", { vendorId: vendor.id })
                 .groupBy("product.id, product.title")
-                .orderBy("orderCount", "DESC")
+                .orderBy("COUNT(*)", "DESC")
                 .limit(10)
                 .getRawMany(),
 
