@@ -290,6 +290,35 @@ Exchange a refresh token for a new access token + new refresh token (rotating).
 
 ---
 
+### `POST /api/vendor/documents` — Auth Required | `multipart/form-data`
+
+Upload a verification document. Required before admin can approve a pending vendor account.
+
+**Form Fields:**
+
+| Field | Type | Required | Values |
+|---|---|---|---|
+| `file` | File | Yes | Image or PDF |
+| `documentType` | Text | Yes | `government_id` or `business_registration` |
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Document uploaded. Your account is now pending verification review.",
+  "document": {
+    "id": "uuid",
+    "documentType": "government_id",
+    "documentUrl": "https://...",
+    "fileName": "national-id.jpg",
+    "createdAt": "2026-06-10T10:00:00.000Z"
+  }
+}
+```
+> After uploading at least one document, the vendor profile `documentsSubmitted` becomes `true` and `verificationStatus` is set to `documents_required`. Admin reviews and approves.
+
+---
+
 ## 2. Vendor Products
 
 ### Product Status Values
@@ -299,6 +328,27 @@ Exchange a refresh token for a new access token + new refresh token (rotating).
 | `pending` | Submitted — waiting for admin approval |
 | `approved` | Live on the public shop |
 | `failed` | Rejected by admin — check `rejectionReason` field |
+
+### `POST /api/vendor/products/media/upload` — Auth Required | `multipart/form-data`
+
+Upload media **before** creating a product. Returns URLs you can pass to the create product endpoint.
+
+**Form Fields:** One or more files (image or video).
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Media uploaded. Pass the urls in mediaUrls when creating your product.",
+  "media": [
+    { "url": "https://...", "mimeType": "image/jpeg", "type": "image" },
+    { "url": "https://...", "mimeType": "image/png",  "type": "image" }
+  ]
+}
+```
+> Collect the `url` values and pass them as `mediaUrls` in your `POST /api/vendor/products` body.
+
+---
 
 ### `POST /api/vendor/products` — Auth Required
 
@@ -311,10 +361,11 @@ Exchange a refresh token for a new access token + new refresh token (rotating).
   "stockQuantity": 100,
   "category": "nutrition_healthy_living",
   "subcategory": "vitamins_supplements",
-  "prescriptionRequired": false
+  "prescriptionRequired": false,
+  "mediaUrls": ["https://...", "https://..."]
 }
 ```
-> `stockQuantity` defaults to 0. `price` is in NGN. `prescriptionRequired` defaults to `false` — set to `true` for prescription-only items.
+> `stockQuantity` defaults to 0. `price` is in NGN. `prescriptionRequired` defaults to `false`. `mediaUrls` is optional — pass URLs returned from `POST /api/vendor/products/media/upload`.
 
 **Response `201`:**
 ```json

@@ -36,6 +36,19 @@ class ProductService {
             isActive:             true,
         });
 
+        if (data.mediaUrls?.length) {
+            await Promise.all(
+                data.mediaUrls.map((item, index) =>
+                    productRepository.saveMedia({
+                        productId: product.id,
+                        mediaUrl:  typeof item === "string" ? item : item.url,
+                        mediaType: typeof item === "string" ? "image" : (item.type || "image"),
+                        isPrimary: index === 0,
+                    })
+                )
+            );
+        }
+
         return product;
     }
 

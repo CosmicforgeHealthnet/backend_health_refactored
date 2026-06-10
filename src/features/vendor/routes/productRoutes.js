@@ -12,6 +12,18 @@ router.put("/:id",    authenticateJWT, authorizeRoles("vendor"), productControll
 router.delete("/:id", authenticateJWT, authorizeRoles("vendor"), productController.deleteProduct);
 
 router.post(
+    "/media/upload",
+    authenticateJWT,
+    authorizeRoles("vendor"),
+    DocumentUploadMiddleware.uploadDocuments(),
+    DocumentUploadMiddleware.handleUploadError,
+    DocumentUploadMiddleware.processUploadedFiles,
+    DocumentFolderMiddleware.handleFolderCreation,
+    DocumentFolderMiddleware.saveFilesToDatabase,
+    productController.uploadStandaloneMedia
+);
+
+router.post(
     "/:id/media",
     authenticateJWT,
     DocumentUploadMiddleware.uploadDocuments(),

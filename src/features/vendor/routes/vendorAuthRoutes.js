@@ -30,6 +30,17 @@ router.post(
     vendorAuthController.uploadVendorLogo
 );
 
+router.post(
+    "/documents",
+    authenticateJWT,
+    DocumentUploadMiddleware.uploadDocuments(),
+    DocumentUploadMiddleware.handleUploadError,
+    DocumentUploadMiddleware.processUploadedFiles,
+    DocumentFolderMiddleware.handleFolderCreation,
+    DocumentFolderMiddleware.saveFilesToDatabase,
+    vendorAuthController.uploadDocument
+);
+
 // Admin only
 router.get("/all", authenticateJWT, authorizeRoles("admin"), vendorAuthController.getAllVendors);
 

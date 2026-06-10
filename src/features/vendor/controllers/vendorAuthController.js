@@ -258,6 +258,49 @@ class VendorAuthController {
         }
     }
 
+    async uploadDocument(req, res, next) {
+        try {
+            const files = req.processedFiles || req.uploadedFiles || [];
+            if (!files.length) {
+                return res.status(400).json({ success: false, error: "No file uploaded" });
+            }
+
+            const { documentType } = req.body;
+            const VALID_TYPES = ["government_id", "business_registration"];
+            if (!documentType || !VALID_TYPES.includes(documentType)) {
+                return res.status(400).json({
+                    success: false,
+                    error: `documentType is required. Must be one of: ${VALID_TYPES.join(", ")}`,
+                });
+            }
+
+            const file = files[0];
+            const documents = await vendorAuthService.uploadDocuments(req.user.id, [{
+                documentType,
+                documentUrl: file.url || file.path,
+                fileName:    file.originalname || file.filename || null,
+                mimeType:    file.mimetype || null,
+            }]);
+
+            return res.status(200).json({
+                success: true,
+                message: "Document uploaded. Your account is now pending verification review.",
+                document: {
+                    id:           documents[0].id,
+                    documentType: documents[0].documentType,
+                    documentUrl:  documents[0].documentUrl,
+                    fileName:     documents[0].fileName,
+                    createdAt:    documents[0].createdAt,
+                },
+            });
+        } catch (error) {
+            if (error.message.includes("not found")) {
+                return res.status(404).json({ success: false, error: error.message });
+            }
+            next(error);
+        }
+    }
+
     async updateAccountSettings(req, res, next) {
         try {
             const { fullName, email } = req.body;

@@ -4,7 +4,7 @@ const { ALL_CATEGORY_KEYS, ALL_SUBCATEGORY_KEYS } = require("../constants/produc
 class ProductController {
     async createProduct(req, res, next) {
         try {
-            const { title, description, price, stockQuantity, category, subcategory, prescriptionRequired } = req.body;
+            const { title, description, price, stockQuantity, category, subcategory, prescriptionRequired, mediaUrls } = req.body;
 
             if (!title || !description || price === undefined || !category || !subcategory) {
                 return res.status(400).json({
@@ -18,6 +18,7 @@ class ProductController {
 
             const product = await productService.createProduct(req.user.id, {
                 title, description, price, stockQuantity, category, subcategory, prescriptionRequired,
+                mediaUrls: Array.isArray(mediaUrls) ? mediaUrls : undefined,
             });
 
             return res.status(201).json({
@@ -27,6 +28,29 @@ class ProductController {
             });
         } catch (error) {
             if (isClientError(error)) return res.status(400).json({ success: false, error: error.message });
+            next(error);
+        }
+    }
+
+    async uploadStandaloneMedia(req, res, next) {
+        try {
+            const files = req.processedFiles || req.uploadedFiles || [];
+            if (!files.length) {
+                return res.status(400).json({ success: false, error: "No media files uploaded" });
+            }
+
+            const media = files.map((file) => ({
+                url:      file.url || file.path,
+                mimeType: file.mimetype || null,
+                type:     file.mimetype?.startsWith("video/") ? "video" : "image",
+            }));
+
+            return res.status(200).json({
+                success: true,
+                message: "Media uploaded. Pass the urls in mediaUrls when creating your product.",
+                media,
+            });
+        } catch (error) {
             next(error);
         }
     }
