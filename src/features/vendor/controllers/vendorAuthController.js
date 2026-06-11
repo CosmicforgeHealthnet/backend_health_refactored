@@ -246,11 +246,12 @@ class VendorAuthController {
 
     async uploadVendorLogo(req, res, next) {
         try {
-            const files = req.processedFiles || req.uploadedFiles || [];
-            if (!files.length) {
+            const savedFiles = req.savedFiles || [];
+            if (!savedFiles.length) {
                 return res.status(400).json({ success: false, error: "No file uploaded" });
             }
-            const logoUrl = files[0].url || files[0].path;
+            const baseUrl = process.env.FILE_SERVER_URL || process.env.APP_URL || "";
+            const logoUrl = `${baseUrl}/api/documents/images/${savedFiles[0].id}`;
             const result = await vendorAuthService.uploadVendorLogo(req.user.id, logoUrl);
             return res.status(200).json({ success: true, message: "Logo uploaded", logoUrl: result.logoUrl });
         } catch (error) {
@@ -260,8 +261,8 @@ class VendorAuthController {
 
     async uploadDocument(req, res, next) {
         try {
-            const files = req.processedFiles || req.uploadedFiles || [];
-            if (!files.length) {
+            const savedFiles = req.savedFiles || [];
+            if (!savedFiles.length) {
                 return res.status(400).json({ success: false, error: "No file uploaded" });
             }
 
@@ -274,12 +275,13 @@ class VendorAuthController {
                 });
             }
 
-            const file = files[0];
+            const baseUrl = process.env.FILE_SERVER_URL || process.env.APP_URL || "";
+            const savedFile = savedFiles[0];
             const documents = await vendorAuthService.uploadDocuments(req.user.id, [{
                 documentType,
-                documentUrl: file.url || file.path,
-                fileName:    file.originalname || file.filename || null,
-                mimeType:    file.mimetype || null,
+                documentUrl: `${baseUrl}/api/documents/images/${savedFile.id}`,
+                fileName:    savedFile.originalFileName || null,
+                mimeType:    savedFile.mimeType || null,
             }]);
 
             return res.status(200).json({

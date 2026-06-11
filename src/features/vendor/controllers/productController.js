@@ -34,15 +34,16 @@ class ProductController {
 
     async uploadStandaloneMedia(req, res, next) {
         try {
-            const files = req.processedFiles || req.uploadedFiles || [];
-            if (!files.length) {
+            const savedFiles = req.savedFiles || [];
+            if (!savedFiles.length) {
                 return res.status(400).json({ success: false, error: "No media files uploaded" });
             }
 
-            const media = files.map((file) => ({
-                url:      file.url || file.path,
-                mimeType: file.mimetype || null,
-                type:     file.mimetype?.startsWith("video/") ? "video" : "image",
+            const baseUrl = process.env.FILE_SERVER_URL || process.env.APP_URL || "";
+            const media = savedFiles.map((f) => ({
+                url:      `${baseUrl}/api/documents/images/${f.id}`,
+                mimeType: f.mimeType,
+                type:     f.mimeType?.startsWith("video/") ? "video" : "image",
             }));
 
             return res.status(200).json({
@@ -57,10 +58,16 @@ class ProductController {
 
     async uploadProductMedia(req, res, next) {
         try {
-            const files = req.processedFiles || req.uploadedFiles || [];
-            if (!files.length) {
+            const savedFiles = req.savedFiles || [];
+            if (!savedFiles.length) {
                 return res.status(400).json({ success: false, error: "No media files uploaded" });
             }
+
+            const baseUrl = process.env.FILE_SERVER_URL || process.env.APP_URL || "";
+            const files = savedFiles.map((f) => ({
+                url:      `${baseUrl}/api/documents/images/${f.id}`,
+                mimetype: f.mimeType,
+            }));
 
             const media = await productService.uploadProductMedia(req.user.id, req.params.id, files);
             return res.status(200).json({ success: true, message: "Media uploaded", media });
