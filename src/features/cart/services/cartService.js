@@ -101,18 +101,28 @@ class CartService {
         if (cart.status !== "draft") throw new Error("Cart has already been submitted");
         if (!cart.items || cart.items.length === 0) throw new Error("Cannot submit an empty cart");
 
+        // Auto-confirm at listed product prices — no vendor confirmation step needed
+        const confirmedTotal = parseFloat(
+            cart.items.reduce((sum, item) =>
+                sum + parseFloat(item.priceSnapshot) * item.quantity, 0
+            ).toFixed(2)
+        );
+
+        const now = new Date();
         await cartRepository.updateCart(cartId, {
-            status:      "submitted",
-            patientNote: patientNote || null,
-            submittedAt: new Date(),
+            status:         "confirmed",
+            patientNote:    patientNote || null,
+            submittedAt:    now,
+            confirmedAt:    now,
+            confirmedTotal,
         });
 
-        // Notify the vendor
+        // Notify vendor — order is ready, no action needed before payment
         try {
             await notificationService.createNotification(
                 cart.vendorId,
                 "notification",
-                `You have received a new cart from a customer. Review it in your dashboard.`,
+                `New order received from a customer. Payment is pending.`,
                 { cartId, patientId }
             );
         } catch {
