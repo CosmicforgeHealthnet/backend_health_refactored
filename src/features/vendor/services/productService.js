@@ -11,9 +11,9 @@ class ProductService {
             throw new Error("Your vendor account must be approved before listing products");
         }
 
-        // Medications are restricted to hybrid pharmacies
+        // Medications are restricted to pharmacies (hybrid or standard)
         if (data.category === "medications" && !vendor.isHybridPharmacy) {
-            throw new Error("Only hybrid pharmacies can list medications");
+            throw new Error("Only pharmacies can list medications");
         }
 
         const categoryDef = PRODUCT_CATEGORIES[data.category];

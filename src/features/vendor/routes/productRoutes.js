@@ -4,17 +4,17 @@ const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/auth
 const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
 const DocumentFolderMiddleware = require("../../documents/middlewares/documentFolderMiddleware");
 
-// ─── Vendor product management ────────────────────────────────────────────────
-router.get("/",       authenticateJWT, authorizeRoles("vendor"), productController.getMyProducts);
-router.post("/",      authenticateJWT, authorizeRoles("vendor"), productController.createProduct);
-router.get("/:id",    authenticateJWT, authorizeRoles("vendor"), productController.getMyProductById);
-router.put("/:id",    authenticateJWT, authorizeRoles("vendor"), productController.updateProduct);
-router.delete("/:id", authenticateJWT, authorizeRoles("vendor"), productController.deleteProduct);
+// ─── Vendor/Pharmacy product management ──────────────────────────────────────
+router.get("/",       authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.getMyProducts);
+router.post("/",      authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.createProduct);
+router.get("/:id",    authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.getMyProductById);
+router.put("/:id",    authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.updateProduct);
+router.delete("/:id", authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.deleteProduct);
 
 router.post(
     "/media/upload",
     authenticateJWT,
-    authorizeRoles("vendor"),
+    authorizeRoles("vendor", "pharmacy"),
     DocumentUploadMiddleware.uploadDocuments(),
     DocumentUploadMiddleware.handleUploadError,
     DocumentUploadMiddleware.processUploadedFiles,

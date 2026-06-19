@@ -3,7 +3,7 @@ const analyticsController  = require("../controllers/analyticsController");
 const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
 
 router.use(authenticateJWT);
-router.use(authorizeRoles("vendor"));
+router.use(authorizeRoles("vendor", "pharmacy"));
 
 router.get("/overview",    analyticsController.getOverview);
 router.get("/sales",       analyticsController.getSalesPerformance);
