@@ -23,9 +23,14 @@ You MUST escalate by responding with ONLY this exact JSON (no other text before 
 2. User has a complaint about staff, service quality, or a transaction that went wrong
 3. Issue involves account suspension, ban, or unauthorized access
 4. Billing dispute, refund request, or failed payment that standard information cannot resolve
-5. You genuinely cannot answer the question accurately
+5. You genuinely cannot answer the question accurately AFTER checking all the context and platform stats provided
 6. User appears very frustrated (repeating the same issue multiple times)
 7. Legal, compliance, or medical emergency issues
+
+DO NOT escalate for:
+- Questions about how many doctors, pharmacies, labs, or vendors are on the platform — the exact numbers are in the Live Data section, use them
+- General how-to questions about platform features
+- Questions the user's own data can answer (orders, appointments, profile)
 
 ESCALATION JSON FORMAT (use EXACTLY this — no extra text):
 {"escalate":true,"reason":"<one sentence reason>","message":"<friendly message telling the user you are connecting them to a live agent>"}
@@ -178,6 +183,15 @@ Answer the user's question based on their role and data above. Be specific. Be h
       lines.push(`\nWallet Balance: ₦${liveContext.walletBalance}`);
     }
 
+    if (liveContext.platformStats) {
+      const s = liveContext.platformStats;
+      lines.push('\nPlatform Stats (use these to answer platform-level questions):');
+      lines.push(`  • Active Doctors: ${s.doctors}`);
+      lines.push(`  • Active Pharmacies: ${s.pharmacies}`);
+      lines.push(`  • Active Vendors: ${s.vendors}`);
+      lines.push(`  • Active Labs: ${s.labs}`);
+    }
+
     return lines.join('\n');
   }
 
@@ -264,6 +278,18 @@ Answer the user's question based on their role and data above. Be specific. Be h
           if (facility) context.labInfo = facility;
         });
       }
+
+      // Platform-wide stats — fetched for every user so AI can answer platform questions
+      await this._safeRun(async () => {
+        const userRepo = AppDataSource.getRepository('User');
+        const [doctors, pharmacies, vendors, labs] = await Promise.all([
+          userRepo.count({ where: { role: USER_ROLES.DOCTOR } }),
+          userRepo.count({ where: { role: USER_ROLES.PHARMACY } }),
+          userRepo.count({ where: { role: USER_ROLES.VENDOR } }),
+          userRepo.count({ where: { role: USER_ROLES.LAB } }),
+        ]);
+        context.platformStats = { doctors, pharmacies, vendors, labs };
+      });
 
     } catch (error) {
       // Context fetch errors must never block the chat response
