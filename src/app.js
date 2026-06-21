@@ -120,6 +120,11 @@ chatSocketHandler.initialize();
 const notificationSocketHandler = new NotificationSocketHandler(io);
 notificationSocketHandler.initialize();
 
+// Initialize support WebSocket
+const SupportSocketHandler = require("./features/support/websocket/supportSocket");
+const supportSocketHandler = new SupportSocketHandler(io);
+supportSocketHandler.initialize();
+
 // ============================================
 // SWAGGER DOCUMENTATION
 // ============================================
@@ -542,6 +547,8 @@ app.use("/api/webhooks/vendor/promotions", require("./features/vendor/routes/pro
 app.use("/api/webhooks/vendor/orders",    require("./features/vendor/routes/orderWebhookRoutes"));    // Vendor order payment webhooks
 app.use("/api/transactions", authenticateJWT, transactionFeature.router);
 app.use("/api/support", authenticateJWT, supportFeature.router);
+app.use("/api/ai-support", authenticateJWT, supportFeature.aiLiveSupportRouter);
+app.use("/api/admin/ai-support", authenticateJWT, supportFeature.aiSupportAdminRouter);
 
 app.use("/api/faq", supportFeature.faqRouter);
 app.use("/api/pharmacy", pharmacyFeature.router);
