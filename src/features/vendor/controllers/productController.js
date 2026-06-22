@@ -77,6 +77,19 @@ class ProductController {
         }
     }
 
+    async getOutOfStock(req, res, next) {
+        try {
+            const result = await productService.getOutOfStockProducts(req.user.id);
+            return res.status(200).json({
+                success: true,
+                products: result.products.map(formatProduct),
+                total: result.total,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async getMyProducts(req, res, next) {
         try {
             const { status, page = 1, limit = 20 } = req.query;

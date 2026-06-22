@@ -69,6 +69,12 @@ class ProductService {
         return Promise.all(mediaItems.map((m) => productRepository.saveMedia(m)));
     }
 
+    async getOutOfStockProducts(userId) {
+        const vendor = await vendorRepository.findByUserId(userId);
+        if (!vendor) throw new Error("Vendor profile not found");
+        return productRepository.findOutOfStockByVendor(vendor.id);
+    }
+
     async getVendorProducts(userId, { status, page, limit }) {
         const vendor = await vendorRepository.findByUserId(userId);
         if (!vendor) throw new Error("Vendor profile not found");

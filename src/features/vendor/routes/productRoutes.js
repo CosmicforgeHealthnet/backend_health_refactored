@@ -4,12 +4,15 @@ const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/auth
 const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
 const DocumentFolderMiddleware = require("../../documents/middlewares/documentFolderMiddleware");
 
-// ─── Vendor/Pharmacy product management ──────────────────────────────────────
-router.get("/",       authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.getMyProducts);
-router.post("/",      authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.createProduct);
-router.get("/:id",    authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.getMyProductById);
-router.put("/:id",    authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.updateProduct);
-router.delete("/:id", authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.deleteProduct);
+// ─── Static routes MUST come before /:id ─────────────────────────────────────
+
+// Admin
+router.get("/admin/all",         authenticateJWT, authorizeRoles("admin"), productController.adminGetAllProducts);
+router.put("/admin/:id/approve", authenticateJWT, authorizeRoles("admin"), productController.adminApproveProduct);
+router.put("/admin/:id/reject",  authenticateJWT, authorizeRoles("admin"), productController.adminRejectProduct);
+
+// Vendor/Pharmacy — named sub-paths
+router.get("/out-of-stock", authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.getOutOfStock);
 
 router.post(
     "/media/upload",
@@ -23,6 +26,13 @@ router.post(
     productController.uploadStandaloneMedia
 );
 
+// ─── Vendor/Pharmacy CRUD ─────────────────────────────────────────────────────
+router.get("/",       authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.getMyProducts);
+router.post("/",      authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.createProduct);
+router.get("/:id",    authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.getMyProductById);
+router.put("/:id",    authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.updateProduct);
+router.delete("/:id", authenticateJWT, authorizeRoles("vendor", "pharmacy"), productController.deleteProduct);
+
 router.post(
     "/:id/media",
     authenticateJWT,
@@ -33,10 +43,5 @@ router.post(
     DocumentFolderMiddleware.saveFilesToDatabase,
     productController.uploadProductMedia
 );
-
-// ─── Admin product approval ───────────────────────────────────────────────────
-router.get("/admin/all",         authenticateJWT, authorizeRoles("admin"), productController.adminGetAllProducts);
-router.put("/admin/:id/approve", authenticateJWT, authorizeRoles("admin"), productController.adminApproveProduct);
-router.put("/admin/:id/reject",  authenticateJWT, authorizeRoles("admin"), productController.adminRejectProduct);
 
 module.exports = router;
