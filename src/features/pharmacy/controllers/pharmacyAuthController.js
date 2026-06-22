@@ -6,6 +6,7 @@ const userRepo = require("../../auth/repositories/userRepository");
 const bcrypt = require('bcryptjs');
 const mfaService = require('../../auth/services/mfa/mfaService');
 const passwordResetService = require("../../auth/services/passwordResetService");
+const AppDataSource = require("../../../config/database");
 
 class PharmacyAuthController {
   async registerPharmacy(req, res, next) {
@@ -389,6 +390,40 @@ class PharmacyAuthController {
             createdAt: p.user.createdAt
           } : null
         }))
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getPharmacyById(req, res, next) {
+    try {
+      const pharmacy = await pharmacyProfileRepo.findById(req.params.id);
+      if (!pharmacy || pharmacy.verificationStatus !== "approved") {
+        return res.status(404).json({ success: false, error: "Pharmacy not found" });
+      }
+
+      // Get vendor profile so frontend knows which vendorId to use for the cart
+      const vendorProfile = await AppDataSource.getRepository("VendorProfile")
+        .findOne({ where: { userId: pharmacy.userId, isHybridPharmacy: true } });
+
+      return res.status(200).json({
+        success: true,
+        pharmacy: {
+          id:                 pharmacy.id,
+          pharmacyName:       pharmacy.pharmacyName,
+          registrationNumber: pharmacy.registrationNumber,
+          address:            pharmacy.address,
+          phone:              pharmacy.phone,
+          email:              pharmacy.email,
+          website:            pharmacy.website     || null,
+          logoUrl:            pharmacy.logoUrl     || null,
+          description:        pharmacy.description || null,
+          operatingHours:     pharmacy.operatingHours || null,
+          verificationStatus: pharmacy.verificationStatus,
+          isActive:           pharmacy.isActive,
+          vendorId:           vendorProfile?.id || null,
+        },
       });
     } catch (error) {
       next(error);

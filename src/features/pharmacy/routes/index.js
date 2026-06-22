@@ -28,4 +28,7 @@ router.get("/list", authenticateJWT, (req, res, next) => {
   next();
 }, pharmacyAuthController.getAllPharmacies);
 
+// Single pharmacy detail — includes vendorId for cart
+router.get("/:id", authenticateJWT, pharmacyAuthController.getPharmacyById);
+
 module.exports = router;
