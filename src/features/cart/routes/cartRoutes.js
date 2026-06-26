@@ -6,20 +6,23 @@ const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/auth
 router.use(authenticateJWT);
 router.use(authorizeRoles("patient"));
 
+// ─── Static paths MUST come before /:cartId ──────────────────────────────────
+
 // Patient's cart list
-router.get("/", cartController.getMyCarts);
+router.get("/",    cartController.getMyCarts);
+router.get("/my",  cartController.getMyCarts);  // alias used by frontend
+
+// Add item to cart for a specific vendor
+router.post("/vendor/:vendorId/items", cartController.addItem);
+
+// ─── Parameterized routes ─────────────────────────────────────────────────────
 
 // Single cart detail
 router.get("/:cartId", cartController.getMyCart);
 
-// Submit cart to vendor
+// Submit / cancel
 router.post("/:cartId/submit", cartController.submitCart);
-
-// Cancel cart
 router.post("/:cartId/cancel", cartController.cancelCart);
-
-// Add item to cart for a specific vendor
-router.post("/vendor/:vendorId/items", cartController.addItem);
 
 // Update / remove item
 router.put("/:cartId/items/:itemId",    cartController.updateItemQuantity);
