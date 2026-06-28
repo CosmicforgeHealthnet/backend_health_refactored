@@ -74,10 +74,33 @@ class CartController {
         }
     }
 
+    async initiatePayment(req, res, next) {
+        try {
+            const { provider, email, phone, name, currency, callbackUrl } = req.body;
+            if (!provider || !["flutterwave", "paystack"].includes(provider)) {
+                return res.status(400).json({ success: false, error: "provider must be 'flutterwave' or 'paystack'" });
+            }
+            if (!email) {
+                return res.status(400).json({ success: false, error: "email is required" });
+            }
+            const result = await cartService.initiateCartPayment(req.user.id, req.params.cartId, {
+                provider, email, phone, name, currency, callbackUrl,
+            });
+            return res.status(200).json({
+                success: true,
+                message: "Payment initiated. Redirect the patient to redirectUrl to complete payment.",
+                data: result,
+            });
+        } catch (error) {
+            if (isClientError(error)) return res.status(400).json({ success: false, error: error.message });
+            next(error);
+        }
+    }
+
     async submitCart(req, res, next) {
         try {
-            const { patientNote } = req.body;
-            const cart = await cartService.submitCart(req.user.id, req.params.cartId, patientNote);
+            const { patientNote, prescriptionId } = req.body;
+            const cart = await cartService.submitCart(req.user.id, req.params.cartId, patientNote, prescriptionId);
             return res.status(200).json({
                 success: true,
                 message: "Cart submitted to vendor. They will review and confirm pricing.",
@@ -104,11 +127,13 @@ function formatCart(c) {
     return {
         id:        c.id,
         status:    c.status,
+        prescriptionId: c.prescriptionId || null,
         patientNote:    c.patientNote,
         vendorNote:     c.vendorNote,
         confirmedTotal: c.confirmedTotal,
         submittedAt:  c.submittedAt,
         confirmedAt:  c.confirmedAt,
+        paidAt:       c.paidAt || null,
         cancelledAt:  c.cancelledAt,
         cancelledBy:  c.cancelledBy,
         vendor: c.vendor

@@ -1706,6 +1706,13 @@ class PaymentService {
           } catch (syncError) {
             console.error(`❌ Failed to automatically sync appointment status via webhook:`, syncError);
           }
+        } else if (ourTransaction.serviceType === 'pharmacy') {
+          console.log('🛒 Processing cart order payment...');
+          try {
+            await this._handleCartOrderPayment(ourTransaction);
+          } catch (cartErr) {
+            console.error('❌ Cart order post-payment handling failed:', cartErr.message);
+          }
         } else if (ourTransaction.doctorId) {
           console.log('💰 Processing immediate funds...');
           await this.processFundsImmediate(ourTransaction);
@@ -2017,6 +2024,56 @@ class PaymentService {
       }
     } catch (error) {
       console.error('Error processing immediate payment funds:', error);
+    }
+  }
+
+  /**
+   * Handle post-payment actions for a cart order (serviceType === 'pharmacy').
+   * - Marks cart as 'paid'
+   * - Credits vendor wallet (93%) + platform (7%)
+   * - Marks linked prescription as completed if present
+   */
+  async _handleCartOrderPayment(transaction) {
+    const AppDataSource = require('../../../config/database');
+    const cartRepo         = AppDataSource.getRepository('Cart');
+    const vendorWalletRepo = AppDataSource.getRepository('VendorWallet');
+    const prescriptionRepo = AppDataSource.getRepository('Prescription');
+
+    const cart = await cartRepo.findOne({
+      where: { id: transaction.serviceId },
+      relations: ['vendor'],
+    });
+    if (!cart) {
+      console.error(`[CartPayment] Cart ${transaction.serviceId} not found for transaction ${transaction.id}`);
+      return;
+    }
+
+    // Mark cart as paid
+    await cartRepo.update(cart.id, { status: 'paid', paidAt: new Date() });
+    console.log(`✅ Cart ${cart.id} marked as paid`);
+
+    // Credit vendor wallet — 93% to pending clearance, 7% stays with platform
+    const total        = parseFloat(cart.confirmedTotal || 0);
+    const vendorAmount = parseFloat((total * 0.93).toFixed(2));
+
+    if (vendorAmount > 0 && cart.vendorId) {
+      const wallet = await vendorWalletRepo.findOne({ where: { vendorId: cart.vendorId } });
+      if (wallet) {
+        await vendorWalletRepo.update(wallet.id, {
+          pendingClearanceNgn: parseFloat(wallet.pendingClearanceNgn || 0) + vendorAmount,
+          totalEarningsNgn:    parseFloat(wallet.totalEarningsNgn    || 0) + vendorAmount,
+        });
+        console.log(`✅ Credited ₦${vendorAmount} to vendor ${cart.vendorId} wallet (pending clearance)`);
+      }
+    }
+
+    // Fulfill linked prescription
+    if (cart.prescriptionId) {
+      await prescriptionRepo.update(cart.prescriptionId, {
+        status:        'completed',
+        paymentStatus: 'paid',
+      });
+      console.log(`✅ Prescription ${cart.prescriptionId} marked as completed (paid via cart ${cart.id})`);
     }
   }
 

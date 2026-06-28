@@ -10,9 +10,11 @@ module.exports = new EntitySchema({
 
         status: {
             type: "enum",
-            enum: ["draft", "submitted", "confirmed", "cancelled"],
+            enum: ["draft", "submitted", "confirmed", "cancelled", "paid"],
             default: "draft",
         },
+
+        prescriptionId: { type: "uuid", nullable: true, comment: "Linked prescription — marked fulfilled on payment" },
 
         patientNote:    { type: "text",    nullable: true, comment: "Message from patient to vendor" },
         vendorNote:     { type: "text",    nullable: true, comment: "Vendor response / pricing notes" },
@@ -20,6 +22,7 @@ module.exports = new EntitySchema({
 
         submittedAt:  { type: "timestamp", nullable: true },
         confirmedAt:  { type: "timestamp", nullable: true },
+        paidAt:       { type: "timestamp", nullable: true },
         cancelledAt:  { type: "timestamp", nullable: true },
         cancelledBy:  { type: "varchar",   nullable: true, comment: "patient or vendor" },
 

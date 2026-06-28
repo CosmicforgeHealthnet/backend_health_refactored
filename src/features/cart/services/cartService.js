@@ -95,7 +95,7 @@ class CartService {
         });
     }
 
-    async submitCart(patientId, cartId, patientNote) {
+    async submitCart(patientId, cartId, patientNote, prescriptionId) {
         const cart = await cartRepository.findByIdAndPatient(cartId, patientId);
         if (!cart) throw new Error("Cart not found");
         if (cart.status !== "draft") throw new Error("Cart has already been submitted");
@@ -109,13 +109,15 @@ class CartService {
         );
 
         const now = new Date();
-        await cartRepository.updateCart(cartId, {
+        const update = {
             status:         "confirmed",
             patientNote:    patientNote || null,
             submittedAt:    now,
             confirmedAt:    now,
             confirmedTotal,
-        });
+        };
+        if (prescriptionId) update.prescriptionId = prescriptionId;
+        await cartRepository.updateCart(cartId, update);
 
         // Notify vendor — order is ready, no action needed before payment
         try {
@@ -145,6 +147,48 @@ class CartService {
         });
 
         return cartRepository.findByIdAndPatient(cartId, patientId);
+    }
+
+    async initiateCartPayment(patientId, cartId, { provider, email, phone, name, currency, callbackUrl }) {
+        const cart = await cartRepository.findByIdAndPatient(cartId, patientId);
+        if (!cart) throw new Error("Cart not found");
+        if (cart.status !== "confirmed") throw new Error("Cart must be confirmed before payment. Submit your cart first.");
+        if (!cart.confirmedTotal || parseFloat(cart.confirmedTotal) <= 0) throw new Error("Cart has no confirmed total");
+
+        const paymentService = require("../../payments/services/paymentService");
+
+        const transaction = await paymentService.initiatePayment({
+            patientId,
+            serviceType:      "pharmacy",
+            serviceId:        cartId,
+            originalAmount:   parseFloat(cart.confirmedTotal),
+            originalCurrency: currency || "NGN",
+            paymentProvider:  provider,
+            description:      `Cart order — ${cart.items?.length || 0} item(s)`,
+            appointmentFee:   0,
+            serviceFee:       0,
+        });
+
+        const providerPaymentData = { email, phone, name, callbackUrl };
+        let providerResponse;
+        if (provider === "flutterwave") {
+            providerResponse = await paymentService.processFlutterwavePayment(transaction, providerPaymentData);
+        } else {
+            providerResponse = await paymentService.processPaystackPayment(transaction, providerPaymentData);
+        }
+
+        if (!providerResponse?.success) {
+            throw new Error(providerResponse?.error || "Failed to create payment with provider");
+        }
+
+        return {
+            transactionId:     transaction.id,
+            redirectUrl:       providerResponse.authUrl,
+            amount:            parseFloat(cart.confirmedTotal),
+            currency:          currency || "NGN",
+            paymentProvider:   provider,
+            providerReference: providerResponse.reference,
+        };
     }
 
     // ─── Vendor operations ────────────────────────────────────────────────────

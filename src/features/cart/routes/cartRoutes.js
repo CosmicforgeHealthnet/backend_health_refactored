@@ -20,8 +20,9 @@ router.post("/vendor/:vendorId/items", cartController.addItem);
 // Single cart detail
 router.get("/:cartId", cartController.getMyCart);
 
-// Submit / cancel
+// Submit / pay / cancel
 router.post("/:cartId/submit", cartController.submitCart);
+router.post("/:cartId/pay",    cartController.initiatePayment);
 router.post("/:cartId/cancel", cartController.cancelCart);
 
 // Update / remove item
