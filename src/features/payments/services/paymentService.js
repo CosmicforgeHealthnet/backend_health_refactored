@@ -2034,9 +2034,8 @@ class PaymentService {
    * - Marks linked prescription as completed if present
    */
   async _handleCartOrderPayment(transaction) {
-    const AppDataSource = require('../../../config/database');
+    const AppDataSource    = require('../../../config/database');
     const cartRepo         = AppDataSource.getRepository('Cart');
-    const vendorWalletRepo = AppDataSource.getRepository('VendorWallet');
     const prescriptionRepo = AppDataSource.getRepository('Prescription');
 
     const cart = await cartRepo.findOne({
@@ -2083,19 +2082,19 @@ class PaymentService {
       console.error('[CartPayment] Vendor notification failed:', notifErr.message);
     }
 
-    // Credit vendor wallet — 93% to pending clearance, 7% stays with platform
+    // Credit vendor wallet — 93% of total (7% is platform fee)
     const total        = parseFloat(cart.confirmedTotal || 0);
     const vendorAmount = parseFloat((total * 0.93).toFixed(2));
 
     if (vendorAmount > 0 && cart.vendorId) {
-      const wallet = await vendorWalletRepo.findOne({ where: { vendorId: cart.vendorId } });
-      if (wallet) {
-        await vendorWalletRepo.update(wallet.id, {
-          pendingClearanceNgn: parseFloat(wallet.pendingClearanceNgn || 0) + vendorAmount,
-          totalEarningsNgn:    parseFloat(wallet.totalEarningsNgn    || 0) + vendorAmount,
-        });
-        console.log(`✅ Credited ₦${vendorAmount} to vendor ${cart.vendorId} wallet (pending clearance)`);
-      }
+      const walletService = require('../../vendor/services/walletService');
+      await walletService.creditOrder(cart.vendorId, {
+        orderId:     cart.id,
+        amountNgn:   vendorAmount,
+        reference:   transaction.id,
+        description: `Cart order — patient paid ₦${total.toLocaleString()} (platform fee: ₦${(total * 0.07).toFixed(2)})`,
+      });
+      console.log(`✅ Credited ₦${vendorAmount} to vendor ${cart.vendorId} wallet`);
     }
 
     // Fulfill linked prescription
