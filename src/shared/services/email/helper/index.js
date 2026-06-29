@@ -1,11 +1,15 @@
 // src/services/emailHelpers.js
 const emailService = require("../emailService");
 
+function getFrontendUrl(user) {
+  const role = user?.role;
+  if (role === "pharmacy") return process.env.PHARMACY_APP_URL || process.env.APP_BASE_URL;
+  if (role === "vendor")   return process.env.VENDOR_APP_URL   || process.env.APP_BASE_URL;
+  return process.env.APP_BASE_URL;
+}
+
 async function sendVerificationEmail(user, token, expiresInMinutes = 60) {
-  const role = user.role || "patient";
-  const baseUrl = role === "pharmacy"
-    ? (process.env.PHARMACY_APP_URL || process.env.APP_BASE_URL)
-    : process.env.APP_BASE_URL;
+  const baseUrl = getFrontendUrl(user);
   const link = `${baseUrl}/auth/verify-email?token=${token}`;
   await emailService.send(
     "verification",
@@ -16,9 +20,7 @@ async function sendVerificationEmail(user, token, expiresInMinutes = 60) {
 }
 
 async function sendPasswordResetEmail(user, token, expiresInMinutes = 60) {
-  const baseUrl = user.role === "pharmacy"
-    ? (process.env.PHARMACY_APP_URL || process.env.APP_BASE_URL)
-    : process.env.APP_BASE_URL;
+  const baseUrl = getFrontendUrl(user);
   const link = `${baseUrl}/auth/reset-password?token=${token}`;
   await emailService.send(
     "reset_password",
