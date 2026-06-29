@@ -8,6 +8,35 @@ const mfaService = require('../../auth/services/mfa/mfaService');
 const passwordResetService = require("../../auth/services/passwordResetService");
 const AppDataSource = require("../../../config/database");
 
+function buildAccountState(pharmacy, vendorProfile) {
+  const status = pharmacy.verificationStatus;
+  const isApproved = status === "approved";
+  const vendorModeEnabled = !!(vendorProfile?.id);
+
+  const stageMap = {
+    pending:            { nextStep: "Upload your pharmacy license and government ID to continue.", pendingActions: ["upload_documents"] },
+    documents_required: { nextStep: "Upload your pharmacy license and government ID to continue.", pendingActions: ["upload_documents"] },
+    under_review:       { nextStep: "Your documents are under review. You will be notified once approved.", pendingActions: [] },
+    approved:           { nextStep: null, pendingActions: [] },
+    rejected:           { nextStep: "Your application was rejected. Please re-upload your documents.", pendingActions: ["upload_documents"] },
+    suspended:          { nextStep: "Your account has been suspended. Please contact support.", pendingActions: [] },
+  };
+
+  const { nextStep, pendingActions } = stageMap[status] || { nextStep: null, pendingActions: [] };
+
+  return {
+    stage:              status,
+    isApproved,
+    canAccessShop:      isApproved,
+    canReceiveOrders:   isApproved,
+    vendorModeEnabled,
+    vendorId:           vendorProfile?.id || null,
+    documentsSubmitted: pharmacy.documentsSubmitted || false,
+    nextStep,
+    pendingActions,
+  };
+}
+
 class PharmacyAuthController {
   async registerPharmacy(req, res, next) {
     try {
@@ -149,8 +178,10 @@ class PharmacyAuthController {
         userAgent
       );
 
-      // 7) Get full pharmacy profile with relations
+      // 7) Get full pharmacy profile + vendor profile for accountState
       const pharmacyProfile = await pharmacyRegistrationService.getPharmacyProfile(user.id);
+      const vendorProfile   = await AppDataSource.getRepository("VendorProfile")
+        .findOne({ where: { userId: user.id, isHybridPharmacy: true } });
 
       return res.json({
         payload: tokens.payload,
@@ -166,13 +197,13 @@ class PharmacyAuthController {
           email: pharmacyProfile.email,
           username: pharmacyProfile.preferredUsername,
           verificationStatus: pharmacyProfile.verificationStatus,
-          documentsSubmitted: pharmacyProfile.documentsSubmitted,  // ADD THIS LINE
+          documentsSubmitted: pharmacyProfile.documentsSubmitted,
           isActive: pharmacyProfile.isActive,
           createdAt: pharmacyProfile.createdAt,
           updatedAt: pharmacyProfile.updatedAt,
-          // Include related data if available
           documents: pharmacyProfile.documents || [],
-          branches: pharmacyProfile.branches || []
+          branches: pharmacyProfile.branches  || [],
+          accountState: buildAccountState(pharmacyProfile, vendorProfile),
         } : null
       });
 
@@ -187,13 +218,15 @@ class PharmacyAuthController {
   async getPharmacyProfile(req, res, next) {
     try {
       const userId = req.user.sub;
-      const pharmacyProfile = await pharmacyRegistrationService.getPharmacyProfile(userId);
+      const [pharmacyProfile, freshUser, vendorProfile] = await Promise.all([
+        pharmacyRegistrationService.getPharmacyProfile(userId),
+        userRepo.findById(userId),
+        AppDataSource.getRepository("VendorProfile").findOne({ where: { userId, isHybridPharmacy: true } }),
+      ]);
 
       if (!pharmacyProfile) {
         return res.status(404).json({ error: "Pharmacy profile not found" });
       }
-
-      const freshUser = await userRepo.findById(userId);
 
       return res.json({
         user: {
@@ -232,9 +265,9 @@ class PharmacyAuthController {
           defaultCurrency: pharmacyProfile.defaultCurrency,
           createdAt: pharmacyProfile.createdAt,
           updatedAt: pharmacyProfile.updatedAt,
-          // Include related data
           documents: pharmacyProfile.documents || [],
-          branches: pharmacyProfile.branches || []
+          branches: pharmacyProfile.branches  || [],
+          accountState: buildAccountState(pharmacyProfile, vendorProfile),
         }
       });
     } catch (error) {
