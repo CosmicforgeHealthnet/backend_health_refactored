@@ -119,14 +119,17 @@ class CartService {
         if (prescriptionId) update.prescriptionId = prescriptionId;
         await cartRepository.updateCart(cartId, update);
 
-        // Notify vendor — order is ready, no action needed before payment
+        // Notify vendor — use vendor's userId (not vendorProfileId)
         try {
-            await notificationService.createNotification(
-                cart.vendorId,
-                "notification",
-                `New order received from a customer. Payment is pending.`,
-                { cartId, patientId }
-            );
+            const vendor = await vendorRepository.findById(cart.vendorId);
+            if (vendor?.userId) {
+                await notificationService.createNotification(
+                    vendor.userId,
+                    "notification",
+                    `New order received. Total: ₦${confirmedTotal.toLocaleString()}. Awaiting payment.`,
+                    { cartId, patientId, confirmedTotal }
+                );
+            }
         } catch {
             // Notifications are non-critical
         }

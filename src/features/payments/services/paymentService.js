@@ -2052,6 +2052,37 @@ class PaymentService {
     await cartRepo.update(cart.id, { status: 'paid', paidAt: new Date() });
     console.log(`✅ Cart ${cart.id} marked as paid`);
 
+    // Notify vendor via in-app notification
+    try {
+      const vendorProfile = await AppDataSource.getRepository('VendorProfile').findOne({
+        where: { id: cart.vendorId },
+        select: ['userId'],
+      });
+      if (vendorProfile?.userId) {
+        const io = require('../../../config/websocket').getIO();
+        const notif = {
+          type:    'notification',
+          message: `Payment received for order. Amount: ₦${parseFloat(cart.confirmedTotal).toLocaleString()}. Funds are in your wallet.`,
+          metadata: { cartId: cart.id },
+          isRead:  false,
+          createdAt: new Date(),
+        };
+        io.to(`user_${vendorProfile.userId}`).emit('notification', notif);
+        // Also persist to DB via notification table
+        const { getRepository } = AppDataSource;
+        await AppDataSource.getRepository('Notification').save({
+          userId:  vendorProfile.userId,
+          type:    notif.type,
+          message: notif.message,
+          metadata: notif.metadata,
+          isRead:  false,
+          isDeleted: false,
+        });
+      }
+    } catch (notifErr) {
+      console.error('[CartPayment] Vendor notification failed:', notifErr.message);
+    }
+
     // Credit vendor wallet — 93% to pending clearance, 7% stays with platform
     const total        = parseFloat(cart.confirmedTotal || 0);
     const vendorAmount = parseFloat((total * 0.93).toFixed(2));
