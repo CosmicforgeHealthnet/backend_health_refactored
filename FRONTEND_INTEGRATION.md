@@ -152,6 +152,7 @@ POST /vendor/auth/login
 ```json
 {
   "success": true,
+  "message": "Login successful",
   "accessToken": "eyJ...",
   "refreshToken": "eyJ...",
   "payload": {
@@ -165,8 +166,75 @@ POST /vendor/auth/login
     "businessCategory": "health_wellness",
     "verificationStatus": "approved",
     "isActive": true,
-    "documentsSubmitted": true
+    "documentsSubmitted": true,
+    "logoUrl": "https://...",
+    "accountState": {
+      "stage": "approved",
+      "emailVerified": true,
+      "isApproved": true,
+      "canListProducts": true,
+      "canReceiveOrders": true,
+      "documentsSubmitted": true,
+      "nextStep": null,
+      "pendingActions": []
+    }
+  },
+  "user": {
+    "id": "uuid",
+    "fullName": "John Doe",
+    "email": "vendor@example.com",
+    "role": "vendor",
+    "status": "vendor_active",
+    "tier": "free",
+    "profileImageUrl": null
   }
+}
+```
+
+**`accountState` — all possible stages:**
+
+| `stage` | `emailVerified` | `isApproved` | What to show |
+|---|---|---|---|
+| `email_unverified` | false | false | "Check your inbox and verify your email" |
+| `documents_required` | true | false | Upload government ID + business registration |
+| `under_review` | true | false | "Documents submitted — awaiting admin approval" |
+| `approved` | true | true | Full dashboard access |
+| `rejected` | true | false | "Application rejected — re-upload documents" |
+| `suspended` | true | false | "Account suspended — contact support" |
+
+**`user.status` enum values** (for reference):
+
+| Value | Meaning |
+|---|---|
+| `pending_email_verification` | Just registered, email not verified |
+| `pending_vendor_verification` | Email verified, awaiting admin approval |
+| `vendor_active` | Fully approved and active |
+| `locked` | Account locked |
+
+**`vendor.verificationStatus` enum values:**
+
+| Value | Meaning |
+|---|---|
+| `pending` | Just registered |
+| `documents_required` | Must upload documents |
+| `under_review` | Admin is reviewing |
+| `approved` | Approved ✅ |
+| `rejected` | Rejected — re-upload |
+| `suspended` | Suspended |
+
+**Recommended frontend logic:**
+```js
+const { accountState } = vendor;
+
+if (!accountState.emailVerified) {
+  showEmailVerificationBanner(accountState.nextStep);
+} else if (!accountState.isApproved) {
+  showOnboardingScreen(accountState);
+  if (accountState.pendingActions.includes("upload_documents")) {
+    showUploadButton();
+  }
+} else {
+  showFullDashboard();
 }
 ```
 

@@ -17,6 +17,55 @@ const VALID_CATEGORIES = [
     "others",
 ];
 
+function buildVendorAccountState(user, vendor) {
+    const emailVerified  = user.status !== "pending_email_verification";
+    const verifyStatus   = vendor.verificationStatus;
+    const isApproved     = verifyStatus === "approved" && user.status === "vendor_active";
+
+    let stage, nextStep, pendingActions;
+
+    if (!emailVerified) {
+        stage          = "email_unverified";
+        nextStep       = "Please verify your email address. Check your inbox for the verification link.";
+        pendingActions = ["verify_email"];
+    } else if (verifyStatus === "pending" || verifyStatus === "documents_required") {
+        stage          = "documents_required";
+        nextStep       = "Upload your government ID and business registration document to continue.";
+        pendingActions = ["upload_documents"];
+    } else if (verifyStatus === "under_review") {
+        stage          = "under_review";
+        nextStep       = "Your documents are under review. You will be notified once your account is approved.";
+        pendingActions = [];
+    } else if (verifyStatus === "approved") {
+        stage          = "approved";
+        nextStep       = null;
+        pendingActions = [];
+    } else if (verifyStatus === "rejected") {
+        stage          = "rejected";
+        nextStep       = "Your application was rejected. Please re-upload your documents.";
+        pendingActions = ["upload_documents"];
+    } else if (verifyStatus === "suspended") {
+        stage          = "suspended";
+        nextStep       = "Your account has been suspended. Please contact support.";
+        pendingActions = [];
+    } else {
+        stage          = verifyStatus;
+        nextStep       = null;
+        pendingActions = [];
+    }
+
+    return {
+        stage,
+        emailVerified,
+        isApproved,
+        canListProducts:  isApproved,
+        canReceiveOrders: isApproved,
+        documentsSubmitted: vendor.documentsSubmitted || false,
+        nextStep,
+        pendingActions,
+    };
+}
+
 class VendorAuthController {
     async registerVendor(req, res, next) {
         try {
@@ -150,7 +199,9 @@ class VendorAuthController {
                     businessCategory: vendor.businessCategory,
                     verificationStatus: vendor.verificationStatus,
                     isActive: vendor.isActive,
+                    documentsSubmitted: vendor.documentsSubmitted,
                     logoUrl: vendor.logoUrl,
+                    accountState: buildVendorAccountState(user, vendor),
                 },
                 user: {
                     id: user.id,
@@ -218,6 +269,7 @@ class VendorAuthController {
                     documents: vendor.documents,
                     createdAt: vendor.createdAt,
                     updatedAt: vendor.updatedAt,
+                    accountState: buildVendorAccountState(user, vendor),
                 },
                 user: {
                     id: user.id,
