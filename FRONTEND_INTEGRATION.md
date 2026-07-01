@@ -796,6 +796,40 @@ POST /pharmacy/auth/login
 
 ---
 
+### Verify Email
+```
+GET /pharmacy/auth/verify-email?token=<token-from-email>
+```
+**Response `200`:**
+```json
+{ "success": true, "message": "Email verified successfully. Your pharmacy application is under review." }
+```
+**Response `400` (expired):**
+```json
+{ "success": false, "error": "Verification token has expired. Request a new one." }
+```
+
+---
+
+### Resend Verification Email
+```
+POST /pharmacy/auth/resend-verification
+```
+**Request:**
+```json
+{ "email": "pharmacy@example.com" }
+```
+**Response `200`:**
+```json
+{ "success": true, "message": "If unverified, a new verification link has been sent." }
+```
+**Response `429` (rate limited — max 3 per hour):**
+```json
+{ "success": false, "error": "Too many verification emails sent; please try again later." }
+```
+
+---
+
 ### Forgot Password
 ```
 POST /pharmacy/auth/forgot-password
@@ -1222,57 +1256,132 @@ GET /vendor/products/public
 
 ## WebSocket Notifications
 
-**Connection:**
+**Yes — notifications are real-time.** The moment an event happens on the backend (new order, payment received, etc.), the notification is pushed to the connected client instantly via Socket.IO. No polling needed.
+
+---
+
+### How it works
+
+1. Frontend connects with the JWT access token
+2. Backend authenticates the socket and auto-joins the user to their personal room
+3. When any event fires (new order, payment success, etc.), the backend emits to that room immediately
+4. Frontend receives it in real-time and can update the UI (toast, badge count, notification list)
+
+---
+
+### Connection
 ```js
 import { io } from "socket.io-client";
 
 const socket = io("wss://dev-api.cosmicforge-healthnet.com", {
-  auth: { token: "<accessToken>" }
+  auth: { token: "<accessToken>" },
+  transports: ["websocket"]   // use websocket, skip long-polling
 });
 ```
 
-**On connect — rooms auto-joined:**
-- Every user → `user_{userId}`
-- Vendor/Pharmacy → `vendor_{vendorProfileId}`
-- Pharmacy → `pharmacy_{pharmacyProfileId}`
+---
 
-**Events to listen for:**
+### Rooms — auto-joined on connect (no action needed)
+
+| Role | Rooms joined automatically |
+|---|---|
+| All users | `user_{userId}` |
+| Vendor | `user_{userId}` + `vendor_{vendorProfileId}` |
+| Pharmacy | `user_{userId}` + `vendor_{vendorProfileId}` + `pharmacy_{pharmacyProfileId}` |
+
+You don't need to emit a join event — it happens automatically when the socket authenticates.
+
+---
+
+### Events to listen for
+
 ```js
-socket.on("connection-confirmed", ({ userId, room }) => {
-  console.log("Connected:", room);
+// ✅ Connection confirmed — fires immediately on connect
+socket.on("connection-confirmed", ({ userId, room, userName }) => {
+  console.log("WebSocket connected. Room:", room);
 });
 
+// 🔔 New notification — fires in real-time when any event happens
 socket.on("notification", (notif) => {
-  // { id, type, message, metadata, isRead, createdAt }
+  /*
+  {
+    id:        "uuid",
+    type:      "notification" | "alert",
+    message:   "Payment received for order. Amount: ₦9,300.",
+    metadata:  { cartId: "uuid" },
+    isRead:    false,
+    createdAt: "2026-07-01T10:00:00Z"
+  }
+  */
   showToast(notif.message);
-  updateBadgeCount();
+  addToNotificationList(notif);
+  incrementBadgeCount();
 });
 
+// ✅ One notification marked read
 socket.on("notification_read", ({ id, readAt }) => {
-  markNotifAsRead(id);
+  markNotifAsRead(id, readAt);
+  decrementBadgeCount();
 });
 
+// ✅ All notifications cleared
 socket.on("all_notifications_read", () => {
-  clearAllBadges();
+  markAllAsRead();
+  resetBadgeCount();
 });
 
+// 🗑️ Notification deleted
 socket.on("notification_deleted", ({ id }) => {
-  removeNotifFromList(id);
+  removeFromNotificationList(id);
 });
 ```
 
-**Events to emit:**
-```js
-// Get counts
-socket.emit("get_notification_counts");
-socket.on("notification_counts", (counts) => { /* update badge */ });
+---
 
-// Mark as read via socket
+### Events to emit
+
+```js
+// 🔢 Get unread badge count (response comes back on "notification_counts")
+socket.emit("get_notification_counts");
+socket.on("notification_counts", ({ total, unread, unreadNotifications, unreadAlerts }) => {
+  setBadge(unread);
+});
+
+// ✅ Mark a single notification as read via socket
 socket.emit("mark_notification_read", { notificationId: "uuid" });
 
-// Keep-alive
+// 💓 Keep-alive ping (use if you want to verify connection is alive)
 socket.emit("ping");
-socket.on("pong", () => {});
+socket.on("pong", ({ timestamp }) => { console.log("alive", timestamp); });
+```
+
+---
+
+### What triggers a real-time notification
+
+| Trigger | Who receives it | Message |
+|---|---|---|
+| Patient submits cart | Vendor/Pharmacy | `New order received. Total: ₦X. Awaiting payment.` |
+| Patient payment confirmed | Vendor/Pharmacy | `Payment received for order. Amount: ₦X. Funds are in your wallet.` |
+| Admin approves product | Vendor | (via existing admin flow) |
+
+---
+
+### Reconnection (recommended)
+
+```js
+// Socket.IO auto-reconnects but you should re-fetch missed notifications on reconnect
+socket.on("connect", async () => {
+  const missed = await fetch("/api/vendor/notifications?isRead=unread", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  syncNotifications(await missed.json());
+});
+
+socket.on("disconnect", (reason) => {
+  console.log("WebSocket disconnected:", reason);
+  // Socket.IO will auto-reconnect unless reason === "io server disconnect"
+});
 ```
 
 ---

@@ -6,10 +6,12 @@ const DocumentUploadMiddleware   = require("../../documents/middlewares/document
 const DocumentFolderMiddleware   = require("../../documents/middlewares/documentFolderMiddleware");
 
 // Public routes
-router.post("/register", pharmacyAuthController.registerPharmacy);
-router.post("/login", pharmacyAuthController.loginPharmacy);
-router.post("/forgot-password", pharmacyAuthController.forgotPassword);
-router.post("/reset-password", pharmacyAuthController.resetPassword);
+router.post("/register",            pharmacyAuthController.registerPharmacy);
+router.post("/login",               pharmacyAuthController.loginPharmacy);
+router.post("/forgot-password",     pharmacyAuthController.forgotPassword);
+router.post("/reset-password",      pharmacyAuthController.resetPassword);
+router.get("/verify-email",         pharmacyAuthController.verifyEmail);
+router.post("/resend-verification", pharmacyAuthController.resendVerification);
 
 // Protected routes
 router.get("/profile", authenticateJWT, pharmacyAuthController.getPharmacyProfile);

@@ -5,7 +5,9 @@ const authService = require("../../auth/services/authService");
 const userRepo = require("../../auth/repositories/userRepository");
 const bcrypt = require('bcryptjs');
 const mfaService = require('../../auth/services/mfa/mfaService');
-const passwordResetService = require("../../auth/services/passwordResetService");
+const passwordResetService  = require("../../auth/services/passwordResetService");
+const verificationService   = require("../../auth/services/verificationService");
+const emailVerRepo          = require("../../auth/repositories/emailVerificationRepository");
 const AppDataSource = require("../../../config/database");
 
 function buildAccountState(pharmacy, vendorProfile) {
@@ -459,6 +461,44 @@ class PharmacyAuthController {
         },
       });
     } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyEmail(req, res, next) {
+    try {
+      const { token } = req.query;
+      if (!token) return res.status(400).json({ success: false, error: "Verification token is required" });
+
+      const ev = await emailVerRepo.findByToken(token);
+      if (!ev) return res.status(400).json({ success: false, error: "Invalid or expired verification token" });
+
+      if (ev.usedAt) {
+        return res.status(200).json({ success: true, message: "Email already verified." });
+      }
+      if (ev.expiresAt < new Date()) {
+        return res.status(400).json({ success: false, error: "Verification token has expired. Request a new one." });
+      }
+
+      ev.usedAt = new Date();
+      await emailVerRepo.save(ev);
+
+      return res.status(200).json({ success: true, message: "Email verified successfully. Your pharmacy application is under review." });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resendVerification(req, res, next) {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ success: false, error: "Email is required" });
+      await verificationService.resendVerificationEmail(email);
+      return res.status(200).json({ success: true, message: "If unverified, a new verification link has been sent." });
+    } catch (error) {
+      if (error.message?.includes("Too many")) {
+        return res.status(429).json({ success: false, error: error.message });
+      }
       next(error);
     }
   }
