@@ -95,26 +95,41 @@ class CartService {
         });
     }
 
-    async submitCart(patientId, cartId, patientNote) {
+    async submitCart(patientId, cartId, patientNote, prescriptionId) {
         const cart = await cartRepository.findByIdAndPatient(cartId, patientId);
         if (!cart) throw new Error("Cart not found");
         if (cart.status !== "draft") throw new Error("Cart has already been submitted");
         if (!cart.items || cart.items.length === 0) throw new Error("Cannot submit an empty cart");
 
-        await cartRepository.updateCart(cartId, {
-            status:      "submitted",
-            patientNote: patientNote || null,
-            submittedAt: new Date(),
-        });
+        // Auto-confirm at listed product prices — no vendor confirmation step needed
+        const confirmedTotal = parseFloat(
+            cart.items.reduce((sum, item) =>
+                sum + parseFloat(item.priceSnapshot) * item.quantity, 0
+            ).toFixed(2)
+        );
 
-        // Notify the vendor
+        const now = new Date();
+        const update = {
+            status:         "confirmed",
+            patientNote:    patientNote || null,
+            submittedAt:    now,
+            confirmedAt:    now,
+            confirmedTotal,
+        };
+        if (prescriptionId) update.prescriptionId = prescriptionId;
+        await cartRepository.updateCart(cartId, update);
+
+        // Notify vendor — use vendor's userId (not vendorProfileId)
         try {
-            await notificationService.createNotification(
-                cart.vendorId,
-                "notification",
-                `You have received a new cart from a customer. Review it in your dashboard.`,
-                { cartId, patientId }
-            );
+            const vendor = await vendorRepository.findById(cart.vendorId);
+            if (vendor?.userId) {
+                await notificationService.createNotification(
+                    vendor.userId,
+                    "notification",
+                    `New order received. Total: ₦${confirmedTotal.toLocaleString()}. Awaiting payment.`,
+                    { cartId, patientId, confirmedTotal }
+                );
+            }
         } catch {
             // Notifications are non-critical
         }
@@ -135,6 +150,48 @@ class CartService {
         });
 
         return cartRepository.findByIdAndPatient(cartId, patientId);
+    }
+
+    async initiateCartPayment(patientId, cartId, { provider, email, phone, name, currency, callbackUrl }) {
+        const cart = await cartRepository.findByIdAndPatient(cartId, patientId);
+        if (!cart) throw new Error("Cart not found");
+        if (cart.status !== "confirmed") throw new Error("Cart must be confirmed before payment. Submit your cart first.");
+        if (!cart.confirmedTotal || parseFloat(cart.confirmedTotal) <= 0) throw new Error("Cart has no confirmed total");
+
+        const paymentService = require("../../payments/services/paymentService");
+
+        const transaction = await paymentService.initiatePayment({
+            patientId,
+            serviceType:      "pharmacy",
+            serviceId:        cartId,
+            originalAmount:   parseFloat(cart.confirmedTotal),
+            originalCurrency: currency || "NGN",
+            paymentProvider:  provider,
+            description:      `Cart order — ${cart.items?.length || 0} item(s)`,
+            appointmentFee:   0,
+            serviceFee:       0,
+        });
+
+        const providerPaymentData = { email, phone, name, callbackUrl };
+        let providerResponse;
+        if (provider === "flutterwave") {
+            providerResponse = await paymentService.processFlutterwavePayment(transaction, providerPaymentData);
+        } else {
+            providerResponse = await paymentService.processPaystackPayment(transaction, providerPaymentData);
+        }
+
+        if (!providerResponse?.success) {
+            throw new Error(providerResponse?.error || "Failed to create payment with provider");
+        }
+
+        return {
+            transactionId:     transaction.id,
+            redirectUrl:       providerResponse.authUrl,
+            amount:            parseFloat(cart.confirmedTotal),
+            currency:          currency || "NGN",
+            paymentProvider:   provider,
+            providerReference: providerResponse.reference,
+        };
     }
 
     // ─── Vendor operations ────────────────────────────────────────────────────

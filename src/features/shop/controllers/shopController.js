@@ -72,15 +72,16 @@ class ShopController {
 
 function formatPublicProduct(p) {
     return {
-        id:            p.id,
-        title:         p.title,
-        description:   p.description,
-        price:         p.price,
-        stockQuantity: p.stockQuantity,
-        inStock:       p.stockQuantity > 0,
-        category:      p.category,
-        subcategory:   p.subcategory,
-        media:         p.media || [],
+        id:                   p.id,
+        title:                p.title,
+        description:          p.description,
+        price:                p.price,
+        stockQuantity:        p.stockQuantity,
+        inStock:              p.stockQuantity > 0,
+        category:             p.category,
+        subcategory:          p.subcategory,
+        prescriptionRequired: p.prescriptionRequired ?? false,
+        media:                p.media || [],
         vendor: p.vendor
             ? {
                 id:           p.vendor.id,

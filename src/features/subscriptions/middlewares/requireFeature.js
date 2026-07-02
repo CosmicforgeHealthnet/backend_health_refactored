@@ -20,10 +20,10 @@
  * PATIENT FEATURES:
  * | Feature                     | Free | Basic | Standard | Medium | Premium | Gold Elite |
  * |-----------------------------|------|-------|----------|--------|---------|------------|
- * | chatOnly                    | Yes  | No    | No       | No     | No      | No         |
+ * | chatAccess                  | No   | Yes   | Yes      | Yes    | Yes     | Yes        |
  * | voiceConsultation           | No   | Yes   | Yes      | Yes    | Yes     | Yes        |
- * | videoConsultation           | No   | No    | Yes      | Yes    | Yes     | Yes        |
- * | generalEmergencySpecialists | Yes  | No    | No       | No     | No      | No         |
+ * | videoConsultation           | Yes  | Yes   | Yes      | Yes    | Yes     | Yes        |
+ * | generalEmergencySpecialists | Yes  | Yes   | Yes      | Yes    | Yes     | Yes        |
  * | allSpecialists              | No   | Yes   | Yes      | Yes    | Yes     | Yes        |
  * | labAccess                   | No   | Yes   | Yes      | Yes    | Yes     | Yes        |
  * | pharmacy                    | No   | No    | Yes      | Yes    | Yes     | Yes        |
@@ -35,17 +35,21 @@
  * | earlyAccessFeatures         | No   | No    | No       | No     | No      | Yes        |
  * | betaAccess                  | No   | No    | No       | No     | No      | Yes        |
  *
+ * NOTE: Free plan has Video Consultation ONLY (no chat). Basic+ plans add Chat Access.
+ *
  * DOCTOR FEATURES:
  * | Feature               | Free | Basic | Professional | Premium |
  * |-----------------------|------|-------|--------------|---------|
- * | chatOnly              | Yes  | No    | No           | No      |
- * | videoConsultation     | No   | Yes   | Yes          | Yes     |
+ * | chatAccess            | No   | Yes   | Yes          | Yes     |
+ * | videoConsultation     | Yes  | Yes   | Yes          | Yes     |
  * | regularProfileListing | Yes  | Yes   | No           | No      |
  * | topProfileListing     | No   | No    | Yes          | Yes     |
  * | standardSupport       | Yes  | Yes   | No           | No      |
  * | prioritySupport       | No   | No    | Yes          | Yes     |
  * | unlimitedPatients     | No   | No    | No           | Yes     |
  * | unlimitedAI           | No   | No    | No           | Yes     |
+ *
+ * NOTE: Free plan has Video Consultation ONLY (no chat). Basic+ plans add Chat Access.
  *
  * =============================================================================
  * AVAILABLE METHODS
@@ -166,7 +170,7 @@ const subscriptionCompatibilityService = require("../services/subscriptionCompat
  */
 const FEATURE_DISPLAY_NAMES = {
   // Consultation types
-  chatOnly: "Chat Only",
+  chatAccess: "Chat Access",
   voiceConsultation: "Voice Consultation",
   videoConsultation: "Video Consultation",
 

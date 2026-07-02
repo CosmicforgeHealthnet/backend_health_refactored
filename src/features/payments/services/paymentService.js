@@ -1044,22 +1044,32 @@ class PaymentService {
     const splits = [];
 
     if (serviceType === 'appointment' && finalDoctorId) {
-      const PLATFORM_FEE_RATE = 0.07; // 7% platform fee — set by system
+      // Read platform fee rate from admin-controlled config (cached, 5-min TTL)
+      const platformConfigService = require('../../admin-ops/services/platformConfigService');
+      const PLATFORM_FEE_RATE = await platformConfigService.getPlatformFeeRate();
 
-      // Step 1: 7% platform fee on the full amount
-      const platformFee    = originalAmount * PLATFORM_FEE_RATE;
-      const afterPlatform  = originalAmount - platformFee;
+      // Step 1: Platform fee is added ON TOP of doctor's base fee
+      const baseAmount     = originalAmount; // doctor's fee (what they set)
+      const platformFee    = baseAmount * PLATFORM_FEE_RATE;
+      const grossAmount    = baseAmount + platformFee; // patient pays this total
 
-      // Step 2: Doctor commission (10–30% based on subscription tier) on the remainder
+      // Override the transaction amount so Paystack charges the gross amount (base + fee)
+      // Update the already-saved transaction record to reflect gross amount
+      await transactionRepository.updateStatus(savedTransaction.id, 'pending', {
+        originalAmount: grossAmount,
+        usdAmount:      grossAmount * exchangeRate,
+      });
+
+      // Step 2: Doctor commission (10–30% based on subscription tier) on BASE amount
       const commissionRate   = await this.getDoctorCommissionRate(finalDoctorId);
-      const commissionAmount = afterPlatform * (commissionRate / 100);
+      const commissionAmount = baseAmount * (commissionRate / 100);
 
-      // Step 3: Doctor receives the rest
-      const doctorAmount = afterPlatform - commissionAmount;
+      // Step 3: Doctor receives base amount minus commission
+      const doctorAmount = baseAmount - commissionAmount;
 
-      console.log(`💰 Appointment Payment Breakdown for ${originalAmount} ${originalCurrency}:`);
-      console.log(`   Platform Fee (7%): ${platformFee.toFixed(2)}`);
-      console.log(`   After Platform Fee: ${afterPlatform.toFixed(2)}`);
+      console.log(`💰 Appointment Payment Breakdown for ${baseAmount} ${originalCurrency}:`);
+      console.log(`   Platform Fee (7% ON TOP): ${platformFee.toFixed(2)}`);
+      console.log(`   Patient Pays (gross):     ${grossAmount.toFixed(2)}`);
       console.log(`   Doctor Commission (${commissionRate}%): ${commissionAmount.toFixed(2)}`);
       console.log(`   Doctor Gets: ${doctorAmount.toFixed(2)}`);
 
@@ -1696,6 +1706,13 @@ class PaymentService {
           } catch (syncError) {
             console.error(`❌ Failed to automatically sync appointment status via webhook:`, syncError);
           }
+        } else if (ourTransaction.serviceType === 'pharmacy') {
+          console.log('🛒 Processing cart order payment...');
+          try {
+            await this._handleCartOrderPayment(ourTransaction);
+          } catch (cartErr) {
+            console.error('❌ Cart order post-payment handling failed:', cartErr.message);
+          }
         } else if (ourTransaction.doctorId) {
           console.log('💰 Processing immediate funds...');
           await this.processFundsImmediate(ourTransaction);
@@ -2007,6 +2024,86 @@ class PaymentService {
       }
     } catch (error) {
       console.error('Error processing immediate payment funds:', error);
+    }
+  }
+
+  /**
+   * Handle post-payment actions for a cart order (serviceType === 'pharmacy').
+   * - Marks cart as 'paid'
+   * - Credits vendor wallet (93%) + platform (7%)
+   * - Marks linked prescription as completed if present
+   */
+  async _handleCartOrderPayment(transaction) {
+    const AppDataSource    = require('../../../config/database');
+    const cartRepo         = AppDataSource.getRepository('Cart');
+    const prescriptionRepo = AppDataSource.getRepository('Prescription');
+
+    const cart = await cartRepo.findOne({
+      where: { id: transaction.serviceId },
+      relations: ['vendor'],
+    });
+    if (!cart) {
+      console.error(`[CartPayment] Cart ${transaction.serviceId} not found for transaction ${transaction.id}`);
+      return;
+    }
+
+    // Mark cart as paid
+    await cartRepo.update(cart.id, { status: 'paid', paidAt: new Date() });
+    console.log(`✅ Cart ${cart.id} marked as paid`);
+
+    // Notify vendor via in-app notification
+    try {
+      const vendorProfile = await AppDataSource.getRepository('VendorProfile').findOne({
+        where: { id: cart.vendorId },
+        select: ['userId'],
+      });
+      if (vendorProfile?.userId) {
+        const io = require('../../../config/websocket').getIO();
+        const notif = {
+          type:    'notification',
+          message: `Payment received for order. Amount: ₦${parseFloat(cart.confirmedTotal).toLocaleString()}. Funds are in your wallet.`,
+          metadata: { cartId: cart.id },
+          isRead:  false,
+          createdAt: new Date(),
+        };
+        io.to(`user_${vendorProfile.userId}`).emit('notification', notif);
+        // Also persist to DB via notification table
+        const { getRepository } = AppDataSource;
+        await AppDataSource.getRepository('Notification').save({
+          userId:  vendorProfile.userId,
+          type:    notif.type,
+          message: notif.message,
+          metadata: notif.metadata,
+          isRead:  false,
+          isDeleted: false,
+        });
+      }
+    } catch (notifErr) {
+      console.error('[CartPayment] Vendor notification failed:', notifErr.message);
+    }
+
+    // Credit vendor wallet — 93% of total (7% is platform fee)
+    const total        = parseFloat(cart.confirmedTotal || 0);
+    const vendorAmount = parseFloat((total * 0.93).toFixed(2));
+
+    if (vendorAmount > 0 && cart.vendorId) {
+      const walletService = require('../../vendor/services/walletService');
+      await walletService.creditOrder(cart.vendorId, {
+        orderId:     cart.id,
+        amountNgn:   vendorAmount,
+        reference:   transaction.id,
+        description: `Cart order — patient paid ₦${total.toLocaleString()} (platform fee: ₦${(total * 0.07).toFixed(2)})`,
+      });
+      console.log(`✅ Credited ₦${vendorAmount} to vendor ${cart.vendorId} wallet`);
+    }
+
+    // Fulfill linked prescription
+    if (cart.prescriptionId) {
+      await prescriptionRepo.update(cart.prescriptionId, {
+        status:        'completed',
+        paymentStatus: 'paid',
+      });
+      console.log(`✅ Prescription ${cart.prescriptionId} marked as completed (paid via cart ${cart.id})`);
     }
   }
 

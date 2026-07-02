@@ -58,7 +58,41 @@ This document outlines the changes made during the system refactoring from a leg
   - `src/features/marketing/postman_collection.json`
   - ...and more.
 
-## 4. Verification Steps
+## 4. Pharmacy Payment Flow Deprecation (2026-06-07)
+
+The legacy invoice-based payment flow has been replaced end-to-end by the **prescription cart session system** (`/api/pharmacy/sessions`).
+
+### Disabled Routes (return `410 Gone`)
+
+| **Route** | **File** | **Replacement** |
+| :--- | :--- | :--- |
+| `POST /api/pharmacy/invoices` | `invoiceRoutes.js` | `POST /api/pharmacy/sessions` |
+| `PATCH /api/pharmacy/invoices/:id` | `invoiceRoutes.js` | Session cart management |
+| `POST /api/pharmacy/invoices/:id/send` | `invoiceRoutes.js` | Session cart management |
+| `PATCH /api/pharmacy/invoices/:id/mark-paid` | `invoiceRoutes.js` | Session cart management |
+| `PATCH /api/pharmacy/invoices/:id/cancel` | `invoiceRoutes.js` | Session cancellation |
+| `POST /api/pharmacy/prescriptions/:id/provide-costs` | `prescriptionRoutes.js` | Session cart item entry |
+| `GET /api/patient/invoices` | `patientRoutes.js` | Session-based cost view |
+| `GET /api/patient/invoices/:id` | `patientRoutes.js` | Session-based cost view |
+| `PATCH /api/patient/invoices/:id/viewed` | `patientRoutes.js` | Removed |
+| `POST /api/patient/invoices/:id/dispute` | `patientRoutes.js` | Removed |
+| `POST /api/patient/payments/initiate` | `patientRoutes.js` | Session payment flow |
+| `GET /api/patient/payments/verify/:reference` | `patientRoutes.js` | Session payment flow |
+| `GET /api/pharmacy/prescriptions/patient/invoices` | `prescriptionRoutes.js` | Session-based cost view |
+
+### Still Active
+
+| **Route** | **Purpose** |
+| :--- | :--- |
+| `GET /api/pharmacy/invoices` | Pharmacy invoice history (read-only audit trail) |
+| `GET /api/pharmacy/invoices/:id` | Single invoice detail (read-only audit trail) |
+| `GET /api/patient/wallet/summary` | Patient wallet balance |
+| `GET /api/patient/wallet/transactions` | Patient wallet transaction history |
+| `POST /api/patient/wallet/top-up` | Patient wallet top-up |
+
+---
+
+## 5. Verification Steps
 To verify the migration:
 1.  **Check `app.js`**: See `FEATURE IMPORTS` vs `LEGACY ROUTES` sections.
 2.  **Test Endpoints**: Use the new Postman collections with `/api/` prefix.

@@ -1,8 +1,9 @@
 const router               = require("express").Router();
 const vendorCartController = require("../controllers/vendorCartController");
-const { authenticateJWT }  = require("../../auth/middlewares/authMiddleware");
+const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
 
 router.use(authenticateJWT);
+router.use(authorizeRoles("vendor", "pharmacy"));
 
 router.get("/",                          vendorCartController.getVendorCarts);
 router.get("/:cartId",                   vendorCartController.getVendorCartById);

@@ -5,7 +5,39 @@ const authService = require("../../auth/services/authService");
 const userRepo = require("../../auth/repositories/userRepository");
 const bcrypt = require('bcryptjs');
 const mfaService = require('../../auth/services/mfa/mfaService');
-const passwordResetService = require("../../auth/services/passwordResetService");
+const passwordResetService  = require("../../auth/services/passwordResetService");
+const verificationService   = require("../../auth/services/verificationService");
+const emailVerRepo          = require("../../auth/repositories/emailVerificationRepository");
+const AppDataSource = require("../../../config/database");
+
+function buildAccountState(pharmacy, vendorProfile) {
+  const status = pharmacy.verificationStatus;
+  const isApproved = status === "approved";
+  const vendorModeEnabled = !!(vendorProfile?.id);
+
+  const stageMap = {
+    pending:            { nextStep: "Upload your pharmacy license and government ID to continue.", pendingActions: ["upload_documents"] },
+    documents_required: { nextStep: "Upload your pharmacy license and government ID to continue.", pendingActions: ["upload_documents"] },
+    under_review:       { nextStep: "Your documents are under review. You will be notified once approved.", pendingActions: [] },
+    approved:           { nextStep: null, pendingActions: [] },
+    rejected:           { nextStep: "Your application was rejected. Please re-upload your documents.", pendingActions: ["upload_documents"] },
+    suspended:          { nextStep: "Your account has been suspended. Please contact support.", pendingActions: [] },
+  };
+
+  const { nextStep, pendingActions } = stageMap[status] || { nextStep: null, pendingActions: [] };
+
+  return {
+    stage:              status,
+    isApproved,
+    canAccessShop:      isApproved,
+    canReceiveOrders:   isApproved,
+    vendorModeEnabled,
+    vendorId:           vendorProfile?.id || null,
+    documentsSubmitted: pharmacy.documentsSubmitted || false,
+    nextStep,
+    pendingActions,
+  };
+}
 
 class PharmacyAuthController {
   async registerPharmacy(req, res, next) {
@@ -148,8 +180,10 @@ class PharmacyAuthController {
         userAgent
       );
 
-      // 7) Get full pharmacy profile with relations
+      // 7) Get full pharmacy profile + vendor profile for accountState
       const pharmacyProfile = await pharmacyRegistrationService.getPharmacyProfile(user.id);
+      const vendorProfile   = await AppDataSource.getRepository("VendorProfile")
+        .findOne({ where: { userId: user.id, isHybridPharmacy: true } });
 
       return res.json({
         payload: tokens.payload,
@@ -165,13 +199,13 @@ class PharmacyAuthController {
           email: pharmacyProfile.email,
           username: pharmacyProfile.preferredUsername,
           verificationStatus: pharmacyProfile.verificationStatus,
-          documentsSubmitted: pharmacyProfile.documentsSubmitted,  // ADD THIS LINE
+          documentsSubmitted: pharmacyProfile.documentsSubmitted,
           isActive: pharmacyProfile.isActive,
           createdAt: pharmacyProfile.createdAt,
           updatedAt: pharmacyProfile.updatedAt,
-          // Include related data if available
           documents: pharmacyProfile.documents || [],
-          branches: pharmacyProfile.branches || []
+          branches: pharmacyProfile.branches  || [],
+          accountState: buildAccountState(pharmacyProfile, vendorProfile),
         } : null
       });
 
@@ -186,13 +220,15 @@ class PharmacyAuthController {
   async getPharmacyProfile(req, res, next) {
     try {
       const userId = req.user.sub;
-      const pharmacyProfile = await pharmacyRegistrationService.getPharmacyProfile(userId);
+      const [pharmacyProfile, freshUser, vendorProfile] = await Promise.all([
+        pharmacyRegistrationService.getPharmacyProfile(userId),
+        userRepo.findById(userId),
+        AppDataSource.getRepository("VendorProfile").findOne({ where: { userId, isHybridPharmacy: true } }),
+      ]);
 
       if (!pharmacyProfile) {
         return res.status(404).json({ error: "Pharmacy profile not found" });
       }
-
-      const freshUser = await userRepo.findById(userId);
 
       return res.json({
         user: {
@@ -231,9 +267,9 @@ class PharmacyAuthController {
           defaultCurrency: pharmacyProfile.defaultCurrency,
           createdAt: pharmacyProfile.createdAt,
           updatedAt: pharmacyProfile.updatedAt,
-          // Include related data
           documents: pharmacyProfile.documents || [],
-          branches: pharmacyProfile.branches || []
+          branches: pharmacyProfile.branches  || [],
+          accountState: buildAccountState(pharmacyProfile, vendorProfile),
         }
       });
     } catch (error) {
@@ -391,6 +427,78 @@ class PharmacyAuthController {
         }))
       });
     } catch (error) {
+      next(error);
+    }
+  }
+
+  async getPharmacyById(req, res, next) {
+    try {
+      const pharmacy = await pharmacyProfileRepo.findById(req.params.id);
+      if (!pharmacy || pharmacy.verificationStatus !== "approved") {
+        return res.status(404).json({ success: false, error: "Pharmacy not found" });
+      }
+
+      // Get vendor profile so frontend knows which vendorId to use for the cart
+      const vendorProfile = await AppDataSource.getRepository("VendorProfile")
+        .findOne({ where: { userId: pharmacy.userId, isHybridPharmacy: true } });
+
+      return res.status(200).json({
+        success: true,
+        pharmacy: {
+          id:                 pharmacy.id,
+          pharmacyName:       pharmacy.pharmacyName,
+          registrationNumber: pharmacy.registrationNumber,
+          address:            pharmacy.address,
+          phone:              pharmacy.phone,
+          email:              pharmacy.email,
+          website:            pharmacy.website     || null,
+          logoUrl:            pharmacy.logoUrl     || null,
+          description:        pharmacy.description || null,
+          operatingHours:     pharmacy.operatingHours || null,
+          verificationStatus: pharmacy.verificationStatus,
+          isActive:           pharmacy.isActive,
+          vendorId:           vendorProfile?.id || null,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyEmail(req, res, next) {
+    try {
+      const { token } = req.query;
+      if (!token) return res.status(400).json({ success: false, error: "Verification token is required" });
+
+      const ev = await emailVerRepo.findByToken(token);
+      if (!ev) return res.status(400).json({ success: false, error: "Invalid or expired verification token" });
+
+      if (ev.usedAt) {
+        return res.status(200).json({ success: true, message: "Email already verified." });
+      }
+      if (ev.expiresAt < new Date()) {
+        return res.status(400).json({ success: false, error: "Verification token has expired. Request a new one." });
+      }
+
+      ev.usedAt = new Date();
+      await emailVerRepo.save(ev);
+
+      return res.status(200).json({ success: true, message: "Email verified successfully. Your pharmacy application is under review." });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resendVerification(req, res, next) {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ success: false, error: "Email is required" });
+      await verificationService.resendVerificationEmail(email);
+      return res.status(200).json({ success: true, message: "If unverified, a new verification link has been sent." });
+    } catch (error) {
+      if (error.message?.includes("Too many")) {
+        return res.status(429).json({ success: false, error: error.message });
+      }
       next(error);
     }
   }

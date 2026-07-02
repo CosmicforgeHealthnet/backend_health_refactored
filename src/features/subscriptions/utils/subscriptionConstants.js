@@ -62,6 +62,21 @@ const DOCTOR_SPECIALIZATION_ACCESS = {
 // ===========================================================================
 // DOCTOR PLANS (WITH COMMISSION)
 // ===========================================================================
+/**
+ * DOCTOR SUBSCRIPTION PLANS
+ *
+ * Commission Structure:
+ * - Free: 30% commission per consultation
+ * - Basic: 20% commission per consultation
+ * - Professional: 15% commission per consultation
+ * - Premium: 10% commission per consultation
+ *
+ * Feature Enforcement:
+ * - maxPatients: Enforced via requireUsage("maxPatients") middleware in appointments/routes
+ * - aiResponses: Enforced via requireUsage("aiResponses") middleware in chat/routes/chatbot.js
+ * - videoConsultation: Enforced via requireFeature("videoConsultation") for meeting links
+ * - Profile listing: Used for doctor search ranking/display
+ */
 const DOCTOR_PLANS = {
     free: {
         name: "Free Plan",
@@ -72,8 +87,8 @@ const DOCTOR_PLANS = {
         promoExpiry: PROMO_EXPIRY,
         commissionRate: 30, // 30% commission per consultation
         features: {
-            chatOnly: true,
-            videoConsultation: false,
+            chatAccess: false, // No chat in free plan
+            videoConsultation: true, // Free plan has video consultation only
             regularProfileListing: true,
             topProfileListing: false,
             standardSupport: true,
@@ -85,8 +100,16 @@ const DOCTOR_PLANS = {
             maxPatients: 10,
             aiResponses: 50,
         },
+        // Display features for UI/documentation matching
+        displayFeatures: [
+            "Video Consultation Only",
+            "Access to 10 Patients per month",
+            "Regular Profile Listing",
+            "Access to 50 AI Responses",
+            "Access to Support",
+        ],
     },
-basic: {    
+    basic: {
         name: "Basic Plan",
         // 50% discount: $24.99 -> $12.50
         price: { USD: 24.99, NGN: 24900.00 },
@@ -95,7 +118,7 @@ basic: {
         promoExpiry: PROMO_EXPIRY,
         commissionRate: 20, // 20% commission per consultation
         features: {
-            chatOnly: false,
+            chatAccess: true, // Basic adds chat access
             videoConsultation: true,
             regularProfileListing: true,
             topProfileListing: false,
@@ -108,6 +131,15 @@ basic: {
             maxPatients: 40,
             aiResponses: 200,
         },
+        // Display features for UI/documentation matching
+        displayFeatures: [
+            "Video Consultation",
+            "Chat Access",
+            "40 Patients per month",
+            "200 AI Responses",
+            "Regular Profile Listing",
+            "Standard Support",
+        ],
     },
     professional: {
         name: "Professional Plan",
@@ -118,7 +150,7 @@ basic: {
         promoExpiry: PROMO_EXPIRY,
         commissionRate: 15, // 15% commission per consultation
         features: {
-            chatOnly: false,
+            chatAccess: true,
             videoConsultation: true,
             regularProfileListing: false,
             topProfileListing: true,
@@ -131,6 +163,15 @@ basic: {
             maxPatients: 100,
             aiResponses: 400,
         },
+        // Display features for UI/documentation matching
+        displayFeatures: [
+            "Video Consultation",
+            "Chat Access",
+            "100 Patients per month",
+            "400 AI Responses",
+            "Top Profile Listing",
+            "Priority Support",
+        ],
     },
     premium: {
         name: "Premium Plan",
@@ -141,7 +182,7 @@ basic: {
         promoExpiry: PROMO_EXPIRY,
         commissionRate: 10, // 10% commission per consultation
         features: {
-            chatOnly: false,
+            chatAccess: true,
             videoConsultation: true,
             regularProfileListing: false,
             topProfileListing: true,
@@ -154,12 +195,39 @@ basic: {
             maxPatients: -1, // Unlimited
             aiResponses: -1, // Unlimited
         },
+        // Display features for UI/documentation matching
+        displayFeatures: [
+            "Video Consultation",
+            "Chat Access",
+            "Unlimited Patients",
+            "Unlimited AI Responses",
+            "Top Profile Listing",
+            "Priority Support",
+        ],
     },
 };
 
 // ===========================================================================
 // PATIENT PLANS (NO COMMISSION)
 // ===========================================================================
+/**
+ * PATIENT SUBSCRIPTION PLANS
+ *
+ * No commission applies to patient plans.
+ *
+ * Feature Enforcement:
+ * - aiChatbotResponses: Enforced via requireUsage("aiChatbotResponses") in chat/routes/chatbot.js
+ * - aiDiagnosticRequests: Enforced via requireUsage("aiDiagnosticRequests") in diagnostic routes
+ * - voiceConsultation: Enforced via requireFeature("voiceConsultation") middleware
+ * - videoConsultation: Enforced via requireFeature("videoConsultation") for meeting links
+ * - generalEmergencySpecialists: Enforced via doctorSpecializationAccessMiddleware (Free tier only)
+ * - allSpecialists: Enforced via doctorSpecializationAccessMiddleware (Basic+ tiers)
+ * - labAccess: Enforced via requireFeature("labAccess") in LAB/routes
+ * - pharmacy: Enforced via requireFeature("pharmacy") in pharmacy/routes
+ * - shopAccess: Available to all tiers
+ * - firstAidInstructions: Enforced via requireFeature("firstAidInstructions") in firstaid/routes
+ * - familyPlan: Validated via FAMILY_PLAN_CONFIG and familyMembers limit
+ */
 const PATIENT_PLANS = {
     free: {
         name: "Free Plan",
@@ -170,9 +238,9 @@ const PATIENT_PLANS = {
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null, // No commission for patients
         features: {
-            chatOnly: true,
+            chatAccess: false, // No chat access in free plan
             voiceConsultation: false,
-            videoConsultation: false,
+            videoConsultation: true, // Free plan has video consultation only
             generalEmergencySpecialists: true,
             allSpecialists: false,
             labAccess: false,
@@ -190,6 +258,14 @@ const PATIENT_PLANS = {
             aiDiagnosticRequests: 0,
         },
         familyMembers: 1, // Individual only
+        // Display features for UI/documentation matching
+        displayFeatures: [
+            "Video Consultation Only",
+            "10 AI Chatbot Responses",
+            "Access to General & Emergency Specialists",
+            "Access to Shop/Purchase",
+            "Access to Support",
+        ],
     },
     basic: {
         name: "Basic Plan",
@@ -200,10 +276,10 @@ const PATIENT_PLANS = {
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null,
         features: {
-            chatOnly: false,
+            chatAccess: true, // Basic adds chat access
             voiceConsultation: true,
-            videoConsultation: false,
-            generalEmergencySpecialists: false,
+            videoConsultation: true, // Inherits from free
+            generalEmergencySpecialists: true, // Inherits from free
             allSpecialists: true,
             labAccess: true,
             pharmacy: false,
@@ -220,6 +296,18 @@ const PATIENT_PLANS = {
             aiDiagnosticRequests: 20,
         },
         familyMembers: 1, // Individual only
+        // Display features for UI/documentation matching
+        displayFeatures: [
+            "Video Consultation",
+            "Voice Consultation",
+            "Chat Access",
+            "30 AI Chatbot Responses",
+            "20 AI Diagnostic Requests",
+            "All Department Specialists",
+            "Lab Access",
+            "Shop Access",
+            "Standard Support",
+        ],
     },
     standard: {
         name: "Standard Plan",
@@ -230,10 +318,10 @@ const PATIENT_PLANS = {
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null,
         features: {
-            chatOnly: false,
+            chatAccess: true,
             voiceConsultation: true,
             videoConsultation: true,
-            generalEmergencySpecialists: false,
+            generalEmergencySpecialists: true,
             allSpecialists: true,
             labAccess: true,
             pharmacy: true,
@@ -250,6 +338,20 @@ const PATIENT_PLANS = {
             aiDiagnosticRequests: 50,
         },
         familyMembers: 1, // Individual only
+        // Display features for UI/documentation matching
+        displayFeatures: [
+            "Video Consultation",
+            "Voice Consultation",
+            "Chat Access",
+            "80 AI Chatbot Responses",
+            "50 AI Diagnostic Requests",
+            "All Department Specialists",
+            "Lab Access",
+            "Pharmacy Access",
+            "Shop Access",
+            "First Aid Instructions",
+            "Standard Support",
+        ],
     },
     medium: {
         name: "Medium Plan",
@@ -260,10 +362,10 @@ const PATIENT_PLANS = {
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null,
         features: {
-            chatOnly: false,
+            chatAccess: true,
             voiceConsultation: true,
             videoConsultation: true,
-            generalEmergencySpecialists: false,
+            generalEmergencySpecialists: true,
             allSpecialists: true,
             labAccess: true,
             pharmacy: true,
@@ -280,6 +382,21 @@ const PATIENT_PLANS = {
             aiDiagnosticRequests: 150,
         },
         familyMembers: 3, // 1 Adult + 2 Children
+        // Display features for UI/documentation matching
+        displayFeatures: [
+            "Video Consultation",
+            "Voice Consultation",
+            "Chat Access",
+            "200 AI Chatbot Responses",
+            "150 AI Diagnostic Requests",
+            "All Department Specialists",
+            "Lab Access",
+            "Pharmacy Access",
+            "Shop Access",
+            "First Aid Instructions",
+            "Family Plan: 1 Adult + 2 Children",
+            "Standard Support",
+        ],
     },
     premium: {
         name: "Premium Plan",
@@ -290,10 +407,10 @@ const PATIENT_PLANS = {
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null,
         features: {
-            chatOnly: false,
+            chatAccess: true,
             voiceConsultation: true,
             videoConsultation: true,
-            generalEmergencySpecialists: false,
+            generalEmergencySpecialists: true,
             allSpecialists: true,
             labAccess: true,
             pharmacy: true,
@@ -310,6 +427,21 @@ const PATIENT_PLANS = {
             aiDiagnosticRequests: -1, // Unlimited
         },
         familyMembers: 5, // 2 Adults + 3 Children
+        // Display features for UI/documentation matching
+        displayFeatures: [
+            "Video Consultation",
+            "Voice Consultation",
+            "Chat Access",
+            "Unlimited AI Chatbot Responses",
+            "Unlimited AI Diagnostic Requests",
+            "All Department Specialists",
+            "Lab Access",
+            "Pharmacy Access",
+            "Shop Access",
+            "First Aid Instructions",
+            "Family Plan: 2 Adults + 3 Children",
+            "Priority Support",
+        ],
     },
     gold_elite: {
         name: "Gold Elite Plan",
@@ -320,10 +452,10 @@ const PATIENT_PLANS = {
         promoExpiry: PROMO_EXPIRY,
         commissionRate: null,
         features: {
-            chatOnly: false,
+            chatAccess: true,
             voiceConsultation: true,
             videoConsultation: true,
-            generalEmergencySpecialists: false,
+            generalEmergencySpecialists: true,
             allSpecialists: true,
             labAccess: true,
             pharmacy: true,
@@ -340,6 +472,23 @@ const PATIENT_PLANS = {
             aiDiagnosticRequests: -1, // Unlimited
         },
         familyMembers: -1, // Unlimited dependents
+        // Display features for UI/documentation matching
+        displayFeatures: [
+            "Video Consultation",
+            "Voice Consultation",
+            "Chat Access",
+            "Unlimited AI Chatbot Responses",
+            "Unlimited AI Diagnostic Requests",
+            "All Department Specialists",
+            "Lab Access",
+            "Pharmacy Access",
+            "Shop Access",
+            "First Aid Instructions",
+            "Family Plan: Unlimited Dependents",
+            "Priority Support",
+            "Early Access to Platform Features",
+            "Beta Access to New Cosmicforge Products",
+        ],
     },
 };
 
@@ -506,6 +655,101 @@ function getPlanPricingInfo(plan, currency = "USD") {
     };
 }
 
+// Get display features for a plan (human-readable feature list)
+function getPlanDisplayFeatures(planType, tier) {
+    const plan = getPlan(planType, tier);
+    return plan?.displayFeatures || [];
+}
+
+// Get all plan details for display (used by frontend)
+function getPlanDetailsForDisplay(planType, tier, currency = "USD") {
+    const plan = getPlan(planType, tier);
+    if (!plan) return null;
+
+    const pricing = getPlanPricingInfo(plan, currency);
+
+    return {
+        name: plan.name,
+        tier,
+        planType,
+        pricing,
+        features: plan.features,
+        displayFeatures: plan.displayFeatures || [],
+        monthlyLimits: plan.monthlyLimits,
+        commissionRate: plan.commissionRate,
+        familyMembers: plan.familyMembers || null,
+        familyConfig: planType === "patient" ? FAMILY_PLAN_CONFIG[tier] : null,
+    };
+}
+
+// Get all plans for a type (doctor or patient) with full details
+function getAllPlansForDisplay(planType, currency = "USD") {
+    const plans = PLAN_DEFINITIONS[planType];
+    if (!plans) return [];
+
+    return Object.keys(plans).map(tier => getPlanDetailsForDisplay(planType, tier, currency));
+}
+
+// ===========================================================================
+// FEATURE ENFORCEMENT REFERENCE
+// ===========================================================================
+/**
+ * FEATURE ENFORCEMENT LOCATIONS
+ *
+ * This section documents where each subscription feature is enforced in the codebase.
+ * Use this as a reference when adding new features or debugging access issues.
+ *
+ * USAGE LIMITS (requireUsage middleware):
+ * ----------------------------------------
+ * | Feature             | Middleware Location                        | Enforced In                        |
+ * |---------------------|--------------------------------------------|------------------------------------|
+ * | maxPatients         | requireUsage("maxPatients")                | appointments/routes (doctor-approval) |
+ * | aiResponses         | requireUsage("aiResponses")                | chat/routes/chatbot.js (doctorchat)  |
+ * | aiChatbotResponses  | requireUsage("aiChatbotResponses")         | chat/routes/chatbot.js (chat)        |
+ * | aiDiagnosticRequests| requireUsage("aiDiagnosticRequests")       | diagnostic routes                    |
+ *
+ * FEATURE FLAGS (requireFeature middleware):
+ * ------------------------------------------
+ * | Feature              | Middleware Location                       | Enforced In                          |
+ * |----------------------|-------------------------------------------|--------------------------------------|
+ * | chatAccess           | requireFeature("chatAccess")              | chat/routes (patient/doctor chat)    |
+ * | videoConsultation    | requireFeature("videoConsultation")       | appointments/routes (meeting links)  |
+ * | voiceConsultation    | requireFeature("voiceConsultation")       | consultation routes                  |
+ * | labAccess            | requireFeature("labAccess")               | LAB/routes                           |
+ * | pharmacy             | requireFeature("pharmacy")                | pharmacy/routes/prescriptionRoutes.js|
+ * | firstAidInstructions | requireFeature("firstAidInstructions")    | firstaid/routes/stepRoutes.js        |
+ * | familyPlan           | requireFeature("familyPlan")              | family member routes                 |
+ * | earlyAccessFeatures  | requireFeature("earlyAccessFeatures")     | beta feature routes                  |
+ * | betaAccess           | requireFeature("betaAccess")              | beta product routes                  |
+ *
+ * SPECIALIST ACCESS (doctorSpecializationAccessMiddleware):
+ * ---------------------------------------------------------
+ * | Feature                    | Allowed Specializations                     | Tier Access       |
+ * |----------------------------|---------------------------------------------|-------------------|
+ * | generalEmergencySpecialists| "general medicine", "emergency medicine"   | Free              |
+ * | allSpecialists             | All doctor specializations                  | Basic+ tiers      |
+ *
+ * FAMILY PLAN LIMITS:
+ * -------------------
+ * | Tier       | Adults | Children | Total | Description              |
+ * |------------|--------|----------|-------|--------------------------|
+ * | free       | 1      | 0        | 1     | Individual only          |
+ * | basic      | 1      | 0        | 1     | Individual only          |
+ * | standard   | 1      | 0        | 1     | Individual only          |
+ * | medium     | 1      | 2        | 3     | 1 Adult + 2 Children     |
+ * | premium    | 2      | 3        | 5     | 2 Adults + 3 Children    |
+ * | gold_elite | -1     | -1       | -1    | Unlimited dependents     |
+ *
+ * COMMISSION RATES (Doctor Plans):
+ * --------------------------------
+ * | Plan         | Commission |
+ * |--------------|------------|
+ * | Free         | 30%        |
+ * | Basic        | 20%        |
+ * | Professional | 15%        |
+ * | Premium      | 10%        |
+ */
+
 module.exports = {
     SUBSCRIPTION_TIERS,
     PLAN_DEFINITIONS,
@@ -528,4 +772,7 @@ module.exports = {
     getFamilyMemberLimit,
     getEffectivePrice,
     getPlanPricingInfo,
+    getPlanDisplayFeatures,
+    getPlanDetailsForDisplay,
+    getAllPlansForDisplay,
 };

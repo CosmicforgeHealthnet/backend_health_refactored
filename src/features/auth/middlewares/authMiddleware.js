@@ -24,6 +24,7 @@ function authenticateJWT(req, res, next) {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
         req.user = payload; // contains sub, email, role, status, etc.
+        req.user.id = payload.sub; // alias so controllers can use req.user.id
         next();
     });
 }
@@ -68,6 +69,7 @@ function optionalAuth(req, res, next) {
         } else {
             // Valid token - attach user
             req.user = payload;
+            req.user.id = payload.sub;
         }
         next();
     });

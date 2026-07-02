@@ -2,53 +2,32 @@ const router             = require("express").Router();
 const { authenticateJWT } = require("../../auth/middlewares/authMiddleware");
 const invoiceController  = require("../controllers/invoiceController");
 
-/**
- * @route   POST /api/pharmacy/invoices
- * @desc    Create a draft invoice for a prescription
- * @access  Pharmacy staff
- */
-router.post("/", authenticateJWT, invoiceController.createInvoice);
+// ─── REMOVED: Invoice creation, update, send, and mark-paid ──────────────────
+// The invoice-based payment flow has been replaced by the prescription cart
+// session system. Patients now pay through /api/pharmacy/sessions.
+//
+// Disabled routes (return 410 Gone):
+//   POST   /api/pharmacy/invoices
+//   PATCH  /api/pharmacy/invoices/:id
+//   POST   /api/pharmacy/invoices/:id/send
+//   PATCH  /api/pharmacy/invoices/:id/mark-paid
 
-/**
- * @route   GET /api/pharmacy/invoices
- * @desc    List all invoices for the authenticated pharmacy
- * @access  Pharmacy staff
- */
-router.get("/", authenticateJWT, invoiceController.listInvoices);
+const gone = (_req, res) => res.status(410).json({
+    success: false,
+    error:   "Invoice-based payments have been replaced by the prescription cart session system.",
+    useInstead: "POST /api/pharmacy/sessions — start a session with a patient to build their cart.",
+});
 
-/**
- * @route   GET /api/pharmacy/invoices/:id
- * @desc    Get a single invoice by ID
- * @access  Pharmacy staff
- */
+router.post("/",              authenticateJWT, gone);
+router.patch("/:id",          authenticateJWT, gone);
+router.post("/:id/send",      authenticateJWT, gone);
+router.patch("/:id/mark-paid", authenticateJWT, gone);
+
+// ─── KEPT: Read-only history access ──────────────────────────────────────────
+router.get("/",   authenticateJWT, invoiceController.listInvoices);
 router.get("/:id", authenticateJWT, invoiceController.getInvoice);
 
-/**
- * @route   PATCH /api/pharmacy/invoices/:id
- * @desc    Update a draft invoice
- * @access  Pharmacy staff
- */
-router.patch("/:id", authenticateJWT, invoiceController.updateInvoice);
-
-/**
- * @route   POST /api/pharmacy/invoices/:id/send
- * @desc    Send invoice to patient (draft → sent)
- * @access  Pharmacy staff
- */
-router.post("/:id/send", authenticateJWT, invoiceController.sendInvoice);
-
-/**
- * @route   PATCH /api/pharmacy/invoices/:id/cancel
- * @desc    Cancel an invoice
- * @access  Pharmacy staff
- */
-router.patch("/:id/cancel", authenticateJWT, invoiceController.cancelInvoice);
-
-/**
- * @route   PATCH /api/pharmacy/invoices/:id/mark-paid
- * @desc    Manually mark a pay_on_pickup invoice as paid
- * @access  Pharmacy staff
- */
-router.patch("/:id/mark-paid", authenticateJWT, invoiceController.markPaid);
+// ─── REMOVED: Cancel invoice (no longer valid — sessions handle cancellation) ─
+router.patch("/:id/cancel", authenticateJWT, gone);
 
 module.exports = router;

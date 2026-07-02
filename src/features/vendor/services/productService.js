@@ -11,9 +11,9 @@ class ProductService {
             throw new Error("Your vendor account must be approved before listing products");
         }
 
-        // Medications are restricted to hybrid pharmacies
+        // Medications are restricted to pharmacies (hybrid or standard)
         if (data.category === "medications" && !vendor.isHybridPharmacy) {
-            throw new Error("Only hybrid pharmacies can list medications");
+            throw new Error("Only pharmacies can list medications");
         }
 
         const categoryDef = PRODUCT_CATEGORIES[data.category];
@@ -24,16 +24,30 @@ class ProductService {
         }
 
         const product = await productRepository.save({
-            vendorId:      vendor.id,
-            title:         data.title,
-            description:   data.description,
-            price:         data.price,
-            stockQuantity: data.stockQuantity ?? 0,
-            category:      data.category,
-            subcategory:   data.subcategory,
-            status:        "pending",
-            isActive:      true,
+            vendorId:             vendor.id,
+            title:                data.title,
+            description:          data.description,
+            price:                data.price,
+            stockQuantity:        data.stockQuantity ?? 0,
+            category:             data.category,
+            subcategory:          data.subcategory,
+            prescriptionRequired: data.prescriptionRequired === true,
+            status:               "pending",
+            isActive:             true,
         });
+
+        if (data.mediaUrls?.length) {
+            await Promise.all(
+                data.mediaUrls.map((item, index) =>
+                    productRepository.saveMedia({
+                        productId: product.id,
+                        mediaUrl:  typeof item === "string" ? item : item.url,
+                        mediaType: typeof item === "string" ? "image" : (item.type || "image"),
+                        isPrimary: index === 0,
+                    })
+                )
+            );
+        }
 
         return product;
     }
@@ -53,6 +67,12 @@ class ProductService {
         }));
 
         return Promise.all(mediaItems.map((m) => productRepository.saveMedia(m)));
+    }
+
+    async getOutOfStockProducts(userId) {
+        const vendor = await vendorRepository.findByUserId(userId);
+        if (!vendor) throw new Error("Vendor profile not found");
+        return productRepository.findOutOfStockByVendor(vendor.id);
     }
 
     async getVendorProducts(userId, { status, page, limit }) {
@@ -79,7 +99,7 @@ class ProductService {
         const product = await productRepository.findByIdAndVendor(productId, vendor.id);
         if (!product) throw new Error("Product not found");
 
-        const allowedFields = ["title", "description", "price", "stockQuantity", "isActive"];
+        const allowedFields = ["title", "description", "price", "stockQuantity", "isActive", "prescriptionRequired"];
         const updates = {};
         for (const field of allowedFields) {
             if (data[field] !== undefined) updates[field] = data[field];

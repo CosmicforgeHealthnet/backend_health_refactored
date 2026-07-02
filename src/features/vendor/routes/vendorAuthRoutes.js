@@ -1,14 +1,17 @@
 const router                   = require("express").Router();
 const vendorAuthController     = require("../controllers/vendorAuthController");
-const { authenticateJWT }      = require("../../auth/middlewares/authMiddleware");
+const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
 const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
 const DocumentFolderMiddleware = require("../../documents/middlewares/documentFolderMiddleware");
 
 // Public
-router.post("/register",       vendorAuthController.registerVendor);
-router.post("/login",          vendorAuthController.loginVendor);
-router.post("/forgot-password", vendorAuthController.forgotPassword);
-router.post("/reset-password",  vendorAuthController.resetPassword);
+router.post("/register",            vendorAuthController.registerVendor);
+router.post("/login",               vendorAuthController.loginVendor);
+router.post("/forgot-password",     vendorAuthController.forgotPassword);
+router.post("/reset-password",      vendorAuthController.resetPassword);
+router.get("/verify-email",         vendorAuthController.verifyEmail);
+router.post("/resend-verification", vendorAuthController.resendVerification);
+router.post("/refresh",             vendorAuthController.refresh);
 
 // Protected
 router.get("/profile",  authenticateJWT, vendorAuthController.getVendorProfile);
@@ -27,7 +30,18 @@ router.post(
     vendorAuthController.uploadVendorLogo
 );
 
-// Admin
-router.get("/all", authenticateJWT, vendorAuthController.getAllVendors);
+router.post(
+    "/documents",
+    authenticateJWT,
+    DocumentUploadMiddleware.uploadDocuments(),
+    DocumentUploadMiddleware.handleUploadError,
+    DocumentUploadMiddleware.processUploadedFiles,
+    DocumentFolderMiddleware.handleFolderCreation,
+    DocumentFolderMiddleware.saveFilesToDatabase,
+    vendorAuthController.uploadDocument
+);
+
+// Admin only
+router.get("/all", authenticateJWT, authorizeRoles("admin"), vendorAuthController.getAllVendors);
 
 module.exports = router;

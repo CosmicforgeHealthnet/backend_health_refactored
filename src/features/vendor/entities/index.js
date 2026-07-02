@@ -6,6 +6,10 @@ const ProductMedia               = require("./ProductMedia");
 const Promotion                  = require("./Promotion");
 const PromotionProduct           = require("./PromotionProduct");
 const CampaignProduct            = require("./CampaignProduct");
+const VendorOrder                = require("./VendorOrder");
+const VendorWallet               = require("./VendorWallet");
+const VendorWalletTransaction    = require("./VendorWalletTransaction");
+const Shipment                   = require("./Shipment");
 
 module.exports = {
     VendorProfile,
@@ -16,4 +20,8 @@ module.exports = {
     Promotion,
     PromotionProduct,
     CampaignProduct,
+    VendorOrder,
+    VendorWallet,
+    VendorWalletTransaction,
+    Shipment,
 };

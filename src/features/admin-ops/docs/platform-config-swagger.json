@@ -1,0 +1,260 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Platform Fee & Commission Config API",
+    "description": "Admin-only endpoints to view and control the platform fee rate and vendor commission rate. Changes take effect immediately across all new payments (cached for up to 5 minutes).\n\n**Fee Rules:**\n- `platformFeeRate` — added ON TOP of order/appointment subtotal (customer pays it)\n- `vendorCommissionRate` — deducted FROM vendor earnings (customer does not see this)\n- **Pharmacies are always exempt** from both — they receive 100% of every payment\n- **Doctor commission** (10–30%) is subscription-tier based and not controlled here\n\n**All routes require `admin` or `super_admin` role.**",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:3000/api", "description": "Development server" }
+  ],
+  "tags": [
+    { "name": "Platform Config", "description": "Admin control over platform fee and vendor commission rates" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "responses": {
+      "Unauthorized": { "description": "Missing or invalid token", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Forbidden":    { "description": "Admin role required",      "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "BadRequest":   { "description": "Validation error",         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error":   { "type": "string" }
+        }
+      },
+      "ConfigObject": {
+        "type": "object",
+        "properties": {
+          "platformFeeRate":         { "type": "number",  "example": 0.07,  "description": "Decimal (0–1). E.g. 0.07 = 7%" },
+          "platformFeePercent":      { "type": "string",  "example": "7.00%", "description": "Human-readable percentage" },
+          "vendorCommissionRate":    { "type": "number",  "example": 0,     "description": "Decimal (0–1). Currently 0 (TBD)" },
+          "vendorCommissionPercent": { "type": "string",  "example": "0.00%", "description": "Human-readable percentage" }
+        }
+      },
+      "UpdateConfigRequest": {
+        "type": "object",
+        "properties": {
+          "platformFeeRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.07,
+            "description": "New platform fee rate. Must be 0–1. E.g. 0.07 = 7%. Added ON TOP of order amount — customer pays it."
+          },
+          "vendorCommissionRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.10,
+            "description": "New vendor commission rate. Must be 0–1. E.g. 0.10 = 10%. Deducted FROM vendor earnings."
+          }
+        },
+        "description": "Send only the fields you want to update. Both are optional but at least one is required."
+      }
+    }
+  },
+  "paths": {
+    "/admin/ops/payment-config": {
+      "get": {
+        "tags": ["Platform Config"],
+        "summary": "Get current platform fee and commission config",
+        "description": "Returns current platform fee rate and vendor commission rate, plus the business rules for each payment type.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Current config",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "config":  { "$ref": "#/components/schemas/ConfigObject" },
+                    "rules": {
+                      "type": "object",
+                      "properties": {
+                        "platformFee":      { "type": "string" },
+                        "vendorCommission": { "type": "string" },
+                        "pharmacy":         { "type": "string" },
+                        "doctorCommission": { "type": "string" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "config": {
+                    "platformFeeRate":         0.07,
+                    "platformFeePercent":      "7.00%",
+                    "vendorCommissionRate":    0,
+                    "vendorCommissionPercent": "0.00%"
+                  },
+                  "rules": {
+                    "platformFee":      "Added ON TOP of order/appointment amount — paid by the customer",
+                    "vendorCommission": "Deducted FROM vendor earnings — does NOT affect customer-facing price",
+                    "pharmacy":         "EXEMPT from platform fee and commission — always receives 100%",
+                    "doctorCommission": "10–30% based on subscription tier — not controlled here"
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "put": {
+        "tags": ["Platform Config"],
+        "summary": "Update platform fee rate or vendor commission rate",
+        "description": "Updates one or both rates. Changes take effect on all NEW payments immediately (cached up to 5 minutes). Send only the fields you want to change.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateConfigRequest" },
+              "examples": {
+                "updateFeeOnly": {
+                  "summary": "Update platform fee to 8%",
+                  "value": { "platformFeeRate": 0.08 }
+                },
+                "setVendorCommission": {
+                  "summary": "Set vendor commission to 10%",
+                  "value": { "vendorCommissionRate": 0.10 }
+                },
+                "updateBoth": {
+                  "summary": "Update both",
+                  "value": { "platformFeeRate": 0.07, "vendorCommissionRate": 0.10 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Config updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "config":  { "$ref": "#/components/schemas/ConfigObject" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/ops/payment-config/preview": {
+      "get": {
+        "tags": ["Platform Config"],
+        "summary": "Preview fee breakdown for a given amount",
+        "description": "Shows exactly how a given amount would be split under the current rates. Useful before changing rates — test the impact first.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "amount",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "example": 10000 },
+            "description": "Base amount in NGN (e.g. the vendor's product price or doctor's appointment fee)"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["vendor_order", "appointment", "pharmacy"], "default": "vendor_order" },
+            "description": "Payment type to preview"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fee preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "preview": {
+                      "type": "object",
+                      "properties": {
+                        "type":              { "type": "string" },
+                        "baseAmount":        { "type": "number", "description": "Vendor/doctor's set price" },
+                        "platformFeeRate":   { "type": "string" },
+                        "platformFeeAmount": { "type": "number" },
+                        "grossAmount":       { "type": "number", "description": "What the customer pays" },
+                        "commissionRate":    { "type": "string" },
+                        "commissionAmount":  { "type": "number" },
+                        "vendorReceives":    { "type": "number" },
+                        "platformTotalRevenue": { "type": "number" },
+                        "note":              { "type": "string" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "preview": {
+                    "type":                "vendor_order",
+                    "baseAmount":          10000,
+                    "platformFeeRate":     "7.00%",
+                    "platformFeeAmount":   700,
+                    "grossAmount":         10700,
+                    "commissionRate":      "0.00%",
+                    "commissionAmount":    0,
+                    "vendorReceives":      10000,
+                    "platformTotalRevenue": 700,
+                    "note":               "Vendor commission rate is TBD — currently 0%"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/admin/ops/payment-config/reset": {
+      "post": {
+        "tags": ["Platform Config"],
+        "summary": "Reset to defaults (7% platform fee, 0% commission)",
+        "description": "Resets both rates back to system defaults.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Config reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "config":  { "$ref": "#/components/schemas/ConfigObject" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    }
+  }
+}

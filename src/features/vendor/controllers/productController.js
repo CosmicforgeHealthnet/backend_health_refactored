@@ -4,7 +4,7 @@ const { ALL_CATEGORY_KEYS, ALL_SUBCATEGORY_KEYS } = require("../constants/produc
 class ProductController {
     async createProduct(req, res, next) {
         try {
-            const { title, description, price, stockQuantity, category, subcategory } = req.body;
+            const { title, description, price, stockQuantity, category, subcategory, prescriptionRequired, mediaUrls } = req.body;
 
             if (!title || !description || price === undefined || !category || !subcategory) {
                 return res.status(400).json({
@@ -17,7 +17,8 @@ class ProductController {
             }
 
             const product = await productService.createProduct(req.user.id, {
-                title, description, price, stockQuantity, category, subcategory,
+                title, description, price, stockQuantity, category, subcategory, prescriptionRequired,
+                mediaUrls: Array.isArray(mediaUrls) ? mediaUrls : undefined,
             });
 
             return res.status(201).json({
@@ -31,17 +32,60 @@ class ProductController {
         }
     }
 
-    async uploadProductMedia(req, res, next) {
+    async uploadStandaloneMedia(req, res, next) {
         try {
-            const files = req.processedFiles || req.uploadedFiles || [];
-            if (!files.length) {
+            const savedFiles = req.savedFiles || [];
+            if (!savedFiles.length) {
                 return res.status(400).json({ success: false, error: "No media files uploaded" });
             }
+
+            const baseUrl = process.env.FILE_SERVER_URL || process.env.APP_URL || "";
+            const media = savedFiles.map((f) => ({
+                url:      `${baseUrl}/api/documents/images/${f.id}`,
+                mimeType: f.mimeType,
+                type:     f.mimeType?.startsWith("video/") ? "video" : "image",
+            }));
+
+            return res.status(200).json({
+                success: true,
+                message: "Media uploaded. Pass the urls in mediaUrls when creating your product.",
+                media,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async uploadProductMedia(req, res, next) {
+        try {
+            const savedFiles = req.savedFiles || [];
+            if (!savedFiles.length) {
+                return res.status(400).json({ success: false, error: "No media files uploaded" });
+            }
+
+            const baseUrl = process.env.FILE_SERVER_URL || process.env.APP_URL || "";
+            const files = savedFiles.map((f) => ({
+                url:      `${baseUrl}/api/documents/images/${f.id}`,
+                mimetype: f.mimeType,
+            }));
 
             const media = await productService.uploadProductMedia(req.user.id, req.params.id, files);
             return res.status(200).json({ success: true, message: "Media uploaded", media });
         } catch (error) {
             if (isClientError(error)) return res.status(400).json({ success: false, error: error.message });
+            next(error);
+        }
+    }
+
+    async getOutOfStock(req, res, next) {
+        try {
+            const result = await productService.getOutOfStockProducts(req.user.id);
+            return res.status(200).json({
+                success: true,
+                products: result.products.map(formatProduct),
+                total: result.total,
+            });
+        } catch (error) {
             next(error);
         }
     }
@@ -137,20 +181,21 @@ class ProductController {
 
 function formatProduct(p) {
     return {
-        id:              p.id,
-        title:           p.title,
-        description:     p.description,
-        price:           p.price,
-        stockQuantity:   p.stockQuantity,
-        category:        p.category,
-        subcategory:     p.subcategory,
-        status:          p.status,
-        rejectionReason: p.rejectionReason,
-        isActive:        p.isActive,
-        media:           p.media || [],
-        vendor:          p.vendor ? { id: p.vendor.id, businessName: p.vendor.businessName, logoUrl: p.vendor.logoUrl } : undefined,
-        createdAt:       p.createdAt,
-        updatedAt:       p.updatedAt,
+        id:                   p.id,
+        title:                p.title,
+        description:          p.description,
+        price:                p.price,
+        stockQuantity:        p.stockQuantity,
+        category:             p.category,
+        subcategory:          p.subcategory,
+        prescriptionRequired: p.prescriptionRequired ?? false,
+        status:               p.status,
+        rejectionReason:      p.rejectionReason,
+        isActive:             p.isActive,
+        media:                p.media || [],
+        vendor:               p.vendor ? { id: p.vendor.id, businessName: p.vendor.businessName, logoUrl: p.vendor.logoUrl } : undefined,
+        createdAt:            p.createdAt,
+        updatedAt:            p.updatedAt,
     };
 }
 

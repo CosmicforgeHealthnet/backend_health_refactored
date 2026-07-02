@@ -18,6 +18,18 @@ const productRepository = {
         });
     },
 
+    async findOutOfStockByVendor(vendorId) {
+        const qb = productRepo()
+            .createQueryBuilder("p")
+            .leftJoinAndSelect("p.media", "media")
+            .where("p.vendorId = :vendorId", { vendorId })
+            .andWhere("p.stockQuantity = 0")
+            .andWhere("p.status = 'approved'")
+            .orderBy("p.updatedAt", "DESC");
+        const products = await qb.getMany();
+        return { products, total: products.length };
+    },
+
     async findByVendorPaginated({ vendorId, status, page = 1, limit = 20 }) {
         const qb = productRepo()
             .createQueryBuilder("p")

@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateJWT, authorizeRoles } = require('../../auth/middlewares/authMiddleware');
-const ctrl = require('../controllers/adminOpsController');
+const ctrl               = require('../controllers/adminOpsController');
+const platformConfigCtrl = require('./platformConfigController');
 
 // All management routes require admin or super_admin
 router.use(authenticateJWT);
@@ -68,5 +69,11 @@ router.get('/env-configs', ctrl.listEnvConfigs);
 router.post('/env-configs', ctrl.createEnvConfig);
 router.put('/env-configs/:id', ctrl.updateEnvConfig);
 router.delete('/env-configs/:id', ctrl.deleteEnvConfig);
+
+// ─── Platform Fee & Commission Config ────────────────────────────────────────
+router.get('/payment-config',                platformConfigCtrl.getConfig);
+router.put('/payment-config',                platformConfigCtrl.updateConfig);
+router.get('/payment-config/preview',        platformConfigCtrl.previewFees);
+router.post('/payment-config/reset',         platformConfigCtrl.resetToDefaults);
 
 module.exports = router;

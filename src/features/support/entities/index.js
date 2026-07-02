@@ -6,6 +6,8 @@ const FAQ = require("./FAQ");
 const FAQCategory = require("./FAQCategory");
 const FAQAnalytics = require("./FAQAnalytics");
 const FAQVote = require("./FAQVote");
+const AiSupportSession = require("./AiSupportSession");
+const AiSupportMessage = require("./AiSupportMessage");
 
 module.exports = {
     Account,
@@ -15,5 +17,7 @@ module.exports = {
     FAQ,
     FAQCategory,
     FAQAnalytics,
-    FAQVote
+    FAQVote,
+    AiSupportSession,
+    AiSupportMessage
 };

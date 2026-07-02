@@ -11,10 +11,11 @@ const {
 const RESET_EXPIRES_MINUTES = 60;
 const OTP_EXPIRES_MINUTES = 15;
 
-const getBaseUrl = (user) =>
-  user?.role === "pharmacy"
-    ? (process.env.PHARMACY_APP_URL || process.env.APP_BASE_URL)
-    : process.env.APP_BASE_URL;
+const getBaseUrl = (user) => {
+  if (user?.role === "pharmacy") return process.env.PHARMACY_APP_URL || process.env.APP_BASE_URL;
+  if (user?.role === "vendor")   return process.env.VENDOR_APP_URL   || process.env.APP_BASE_URL;
+  return process.env.APP_BASE_URL;
+};
 
 class PasswordResetService {
   /**

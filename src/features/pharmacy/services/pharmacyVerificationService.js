@@ -2,6 +2,7 @@
 const pharmacyProfileRepo = require("../repositories/pharmacyProfileRepository");
 const pharmacyDocumentRepo = require("../repositories/pharmacyDocumentRepository");
 const pharmacyVerificationRepo = require("../repositories/pharmacyVerificationRepository");
+const AppDataSource = require("../../../config/database");
 
 class PharmacyVerificationService {
   async getPendingVerifications() {
@@ -73,7 +74,54 @@ class PharmacyVerificationService {
       );
     }
 
+    // Auto-create vendor profile so pharmacy can list products in the shop directly
+    await this._ensureVendorProfile(pharmacyId);
+
     return { success: true, message: "Pharmacy approved successfully" };
+  }
+
+  async _ensureVendorProfile(pharmacyId) {
+    try {
+      const pharmacy = await pharmacyProfileRepo.findById(pharmacyId);
+      if (!pharmacy) return;
+
+      const vendorRepo  = AppDataSource.getRepository("VendorProfile");
+      const walletRepo  = AppDataSource.getRepository("VendorWallet");
+
+      const existing = await vendorRepo.findOne({ where: { userId: pharmacy.userId } });
+      if (existing) return; // already has one
+
+      const vendor = vendorRepo.create({
+        userId:              pharmacy.userId,
+        businessName:        pharmacy.pharmacyName,
+        businessCategory:    "health_wellness",
+        businessEmail:       pharmacy.email        || null,
+        businessPhone:       pharmacy.phone        || null,
+        country:             "Nigeria",
+        state:               pharmacy.state        || "",
+        city:                pharmacy.city         || "",
+        fullAddress:         pharmacy.address      || "",
+        businessDescription: `${pharmacy.pharmacyName} — Licensed Pharmacy`,
+        verificationStatus:  "approved",
+        isActive:            true,
+        documentsSubmitted:  true,
+        isHybridPharmacy:    true,
+        pharmacyProfileId:   pharmacy.id,
+      });
+      const saved = await vendorRepo.save(vendor);
+
+      await walletRepo.save(walletRepo.create({
+        vendorId:            saved.id,
+        availableBalanceNgn: 0,
+        pendingClearanceNgn: 0,
+        totalEarningsNgn:    0,
+        isActive:            true,
+        isFrozen:            false,
+      }));
+    } catch (err) {
+      // Non-critical — log but don't block approval
+      console.error("[PharmacyVerification] Auto vendor profile creation failed:", err.message);
+    }
   }
 
   async rejectPharmacy(pharmacyId, adminId, rejectionReason) {

@@ -1,6 +1,7 @@
 const pharmacyPaymentService = require("../services/pharmacyPaymentService");
 const pharmacyPaymentRepo    = require("../repositories/pharmacyPaymentRepository");
 const patientWalletService   = require("../services/patientWalletService");
+const pharmacySessionService = require("../services/pharmacySessionService");
 
 /**
  * POST /api/webhooks/pharmacy/:provider
@@ -45,6 +46,12 @@ const pharmacyWebhookController = {
         // Route to patient wallet top-up handler if applicable
         if (metadata?.type === "wallet_topup") {
           await patientWalletService.handleTopUpSuccess(reference);
+          break;
+        }
+
+        // Route to prescription cart payment handler
+        if (metadata?.type === "prescription_cart") {
+          await pharmacySessionService.handleCartPaymentSuccess(metadata.cartId);
           break;
         }
 
@@ -100,6 +107,12 @@ const pharmacyWebhookController = {
         // Route to patient wallet top-up handler if applicable
         if (meta?.type === "wallet_topup") {
           await patientWalletService.handleTopUpSuccess(reference);
+          break;
+        }
+
+        // Route to prescription cart payment handler
+        if (meta?.type === "prescription_cart") {
+          await pharmacySessionService.handleCartPaymentSuccess(meta.cartId);
           break;
         }
 

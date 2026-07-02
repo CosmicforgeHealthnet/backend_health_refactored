@@ -1,13 +1,15 @@
 /**
- * Seed script: creates 3 fully-verified test accounts
+ * Seed script: creates 4 fully-verified test accounts
  *   - cf.patient@cosmicforge.dev    / TestPatient@123   (gold_elite)
  *   - cf.doctor@cosmicforge.dev     / TestDoctor@123    (professional, verified)
  *   - cf.pharmacy@cosmicforge.dev   / TestPharmacy@123  (gold_elite, verified)
+ *   - cf.vendor@cosmicforge.dev     / TestVendor@123    (free, approved)
  *
  * Run:  node scripts/seed-test-accounts.js
  */
 
 const { Client } = require('pg');
+const bcrypt     = require('bcryptjs');
 
 const client = new Client({
   host: '72.61.20.94',
@@ -29,6 +31,9 @@ async function run() {
   await client.connect();
   console.log('✅ Connected to database');
 
+  // Compute vendor hash at runtime (others are pre-computed)
+  const vendorHash = await bcrypt.hash('TestVendor@123', 12);
+
   try {
     await client.query('BEGIN');
 
@@ -38,7 +43,8 @@ async function run() {
       WHERE email IN (
         'cf.patient@cosmicforge.dev',
         'cf.doctor@cosmicforge.dev',
-        'cf.pharmacy@cosmicforge.dev'
+        'cf.pharmacy@cosmicforge.dev',
+        'cf.vendor@cosmicforge.dev'
       )
     `);
     console.log('🗑️  Cleared existing test accounts');
@@ -220,6 +226,63 @@ async function run() {
 
     console.log(`💊 Pharmacy created: ${pharmacyUser.id}`);
 
+    // ════════════════════════════════════════════
+    //  VENDOR — free tier, fully approved
+    // ════════════════════════════════════════════
+    const { rows: [vendorUser] } = await client.query(`
+      INSERT INTO users (
+        "fullName", email, "passwordHash", role, status, tier, provider,
+        "phoneNumber", "mfaEnabled", "isOnline", "totalReferrals",
+        "averageRating", "totalRatings"
+      ) VALUES (
+        'CosmicForge Test Vendor',
+        'cf.vendor@cosmicforge.dev',
+        $1,
+        'vendor', 'vendor_active', 'free', 'local',
+        '+2348000000004', false, false, 0, 0, 0
+      ) RETURNING id
+    `, [vendorHash]);
+
+    const { rows: [vendorProfile] } = await client.query(`
+      INSERT INTO vendor_profiles (
+        "userId", "businessName", "businessCategory",
+        "businessEmail", "businessPhone",
+        "country", "state", "city", "fullAddress",
+        "businessDescription", "verificationStatus",
+        "isActive", "documentsSubmitted", "isHybridPharmacy"
+      ) VALUES (
+        $1,
+        'CosmicForge Test Store',
+        'health_wellness',
+        'cf.vendor@cosmicforge.dev',
+        '+2348000000004',
+        'Nigeria', 'Lagos', 'Ikeja',
+        '10 Test Avenue, Ikeja, Lagos',
+        'Test vendor account for CosmicForge frontend development.',
+        'approved',
+        true, true, false
+      ) RETURNING id
+    `, [vendorUser.id]);
+
+    await client.query(`
+      INSERT INTO vendor_wallets (
+        "vendorId", "availableBalanceNgn", "pendingClearanceNgn",
+        "totalEarningsNgn", "isActive", "isFrozen"
+      ) VALUES ($1, 0, 0, 0, true, false)
+    `, [vendorProfile.id]);
+
+    await client.query(`
+      INSERT INTO subscriptions (
+        "userId", tier, status, "planType",
+        "startDate", "endDate", "autoRenew", price, currency, "billingCycle", "familyMembers"
+      ) VALUES (
+        $1, 'free', 'active', 'patient',
+        NOW(), NOW() + INTERVAL '10 years', true, 0, 'NGN', 'yearly', 1
+      )
+    `, [vendorUser.id]);
+
+    console.log(`🏪 Vendor created: ${vendorUser.id}`);
+
     await client.query('COMMIT');
 
     console.log('\n════════════════════════════════════════════');
@@ -239,6 +302,11 @@ async function run() {
     console.log('  email   : cf.pharmacy@cosmicforge.dev');
     console.log('  password: TestPharmacy@123');
     console.log('  tier    : gold_elite (fully verified)');
+    console.log('');
+    console.log('VENDOR');
+    console.log('  email   : cf.vendor@cosmicforge.dev');
+    console.log('  password: TestVendor@123');
+    console.log('  tier    : free (approved, wallet ready)');
     console.log('════════════════════════════════════════════\n');
 
   } catch (err) {

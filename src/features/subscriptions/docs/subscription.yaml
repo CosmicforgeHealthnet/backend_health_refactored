@@ -58,52 +58,283 @@ paths:
                         items:
                           $ref: '#/components/schemas/PublicPlan'
               examples:
-                Nigerian_Plans:
-                  summary: Plans for Nigerian visitors
+                Nigerian_Patient_Plans:
+                  summary: Patient plans for Nigerian visitors (NGN)
                   value:
                     success: true
-                    message: "Plans retrieved successfully"
+                    message: "Subscription plans retrieved successfully"
                     data:
-                      countryCode: "NG"
-                      currency: "NGN"
-                      patientPlans:
-                        - tier: "free"
+                      plans:
+                        free:
+                          tier: "free"
+                          planType: "patient"
                           name: "Free Plan"
                           price: 0
                           discountPrice: 0
+                          hasDiscount: false
                           currency: "NGN"
-                          features: ["Basic AI Chat", "Limited Consultations"]
-                        - tier: "basic"
+                          displayFeatures:
+                            - "Video Consultation Only"
+                            - "10 AI Chatbot Responses"
+                            - "Access to General & Emergency Specialists"
+                            - "Access to Shop/Purchase"
+                            - "Access to Support"
+                          monthlyLimits:
+                            aiChatbotResponses: 10
+                            aiDiagnosticRequests: 0
+                          familyMembers: 1
+                          isFree: true
+                        basic:
+                          tier: "basic"
+                          planType: "patient"
                           name: "Basic Plan"
                           price: 9900
-                          discountPrice: 7900
-                          discount: 2000
-                          discountPercentage: 20
+                          discountPrice: 4950
+                          discount: 4950
+                          discountPercentage: 50
                           hasDiscount: true
                           currency: "NGN"
-                          features: ["Voice Consultation", "All Specialists"]
-                        - tier: "premium"
+                          displayFeatures:
+                            - "Video Consultation"
+                            - "Voice Consultation"
+                            - "Chat Access"
+                            - "30 AI Chatbot Responses"
+                            - "20 AI Diagnostic Requests"
+                            - "All Department Specialists"
+                            - "Lab Access"
+                            - "Shop Access"
+                            - "Standard Support"
+                          monthlyLimits:
+                            aiChatbotResponses: 30
+                            aiDiagnosticRequests: 20
+                          familyMembers: 1
+                          familyConfig:
+                            adults: 1
+                            children: 0
+                            total: 1
+                            description: "Individual only"
+                        standard:
+                          tier: "standard"
+                          planType: "patient"
+                          name: "Standard Plan"
+                          price: 15900
+                          discountPrice: 7950
+                          discount: 7950
+                          discountPercentage: 50
+                          hasDiscount: true
+                          currency: "NGN"
+                          displayFeatures:
+                            - "Video Consultation"
+                            - "Voice Consultation"
+                            - "Chat Access"
+                            - "80 AI Chatbot Responses"
+                            - "50 AI Diagnostic Requests"
+                            - "All Department Specialists"
+                            - "Lab Access"
+                            - "Pharmacy Access"
+                            - "Shop Access"
+                            - "First Aid Instructions"
+                            - "Standard Support"
+                          monthlyLimits:
+                            aiChatbotResponses: 80
+                            aiDiagnosticRequests: 50
+                          familyMembers: 1
+                        medium:
+                          tier: "medium"
+                          planType: "patient"
+                          name: "Medium Plan"
+                          price: 24900
+                          discountPrice: 12450
+                          discount: 12450
+                          discountPercentage: 50
+                          hasDiscount: true
+                          currency: "NGN"
+                          displayFeatures:
+                            - "Video Consultation"
+                            - "Voice Consultation"
+                            - "Chat Access"
+                            - "200 AI Chatbot Responses"
+                            - "150 AI Diagnostic Requests"
+                            - "All Department Specialists"
+                            - "Lab Access"
+                            - "Pharmacy Access"
+                            - "Shop Access"
+                            - "First Aid Instructions"
+                            - "Family Plan: 1 Adult + 2 Children"
+                            - "Standard Support"
+                          monthlyLimits:
+                            aiChatbotResponses: 200
+                            aiDiagnosticRequests: 150
+                          familyMembers: 3
+                          familyConfig:
+                            adults: 1
+                            children: 2
+                            total: 3
+                            description: "1 Adult + 2 Children"
+                        premium:
+                          tier: "premium"
+                          planType: "patient"
                           name: "Premium Plan"
                           price: 49900
-                          discountPrice: 39900
-                          discount: 10000
-                          discountPercentage: 20
+                          discountPrice: 24950
+                          discount: 24950
+                          discountPercentage: 50
                           hasDiscount: true
                           currency: "NGN"
-                          features: ["Video Consultation", "Priority Support", "Family Members"]
-                      doctorPlans:
-                        - tier: "basic"
+                          displayFeatures:
+                            - "Video Consultation"
+                            - "Voice Consultation"
+                            - "Chat Access"
+                            - "Unlimited AI Chatbot Responses"
+                            - "Unlimited AI Diagnostic Requests"
+                            - "All Department Specialists"
+                            - "Lab Access"
+                            - "Pharmacy Access"
+                            - "Shop Access"
+                            - "First Aid Instructions"
+                            - "Family Plan: 2 Adults + 3 Children"
+                            - "Priority Support"
+                          monthlyLimits:
+                            aiChatbotResponses: -1
+                            aiDiagnosticRequests: -1
+                          familyMembers: 5
+                          familyConfig:
+                            adults: 2
+                            children: 3
+                            total: 5
+                            description: "2 Adults + 3 Children"
+                        gold_elite:
+                          tier: "gold_elite"
+                          planType: "patient"
+                          name: "Gold Elite Plan"
+                          price: 129900
+                          discountPrice: 64950
+                          discount: 64950
+                          discountPercentage: 50
+                          hasDiscount: true
+                          currency: "NGN"
+                          displayFeatures:
+                            - "Video Consultation"
+                            - "Voice Consultation"
+                            - "Chat Access"
+                            - "Unlimited AI Chatbot Responses"
+                            - "Unlimited AI Diagnostic Requests"
+                            - "All Department Specialists"
+                            - "Lab Access"
+                            - "Pharmacy Access"
+                            - "Shop Access"
+                            - "First Aid Instructions"
+                            - "Family Plan: Unlimited Dependents"
+                            - "Priority Support"
+                            - "Early Access to Platform Features"
+                            - "Beta Access to New Cosmicforge Products"
+                          monthlyLimits:
+                            aiChatbotResponses: -1
+                            aiDiagnosticRequests: -1
+                          familyMembers: -1
+                          familyConfig:
+                            adults: -1
+                            children: -1
+                            total: -1
+                            description: "Unlimited dependents"
+                      planType: "patient"
+                      currency: "NGN"
+                      countryCode: "NG"
+                      withDiscount: true
+                      hasActivePromo: true
+                Nigerian_Doctor_Plans:
+                  summary: Doctor plans for Nigerian visitors (NGN)
+                  value:
+                    success: true
+                    message: "Subscription plans retrieved successfully"
+                    data:
+                      plans:
+                        free:
+                          tier: "free"
+                          planType: "doctor"
+                          name: "Free Plan"
+                          price: 0
+                          discountPrice: 0
+                          hasDiscount: false
+                          currency: "NGN"
+                          commissionRate: 30
+                          displayFeatures:
+                            - "Video Consultation Only"
+                            - "Access to 10 Patients per month"
+                            - "Regular Profile Listing"
+                            - "Access to 50 AI Responses"
+                            - "Access to Support"
+                          monthlyLimits:
+                            maxPatients: 10
+                            aiResponses: 50
+                        basic:
+                          tier: "basic"
+                          planType: "doctor"
                           name: "Basic Plan"
                           price: 24900
-                          discountPrice: 14900
+                          discountPrice: 12450
+                          discount: 12450
+                          discountPercentage: 50
+                          hasDiscount: true
                           currency: "NGN"
                           commissionRate: 20
-                        - tier: "professional"
+                          displayFeatures:
+                            - "Video Consultation"
+                            - "Chat Access"
+                            - "40 Patients per month"
+                            - "200 AI Responses"
+                            - "Regular Profile Listing"
+                            - "Standard Support"
+                          monthlyLimits:
+                            maxPatients: 40
+                            aiResponses: 200
+                        professional:
+                          tier: "professional"
+                          planType: "doctor"
                           name: "Professional Plan"
                           price: 44900
-                          discountPrice: 29900
+                          discountPrice: 22450
+                          discount: 22450
+                          discountPercentage: 50
+                          hasDiscount: true
                           currency: "NGN"
                           commissionRate: 15
+                          displayFeatures:
+                            - "Video Consultation"
+                            - "Chat Access"
+                            - "100 Patients per month"
+                            - "400 AI Responses"
+                            - "Top Profile Listing"
+                            - "Priority Support"
+                          monthlyLimits:
+                            maxPatients: 100
+                            aiResponses: 400
+                        premium:
+                          tier: "premium"
+                          planType: "doctor"
+                          name: "Premium Plan"
+                          price: 99900
+                          discountPrice: 49950
+                          discount: 49950
+                          discountPercentage: 50
+                          hasDiscount: true
+                          currency: "NGN"
+                          commissionRate: 10
+                          displayFeatures:
+                            - "Video Consultation"
+                            - "Chat Access"
+                            - "Unlimited Patients"
+                            - "Unlimited AI Responses"
+                            - "Top Profile Listing"
+                            - "Priority Support"
+                          monthlyLimits:
+                            maxPatients: -1
+                            aiResponses: -1
+                      planType: "doctor"
+                      currency: "NGN"
+                      countryCode: "NG"
+                      withDiscount: true
+                      hasActivePromo: true
 
   /api/subscription/public/plans/{planType}/{tier}:
     get:
@@ -185,44 +416,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/CurrentSubscriptionResponse'
               examples:
-                UK_User:
-                  summary: UK user getting subscription in GBP
+                Patient_Basic_NG:
+                  summary: Nigerian patient with Basic plan
                   value:
                     success: true
                     message: "Current subscription retrieved successfully"
                     data:
                       id: "sub_123456"
-                      tier: "premium"
+                      tier: "basic"
                       planType: "patient"
                       status: "active"
-                      price: 41.24
-                      discountPrice: 32.99
-                      discount: 8.25
-                      discountPercentage: 20
+                      price: 9900
+                      discountPrice: 4950
+                      discount: 4950
+                      discountPercentage: 50
                       hasDiscount: true
-                      currency: "GBP"
-                      countryCode: "GB"
-                      conversionRate: 0.73
-                      convertedAt: "2025-01-20T10:30:00Z"
-                      isPredefined: false
-                      isFallback: false
-                      storedPrice: 39.99
-                      storedCurrency: "USD"
+                      currency: "NGN"
+                      countryCode: "NG"
+                      features:
+                        - "Chat Access"
+                        - "Voice Consultation"
+                        - "Video Consultation"
+                        - "All Specialists"
+                        - "Lab Access"
+                        - "Shop Access"
+                        - "Standard Support"
+                      monthlyLimits:
+                        aiChatbotResponses: 30
+                        aiDiagnosticRequests: 20
+                      currentUsage:
+                        aiChatbotResponses: 12
+                        aiDiagnosticRequests: 5
+                      usagePercentage:
+                        aiChatbotResponses:
+                          used: 12
+                          limit: 30
+                          percentage: 40
+                          remaining: 18
+                          isOverLimit: false
+                        aiDiagnosticRequests:
+                          used: 5
+                          limit: 20
+                          percentage: 25
+                          remaining: 15
+                          isOverLimit: false
+                      familyMembers: 1
                       commissionRate: null
-                      features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
-                      monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
-                      currentUsage: { "aiChatbotResponses": 15, "aiDiagnosticRequests": 5 }
-                      familyMembers: 5
-                      startDate: "2025-01-01T00:00:00Z"
-                      endDate: "2025-02-01T00:00:00Z"
+                      startDate: "2026-05-01T00:00:00Z"
+                      endDate: "2026-06-01T00:00:00Z"
+                      daysRemaining: 6
                       autoRenew: true
-                      autoBillingEnabled: true
+                      autoBillingEnabled: false
                       isActive: true
                       isExpired: false
                       isPremium: true
-                      daysRemaining: 12
-                Nigerian_User:
-                  summary: Nigerian user getting predefined NGN pricing
+                Patient_Premium_NG:
+                  summary: Nigerian patient with Premium plan
                   value:
                     success: true
                     message: "Current subscription retrieved successfully"
@@ -231,30 +480,91 @@ paths:
                       tier: "premium"
                       planType: "patient"
                       status: "active"
-                      price: 49900.00
-                      discountPrice: 39900.00
-                      discount: 10000.00
-                      discountPercentage: 20
+                      price: 49900
+                      discountPrice: 24950
+                      discount: 24950
+                      discountPercentage: 50
                       hasDiscount: true
                       currency: "NGN"
                       countryCode: "NG"
-                      isPredefined: true
-                      isFallback: false
-                      storedPrice: 39.99
-                      storedCurrency: "USD"
-                      commissionRate: null
-                      features: ["Voice Consultation", "Video Consultation", "All Specialists", "Priority Support"]
-                      monthlyLimits: { "aiChatbotResponses": -1, "aiDiagnosticRequests": -1 }
-                      currentUsage: { "aiChatbotResponses": 25, "aiDiagnosticRequests": 8 }
+                      features:
+                        - "Chat Access"
+                        - "Voice Consultation"
+                        - "Video Consultation"
+                        - "All Specialists"
+                        - "Lab Access"
+                        - "Pharmacy Access"
+                        - "Shop Access"
+                        - "First Aid Instructions"
+                        - "Family Plan"
+                        - "Priority Support"
+                      monthlyLimits:
+                        aiChatbotResponses: -1
+                        aiDiagnosticRequests: -1
+                      currentUsage:
+                        aiChatbotResponses: 85
+                        aiDiagnosticRequests: 12
+                      usagePercentage: {}
                       familyMembers: 5
-                      startDate: "2025-01-01T00:00:00Z"
-                      endDate: "2025-02-01T00:00:00Z"
-                      autoRenew: false
-                      autoBillingEnabled: false
+                      commissionRate: null
+                      startDate: "2026-05-01T00:00:00Z"
+                      endDate: "2026-06-01T00:00:00Z"
+                      daysRemaining: 6
+                      autoRenew: true
+                      autoBillingEnabled: true
                       isActive: true
                       isExpired: false
                       isPremium: true
-                      daysRemaining: 12
+                Doctor_Professional_NG:
+                  summary: Nigerian doctor with Professional plan
+                  value:
+                    success: true
+                    message: "Current subscription retrieved successfully"
+                    data:
+                      id: "sub_doc_456"
+                      tier: "professional"
+                      planType: "doctor"
+                      status: "active"
+                      price: 44900
+                      discountPrice: 22450
+                      discount: 22450
+                      discountPercentage: 50
+                      hasDiscount: true
+                      currency: "NGN"
+                      countryCode: "NG"
+                      features:
+                        - "Video Consultation"
+                        - "Top Profile Listing"
+                        - "Priority Support"
+                      monthlyLimits:
+                        maxPatients: 100
+                        aiResponses: 400
+                      currentUsage:
+                        maxPatients: 45
+                        aiResponses: 120
+                      usagePercentage:
+                        maxPatients:
+                          used: 45
+                          limit: 100
+                          percentage: 45
+                          remaining: 55
+                          isOverLimit: false
+                        aiResponses:
+                          used: 120
+                          limit: 400
+                          percentage: 30
+                          remaining: 280
+                          isOverLimit: false
+                      familyMembers: null
+                      commissionRate: 15
+                      startDate: "2026-05-01T00:00:00Z"
+                      endDate: "2026-06-01T00:00:00Z"
+                      daysRemaining: 6
+                      autoRenew: true
+                      autoBillingEnabled: true
+                      isActive: true
+                      isExpired: false
+                      isPremium: true
         '401':
           $ref: '#/components/responses/SubscriptionUnauthorized'
 
@@ -273,30 +583,51 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateSubscriptionPaymentRequest'
             examples:
-              UK_Payment:
-                summary: UK user upgrading to premium
+              Patient_Basic_NG:
+                summary: Patient upgrading to Basic plan (Nigeria)
                 value:
                   planType: "patient"
-                  tier: "premium"
-                  serviceType: "subscription_upgrade"
-                  countryCode: "GB"
-                  paymentProvider: "auto"
-                  enableAutoBilling: true
-              Nigerian_Payment:
-                summary: Nigerian user upgrading with predefined NGN pricing
-                value:
-                  planType: "patient"
-                  tier: "premium"
-                  serviceType: "subscription_upgrade"
+                  tier: "basic"
                   countryCode: "NG"
                   paymentProvider: "paystack"
                   enableAutoBilling: false
-              Doctor_Professional:
-                summary: Doctor upgrading to professional plan
+              Patient_Premium_NG:
+                summary: Patient upgrading to Premium plan (Nigeria)
+                value:
+                  planType: "patient"
+                  tier: "premium"
+                  countryCode: "NG"
+                  paymentProvider: "paystack"
+                  enableAutoBilling: true
+              Patient_GoldElite_NG:
+                summary: Patient upgrading to Gold Elite plan (Nigeria)
+                value:
+                  planType: "patient"
+                  tier: "gold_elite"
+                  countryCode: "NG"
+                  paymentProvider: "paystack"
+                  enableAutoBilling: true
+              Doctor_Basic_NG:
+                summary: Doctor upgrading to Basic plan (Nigeria)
+                value:
+                  planType: "doctor"
+                  tier: "basic"
+                  countryCode: "NG"
+                  paymentProvider: "paystack"
+                  enableAutoBilling: false
+              Doctor_Professional_NG:
+                summary: Doctor upgrading to Professional plan (Nigeria)
                 value:
                   planType: "doctor"
                   tier: "professional"
-                  serviceType: "subscription_upgrade"
+                  countryCode: "NG"
+                  paymentProvider: "paystack"
+                  enableAutoBilling: true
+              Doctor_Premium_US:
+                summary: Doctor upgrading to Premium plan (USD)
+                value:
+                  planType: "doctor"
+                  tier: "premium"
                   countryCode: "US"
                   paymentProvider: "auto"
                   enableAutoBilling: true
@@ -308,57 +639,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateSubscriptionPaymentResponse'
               examples:
-                UK_Payment_Response:
-                  summary: UK payment in GBP via Flutterwave
+                Patient_Basic_NG_Response:
+                  summary: Patient Basic plan payment (Nigeria)
                   value:
                     success: true
                     message: "Subscription payment created successfully"
                     data:
                       transactionId: "550e8400-e29b-41d4-a716-446655440000"
-                      redirectUrl: "https://checkout.flutterwave.com/v3/hosted/pay/abc123"
+                      redirectUrl: "https://checkout.paystack.com/abc123"
                       planType: "patient"
-                      tier: "premium"
-                      planName: "Premium Plan"
-                      amount: 32.99
-                      basePrice: 41.24
-                      discountPrice: 32.99
-                      discount: 8.25
-                      discountPercentage: 20
-                      hasDiscount: true
-                      currency: "GBP"
-                      countryCode: "GB"
-                      paymentProvider: "flutterwave"
-                      enableAutoBilling: true
-                      currencyInfo:
-                        requested: "GBP"
-                        final: "GBP"
-                        rate: 0.73
-                        fallback: false
-                Nigerian_Payment_Response:
-                  summary: Nigerian payment in NGN via Paystack
-                  value:
-                    success: true
-                    message: "Subscription payment created successfully"
-                    data:
-                      transactionId: "550e8400-e29b-41d4-a716-446655440001"
-                      redirectUrl: "https://checkout.paystack.com/abc456"
-                      planType: "patient"
-                      tier: "premium"
-                      planName: "Premium Plan"
-                      amount: 39900.00
-                      basePrice: 49900.00
-                      discountPrice: 39900.00
-                      discount: 10000.00
-                      discountPercentage: 20
+                      tier: "basic"
+                      planName: "Basic Plan"
+                      amount: 4950
+                      basePrice: 9900
+                      discountPrice: 4950
+                      discount: 4950
+                      discountPercentage: 50
                       hasDiscount: true
                       currency: "NGN"
                       countryCode: "NG"
                       paymentProvider: "paystack"
                       enableAutoBilling: false
-                      currencyInfo:
-                        requested: "NGN"
-                        final: "NGN"
-                        fallback: false
+                Patient_Premium_NG_Response:
+                  summary: Patient Premium plan payment (Nigeria)
+                  value:
+                    success: true
+                    message: "Subscription payment created successfully"
+                    data:
+                      transactionId: "550e8400-e29b-41d4-a716-446655440001"
+                      redirectUrl: "https://checkout.paystack.com/xyz789"
+                      planType: "patient"
+                      tier: "premium"
+                      planName: "Premium Plan"
+                      amount: 24950
+                      basePrice: 49900
+                      discountPrice: 24950
+                      discount: 24950
+                      discountPercentage: 50
+                      hasDiscount: true
+                      currency: "NGN"
+                      countryCode: "NG"
+                      paymentProvider: "paystack"
+                      enableAutoBilling: true
+                Doctor_Professional_NG_Response:
+                  summary: Doctor Professional plan payment (Nigeria)
+                  value:
+                    success: true
+                    message: "Subscription payment created successfully"
+                    data:
+                      transactionId: "550e8400-e29b-41d4-a716-446655440002"
+                      redirectUrl: "https://checkout.paystack.com/doc456"
+                      planType: "doctor"
+                      tier: "professional"
+                      planName: "Professional Plan"
+                      amount: 22450
+                      basePrice: 44900
+                      discountPrice: 22450
+                      discount: 22450
+                      discountPercentage: 50
+                      hasDiscount: true
+                      currency: "NGN"
+                      countryCode: "NG"
+                      paymentProvider: "paystack"
+                      enableAutoBilling: true
+                      commissionRate: 15
         '400':
           description: Bad request - invalid parameters or currency conversion failed
           content:
@@ -915,6 +1259,12 @@ paths:
                           isBlocked: false
                           status: "ok"
                       featureAccess:
+                        chatAccess:
+                          displayName: "Chat Access"
+                          description: "Text-based chat consultations with doctors"
+                          icon: "chat"
+                          category: "consultations"
+                          enabled: true
                         voiceConsultation:
                           displayName: "Voice Consultations"
                           description: "Voice call consultations with doctors"
@@ -965,6 +1315,7 @@ paths:
                         message: "All usage within limits"
                         needsAttention: false
                       enabledFeatures:
+                        - "Chat Access"
                         - "Voice Consultations"
                         - "Video Consultations"
                         - "All Specialists"
@@ -975,7 +1326,6 @@ paths:
                         - "Family Plan"
                         - "Priority Support"
                       disabledFeatures:
-                        - "Chat Only"
                         - "General & Emergency Specialists"
                       resetInfo:
                         nextResetDate: "2026-02-01T00:00:00.000Z"

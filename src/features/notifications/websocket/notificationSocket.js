@@ -43,6 +43,23 @@ class NotificationSocketHandler {
         }
       }
 
+      // Vendor joins their own vendor room for vendor-specific broadcasts
+      if (socket.user?.role === "vendor" || socket.user?.role === "pharmacy") {
+        try {
+          const vendorProfile = await AppDataSource.getRepository("VendorProfile").findOne({
+            where: { userId: socket.userId },
+            select: ["id"],
+          });
+          if (vendorProfile?.id) {
+            const vendorRoom = `vendor_${vendorProfile.id}`;
+            socket.join(vendorRoom);
+            console.log(`🏪 ${socket.user?.email || socket.userId} joined vendor room: ${vendorRoom}`);
+          }
+        } catch (err) {
+          console.error("Failed to join vendor room:", err.message);
+        }
+      }
+
       // Send connection confirmation
       socket.emit("connection-confirmed", {
         message: "Connected to notification service",
