@@ -714,12 +714,12 @@ exports.consumeMagicLink = async (req, res) => {
 // mobile magic link — request (sends deep link email)
 exports.requestMobileMagicLink = async (req, res, next) => {
     try {
-        const { email } = req.body;
+        const { email, role } = req.body;
         if (!email) {
             return res.status(400).json({ error: 'Email is required' });
         }
         await magicLinkService.requestMobileMagicLink(
-            { email },
+            { email, role },
             req.ip,
             req.headers['user-agent']
         );

@@ -18,7 +18,7 @@ class MagicLinkService {
    */
   async requestMagicLink({ email, fullName, role = 'patient' }, ip, userAgent) {
     // 1) Find or create user
-    let user = await userRepository.findByEmail(email);
+    let user = await userRepository.findByEmailAndRole(email, role);
     // signup branch: require non‐empty fullName
     if (!user) {
       if (!fullName || !fullName.trim()) {
@@ -55,8 +55,8 @@ class MagicLinkService {
    * Send a mobile deep-link magic-link email (login only)
    * The link opens the app directly (using role-based schemes).
    */
-  async requestMobileMagicLink({ email }, ip, userAgent) {
-    const user = await userRepository.findByEmail(email);
+  async requestMobileMagicLink({ email, role = 'doctor' }, ip, userAgent) {
+    const user = await userRepository.findByEmailAndRole(email, role);
     if (!user) {
       throw Object.assign(new Error('No account found with that email.'), { statusCode: 404 });
     }
