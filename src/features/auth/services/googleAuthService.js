@@ -55,34 +55,23 @@ class GoogleAuthService {
     let user = await userRepository.findByProvider('google', sub);
 
     if (!user) {
-      // Lookup by email to link accounts
-      user = await userRepository.findByEmail(email);
+      const targetRole = ['patient', 'doctor', 'pharmacy', 'lab'].includes(role) ? role : 'patient';
+
+      // Lookup by email + role to link accounts (multi-role safe)
+      user = await userRepository.findByEmailAndRole(email, targetRole);
       if (user) {
-        // Link Google to existing local account
-        console.log('🚀 [GoogleAuthService] Existing user found by email, linking accounts. Email:', email);
+        // Link Google to existing local account for this role
+        console.log('🚀 [GoogleAuthService] Existing user found by email+role, linking accounts. Email:', email, 'Role:', targetRole);
         user.provider = 'google';
         user.providerId = sub;
         user.profileImageUrl = picture;
-        
-        // If the user was a patient but is now registering as a doctor, upgrade them
-        if (role === 'doctor' && user.role !== 'doctor') {
-            console.log('🚀 [GoogleAuthService] Upgrading existing patient to doctor role.');
-            user.role = 'doctor';
-            user.departmentSpecialty = departmentSpecialty;
-            user.phoneNumber = phoneNumber;
-        }
-
         user.status = email_verified
           ? (user.role === 'doctor' ? 'pending_doctor_verification' : 'active')
           : 'pending_email_verification';
-          
         await userRepository.save(user);
         await referralService.createUserReferralCode(user.id);
       } else {
-        // New user flow with role from state
-        const newRole = ['patient', 'doctor', 'pharmacy', 'lab'].includes(role)
-          ? role
-          : 'patient';
+        // New user — create with the requested role
         user = userRepository.create({
           email,
           fullName: name,
@@ -92,11 +81,9 @@ class GoogleAuthService {
           phoneNumber: phoneNumber,
           departmentSpecialty: departmentSpecialty,
           status: email_verified
-            ? (newRole === 'doctor'
-              ? 'pending_doctor_verification'
-              : 'active')
+            ? (targetRole === 'doctor' ? 'pending_doctor_verification' : 'active')
             : 'pending_email_verification',
-          role: newRole
+          role: targetRole
         });
         await userRepository.save(user);
         await referralService.createUserReferralCode(user.id);
@@ -172,29 +159,21 @@ class GoogleAuthService {
     let user = await userRepository.findByProvider('google', sub);
 
     if (!user) {
-      // Lookup by email to link accounts
-      user = await userRepository.findByEmail(email);
+      const targetRole = ['patient', 'doctor', 'pharmacy', 'lab'].includes(role) ? role : 'patient';
+
+      // Lookup by email + role to link accounts (multi-role safe)
+      user = await userRepository.findByEmailAndRole(email, targetRole);
       if (user) {
-        // Link Google to existing local account
-        console.log('🚀 [GoogleAuthService] Mobile: Existing user found by email, linking accounts. Email:', email);
+        // Link Google to existing local account for this role
+        console.log('🚀 [GoogleAuthService] Mobile: Existing user found by email+role, linking accounts. Email:', email, 'Role:', targetRole);
         user.provider = 'google';
         user.providerId = sub;
         user.profileImageUrl = picture;
-
-        // Upgrade if doctor
-        if (role === 'doctor' && user.role !== 'doctor') {
-            console.log('🚀 [GoogleAuthService] Mobile: Upgrading patient to doctor.');
-            user.role = 'doctor';
-            user.departmentSpecialty = departmentSpecialty;
-            user.phoneNumber = phoneNumber;
-        }
-
         user.status = email_verified ? (user.role === 'doctor' ? 'pending_doctor_verification' : 'active') : 'pending_email_verification';
         await userRepository.save(user);
         await referralService.createUserReferralCode(user.id);
       } else {
-        // New user flow
-        const newRole = ['patient', 'doctor', 'pharmacy', 'lab'].includes(role) ? role : 'patient';
+        // New user — create with the requested role
         user = userRepository.create({
           email,
           fullName: name,
@@ -203,8 +182,8 @@ class GoogleAuthService {
           profileImageUrl: picture,
           phoneNumber: phoneNumber,
           departmentSpecialty: departmentSpecialty,
-          status: email_verified ? (newRole === 'doctor' ? 'pending_doctor_verification' : 'active') : 'pending_email_verification',
-          role: newRole
+          status: email_verified ? (targetRole === 'doctor' ? 'pending_doctor_verification' : 'active') : 'pending_email_verification',
+          role: targetRole
         });
         await userRepository.save(user);
         await referralService.createUserReferralCode(user.id);
