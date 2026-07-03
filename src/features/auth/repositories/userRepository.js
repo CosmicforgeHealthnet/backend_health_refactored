@@ -24,6 +24,10 @@ class UserRepository {
     }
   }
 
+  async findByEmailAndRole(email, role) {
+    return this.repo.findOne({ where: { email, role } });
+  }
+
   create(data) {
     return this.repo.create(data);
   }

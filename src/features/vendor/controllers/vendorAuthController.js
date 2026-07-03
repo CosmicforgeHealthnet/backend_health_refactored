@@ -166,8 +166,8 @@ class VendorAuthController {
                 return res.status(400).json({ success: false, error: "Email and password are required" });
             }
 
-            const user = await userRepository.findByEmail(email.toLowerCase().trim());
-            if (!user || user.role !== "vendor") {
+            const user = await userRepository.findByEmailAndRole(email.toLowerCase().trim(), 'vendor');
+            if (!user) {
                 return res.status(401).json({ success: false, error: "Invalid credentials" });
             }
 
@@ -361,7 +361,7 @@ class VendorAuthController {
             const userRepo = require("../../auth/repositories/userRepository");
 
             if (email) {
-                const existing = await userRepo.findByEmail(email.toLowerCase().trim());
+                const existing = await userRepo.findByEmailAndRole(email.toLowerCase().trim(), 'vendor');
                 if (existing && existing.id !== req.user.id) {
                     return res.status(400).json({ success: false, error: "Email already in use" });
                 }

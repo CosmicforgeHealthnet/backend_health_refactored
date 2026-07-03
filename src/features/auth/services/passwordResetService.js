@@ -21,8 +21,10 @@ class PasswordResetService {
   /**
    * Kick off a reset: generate token, store it, email the link.
    */
-  async requestReset(email) {
-    const user = await userRepository.findByEmail(email);
+  async requestReset(email, role = null) {
+    const user = role
+      ? await userRepository.findByEmailAndRole(email, role)
+      : await userRepository.findByEmail(email);
     if (!user) {
       // Do not reveal whether email exists
       return;
@@ -89,8 +91,10 @@ class PasswordResetService {
     await passwordResetRepository.save(record);
   }
 
-  async resendResetEmail(email) {
-    const user = await userRepository.findByEmail(email);
+  async resendResetEmail(email, role = null) {
+    const user = role
+      ? await userRepository.findByEmailAndRole(email, role)
+      : await userRepository.findByEmail(email);
     if (!user) return;
 
     // Rate-limit: max 3 per hour

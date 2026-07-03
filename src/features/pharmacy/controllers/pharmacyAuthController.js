@@ -126,17 +126,10 @@ class PharmacyAuthController {
       }
 
       // 1) Lookup user
-      const user = await userRepo.findByEmail(email);
+      const user = await userRepo.findByEmailAndRole(email, 'pharmacy');
       if (!user) {
         return res.status(401).json({
           error: "The email address you entered is not registered."
-        });
-      }
-
-      // 2) Check if user is pharmacy
-      if (user.role !== "pharmacy") {
-        return res.status(403).json({
-          error: "Access denied: Not a pharmacy account"
         });
       }
 
@@ -538,7 +531,7 @@ class PharmacyAuthController {
       const updates = {};
       if (fullName) updates.fullName = fullName.trim();
       if (email) {
-        const existing = await userRepo.findByEmail(email.toLowerCase().trim());
+        const existing = await userRepo.findByEmailAndRole(email.toLowerCase().trim(), 'pharmacy');
         if (existing && existing.id !== userId) {
           return res.status(400).json({ success: false, message: "Email already in use" });
         }
@@ -594,7 +587,7 @@ class PharmacyAuthController {
     try {
       const { email } = req.body;
       if (!email) return res.status(400).json({ success: false, message: "Email is required" });
-      await passwordResetService.requestReset(email);
+      await passwordResetService.requestReset(email, 'pharmacy');
       return res.status(200).json({ success: true, message: "If that email is registered, a reset link has been sent." });
     } catch (error) {
       next(error);

@@ -43,7 +43,7 @@ class PharmacyRegistrationService {
     const normalizedEmail = email.toLowerCase().trim();
 
     // Run all uniqueness checks before opening a transaction
-    const existingUser = await this.userRepo.findByEmail(normalizedEmail);
+    const existingUser = await this.userRepo.findByEmailAndRole(normalizedEmail, 'pharmacy');
     if (existingUser) throw new Error("Email already in use");
 
     const existingUsername = await this.profileRepo.findByUsername(preferredUsername);
@@ -258,7 +258,7 @@ class PharmacyRegistrationService {
       throw err;
     }
 
-    const existingUser = await this.userRepo.findByEmail(email.toLowerCase().trim());
+    const existingUser = await this.userRepo.findByEmailAndRole(email.toLowerCase().trim(), role);
     if (existingUser) {
       throw new Error("Email already in use");
     }

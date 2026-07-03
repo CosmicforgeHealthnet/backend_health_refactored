@@ -28,7 +28,7 @@ class VendorAuthService {
         const normalizedEmail         = email.toLowerCase().trim();
         const normalizedBusinessEmail = businessEmail.toLowerCase().trim();
 
-        const existingUser = await userRepository.findByEmail(normalizedEmail);
+        const existingUser = await userRepository.findByEmailAndRole(normalizedEmail, 'vendor');
         if (existingUser) throw new Error("Email already in use");
 
         const existingVendorEmail = await vendorRepository.findByBusinessEmail(normalizedBusinessEmail);
