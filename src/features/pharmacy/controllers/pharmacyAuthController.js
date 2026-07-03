@@ -587,7 +587,7 @@ class PharmacyAuthController {
     try {
       const { email } = req.body;
       if (!email) return res.status(400).json({ success: false, message: "Email is required" });
-      await passwordResetService.requestReset(email);
+      await passwordResetService.requestReset(email, 'pharmacy');
       return res.status(200).json({ success: true, message: "If that email is registered, a reset link has been sent." });
     } catch (error) {
       next(error);
