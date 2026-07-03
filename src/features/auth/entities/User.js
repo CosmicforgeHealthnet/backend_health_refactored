@@ -35,7 +35,7 @@ module.exports = new EntitySchema({
   columns: {
     id: { primary: true, type: "uuid", generated: "uuid" },
     fullName: { type: "varchar", nullable: false },
-    email: { type: "varchar", unique: true },
+    email: { type: "varchar" },
     passwordHash: { type: "varchar", nullable: true },
 
     // PHARMACY FIELDS
@@ -330,6 +330,10 @@ module.exports = new EntitySchema({
       inverseSide: 'user',
     },
   },
+
+  uniques: [
+    { columns: ["email", "role"] },
+  ],
 
   indices: [
     { columns: ["email"] },

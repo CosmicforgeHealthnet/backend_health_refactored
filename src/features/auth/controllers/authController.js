@@ -229,7 +229,7 @@ exports.signupOtp = async (req, res, next) => {
 
 // login
 exports.login = async (req, res, next) => {
-    const { email, password, mfaToken, deviceFingerprint } = req.body;
+    const { email, password, mfaToken, deviceFingerprint, role } = req.body;
     const userAgent = req.headers["user-agent"];
 
     try {
@@ -242,7 +242,9 @@ exports.login = async (req, res, next) => {
         }
 
         // 2) Lookup user
-        const user = await userRepo.findByEmail(email);
+        const user = role
+            ? await userRepo.findByEmailAndRole(email, role)
+            : await userRepo.findByEmail(email);
         if (!user) {
             return res
                 .status(401)
@@ -282,7 +284,7 @@ exports.login = async (req, res, next) => {
 
         // 6) Issue tokens (original logic)
         const tokens = await authService.login(
-            { email, password },
+            { email, password, role },
             deviceFingerprint,
             userAgent
         );

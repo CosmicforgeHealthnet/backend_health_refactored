@@ -35,7 +35,7 @@ function toMs(setting, fallbackMs) {
 class AuthService {
 
     async register({ email, password, fullName, role, phoneNumber = null, departmentSpecialty = null, country = null }) {
-        if (await userRepository.findByEmail(email)) {
+        if (await userRepository.findByEmailAndRole(email, role)) {
             throw new Error('Email already in use');
         }
         const passwordHash = await bcrypt.hash(password, 12);
@@ -56,7 +56,7 @@ class AuthService {
      * Authenticate and issue tokens (access + rotating refresh).
      * Enforces max_login_attempts and lock_duration from admin_settings.
      */
-    async login({ email, password }, deviceFingerprint, userAgent) {
+    async login({ email, password, role }, deviceFingerprint, userAgent) {
         // Read security settings (with sensible defaults)
         const [maxAttemptsSetting, lockDurationSetting, tokenExpirySetting] = await Promise.all([
             getSetting('security', 'max_login_attempts',  { enabled: true, value: 5 }),
@@ -69,7 +69,9 @@ class AuthService {
         const ACCESS_EXPIRES = toJwtExpiry(tokenExpirySetting, '1h');
 
         // 1) Lookup user
-        const user = await userRepository.findByEmail(email);
+        const user = role
+            ? await userRepository.findByEmailAndRole(email, role)
+            : await userRepository.findByEmail(email);
         if (!user || !user.passwordHash) {
             throw new Error('Invalid credentials');
         }
