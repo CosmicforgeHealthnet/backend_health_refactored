@@ -39,7 +39,7 @@ class PharmacyDocumentController {
           submissionStatus: doc.submissionStatus
         })),
         pharmacy: {
-          verificationStatus: "documents_required"
+          verificationStatus: "under_review"
         }
       });
     } catch (error) {

@@ -150,7 +150,7 @@ class PharmacyRegistrationService {
     }
 
     // Update pharmacy status
-    await this.profileRepo.updateVerificationStatus(pharmacyId, "documents_required");
+    await this.profileRepo.updateVerificationStatus(pharmacyId, "under_review");
     await this.profileRepo.updateDocumentSubmissionStatus(pharmacyId, true);
 
     return savedDocuments;
