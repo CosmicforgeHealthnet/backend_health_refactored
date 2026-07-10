@@ -168,7 +168,7 @@ class PharmacyAuthController {
 
       // 6) Issue tokens using existing auth service
       const tokens = await authService.login(
-        { email, password },
+        { email, password, role: "pharmacy" },
         deviceFingerprint,
         userAgent
       );

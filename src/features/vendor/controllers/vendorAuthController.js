@@ -187,7 +187,7 @@ class VendorAuthController {
             }
 
             const { vendor } = await vendorAuthService.getVendorProfile(user.id);
-            const tokens = await authService.login({ email, password }, deviceFingerprint, req.headers['user-agent']);
+            const tokens = await authService.login({ email, password, role: "vendor" }, deviceFingerprint, req.headers["user-agent"]);
 
             return res.status(200).json({
                 success: true,
@@ -220,7 +220,7 @@ class VendorAuthController {
 
     async forgotPassword(req, res, next) {
         try {
-            await passwordResetService.requestReset(req.body.email);
+            await passwordResetService.requestReset(req.body.email, "vendor");
             return res.status(200).json({ success: true, message: "If that email exists, a reset link has been sent." });
         } catch (error) {
             next(error);

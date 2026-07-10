@@ -47,9 +47,10 @@ class VerificationService {
   async resendVerificationEmail(email) {
     const user = await this.userRepo.findByEmail(email);
     if (!user) return;
-    // Any status other than pending_email_verification means email is already verified
-    if (user.status !== ‘pending_email_verification’) {
-      throw Object.assign(new Error(‘Email is already verified.’), { code: ‘ALREADY_VERIFIED’ });
+    if (user.status !== "pending_email_verification") {
+      const err = new Error("Email is already verified.");
+      err.code = "ALREADY_VERIFIED";
+      throw err;
     }
 
     // rate-limit: max 3 emails per hour
