@@ -497,12 +497,13 @@ exports.resendVerification = async (req, res, next) => {
         const { email } = req.body;
         if (!email) return res.status(400).json({ error: "Email is required" });
 
-        // Note: verificationService is now local
         await verificationService.resendVerificationEmail(email);
 
-        // Always 200 to avoid leaking which emails exist
         res.json({ message: "If unverified, a new link has been emailed." });
     } catch (err) {
+        if (err.code === 'ALREADY_VERIFIED') {
+            return res.status(200).json({ message: "Email is already verified. You can log in." });
+        }
         next(err);
     }
 };

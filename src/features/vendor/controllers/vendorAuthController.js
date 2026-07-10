@@ -471,6 +471,9 @@ class VendorAuthController {
             await verificationService.resendVerificationEmail(email);
             return res.status(200).json({ success: true, message: "If unverified, a new verification link has been sent." });
         } catch (error) {
+            if (error.code === 'ALREADY_VERIFIED') {
+                return res.status(200).json({ success: true, message: "Email is already verified. You can log in." });
+            }
             if (error.message.includes("Too many")) {
                 return res.status(429).json({ success: false, error: error.message });
             }
