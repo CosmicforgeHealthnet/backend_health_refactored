@@ -22,8 +22,11 @@ const { sendVerificationStatusEmail,
 const VerificationHelpers = require("../utils/verificationHelpers");
 const apiConnectorService = require("./apiConnectorService");
 const documentProcessingService = require("./documentProcessingService");
+const ninVerificationService = require("./ninVerificationService");
+const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
+const crypto = require("crypto");
 
-const { VerificationStatus } = require("../entities/VerificationRequest");
+const { VerificationStatus, NinVerificationStatus } = require("../entities/VerificationRequest");
 const { getNotificationSocket } = require("../../../shared/utils/notificationUtils");
 
 class DoctorVerificationService {
@@ -347,6 +350,95 @@ class DoctorVerificationService {
 
     } catch (error) {
       console.error("Error uploading verification document:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Submit and verify a doctor's NIN (National Identification Number).
+   * Nigeria-specific identity check — confirms the government-registered name for
+   * this NIN matches the doctor's name on the platform. A mismatch does NOT
+   * auto-reject the verification request: it's surfaced to admins for manual
+   * review, since legitimate mismatches happen (married names, spelling variants).
+   * This does not currently block approval on its own — see NIN_VERIFICATION_REQUIREMENTS.md
+   * for the pending grace-period/enforcement decision for doctors already on the platform.
+   */
+  async submitNinVerification(verificationRequestId, doctorId, nin) {
+    try {
+      const verificationRequest = await verificationRequestRepo.findById(verificationRequestId);
+      if (!verificationRequest || verificationRequest.doctorId !== doctorId) {
+        throw new Error("Verification request not found");
+      }
+
+      if (verificationRequest.countryCode !== 'NG') {
+        throw new Error("NIN verification only applies to Nigeria");
+      }
+
+      const doctor = await userRepository.findById(doctorId);
+      if (!doctor) {
+        throw new Error("Doctor not found");
+      }
+
+      const result = await ninVerificationService.verifyNin(nin, doctor.fullName);
+
+      const encryptionKey = crypto.randomBytes(32).toString('hex');
+      const encryptedBuffer = DocumentUploadMiddleware.encryptBuffer(Buffer.from(nin, 'utf8'), encryptionKey);
+
+      const updateData = {
+        ninEncrypted: encryptedBuffer.toString('hex'),
+        ninEncryptionKey: encryptionKey,
+        ninLast4: nin.slice(-4),
+        ninVerificationStatus: result.status,
+        ninVerifiedData: result.providerData,
+        ninNameMatchScore: result.nameMatchScore,
+        ninSubmittedAt: new Date()
+      };
+
+      if (result.providerData) {
+        updateData.ninVerifiedAt = new Date();
+      }
+
+      await verificationRequestRepo.update(verificationRequestId, updateData);
+
+      // Info-only audit entry — doesn't change the verification request's own status
+      await verificationStatusHistoryRepo.logStatusChange(
+        verificationRequestId,
+        verificationRequest.status,
+        verificationRequest.status,
+        doctorId,
+        `NIN submitted — result: ${result.status}${result.nameMatchScore != null ? ` (name match ${result.nameMatchScore}%)` : ''}`,
+        { ninVerificationStatus: result.status, nameMatchScore: result.nameMatchScore },
+        false
+      );
+
+      try {
+        const messages = {
+          [NinVerificationStatus.VERIFIED]: "Your NIN has been verified and matches your registered name.",
+          [NinVerificationStatus.MISMATCH]: "Your NIN was found, but the registered name didn't match — this will be reviewed by our team.",
+          [NinVerificationStatus.FAILED]: "We couldn't verify your NIN. Please check the number and try again."
+        };
+        await getNotificationSocket().sendNotificationToUser(doctorId, {
+          type: "info",
+          message: messages[result.status] || "Your NIN verification has been processed.",
+          metadata: {
+            action: "nin_verification_result",
+            verificationRequestId,
+            status: result.status,
+            link: "/doctor/verification"
+          }
+        });
+      } catch (notifyError) {
+        console.error("Error sending NIN verification notification:", notifyError);
+      }
+
+      return {
+        status: result.status,
+        nameMatchScore: result.nameMatchScore,
+        error: result.error
+      };
+
+    } catch (error) {
+      console.error("Error submitting NIN verification:", error);
       throw error;
     }
   }

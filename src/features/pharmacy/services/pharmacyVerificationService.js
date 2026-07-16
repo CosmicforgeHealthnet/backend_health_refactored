@@ -52,6 +52,11 @@ class PharmacyVerificationService {
   async approvePharmacy(pharmacyId, adminId, reviewNotes) {
     // Check if all documents are verified
     const documents = await pharmacyDocumentRepo.findByPharmacyId(pharmacyId);
+
+    if (documents.length === 0) {
+      throw new Error("Cannot approve — no documents have been submitted, so none must be verified");
+    }
+
     const unverifiedDocs = documents.filter(doc => !doc.isVerified);
 
     if (unverifiedDocs.length > 0) {
@@ -62,8 +67,7 @@ class PharmacyVerificationService {
     await pharmacyProfileRepo.updateVerificationStatus(pharmacyId, "approved");
 
     // Update verification request
-    const verificationRequests = await pharmacyVerificationRepo.findByPharmacyId(pharmacyId);
-    const activeRequest = verificationRequests.find(req => req.status === "in_progress");
+    const activeRequest = await this._findActiveRequest(pharmacyId);
 
     if (activeRequest) {
       await pharmacyVerificationRepo.updateStatus(
@@ -129,8 +133,7 @@ class PharmacyVerificationService {
     await pharmacyProfileRepo.updateVerificationStatus(pharmacyId, "rejected");
 
     // Update verification request
-    const verificationRequests = await pharmacyVerificationRepo.findByPharmacyId(pharmacyId);
-    const activeRequest = verificationRequests.find(req => req.status === "in_progress");
+    const activeRequest = await this._findActiveRequest(pharmacyId);
 
     if (activeRequest) {
       await pharmacyVerificationRepo.updateStatus(
@@ -145,12 +148,14 @@ class PharmacyVerificationService {
   }
 
   async requestMoreDocuments(pharmacyId, adminId, requiredDocuments) {
-    // Update pharmacy status
-    await pharmacyProfileRepo.updateVerificationStatus(pharmacyId, "requires_changes");
+    // Update pharmacy status.
+    // NOTE: PharmacyProfile.verificationStatus uses "documents_required", not
+    // "requires_changes" — that string only exists on PharmacyVerificationRequest.status.
+    // Passing "requires_changes" here throws a Postgres invalid-enum-value error.
+    await pharmacyProfileRepo.updateVerificationStatus(pharmacyId, "documents_required");
 
     // Update verification request
-    const verificationRequests = await pharmacyVerificationRepo.findByPharmacyId(pharmacyId);
-    const activeRequest = verificationRequests.find(req => req.status === "in_progress");
+    const activeRequest = await this._findActiveRequest(pharmacyId);
 
     if (activeRequest) {
       await pharmacyVerificationRepo.updateStatus(
@@ -162,6 +167,20 @@ class PharmacyVerificationService {
     }
 
     return { success: true, message: "Additional documents requested" };
+  }
+
+  /**
+   * Find the verification request an outstanding review action should apply to.
+   * Matches any non-terminal status ("pending", "in_progress", "requires_changes")
+   * rather than just "in_progress" — admins can approve/reject/request-documents
+   * directly without first calling the separate /assign endpoint, and a pharmacy
+   * that already got sent back for "requires_changes" still needs a later
+   * approve/reject call to land on that same request instead of leaving it
+   * stuck at "requires_changes" forever once documents are fixed up.
+   */
+  async _findActiveRequest(pharmacyId) {
+    const verificationRequests = await pharmacyVerificationRepo.findByPharmacyId(pharmacyId);
+    return verificationRequests.find(req => !["approved", "rejected"].includes(req.status));
   }
 }
 

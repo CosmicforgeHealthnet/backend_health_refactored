@@ -155,6 +155,22 @@ module.exports = {
     idfy: 'https://api.idfy.com/doctor-verification'
   },
 
+  // NIN (National Identification Number) verification — Nigeria-specific identity check.
+  // NIMC has no public API; verification goes through a licensed third-party provider.
+  NIN_VERIFICATION: {
+    ENABLED_COUNTRIES: ['NG'],
+    PROVIDER: process.env.NIN_VERIFICATION_PROVIDER || 'dojah',
+    NIN_LENGTH: 11, // Nigerian NIN is always an 11-digit number
+    NAME_MATCH_THRESHOLD: 80, // >= this similarity score (0-100) is considered a match
+    PROVIDERS: {
+      dojah: {
+        endpoint: process.env.DOJAH_API_ENDPOINT || 'https://api.dojah.io/api/v1/kyc/nin',
+        appIdEnv: 'DOJAH_APP_ID',
+        secretKeyEnv: 'DOJAH_SECRET_KEY'
+      }
+    }
+  },
+
   // Confidence score weightings
   CONFIDENCE_WEIGHTINGS: {
     BASE_TIER_SCORE: {

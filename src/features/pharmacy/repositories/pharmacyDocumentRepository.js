@@ -41,6 +41,10 @@ class PharmacyDocumentRepository {
       verifiedBy,
       verificationNotes: notes,
       verifiedAt: new Date(),
+      // Keep submissionStatus in sync — it previously stayed frozen at its
+      // "pending" default forever, even after a document was verified/rejected,
+      // since only isVerified was ever written.
+      submissionStatus: isVerified ? "approved" : "rejected",
       updatedAt: new Date()
     });
   }

@@ -338,6 +338,14 @@ class AdminVerificationController {
           confidenceScore: verificationRequest.confidenceScore,
           apiVerificationData: verificationRequest.apiVerificationData,
           apiErrors: verificationRequest.apiErrors,
+          ninVerification: {
+            status: verificationRequest.ninVerificationStatus,
+            last4: verificationRequest.ninLast4,
+            nameMatchScore: verificationRequest.ninNameMatchScore,
+            verifiedData: verificationRequest.ninVerifiedData,
+            submittedAt: verificationRequest.ninSubmittedAt,
+            verifiedAt: verificationRequest.ninVerifiedAt
+          },
           submittedAt: verificationRequest.submittedAt,
           approvedAt: verificationRequest.approvedAt,
           rejectedAt: verificationRequest.rejectedAt,

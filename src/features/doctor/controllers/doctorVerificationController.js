@@ -452,6 +452,46 @@ class DoctorVerificationController {
   }
 
   /**
+   * Submit NIN (National Identification Number) for identity verification
+   * POST /api/doctor/verification/:id/nin
+   * Nigeria-specific — confirms the doctor's registered name matches the
+   * government record for the NIN they submit.
+   */
+  async submitNin(req, res, next) {
+    try {
+      const { id: verificationRequestId } = req.params;
+      const { nin } = req.body;
+      const doctorId = req.user.sub;
+
+      if (!nin || !/^\d{11}$/.test(nin)) {
+        return res.status(400).json({
+          error: 'A valid 11-digit NIN is required'
+        });
+      }
+
+      const result = await doctorVerificationService.submitNinVerification(
+        verificationRequestId,
+        doctorId,
+        nin
+      );
+
+      res.json({
+        message: 'NIN submitted for verification',
+        ninVerificationStatus: result.status,
+        nameMatchScore: result.nameMatchScore,
+        error: result.error
+      });
+
+    } catch (error) {
+      console.error('Error submitting NIN:', error);
+      if (error.message) {
+        return res.status(400).json({ error: error.message });
+      }
+      next(error);
+    }
+  }
+
+  /**
    * Get verification status
    * GET /api/doctor/verification/status
    */
@@ -487,6 +527,11 @@ class DoctorVerificationController {
           rejectedAt: currentVerification.rejectedAt,
           rejectionReason: currentVerification.rejectionReason,
           expiresAt: currentVerification.expiresAt,
+          ninVerification: currentVerification.countryCode === 'NG' ? {
+            status: currentVerification.ninVerificationStatus,
+            nameMatchScore: currentVerification.ninNameMatchScore,
+            submittedAt: currentVerification.ninSubmittedAt
+          } : null,
           documents: currentVerification.documents?.map(doc => ({
             id: doc.id,
             documentType: doc.documentType,
