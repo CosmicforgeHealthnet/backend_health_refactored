@@ -610,6 +610,78 @@ app.use("/search", search);
 // app.use("/prescriptions", prescription);
 // app.use('/referrals', authenticateJWT, referralRoutes);
 
+// ─── Internal lab payment bridge ────────────────────────────────────────────
+// Called by Lab_Backend with x-lab-payment-secret; no user auth required.
+app.post("/api/internal/lab/payments/initiate", async (req, res) => {
+  try {
+    const bridgeSecret = req.headers["x-lab-payment-secret"];
+    if (!bridgeSecret || bridgeSecret !== process.env.LAB_PAYMENT_BRIDGE_SECRET) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+    const axios = require("axios");
+    const {
+      orderId, orderNumber, patientEmail, patientName, patientPhone,
+      amount, currency = "NGN", provider = "paystack",
+      description, returnUrl,
+    } = req.body;
+    if (!orderId || !amount || !patientEmail) {
+      return res.status(400).json({ success: false, message: "orderId, amount and patientEmail are required" });
+    }
+    const prov = String(provider).toLowerCase();
+    const reference = `LAB-${orderId.slice(0, 8)}-${Date.now()}`;
+    let paymentUrl, providerReference;
+
+    if (prov === "paystack") {
+      const r = await axios.post(
+        "https://api.paystack.co/transaction/initialize",
+        {
+          email: patientEmail,
+          amount: Math.round(amount * 100),
+          currency: currency.toUpperCase(),
+          reference,
+          callback_url: returnUrl,
+          metadata: { lab_order_id: orderId, order_number: orderNumber, service_type: "lab_test" },
+        },
+        { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`, "Content-Type": "application/json" } }
+      );
+      if (!r.data?.status) {
+        return res.status(502).json({ success: false, message: r.data?.message || "Paystack initialization failed" });
+      }
+      paymentUrl = r.data.data.authorization_url;
+      providerReference = reference;
+    } else if (prov === "flutterwave") {
+      const r = await axios.post(
+        "https://api.flutterwave.com/v3/payments",
+        {
+          tx_ref: reference,
+          amount,
+          currency: currency.toUpperCase(),
+          redirect_url: returnUrl,
+          customer: { email: patientEmail, name: patientName || patientEmail, phonenumber: patientPhone },
+          customizations: { title: "CosmicForge Lab", description: description || `Lab order ${orderNumber}` },
+          meta: { lab_order_id: orderId, order_number: orderNumber },
+        },
+        { headers: { Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`, "Content-Type": "application/json" } }
+      );
+      if (r.data?.status !== "success") {
+        return res.status(502).json({ success: false, message: r.data?.message || "Flutterwave initialization failed" });
+      }
+      paymentUrl = r.data.data.link;
+      providerReference = reference;
+    } else {
+      return res.status(400).json({ success: false, message: "Invalid provider. Use paystack or flutterwave." });
+    }
+
+    return res.json({
+      success: true,
+      data: { paymentUrl, provider: prov, paymentReference: providerReference, mainTransactionId: reference, status: "pending" },
+    });
+  } catch (err) {
+    console.error("[lab-payment-bridge]", err?.response?.data || err.message);
+    return res.status(500).json({ success: false, message: err?.response?.data?.message || err.message || "Payment initialization failed" });
+  }
+});
+
 // Static file serving for uploads
 const uploadsPath = process.env.UPLOAD_DIRECTORY
     ? path.join(process.env.UPLOAD_DIRECTORY, 'images')
