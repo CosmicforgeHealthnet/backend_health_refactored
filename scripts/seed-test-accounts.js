@@ -37,16 +37,28 @@ async function run() {
   try {
     await client.query('BEGIN');
 
-    // ── Remove any existing test accounts (CASCADE cleans related rows) ──
-    await client.query(`
-      DELETE FROM users
-      WHERE email IN (
-        'cf.patient@cosmicforge.dev',
-        'cf.doctor@cosmicforge.dev',
-        'cf.pharmacy@cosmicforge.dev',
-        'cf.vendor@cosmicforge.dev'
-      )
-    `);
+    // ── Remove any existing test accounts (delete FK dependents first) ──
+    const testEmails = [
+      'cf.patient@cosmicforge.dev',
+      'cf.doctor@cosmicforge.dev',
+      'cf.pharmacy@cosmicforge.dev',
+      'cf.vendor@cosmicforge.dev',
+    ];
+
+    // Fetch IDs first so we can target child rows
+    const { rows: existingUsers } = await client.query(
+      `SELECT id FROM users WHERE email = ANY($1)`,
+      [testEmails]
+    );
+    const existingIds = existingUsers.map(r => r.id);
+
+    if (existingIds.length > 0) {
+      // Delete rows in tables that reference users but lack CASCADE
+      await client.query(`DELETE FROM vendor_orders WHERE "patientId" = ANY($1)`, [existingIds]);
+      await client.query(`DELETE FROM carts         WHERE "patientId" = ANY($1)`, [existingIds]);
+      // Now safe to delete users (remaining FKs have CASCADE)
+      await client.query(`DELETE FROM users WHERE id = ANY($1)`, [existingIds]);
+    }
     console.log('🗑️  Cleared existing test accounts');
 
     // ════════════════════════════════════════════

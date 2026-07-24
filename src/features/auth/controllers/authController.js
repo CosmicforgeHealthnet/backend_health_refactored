@@ -241,10 +241,12 @@ exports.login = async (req, res, next) => {
             });
         }
 
-        // 2) Lookup user
-        const user = role
-            ? await userRepo.findByEmailAndRole(email, role)
-            : await userRepo.findByEmail(email);
+        // 2) Lookup user — try role-specific first; if nothing found (e.g. patient
+        //    app sends role:'patient' but this account is role:'doctor'), fall back
+        //    to email-only so doctors aren't blocked by the frontend's default role.
+        //    Same-email multi-role users are safe: the role-specific hit wins first.
+        let user = role ? await userRepo.findByEmailAndRole(email, role) : null;
+        if (!user) user = await userRepo.findByEmail(email);
         if (!user) {
             return res
                 .status(401)
@@ -282,9 +284,10 @@ exports.login = async (req, res, next) => {
             }
         }
 
-        // 6) Issue tokens (original logic)
+        // 6) Issue tokens — pass the actual role from DB so authService
+        //    lookup uses the correct role, not whatever the frontend sent.
         const tokens = await authService.login(
-            { email, password, role },
+            { email, password, role: user.role },
             deviceFingerprint,
             userAgent
         );
