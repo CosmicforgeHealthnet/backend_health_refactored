@@ -22,24 +22,6 @@ class CartController {
         }
     }
 
-    async updateItemQuantity(req, res, next) {
-        try {
-            const { quantity } = req.body;
-            if (!quantity) return res.status(400).json({ success: false, error: "quantity is required" });
-
-            const cart = await cartService.updateItemQuantity(
-                req.user.id,
-                req.params.cartId,
-                req.params.itemId,
-                Number(quantity)
-            );
-            return res.status(200).json({ success: true, message: "Item updated", cart: formatCart(cart) });
-        } catch (error) {
-            if (isClientError(error)) return res.status(400).json({ success: false, error: error.message });
-            next(error);
-        }
-    }
-
     async removeItem(req, res, next) {
         try {
             const cart = await cartService.removeItem(req.user.id, req.params.cartId, req.params.itemId);

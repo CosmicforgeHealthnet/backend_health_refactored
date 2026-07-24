@@ -25,8 +25,7 @@ router.post("/:cartId/submit", cartController.submitCart);
 router.post("/:cartId/pay",    cartController.initiatePayment);
 router.post("/:cartId/cancel", cartController.cancelCart);
 
-// Update / remove item
-router.put("/:cartId/items/:itemId",    cartController.updateItemQuantity);
+// Remove item
 router.delete("/:cartId/items/:itemId", cartController.removeItem);
 
 module.exports = router;

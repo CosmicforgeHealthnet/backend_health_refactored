@@ -35,12 +35,10 @@ class CartService {
             cart = await cartRepository.saveCart({ patientId, vendorId, status: "draft" });
         }
 
-        // If product already in cart — increase quantity
+        // If product already in cart — set the quantity to whatever was passed
         const existingItem = await cartRepository.findItemByCartAndProduct(cart.id, productId);
         if (existingItem) {
-            await cartRepository.updateItem(existingItem.id, {
-                quantity: existingItem.quantity + quantity,
-            });
+            await cartRepository.updateItem(existingItem.id, { quantity });
         } else {
             await cartRepository.saveItem({
                 cartId:        cart.id,
@@ -52,20 +50,6 @@ class CartService {
         }
 
         return cartRepository.findByIdAndPatient(cart.id, patientId);
-    }
-
-    async updateItemQuantity(patientId, cartId, itemId, quantity) {
-        if (quantity < 1) throw new Error("Quantity must be at least 1");
-
-        const cart = await cartRepository.findByIdAndPatient(cartId, patientId);
-        if (!cart) throw new Error("Cart not found");
-        if (cart.status !== "draft") throw new Error("Cannot modify a submitted cart");
-
-        const item = await cartRepository.findItemById(itemId);
-        if (!item || item.cart.id !== cartId) throw new Error("Cart item not found");
-
-        await cartRepository.updateItem(itemId, { quantity });
-        return cartRepository.findByIdAndPatient(cartId, patientId);
     }
 
     async removeItem(patientId, cartId, itemId) {
