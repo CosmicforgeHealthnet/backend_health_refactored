@@ -1,7 +1,7 @@
 /**
  * Seed script: creates 4 fully-verified test accounts
  *   - cf.patient@cosmicforge.dev    / TestPatient@123   (gold_elite)
- *   - cf.doctor@cosmicforge.dev     / TestDoctor@123    (professional, verified)
+ *   - cf.doctor@cosmicforge.dev     / TestDoctor@123    (gold_elite, verified)
  *   - cf.pharmacy@cosmicforge.dev   / TestPharmacy@123  (gold_elite, verified)
  *   - cf.vendor@cosmicforge.dev     / TestVendor@123    (free, approved)
  *
@@ -84,7 +84,11 @@ async function run() {
     console.log(`👤 Patient created: ${patientUser.id}`);
 
     // ════════════════════════════════════════════
-    //  DOCTOR — professional tier, fully verified
+    //  DOCTOR — gold_elite tier, fully verified
+    //  (users.tier is a display/badge tier — kept in line with patient/pharmacy.
+    //   The doctor's actual commission-rate plan lives in subscriptions.tier
+    //   below and stays 'professional', since 'gold_elite' isn't a valid
+    //   doctor subscription plan — that vocabulary is patient-plan only.)
     // ════════════════════════════════════════════
     const { rows: [doctorUser] } = await client.query(`
       INSERT INTO users (
@@ -95,7 +99,7 @@ async function run() {
         'Dr. Test Doctor',
         'cf.doctor@cosmicforge.dev',
         $1,
-        'doctor', 'doctor_active', 'professional', 'local',
+        'doctor', 'doctor_active', 'gold_elite', 'local',
         '+2348000000002', 'General Practice', false, false, 0, 0, 0
       ) RETURNING id
     `, [HASHES.doctor]);
@@ -296,7 +300,7 @@ async function run() {
     console.log('DOCTOR');
     console.log('  email   : cf.doctor@cosmicforge.dev');
     console.log('  password: TestDoctor@123');
-    console.log('  tier    : professional (fully verified)');
+    console.log('  tier    : gold_elite (fully verified)');
     console.log('');
     console.log('PHARMACY');
     console.log('  email   : cf.pharmacy@cosmicforge.dev');
