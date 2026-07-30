@@ -37,13 +37,18 @@ The cart is a **direct shop flow** — no back and forth with the pharmacy/vendo
 3. Patient adds items to cart
    POST /cart/vendor/:vendorId/items  →  cart is created automatically (status: draft)
 
-4. Patient can add more items, update quantities, or remove items
-   PUT  /cart/:cartId/items/:itemId   →  change quantity
-   DELETE /cart/:cartId/items/:itemId →  remove item
+4. Patient can add more items or remove items while shopping
+   DELETE /cart/:cartId/items/:itemId →  remove item now, while still shopping
+
+   Quantity is NOT updated live — manage it client-side (local/component state)
+   as the patient adjusts +/- on a cart line, and only send the final values
+   in the submit request below. This avoids a round trip per quantity change.
 
 5. Patient submits the cart
    POST /cart/:cartId/submit  →  cart auto-confirms at product prices (status: confirmed)
    Optionally pass prescriptionId if the patient has a prescription for these drugs
+   Optionally pass items: [{ productId, quantity }] with the final quantities —
+   quantity 0 (or negative) removes that item entirely
 
 6. Patient pays
    POST /cart/:cartId/pay  →  returns a redirectUrl from Paystack or Flutterwave
@@ -1019,20 +1024,10 @@ Use `vendorId` from `GET /pharmacy/:id` → `pharmacy.vendorId`
 
 ---
 
-### Update Item Quantity
-```
-PUT /cart/:cartId/items/:itemId
-```
-**Request:**
-```json
-{ "quantity": 3 }
-```
-**Response `200`:**
-```json
-{ "success": true, "message": "Item updated", "cart": { "...full cart object..." } }
-```
-
----
+> **No live "update quantity" endpoint, by design.** Manage quantity client-side
+> (local/component state) as the patient adjusts a cart line, and send the final
+> quantities in the `items` field of the submit request — don't call the API on
+> every +/- click.
 
 ### Remove Item
 ```
@@ -1127,10 +1122,14 @@ Cart must be in `draft` status. Prices are auto-confirmed at product listed pric
 ```json
 {
   "patientNote": "Please pack carefully",
-  "prescriptionId": "prescription-uuid"
+  "prescriptionId": "prescription-uuid",
+  "items": [
+    { "productId": "product-uuid", "quantity": 3 },
+    { "productId": "product-uuid-2", "quantity": 0 }
+  ]
 }
 ```
-Both fields are optional. Pass `prescriptionId` only if the patient is buying against a prescription — it will be auto-marked as `completed` once payment succeeds.
+All three fields are optional. Pass `prescriptionId` only if the patient is buying against a prescription — it will be auto-marked as `completed` once payment succeeds. Pass `items` only if the patient changed any quantities since adding items to the cart — each `productId` must already be in this cart, and `quantity: 0` (or negative) removes that item entirely. Omit `items` if nothing changed and the cart should submit as-is.
 
 **Response `200`:**
 ```json

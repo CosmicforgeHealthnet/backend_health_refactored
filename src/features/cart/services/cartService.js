@@ -79,10 +79,31 @@ class CartService {
         });
     }
 
-    async submitCart(patientId, cartId, patientNote, prescriptionId) {
-        const cart = await cartRepository.findByIdAndPatient(cartId, patientId);
+    async submitCart(patientId, cartId, patientNote, prescriptionId, items) {
+        let cart = await cartRepository.findByIdAndPatient(cartId, patientId);
         if (!cart) throw new Error("Cart not found");
         if (cart.status !== "draft") throw new Error("Cart has already been submitted");
+
+        // Final quantities are managed client-side while shopping and only sent
+        // here, at checkout — this avoids a round trip per quantity change.
+        // items: [{ productId, quantity }] — quantity <= 0 removes the item.
+        if (Array.isArray(items) && items.length > 0) {
+            for (const { productId, quantity } of items) {
+                if (!productId || !Number.isInteger(quantity)) {
+                    throw new Error("Each item must have a valid productId and an integer quantity");
+                }
+                const existingItem = await cartRepository.findItemByCartAndProduct(cartId, productId);
+                if (!existingItem) throw new Error(`Product ${productId} is not in this cart`);
+
+                if (quantity <= 0) {
+                    await cartRepository.deleteItem(existingItem.id);
+                } else {
+                    await cartRepository.updateItem(existingItem.id, { quantity });
+                }
+            }
+            cart = await cartRepository.findByIdAndPatient(cartId, patientId);
+        }
+
         if (!cart.items || cart.items.length === 0) throw new Error("Cannot submit an empty cart");
 
         // Auto-confirm at listed product prices — no vendor confirmation step needed

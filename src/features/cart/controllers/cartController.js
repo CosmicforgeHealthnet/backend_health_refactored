@@ -81,8 +81,8 @@ class CartController {
 
     async submitCart(req, res, next) {
         try {
-            const { patientNote, prescriptionId } = req.body;
-            const cart = await cartService.submitCart(req.user.id, req.params.cartId, patientNote, prescriptionId);
+            const { patientNote, prescriptionId, items } = req.body;
+            const cart = await cartService.submitCart(req.user.id, req.params.cartId, patientNote, prescriptionId, items);
             return res.status(200).json({
                 success: true,
                 message: "Cart submitted to vendor. They will review and confirm pricing.",
@@ -151,7 +151,9 @@ function isClientError(error) {
         error.message.includes("must be") ||
         error.message.includes("empty") ||
         error.message.includes("does not belong") ||
-        error.message.includes("positive")
+        error.message.includes("positive") ||
+        error.message.includes("must have a valid") ||
+        error.message.includes("is not in this cart")
     );
 }
 
