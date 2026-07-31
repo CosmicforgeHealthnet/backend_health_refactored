@@ -15,6 +15,7 @@ const magicLinkService = require("../services/magicLinkService");
 const googleAuthService = require("../services/googleAuthService");
 const refreshTokenService = require("../services/refreshTokenService");
 const mfaService = require('../services/mfa/mfaService');
+const verificationRequestRepo = require("../../doctor/repositories/verificationRequestRepository");
 
 // ADD THIS: Country restriction for patients only
 const ALLOWED_PATIENT_COUNTRIES = ['Nigeria', 'Ghana', 'Kenya', 'South Africa'];
@@ -775,6 +776,14 @@ exports.getCurrentUser = async (req, res, next) => {
 
         console.log("✅ [DEBUG] User found. departmentSpecialty in DB:", user.departmentSpecialty);
 
+        // Doctors who registered but never called /verification/submit have zero
+        // verification_requests rows — invisible to the admin queue. Flag it so
+        // the frontend can route them back to the submit step every session.
+        let verificationRequired = false;
+        if (user.role === "doctor") {
+            verificationRequired = !(await verificationRequestRepo.existsForDoctor(user.id));
+        }
+
         // Sanitize response (remove sensitive fields)
         const sanitizedUser = {
             id: user.id,
@@ -790,6 +799,7 @@ exports.getCurrentUser = async (req, res, next) => {
             mfaEnabled: user.mfaEnabled,
             country: user.country,
             isOnline: user.isOnline,
+            verificationRequired,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
         };

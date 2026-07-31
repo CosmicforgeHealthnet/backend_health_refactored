@@ -46,7 +46,8 @@
       "Bash(curl -s \"https://dev-api.cosmicforge-healthnet.com/health\" -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" --max-time 20)",
       "Bash(curl -s -X POST https://dev-api.cosmicforge-healthnet.com/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"cf.doctor@cosmicforge.dev\",\"password\":\"TestDoctor@123\",\"deviceFingerprint\":\"debug-check-final\",\"role\":\"doctor\"}' -w '\\\\nHTTP_STATUS:%{http_code}\\\\n' --max-time 20)",
       "Bash(node --check src/features/cart/services/cartService.js)",
-      "Bash(node --check src/features/cart/controllers/cartController.js)"
+      "Bash(node --check src/features/cart/controllers/cartController.js)",
+      "Bash(node -e ' *)"
     ]
   }
 }

@@ -713,6 +713,35 @@ class AdminVerificationController {
   }
 
   /**
+   * List doctors who registered but never called /verification/submit.
+   * These have zero verification_requests rows, so they never show up in
+   * getVerificationQueue (which only ever lists existing requests) — this is
+   * the only way to find them short of querying the database directly.
+   * GET /api/admin/verification/stuck-doctors
+   */
+  async getStuckDoctors(req, res, next) {
+    try {
+      const doctors = await userRepository.findDoctorsWithNoVerificationRequest();
+
+      res.json({
+        success: true,
+        count: doctors.length,
+        doctors: doctors.map(d => ({
+          id: d.id,
+          fullName: d.fullName,
+          email: d.email,
+          phoneNumber: d.phoneNumber,
+          status: d.status,
+          createdAt: d.createdAt,
+          daysSinceSignup: Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+        })),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Get verification statistics
    * GET /api/admin/verification/statistics
    */

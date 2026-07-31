@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const userRepository = require('../repositories/userRepository');
 const refreshTokenService = require('./refreshTokenService');
 const { getSetting } = require('../../../shared/services/adminSettingsService');
+const verificationRequestRepo = require('../../doctor/repositories/verificationRequestRepository');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -114,6 +115,13 @@ class AuthService {
         }
 
         // 5) Prepare JWT payload
+        // Doctors who never called /verification/submit have zero verification_requests
+        // rows and are invisible to the admin queue — flag it so the frontend can
+        // route them back to the submit step.
+        const verificationRequired = user.role === 'doctor'
+            ? !(await verificationRequestRepo.existsForDoctor(user.id))
+            : false;
+
         const payload = {
             sub: user.id,
             email: user.email,
@@ -127,6 +135,7 @@ class AuthService {
             departmentSpecialty: user.departmentSpecialty,
             bannerUrl: user.bannerUrl,
             mfaEnabled: user.mfaEnabled,
+            verificationRequired,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         };

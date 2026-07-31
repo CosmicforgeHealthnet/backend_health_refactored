@@ -9,6 +9,7 @@ const {
   rejectVerification,
   getVerificationDetails,
   getVerificationStatistics,
+  getStuckDoctors,             // NEW
   getVerificationDocuments,    // NEW
   viewDocument,                // NEW
   downloadDocument,            // NEW
@@ -21,6 +22,7 @@ router.use(authorizeRoles('admin', 'super_admin'));
 
 // Admin verification management routes
 router.get("/queue", getVerificationQueue);
+router.get("/stuck-doctors", getStuckDoctors);
 router.get("/statistics", getVerificationStatistics);
 router.get("/:id", getVerificationDetails);
 router.post("/:id/assign", assignVerification);

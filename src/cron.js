@@ -2,6 +2,8 @@ const cron = require('node-cron');
 const runSubscriptionExpiryJob = require("./features/subscriptions/jobs/subscription-expiryJob");
 const doctorVerificationService = require('./features/doctor/services/doctorVerificationService');
 const verificationRequestRepo = require('./features/doctor/repositories/verificationRequestRepository');
+const userRepository = require('./features/auth/repositories/userRepository');
+const { sendVerificationNotSubmittedReminderEmail } = require('./shared/services/email/emailHelpers');
 const PaymentJobScheduler = require('./features/payments/jobs/paymentJobScheduler');
 const { trackJob } = require('./features/admin-ops/services/jobTracker');
 const { recordHealthCheck } = require('./features/admin-ops/services/adminOpsService');
@@ -88,6 +90,14 @@ class VerificationReminderJob {
         );
       }
       console.log(`✅ Sent ${expiringTokens.length} payment method expiry notifications`);
+    }));
+
+    // Remind doctors who registered but never submitted verification details —
+    // weekly on Mondays at 9 AM. These have zero verification_requests rows and
+    // are invisible to the admin queue, so nothing else nudges them.
+    cron.schedule('0 9 * * 1', trackJob('verification-never-submitted-reminders', 'cron', async () => {
+      console.log('📧 Running never-submitted verification reminder job...');
+      await VerificationReminderJob.sendNeverSubmittedReminders();
     }));
 
     // Fix incomplete doctor setups weekly on Sundays at 2 AM
@@ -183,6 +193,20 @@ class VerificationReminderJob {
       await doctorVerificationService.sendVerificationExpiryWarning(request.id, 7);
     }
     console.log(`⚠️ Sent ${expiringRequests.length} expiry warnings`);
+  }
+
+  static async sendNeverSubmittedReminders() {
+    const stuckDoctors = await userRepository.findDoctorsWithNoVerificationRequest();
+    let sent = 0;
+    for (const doctor of stuckDoctors) {
+      try {
+        await sendVerificationNotSubmittedReminderEmail(doctor);
+        sent++;
+      } catch (error) {
+        console.error(`Failed to send never-submitted reminder to ${doctor.email}:`, error.message);
+      }
+    }
+    console.log(`📤 Sent ${sent}/${stuckDoctors.length} "verification not submitted" reminders`);
   }
 }
 
