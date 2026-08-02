@@ -53,14 +53,24 @@ class UserRepository {
    * view and the reminder cron job.
    */
   async findDoctorsWithNoVerificationRequest() {
-    return this.repo
+    const rows = await this.repo
       .createQueryBuilder("user")
       .leftJoin("verification_requests", "vr", 'vr."doctorId" = user.id')
+      .leftJoin("doctor_profiles", "dp", 'dp."userId" = user.id')
       .where("user.role = :role", { role: USER_ROLES.DOCTOR })
       .andWhere("user.status = :status", { status: "pending_doctor_verification" })
       .andWhere("vr.id IS NULL")
       .orderBy("user.createdAt", "ASC")
-      .getMany();
+      .select(["user", "dp.id"])
+      .getRawAndEntities();
+
+    // getRawAndEntities keeps dp.id alongside each entity row so we can tell
+    // apart doctors who never came back at all vs. those who at least
+    // completed their profile but still never submitted verification.
+    return rows.entities.map((user, i) => ({
+      ...user,
+      hasProfile: !!rows.raw[i].dp_id,
+    }));
   }
 
   // New method to fetch all doctors

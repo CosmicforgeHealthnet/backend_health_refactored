@@ -732,6 +732,7 @@ class AdminVerificationController {
           email: d.email,
           phoneNumber: d.phoneNumber,
           status: d.status,
+          profileStatus: d.hasProfile ? "complete" : "incomplete",
           createdAt: d.createdAt,
           daysSinceSignup: Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
         })),
