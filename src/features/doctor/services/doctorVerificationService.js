@@ -1,4 +1,5 @@
 // src/services/doctorVerificationService.js
+const AppDataSource = require("../../../config/database");
 const verificationRequestRepo = require("../repositories/verificationRequestRepository");
 const verificationDocumentRepo = require("../repositories/verificationDocumentRepository");
 const verificationStatusHistoryRepo = require("../repositories/verificationStatusHistoryRepository");
@@ -508,26 +509,46 @@ class DoctorVerificationService {
 
       console.log(`🔄 Starting enhanced approval for doctor ${verificationRequest.doctorId}`);
 
-      // Continue with existing approval logic...
-      await verificationRequestRepo.updateStatus(
-        verificationRequestId,
-        VerificationStatus.APPROVED,
-        approvedBy,
-        approvalNotes
-      );
+      // Mark the request approved, log the change, and activate the doctor's
+      // account together, in one DB transaction. These three used to run as
+      // separate non-transactional writes — if anything failed partway through,
+      // the request could end up "approved" while the account stayed pending
+      // forever (confirmed happening to a real doctor). Wrapping them together
+      // means they either all land or none do.
+      await AppDataSource.transaction(async (manager) => {
+        const approvedAt = new Date();
 
-      // Log status change
-      await verificationStatusHistoryRepo.logStatusChange(
-        verificationRequestId,
-        verificationRequest.status,
-        VerificationStatus.APPROVED,
-        approvedBy,
-        approvalNotes || "Verification approved",
-        null,
-        approvedBy === 'system'
-      );
+        const vrUpdate = {
+          status: VerificationStatus.APPROVED,
+          updatedBy: approvedBy,
+          updatedAt: approvedAt,
+          approvedAt,
+        };
+        if (approvalNotes) vrUpdate.reviewNotes = approvalNotes;
 
-      // Update doctor profile and user status
+        await manager.getRepository("VerificationRequest").update(verificationRequestId, vrUpdate);
+
+        await manager.getRepository("VerificationStatusHistory").insert({
+          verificationRequestId,
+          fromStatus: verificationRequest.status,
+          toStatus: VerificationStatus.APPROVED,
+          changedBy: approvedBy,
+          changeReason: approvalNotes || "Verification approved",
+          automatedChange: approvedBy === 'system',
+        });
+
+        await manager.getRepository("User").update(verificationRequest.doctorId, {
+          status: 'doctor_active',
+        });
+      });
+
+      // Everything below is best-effort enhancement, not core approval state —
+      // a doctor is fully "approved and active" as of the transaction above
+      // regardless of what happens next. Failures here are non-fatal and
+      // self-healing: the weekly doctor-setup-check job and the admin
+      // fix-setup tools already cover gaps in wallet/subscription/profile sync.
+
+      // Update doctor profile verification metadata
       await this.updateDoctorProfileVerificationStatus(
         verificationRequest.doctorId,
         "verified",
@@ -535,13 +556,6 @@ class DoctorVerificationService {
         verificationRequest.tier,
         verificationRequest.confidenceScore
       );
-
-      // Update user status to doctor_active
-      const user = await userRepository.findById(verificationRequest.doctorId);
-      if (user) {
-        user.status = 'doctor_active';
-        await userRepository.save(user);
-      }
 
       // NEW: Sync verified license data and calculate years of experience
       await this.syncVerifiedDataToProfile(verificationRequest);

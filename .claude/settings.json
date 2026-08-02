@@ -19,7 +19,10 @@
       "Bash(node src/features/pharmacy/docs/buildRoleSwaggerBundles.js)",
       "Bash(NODE_ENV=development node -e ' *)",
       "Bash(node --check src/features/auth/repositories/userRepository.js)",
-      "Bash(node --check src/features/auth/controllers/adminVerificationController.js)"
+      "Bash(node --check src/features/auth/controllers/adminVerificationController.js)",
+      "WebSearch",
+      "Bash(node -e ' *)",
+      "Bash(node --check src/features/doctor/services/doctorVerificationService.js)"
     ],
     "additionalDirectories": [
       "C:\\Users\\TriumphAdeniran\\AppData\\Local\\Temp"
