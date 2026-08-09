@@ -22,7 +22,23 @@
       "Bash(node --check src/features/auth/controllers/adminVerificationController.js)",
       "WebSearch",
       "Bash(node -e ' *)",
-      "Bash(node --check src/features/doctor/services/doctorVerificationService.js)"
+      "Bash(node --check src/features/doctor/services/doctorVerificationService.js)",
+      "Bash(npm run *)",
+      "Bash(sleep 10; cat /tmp/server_boot.log | tail -n 150)",
+      "Read(//tmp/**)",
+      "Bash(curl -s http://localhost:5000/api/community/communities/discover -H \"Authorization: Bearer bad\" -w \"\\\\nSTATUS:%{http_code}\\\\n\")",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Id 6816 -Force)",
+      "Bash(sleep 8; tail -n 20 /tmp/server_boot3.log)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force })",
+      "Bash(npx jest *)",
+      "Bash(npm test *)",
+      "Bash(node -e \"console.log\\('checking connectivity...'\\)\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('src/features/community/docs/community-swagger.json','utf8'\\)\\); console.log\\('valid JSON'\\)\")",
+      "Bash(curl -s http://localhost:5000/)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\('swagger.community =', j.swagger.community\\)}\\)\")",
+      "Bash(curl -s http://localhost:5000/community-docs/ -o /dev/null -w \"GET /community-docs/ -> %{http_code}\\\\n\")",
+      "Bash(curl -s http://localhost:5000/community-docs/swagger-ui-init.js -o /dev/null -w \"swagger-ui-init.js -> %{http_code}\\\\n\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\TriumphAdeniran\\AppData\\Local\\Temp"

@@ -23,7 +23,8 @@
     "build:sos-swagger": "node src/features/firstaid/content/sosSwaggerMerger.js",
     "build:all-swagger": "npm run build:main-swagger && npm run build:pharmacy-swagger",
     "build": "npm run build:all-swagger && npm run build:lab-swagger && npm run build:sos-swagger",
-    "test": "jest",
+    "test": "jest --testPathIgnorePatterns=\"/node_modules/|/tests/integration/\"",
+    "test:integration": "cross-env NODE_ENV=development jest tests/integration",
     "start:cron": "node src/cron.js",
     "lint": "eslint .",
     "lint:case": "node scripts/check-case.js",
@@ -96,6 +97,7 @@
     "lint-staged": "^16.3.0",
     "madge": "^8.0.0",
     "nodemon": "^3.1.10",
+    "supertest": "^7.2.2",
     "yaml": "^2.8.0"
   },
   "engines": {

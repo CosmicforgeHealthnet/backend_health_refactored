@@ -70,7 +70,9 @@ function errorHandler(err, req, res, next) {
     }
 
     // Default to 500 Internal Server Error
-    const statusCode = err.status || err.statusCode || 500;
+    // err.status can be a non-numeric string (e.g. AppError sets 'fail'/'error'), so
+    // prefer numeric statusCode and only fall back to err.status when it's a number.
+    const statusCode = err.statusCode || (typeof err.status === 'number' ? err.status : null) || 500;
     const message = process.env.NODE_ENV === 'production'
         ? 'Internal Server Error'
         : err.message || 'Something went wrong';
