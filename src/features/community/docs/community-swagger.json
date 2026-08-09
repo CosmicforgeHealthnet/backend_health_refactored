@@ -2,16 +2,18 @@
   "openapi": "3.0.3",
   "info": {
     "title": "CosmicForge Community Health System API",
-    "description": "Phase 1: Communities, Membership & Roles, and Posts. A social/networking layer shared across doctors, patients, pharmacies, and labs — same architecture for every role, only role/permissions differ. Community roles (owner/admin/moderator/member/pending_member) are per-community and separate from the platform-wide user role.",
-    "version": "1.0.0"
+    "description": "Phase 1: Communities, Membership & Roles, and Posts. Phase 2: Events. Phase 3: Group Chat (each community automatically gets a group chat room via the existing shared /api/chat API — see the `chatRoomId` field on the Community schema, documented in full at /api-docs). Phase 4: Voice Spaces — audio-only, Twitter/X-Spaces-style rooms backed by real Zoom meetings (any active member can start one; one live space per community at a time). Host controls (mute/remove) happen in Zoom's own in-meeting UI via the host's start link, not via this API — the account backing this integration is on a plan without per-participant REST moderation. A social/networking layer shared across doctors, patients, pharmacies, and labs — same architecture for every role, only role/permissions differ. Community roles (owner/admin/moderator/member/pending_member) are per-community and separate from the platform-wide user role.",
+    "version": "1.3.0"
   },
   "servers": [
     { "url": "http://localhost:3000/api", "description": "Development server" }
   ],
   "tags": [
     { "name": "Communities",  "description": "Create, discover, update, and delete communities" },
-    { "name": "Membership",   "description": "Join/leave, join-requests, member list, remove/promote members" },
-    { "name": "Posts",        "description": "Community posts, likes, comments, saves" }
+    { "name": "Membership",   "description": "Join/leave, join-requests, member list, remove/promote members. Also keeps each member's group-chat access in sync (see Community.chatRoomId)." },
+    { "name": "Posts",        "description": "Community posts, likes, comments, saves" },
+    { "name": "Events",       "description": "Community events: create/publish/update/delete, RSVP, reminders, attendee list" },
+    { "name": "Voice Spaces", "description": "Audio-only live rooms: start/end, join/leave, request-to-speak, promote/demote, attendee list" }
   ],
   "paths": {
     "/community/communities": {
@@ -427,6 +429,301 @@
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
+    },
+    "/community/communities/{communityId}/events": {
+      "post": {
+        "tags": ["Events"],
+        "summary": "Create an event",
+        "description": "Owner/admin only. Set status to \"published\" to publish immediately (notifies all other active members) or omit/\"draft\" to save as a draft first.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityIdForPosts" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateEventRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Event created", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "event": { "$ref": "#/components/schemas/CommunityEvent" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "get": {
+        "tags": ["Events"],
+        "summary": "List a community's events",
+        "description": "Draft events are only included for owners/admins; everyone else sees published events only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityIdForPosts" },
+          { "in": "query", "name": "page", "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Events", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "events": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityEvent" } }, "total": { "type": "integer" }, "page": { "type": "integer" }, "limit": { "type": "integer" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/events/{id}": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "Get an event by ID",
+        "description": "Draft events are only visible to the community's owner/admin. Response includes isGoing/remindMe flags for the caller.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "description": "Event detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "event": { "$ref": "#/components/schemas/CommunityEvent" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Events"],
+        "summary": "Update an event",
+        "description": "Owner/admin only. Setting status from draft to published notifies all other active community members.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateEventRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Event updated", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "event": { "$ref": "#/components/schemas/CommunityEvent" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Events"],
+        "summary": "Delete an event",
+        "description": "Owner/admin only. Soft delete.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "description": "Event deleted" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/events/{id}/rsvp": {
+      "post": {
+        "tags": ["Events"],
+        "summary": "RSVP to an event",
+        "description": "Confirms attendance (\"going\"). The event must be published. Reminder defaults to on.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "description": "RSVP confirmed" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Events"],
+        "summary": "Cancel an RSVP",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "description": "RSVP cancelled" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/events/{id}/reminder": {
+      "put": {
+        "tags": ["Events"],
+        "summary": "Set/unset the reminder for an event",
+        "description": "Requires an existing RSVP — RSVP first, then toggle the reminder. A background job notifies remindMe=true attendees roughly 1 hour before the event starts.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["remindMe"], "properties": { "remindMe": { "type": "boolean" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Reminder preference updated" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/community/events/{id}/attendees": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "List attendees",
+        "description": "Owner/admin only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "description": "Attendees", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "attendees": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityEventRSVP" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/communities/{communityId}/voice-spaces": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Start a voice space",
+        "description": "Any active member can start one. Creates a real, instant Zoom meeting. Fails with 400 if the community already has a live space (only one at a time). The response includes joinUrl (share with anyone) and hostStartUrl (host only — never shown to other viewers).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityIdForPosts" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["title"], "properties": { "title": { "type": "string", "example": "Community AMA" } } } } }
+        },
+        "responses": {
+          "201": { "description": "Voice space started", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "space": { "$ref": "#/components/schemas/CommunityVoiceSpace" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "get": {
+        "tags": ["Voice Spaces"],
+        "summary": "List past (ended) voice spaces",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityIdForPosts" },
+          { "in": "query", "name": "page", "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Past voice spaces", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "spaces": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityVoiceSpace" } }, "total": { "type": "integer" }, "page": { "type": "integer" }, "limit": { "type": "integer" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/communities/{communityId}/voice-spaces/active": {
+      "get": {
+        "tags": ["Voice Spaces"],
+        "summary": "Get the community's current live voice space, if any",
+        "description": "Returns 404 if no space is currently live.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityIdForPosts" }],
+        "responses": {
+          "200": { "description": "The live space", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "space": { "$ref": "#/components/schemas/CommunityVoiceSpace" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "description": "No live voice space in this community" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}": {
+      "get": {
+        "tags": ["Voice Spaces"],
+        "summary": "Get a voice space by ID",
+        "description": "Response includes myRole and handRaised for the caller (null/false if not an active participant).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Voice space detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "space": { "$ref": "#/components/schemas/CommunityVoiceSpace" } } } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/end": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "End a voice space",
+        "description": "Host only. Really ends the underlying Zoom meeting, marks the space ended, and disconnects all participants.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Voice space ended" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/join": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Join a voice space",
+        "description": "Joins as a listener. Requires active community membership and a live space.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Joined", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "space": { "$ref": "#/components/schemas/CommunityVoiceSpace" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/leave": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Leave a voice space",
+        "description": "If the host leaves, the space automatically ends for everyone.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Left the voice space" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/request-to-speak": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Raise your hand to request to speak",
+        "description": "Listeners only. Notifies the host.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Request sent" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/participants": {
+      "get": {
+        "tags": ["Voice Spaces"],
+        "summary": "List host, speakers, and listeners",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Participants", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "participants": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityVoiceSpaceParticipant" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/participants/{userId}/promote": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Promote a listener to speaker",
+        "description": "Host only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/VoiceSpaceId" },
+          { "in": "path", "name": "userId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Promoted to speaker" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/participants/{userId}/demote": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Move a speaker back to listener (\"Remove speakers\")",
+        "description": "Host only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/VoiceSpaceId" },
+          { "in": "path", "name": "userId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Moved back to listener" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
     }
   },
   "components": {
@@ -437,7 +734,9 @@
       "CommunityId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
       "CommunityIdForPosts": { "in": "path", "name": "communityId", "required": true, "schema": { "type": "string", "format": "uuid" } },
       "JoinRequestId": { "in": "path", "name": "requestId", "required": true, "schema": { "type": "string", "format": "uuid" } },
-      "PostId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
+      "PostId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "EventId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "VoiceSpaceId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } }
     },
     "responses": {
       "BadRequest":   { "description": "Bad request",              "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
@@ -506,6 +805,7 @@
           "memberCount":  { "type": "integer" },
           "postCount":    { "type": "integer" },
           "isActive":     { "type": "boolean" },
+          "chatRoomId":   { "type": "string", "format": "uuid", "nullable": true, "description": "The community's group chat room. Every active member is automatically kept in sync as a participant of this room (owner/admin → chat role 'admin', moderator → 'moderator', member → 'member'). Use the existing generic chat API (documented at /api-docs) to send/read messages: POST/GET /api/chat/rooms/{chatRoomId}/messages, GET /api/chat/rooms/{chatRoomId}, plus the socket.io events (join_room, send_message, typing_start, etc.). There are no community-specific chat endpoints — community membership alone grants access." },
           "createdBy":    { "$ref": "#/components/schemas/PublicUser" },
           "createdAt":    { "type": "string", "format": "date-time" },
           "updatedAt":    { "type": "string", "format": "date-time" },
@@ -608,6 +908,81 @@
           "author":    { "$ref": "#/components/schemas/PublicUser" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateEventRequest": {
+        "type": "object",
+        "required": ["title", "startAt"],
+        "properties": {
+          "title":         { "type": "string", "example": "Monthly Diabetes Support Meetup" },
+          "description":   { "type": "string" },
+          "startAt":       { "type": "string", "format": "date-time", "example": "2026-09-15T18:00:00Z" },
+          "coverImageUrl": { "type": "string" },
+          "status":        { "type": "string", "enum": ["draft", "published"], "default": "draft", "description": "Omit or \"draft\" to save as a draft; \"published\" to publish immediately." }
+        }
+      },
+      "UpdateEventRequest": {
+        "type": "object",
+        "properties": {
+          "title":         { "type": "string" },
+          "description":   { "type": "string" },
+          "startAt":       { "type": "string", "format": "date-time" },
+          "coverImageUrl": { "type": "string" },
+          "status":        { "type": "string", "enum": ["draft", "published"], "description": "Set to \"published\" to publish a draft event." }
+        }
+      },
+      "CommunityEvent": {
+        "type": "object",
+        "properties": {
+          "id":            { "type": "string", "format": "uuid" },
+          "title":         { "type": "string" },
+          "description":   { "type": "string", "nullable": true },
+          "startAt":       { "type": "string", "format": "date-time" },
+          "coverImageUrl": { "type": "string", "nullable": true },
+          "status":        { "type": "string", "enum": ["draft", "published"] },
+          "guestCount":    { "type": "integer" },
+          "createdBy":     { "$ref": "#/components/schemas/PublicUser" },
+          "isGoing":       { "type": "boolean", "description": "Present on GET /events/{id} — whether the caller has RSVP'd" },
+          "remindMe":      { "type": "boolean", "description": "Present on GET /events/{id} — the caller's reminder preference (false if not RSVP'd)" },
+          "createdAt":     { "type": "string", "format": "date-time" },
+          "updatedAt":     { "type": "string", "format": "date-time" }
+        }
+      },
+      "CommunityEventRSVP": {
+        "type": "object",
+        "properties": {
+          "id":        { "type": "string", "format": "uuid" },
+          "remindMe":  { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "user":      { "$ref": "#/components/schemas/PublicUser" }
+        }
+      },
+      "CommunityVoiceSpace": {
+        "type": "object",
+        "properties": {
+          "id":            { "type": "string", "format": "uuid" },
+          "title":         { "type": "string" },
+          "status":        { "type": "string", "enum": ["live", "ended"] },
+          "provider":      { "type": "string", "example": "zoom" },
+          "joinUrl":       { "type": "string", "nullable": true, "description": "Share with anyone who wants to join the audio room" },
+          "hostStartUrl":  { "type": "string", "nullable": true, "description": "HOST ONLY — launches the Zoom meeting with full moderator control (mute/remove). Omitted entirely for every other viewer." },
+          "host":          { "$ref": "#/components/schemas/PublicUser" },
+          "endedAt":       { "type": "string", "format": "date-time", "nullable": true },
+          "myRole":        { "type": "string", "nullable": true, "enum": ["host", "speaker", "listener", null], "description": "Present on GET /voice-spaces/{id} and /active" },
+          "handRaised":    { "type": "boolean", "description": "Present on GET /voice-spaces/{id} and /active" },
+          "createdAt":     { "type": "string", "format": "date-time" },
+          "updatedAt":     { "type": "string", "format": "date-time" }
+        }
+      },
+      "CommunityVoiceSpaceParticipant": {
+        "type": "object",
+        "properties": {
+          "id":         { "type": "string", "format": "uuid" },
+          "role":       { "type": "string", "enum": ["host", "speaker", "listener"] },
+          "handRaised": { "type": "boolean" },
+          "isActive":   { "type": "boolean" },
+          "joinedAt":   { "type": "string", "format": "date-time", "nullable": true },
+          "user":       { "$ref": "#/components/schemas/PublicUser" }
         }
       }
     }

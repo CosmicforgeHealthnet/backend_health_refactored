@@ -3,18 +3,26 @@
 
 jest.mock('../../repositories/communityRepository');
 jest.mock('../../repositories/communityMemberRepository');
+jest.mock('../../../chat/services/chatRoomService');
 
 const communityRepository = require('../../repositories/communityRepository');
 const communityMemberRepository = require('../../repositories/communityMemberRepository');
+const ChatService = require('../../../chat/services/chatRoomService');
 
 // communityService exports a singleton instance
 const communityService = require('../communityService');
+
+// The service constructs `new ChatService()` once at module-load time, so the mock
+// instance must be captured now — jest.clearAllMocks() in beforeEach wipes
+// ChatService.mock.instances, and no further instances are ever created.
+const mockChatService = ChatService.mock.instances[0];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const USER_ID = 'aaaa0000-0000-0000-0000-000000000001';
 const OTHER_USER_ID = 'bbbb0000-0000-0000-0000-000000000002';
 const COMMUNITY_ID = 'cccc0000-0000-0000-0000-000000000003';
+const CHAT_ROOM_ID = 'eeee0000-0000-0000-0000-000000000005';
 
 function makeCommunity(overrides = {}) {
   return {
@@ -52,6 +60,8 @@ beforeEach(() => {
 
   communityMemberRepository.create = jest.fn().mockResolvedValue(makeMembership({ role: 'owner' }));
   communityMemberRepository.findByUserAndCommunity = jest.fn().mockResolvedValue(null);
+
+  mockChatService.createRoom.mockReset().mockResolvedValue({ id: CHAT_ROOM_ID });
 });
 
 // ============================================================================
@@ -85,6 +95,16 @@ describe('createCommunity', () => {
       })
     );
     expect(result.slug).toBe('diabetes-support-circle');
+  });
+
+  test('creates a group chat room for the community and links it back', async () => {
+    await communityService.createCommunity(USER_ID, { name: 'Diabetes Support Circle', privacyType: 'private' });
+
+    expect(mockChatService.createRoom).toHaveBeenCalledWith(
+      USER_ID,
+      expect.objectContaining({ type: 'group', isPrivate: true })
+    );
+    expect(communityRepository.update).toHaveBeenCalledWith(COMMUNITY_ID, { chatRoom: { id: CHAT_ROOM_ID } });
   });
 
   test('appends a random suffix to the slug when the base slug is already taken', async () => {

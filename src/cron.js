@@ -11,6 +11,7 @@ const AppDataSource = require('./config/database');
 const { getSetting } = require('./shared/services/adminSettingsService');
 const { runConsultationMaintenance } = require('./features/appointments/jobs/consultationMaintenanceJob');
 const { runPrescriptionMaintenance } = require('./features/pharmacy/jobs/prescriptionMaintenanceJob');
+const { runEventReminderJob } = require('./features/community/jobs/eventReminderJob');
 
 class VerificationReminderJob {
 
@@ -157,6 +158,11 @@ class VerificationReminderJob {
       } finally {
         await qr.release();
       }
+    }));
+
+    // Community event reminders — every 5 minutes, notifies RSVPs whose event starts within the hour
+    cron.schedule("*/5 * * * *", trackJob('community-event-reminders', 'cron', async () => {
+      await runEventReminderJob();
     }));
 
     // Health check snapshot every 15 minutes

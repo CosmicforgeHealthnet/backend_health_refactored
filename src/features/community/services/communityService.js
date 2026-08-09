@@ -1,7 +1,14 @@
 const crypto = require("crypto");
 const communityRepository = require("../repositories/communityRepository");
 const communityMemberRepository = require("../repositories/communityMemberRepository");
+const ChatService = require("../../chat/services/chatRoomService");
 const { NotFoundError } = require("../../../shared/utils/errors");
+
+const chatService = new ChatService();
+
+// Every community's group chat room is unbounded — chat's own default (50) is
+// tuned for direct/appointment rooms, not a whole community's membership.
+const COMMUNITY_CHAT_ROOM_MAX_PARTICIPANTS = 100000;
 
 function slugify(name) {
     return name
@@ -44,7 +51,16 @@ class CommunityService {
             joinedAt: new Date(),
         });
 
-        return community;
+        const chatRoom = await chatService.createRoom(userId, {
+            name: `${community.name} Chat`,
+            description: `Group chat for ${community.name}`,
+            type: "group",
+            isPrivate: community.privacyType === "private",
+            maxParticipants: COMMUNITY_CHAT_ROOM_MAX_PARTICIPANTS,
+        });
+        await communityRepository.update(community.id, { chatRoom: { id: chatRoom.id } });
+
+        return communityRepository.findById(community.id);
     }
 
     async getCommunityById(communityId, viewerUserId) {

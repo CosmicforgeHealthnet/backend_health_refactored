@@ -5,11 +5,13 @@ jest.mock('../../repositories/communityRepository');
 jest.mock('../../repositories/communityMemberRepository');
 jest.mock('../../repositories/communityJoinRequestRepository');
 jest.mock('../../../notifications/services/notificationService');
+jest.mock('../../../chat/services/chatRoomService');
 
 const communityRepository = require('../../repositories/communityRepository');
 const communityMemberRepository = require('../../repositories/communityMemberRepository');
 const communityJoinRequestRepository = require('../../repositories/communityJoinRequestRepository');
 const NotificationService = require('../../../notifications/services/notificationService');
+const ChatService = require('../../../chat/services/chatRoomService');
 
 // communityMembershipService exports a singleton instance
 const communityMembershipService = require('../communityMembershipService');
@@ -20,9 +22,17 @@ const USER_ID = 'aaaa0000-0000-0000-0000-000000000001';
 const OWNER_ID = 'bbbb0000-0000-0000-0000-000000000002';
 const COMMUNITY_ID = 'cccc0000-0000-0000-0000-000000000003';
 const REQUEST_ID = 'dddd0000-0000-0000-0000-000000000004';
+const CHAT_ROOM_ID = 'ffff0000-0000-0000-0000-000000000006';
 
 function makeCommunity(overrides = {}) {
-  return { id: COMMUNITY_ID, name: 'Diabetes Support Circle', privacyType: 'public', isActive: true, ...overrides };
+  return {
+    id: COMMUNITY_ID,
+    name: 'Diabetes Support Circle',
+    privacyType: 'public',
+    isActive: true,
+    chatRoom: { id: CHAT_ROOM_ID },
+    ...overrides,
+  };
 }
 
 function makeMembership(overrides = {}) {
@@ -39,10 +49,11 @@ function makeJoinRequest(overrides = {}) {
   };
 }
 
-// The service constructs `new NotificationService()` once at module-load time, so the
-// mock instance must be captured now — jest.clearAllMocks() in beforeEach wipes
-// NotificationService.mock.instances, and no further instances are ever created.
+// The service constructs `new NotificationService()`/`new ChatService()` once at
+// module-load time, so the mock instances must be captured now — jest.clearAllMocks()
+// in beforeEach wipes .mock.instances, and no further instances are ever created.
 const mockNotify = NotificationService.mock.instances[0].createNotification;
+const mockChatService = ChatService.mock.instances[0];
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -66,6 +77,10 @@ beforeEach(() => {
   communityJoinRequestRepository.updateStatus = jest.fn().mockResolvedValue(undefined);
 
   mockNotify.mockReset().mockResolvedValue(null);
+
+  mockChatService.addParticipant.mockReset().mockResolvedValue(undefined);
+  mockChatService.removeParticipant.mockReset().mockResolvedValue(undefined);
+  mockChatService.updateParticipantRole.mockReset().mockResolvedValue(undefined);
 });
 
 // ============================================================================
@@ -109,6 +124,16 @@ describe('joinCommunity', () => {
       expect.objectContaining({ community: { id: COMMUNITY_ID }, user: { id: USER_ID }, role: 'member', isActive: true })
     );
     expect(communityRepository.incrementMemberCount).toHaveBeenCalledWith(COMMUNITY_ID);
+  });
+
+  test('grants chat access on join', async () => {
+    await communityMembershipService.joinCommunity(COMMUNITY_ID, USER_ID);
+    expect(mockChatService.addParticipant).toHaveBeenCalledWith(CHAT_ROOM_ID, USER_ID, 'member', USER_ID);
+  });
+
+  test('a hiccup syncing chat access does not fail the join', async () => {
+    mockChatService.addParticipant.mockRejectedValue(new Error('Room is full'));
+    await expect(communityMembershipService.joinCommunity(COMMUNITY_ID, USER_ID)).resolves.toBeDefined();
   });
 });
 
@@ -163,6 +188,7 @@ describe('requestToJoin', () => {
       expect.any(Object),
       'community'
     );
+    expect(mockChatService.addParticipant).not.toHaveBeenCalled();
   });
 
   test('does not create a duplicate member row when a leftover inactive membership already exists', async () => {
@@ -210,6 +236,7 @@ describe('approveJoinRequest', () => {
       expect.any(Object),
       'community'
     );
+    expect(mockChatService.addParticipant).toHaveBeenCalledWith(CHAT_ROOM_ID, USER_ID, 'member', USER_ID);
   });
 
   test('creates a member row when none exists yet', async () => {
@@ -248,6 +275,7 @@ describe('rejectJoinRequest', () => {
       expect.any(Object),
       'community'
     );
+    expect(mockChatService.addParticipant).not.toHaveBeenCalled();
   });
 
   test('does not delete an already-active member row', async () => {
@@ -277,13 +305,14 @@ describe('leaveCommunity', () => {
     );
   });
 
-  test('deactivates the membership and decrements the member count', async () => {
+  test('deactivates the membership, decrements the member count, and revokes chat access', async () => {
     communityMemberRepository.findActiveByUserAndCommunity = jest.fn().mockResolvedValue(makeMembership({ id: 'm1', role: 'member' }));
 
     await communityMembershipService.leaveCommunity(COMMUNITY_ID, USER_ID);
 
     expect(communityMemberRepository.deactivate).toHaveBeenCalledWith('m1');
     expect(communityRepository.decrementMemberCount).toHaveBeenCalledWith(COMMUNITY_ID);
+    expect(mockChatService.removeParticipant).toHaveBeenCalledWith(CHAT_ROOM_ID, USER_ID);
   });
 });
 
@@ -307,13 +336,14 @@ describe('removeMember', () => {
     );
   });
 
-  test('deactivates the target and decrements the member count', async () => {
+  test('deactivates the target, decrements the member count, and revokes chat access', async () => {
     communityMemberRepository.findActiveByUserAndCommunity = jest.fn().mockResolvedValue(makeMembership({ id: 'm2', role: 'member' }));
 
     await communityMembershipService.removeMember(COMMUNITY_ID, USER_ID, OWNER_ID);
 
     expect(communityMemberRepository.deactivate).toHaveBeenCalledWith('m2');
     expect(communityRepository.decrementMemberCount).toHaveBeenCalledWith(COMMUNITY_ID);
+    expect(mockChatService.removeParticipant).toHaveBeenCalledWith(CHAT_ROOM_ID, USER_ID);
   });
 });
 
@@ -343,11 +373,12 @@ describe('promoteMember', () => {
     );
   });
 
-  test('updates the role for a valid target member', async () => {
+  test('updates the role for a valid target member and syncs their chat role', async () => {
     communityMemberRepository.findActiveByUserAndCommunity = jest.fn().mockResolvedValue(makeMembership({ id: 'm3', role: 'member' }));
 
     await communityMembershipService.promoteMember(COMMUNITY_ID, USER_ID, 'moderator', OWNER_ID);
 
     expect(communityMemberRepository.updateRole).toHaveBeenCalledWith('m3', 'moderator');
+    expect(mockChatService.updateParticipantRole).toHaveBeenCalledWith(CHAT_ROOM_ID, USER_ID, 'moderator', OWNER_ID);
   });
 });

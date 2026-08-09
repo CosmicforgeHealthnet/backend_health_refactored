@@ -4,7 +4,7 @@ const joinRequestRepo = () => AppDataSource.getRepository("CommunityJoinRequest"
 
 const communityJoinRequestRepository = {
     findById(id) {
-        return joinRequestRepo().findOne({ where: { id }, relations: ["community", "user"] });
+        return joinRequestRepo().findOne({ where: { id }, relations: ["community", "community.chatRoom", "user"] });
     },
 
     findPendingByUserAndCommunity(userId, communityId) {

@@ -10,7 +10,8 @@ function publicUser(user) {
 
 function formatCommunity(community) {
     if (!community) return undefined;
-    return { ...community, createdBy: publicUser(community.createdBy) };
+    const { chatRoom, ...rest } = community;
+    return { ...rest, createdBy: publicUser(community.createdBy), chatRoomId: chatRoom?.id ?? null };
 }
 
 function formatMember(member) {
@@ -46,4 +47,52 @@ function formatSave(save) {
     return { ...save, post: formatPost(save.post) };
 }
 
-module.exports = { publicUser, formatCommunity, formatMember, formatPost, formatComment, formatJoinRequest, formatSave };
+function formatEvent(event) {
+    if (!event) return undefined;
+    return { ...event, createdBy: publicUser(event.createdBy) };
+}
+
+function formatRsvp(rsvp) {
+    if (!rsvp) return undefined;
+    return {
+        id: rsvp.id,
+        remindMe: rsvp.remindMe,
+        createdAt: rsvp.createdAt,
+        user: publicUser(rsvp.user),
+    };
+}
+
+// hostStartUrl gives full Zoom host/moderator control over the meeting — it must
+// only ever reach the space's actual host, never any other viewer.
+function formatVoiceSpace(space, viewerId) {
+    if (!space) return undefined;
+    const isHost = !!viewerId && space.host?.id === viewerId;
+    const { hostStartUrl, ...rest } = space;
+    return { ...rest, host: publicUser(space.host), hostStartUrl: isHost ? hostStartUrl : undefined };
+}
+
+function formatVoiceSpaceParticipant(participant) {
+    if (!participant) return undefined;
+    return {
+        id: participant.id,
+        role: participant.role,
+        handRaised: participant.handRaised,
+        isActive: participant.isActive,
+        joinedAt: participant.joinedAt,
+        user: publicUser(participant.user),
+    };
+}
+
+module.exports = {
+    publicUser,
+    formatCommunity,
+    formatMember,
+    formatPost,
+    formatComment,
+    formatJoinRequest,
+    formatSave,
+    formatEvent,
+    formatRsvp,
+    formatVoiceSpace,
+    formatVoiceSpaceParticipant,
+};

@@ -4,6 +4,10 @@ const { requireCommunityRole } = require("../middlewares/communityRoleMiddleware
 const communityController = require("../controllers/communityController");
 const communityMembershipController = require("../controllers/communityMembershipController");
 const communityPostController = require("../controllers/communityPostController");
+const communityEventController = require("../controllers/communityEventController");
+const communityEventRSVPController = require("../controllers/communityEventRSVPController");
+const communityVoiceSpaceController = require("../controllers/communityVoiceSpaceController");
+const communityVoiceSpaceParticipantController = require("../controllers/communityVoiceSpaceParticipantController");
 
 router.use(authenticateJWT);
 
@@ -49,5 +53,49 @@ router.get("/posts/:id/comments", communityPostController.listComments);
 router.delete("/posts/:id/comments/:commentId", communityPostController.deleteComment);
 router.post("/posts/:id/save", communityPostController.save);
 router.delete("/posts/:id/save", communityPostController.unsave);
+
+// ─── Events ─────────────────────────────────────────────────────────────────────
+router.post(
+    "/communities/:communityId/events",
+    requireCommunityRole("owner", "admin"),
+    communityEventController.create
+);
+router.get(
+    "/communities/:communityId/events",
+    requireCommunityRole("owner", "admin", "moderator", "member"),
+    communityEventController.listByCommunity
+);
+router.get("/events/:id", communityEventController.getById);
+router.put("/events/:id", communityEventController.update);
+router.delete("/events/:id", communityEventController.delete);
+router.get("/events/:id/attendees", communityEventRSVPController.listAttendees);
+router.post("/events/:id/rsvp", communityEventRSVPController.rsvp);
+router.delete("/events/:id/rsvp", communityEventRSVPController.cancelRsvp);
+router.put("/events/:id/reminder", communityEventRSVPController.setReminder);
+
+// ─── Voice Spaces ───────────────────────────────────────────────────────────────
+router.post(
+    "/communities/:communityId/voice-spaces",
+    requireCommunityRole("owner", "admin", "moderator", "member"),
+    communityVoiceSpaceController.start
+);
+router.get(
+    "/communities/:communityId/voice-spaces/active",
+    requireCommunityRole("owner", "admin", "moderator", "member"),
+    communityVoiceSpaceController.getActive
+);
+router.get(
+    "/communities/:communityId/voice-spaces",
+    requireCommunityRole("owner", "admin", "moderator", "member"),
+    communityVoiceSpaceController.listHistory
+);
+router.get("/voice-spaces/:id", communityVoiceSpaceController.getById);
+router.post("/voice-spaces/:id/end", communityVoiceSpaceController.end);
+router.post("/voice-spaces/:id/join", communityVoiceSpaceParticipantController.join);
+router.post("/voice-spaces/:id/leave", communityVoiceSpaceParticipantController.leave);
+router.post("/voice-spaces/:id/request-to-speak", communityVoiceSpaceParticipantController.requestToSpeak);
+router.get("/voice-spaces/:id/participants", communityVoiceSpaceParticipantController.listParticipants);
+router.post("/voice-spaces/:id/participants/:userId/promote", communityVoiceSpaceParticipantController.promote);
+router.post("/voice-spaces/:id/participants/:userId/demote", communityVoiceSpaceParticipantController.demote);
 
 module.exports = router;

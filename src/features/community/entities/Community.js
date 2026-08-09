@@ -44,6 +44,13 @@ module.exports = new EntitySchema({
             target: "CommunityJoinRequest",
             inverseSide: "community",
         },
+        chatRoom: {
+            type: "one-to-one",
+            target: "ChatRoom",
+            joinColumn: { name: "chatRoomId" },
+            onDelete: "SET NULL",
+            nullable: true,
+        },
     },
     uniques: [
         { name: "UQ_COMMUNITY_SLUG", columns: ["slug"] },
@@ -53,5 +60,6 @@ module.exports = new EntitySchema({
         { name: "IDX_COMMUNITY_CATEGORY", columns: ["category"] },
         { name: "IDX_COMMUNITY_CREATED_BY", columns: ["createdBy"] },
         { name: "IDX_COMMUNITY_IS_ACTIVE", columns: ["isActive"] },
+        { name: "IDX_COMMUNITY_CHAT_ROOM", columns: ["chatRoom"] },
     ],
 });

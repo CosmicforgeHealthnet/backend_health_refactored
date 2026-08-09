@@ -5,11 +5,11 @@ const memberRepo    = () => AppDataSource.getRepository("CommunityMember");
 
 const communityRepository = {
     findById(id) {
-        return communityRepo().findOne({ where: { id }, relations: ["createdBy"] });
+        return communityRepo().findOne({ where: { id }, relations: ["createdBy", "chatRoom"] });
     },
 
     findByIdWithDeleted(id) {
-        return communityRepo().findOne({ where: { id }, relations: ["createdBy"], withDeleted: true });
+        return communityRepo().findOne({ where: { id }, relations: ["createdBy", "chatRoom"], withDeleted: true });
     },
 
     findBySlug(slug) {
@@ -45,7 +45,7 @@ const communityRepository = {
     async findByUser(userId) {
         const memberships = await memberRepo().find({
             where: { user: { id: userId }, isActive: true },
-            relations: ["community"],
+            relations: ["community", "community.chatRoom"],
         });
         return memberships
             .filter((m) => m.community && m.community.isActive)
