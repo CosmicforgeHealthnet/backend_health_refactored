@@ -83,6 +83,20 @@ function formatVoiceSpaceParticipant(participant) {
     };
 }
 
+function formatInvite(invite) {
+    if (!invite) return undefined;
+    return {
+        id:          invite.id,
+        status:      invite.status,
+        message:     invite.message,
+        respondedAt: invite.respondedAt,
+        createdAt:   invite.createdAt,
+        community:   invite.community ? { id: invite.community.id, name: invite.community.name } : undefined,
+        invitedBy:   publicUser(invite.invitedBy),
+        invitee:     publicUser(invite.invitee),
+    };
+}
+
 module.exports = {
     publicUser,
     formatCommunity,
@@ -95,4 +109,5 @@ module.exports = {
     formatRsvp,
     formatVoiceSpace,
     formatVoiceSpaceParticipant,
+    formatInvite,
 };

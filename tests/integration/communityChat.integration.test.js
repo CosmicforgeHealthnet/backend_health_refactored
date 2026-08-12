@@ -97,6 +97,7 @@ afterAll(async () => {
 describe('community chat access sync', () => {
   let communityId;
   let chatRoomId;
+  let messageId;
 
   test('creating a community auto-creates a group chat room and makes the owner a chat admin', async () => {
     const res = await request(app)
@@ -185,13 +186,28 @@ describe('community chat access sync', () => {
     expect(await getParticipant(publicChatRoomId, memberId)).toMatchObject({ isActive: false });
   });
 
-  test('the group chat room is usable through the existing chat REST API', async () => {
+  test('the room details endpoint returns the room and its active participants', async () => {
+    const res = await request(app).get(`/api/chat/rooms/${chatRoomId}`).set(authHeader(ownerToken));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ id: chatRoomId, type: 'group' });
+    expect(res.body.data.participants.some((p) => p.user.id === ownerId)).toBe(true);
+  });
+
+  test('a non-participant cannot fetch room details', async () => {
+    const res = await request(app).get(`/api/chat/rooms/${chatRoomId}`).set(authHeader(requesterToken));
+    expect(res.status).toBe(403);
+  });
+
+  test('sending and reading a message', async () => {
     const sendRes = await request(app)
       .post(`/api/chat/rooms/${chatRoomId}/messages`)
       .set(authHeader(ownerToken))
       .send({ content: 'Welcome to the community chat!' });
 
     expect(sendRes.status).toBe(201);
+    expect(sendRes.body.data.content).toBe('Welcome to the community chat!');
+    messageId = sendRes.body.data.id;
 
     const historyRes = await request(app)
       .get(`/api/chat/rooms/${chatRoomId}/messages`)
@@ -199,5 +215,46 @@ describe('community chat access sync', () => {
 
     expect(historyRes.status).toBe(200);
     expect(JSON.stringify(historyRes.body)).toContain('Welcome to the community chat!');
+  });
+
+  test('editing the message (author only)', async () => {
+    const res = await request(app)
+      .put(`/api/chat/messages/${messageId}`)
+      .set(authHeader(ownerToken))
+      .send({ content: 'Welcome to the community chat (edited)!' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.content).toBe('Welcome to the community chat (edited)!');
+  });
+
+  test('searching for the edited message', async () => {
+    const res = await request(app)
+      .get(`/api/chat/rooms/${chatRoomId}/search`)
+      .query({ q: 'edited' })
+      .set(authHeader(ownerToken));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.some((m) => m.id === messageId)).toBe(true);
+  });
+
+  test('marking the room as read', async () => {
+    const res = await request(app)
+      .post(`/api/chat/rooms/${chatRoomId}/read`)
+      .set(authHeader(ownerToken))
+      .send({ messageId });
+
+    expect(res.status).toBe(200);
+  });
+
+  test('deleting the message (soft delete)', async () => {
+    const res = await request(app).delete(`/api/chat/messages/${messageId}`).set(authHeader(ownerToken));
+    expect(res.status).toBe(200);
+
+    // findByRoomId filters `deleted = false` by default, so a soft-deleted
+    // message correctly disappears from the default history view.
+    const historyRes = await request(app)
+      .get(`/api/chat/rooms/${chatRoomId}/messages`)
+      .set(authHeader(ownerToken));
+    expect(historyRes.body.data.find((m) => m.id === messageId)).toBeUndefined();
   });
 });

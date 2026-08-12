@@ -8,6 +8,7 @@ const communityEventController = require("../controllers/communityEventControlle
 const communityEventRSVPController = require("../controllers/communityEventRSVPController");
 const communityVoiceSpaceController = require("../controllers/communityVoiceSpaceController");
 const communityVoiceSpaceParticipantController = require("../controllers/communityVoiceSpaceParticipantController");
+const communityInviteController = require("../controllers/communityInviteController");
 
 router.use(authenticateJWT);
 
@@ -15,6 +16,7 @@ router.use(authenticateJWT);
 router.get("/communities/mine", communityController.getMyCommunities);
 router.get("/communities/discover", communityController.discover);
 router.get("/posts/saved", communityPostController.listMySavedPosts);
+router.get("/invites/mine", communityInviteController.listMine);
 
 // ─── Communities ──────────────────────────────────────────────────────────────
 router.post("/communities", communityController.create);
@@ -97,5 +99,30 @@ router.post("/voice-spaces/:id/request-to-speak", communityVoiceSpaceParticipant
 router.get("/voice-spaces/:id/participants", communityVoiceSpaceParticipantController.listParticipants);
 router.post("/voice-spaces/:id/participants/:userId/promote", communityVoiceSpaceParticipantController.promote);
 router.post("/voice-spaces/:id/participants/:userId/demote", communityVoiceSpaceParticipantController.demote);
+
+// ─── Invites ────────────────────────────────────────────────────────────────────
+router.get(
+    "/communities/:id/invites/search-users",
+    requireCommunityRole("owner", "admin", "moderator", "member"),
+    communityInviteController.searchUsers
+);
+router.get(
+    "/communities/:id/invites/suggested-users",
+    requireCommunityRole("owner", "admin", "moderator", "member"),
+    communityInviteController.suggestedUsers
+);
+router.post(
+    "/communities/:id/invites",
+    requireCommunityRole("owner", "admin", "moderator", "member"),
+    communityInviteController.send
+);
+router.get(
+    "/communities/:id/invites",
+    requireCommunityRole("owner", "admin"),
+    communityInviteController.listSent
+);
+router.delete("/communities/:id/invites/:inviteId", communityInviteController.cancel);
+router.post("/invites/:id/accept", communityInviteController.accept);
+router.post("/invites/:id/decline", communityInviteController.decline);
 
 module.exports = router;

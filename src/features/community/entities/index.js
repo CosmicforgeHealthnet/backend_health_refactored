@@ -10,6 +10,7 @@ const CommunityEvent                = require("./CommunityEvent");
 const CommunityEventRSVP            = require("./CommunityEventRSVP");
 const CommunityVoiceSpace           = require("./CommunityVoiceSpace");
 const CommunityVoiceSpaceParticipant = require("./CommunityVoiceSpaceParticipant");
+const CommunityInvite               = require("./CommunityInvite");
 
 module.exports = {
     Community,
@@ -24,4 +25,5 @@ module.exports = {
     CommunityEventRSVP,
     CommunityVoiceSpace,
     CommunityVoiceSpaceParticipant,
+    CommunityInvite,
 };

@@ -1,4 +1,5 @@
 // src/repositories/chat/chatParticipantRepository.js
+const { In } = require('typeorm');
 const AppDataSource = require('../../../config/database');
 const ChatParticipant = require('../entities/ChatParticipant');
 
@@ -85,7 +86,7 @@ class ChatParticipantRepository {
             where: {
                 user: { id: userId },
                 room: { id: roomId },
-                role: { $in: rolesArray },
+                role: In(rolesArray),
                 isActive: true
             }
         });

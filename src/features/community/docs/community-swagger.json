@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "CosmicForge Community Health System API",
-    "description": "Phase 1: Communities, Membership & Roles, and Posts. Phase 2: Events. Phase 3: Group Chat — every community automatically gets a group chat room (Community.chatRoomId), kept in sync with membership, usable via the endpoints under the Group Chat tag below (these are the same underlying /api/chat/* endpoints the rest of the platform uses for appointment/direct chat too — {roomId} in every path is the community's chatRoomId). Phase 4: Voice Spaces — audio-only, Twitter/X-Spaces-style rooms backed by real Zoom meetings (any active member can start one; one live space per community at a time). Host controls (mute/remove) happen in Zoom's own in-meeting UI via the host's start link, not via this API — the account backing this integration is on a plan without per-participant REST moderation. A social/networking layer shared across doctors, patients, pharmacies, and labs — same architecture for every role, only role/permissions differ. Community roles (owner/admin/moderator/member/pending_member) are per-community and separate from the platform-wide user role.",
-    "version": "1.4.0"
+    "description": "Phase 1: Communities, Membership & Roles, and Posts. Phase 2: Events. Phase 3: Group Chat — every community automatically gets a group chat room (Community.chatRoomId), kept in sync with membership, usable via the endpoints under the Group Chat tag below (these are the same underlying /api/chat/* endpoints the rest of the platform uses for appointment/direct chat too — {roomId} in every path is the community's chatRoomId). Phase 4: Voice Spaces — audio-only, Twitter/X-Spaces-style rooms backed by real Zoom meetings (any active member can start one; one live space per community at a time). Host controls (mute/remove) happen in Zoom's own in-meeting UI via the host's start link, not via this API — the account backing this integration is on a plan without per-participant REST moderation. Invite Members — any active member can search the platform's users and invite them directly (no join request needed); the invitee accepts/declines from their own inbox. A social/networking layer shared across doctors, patients, pharmacies, and labs — same architecture for every role, only role/permissions differ. Community roles (owner/admin/moderator/member/pending_member) are per-community and separate from the platform-wide user role.",
+    "version": "1.5.0"
   },
   "servers": [
     { "url": "http://localhost:3000/api", "description": "Development server" }
@@ -14,6 +14,7 @@
     { "name": "Posts",        "description": "Community posts, likes, comments, saves" },
     { "name": "Events",       "description": "Community events: create/publish/update/delete, RSVP, reminders, attendee list" },
     { "name": "Voice Spaces", "description": "Audio-only live rooms: start/end, join/leave, request-to-speak, promote/demote, attendee list" },
+    { "name": "Invites",      "description": "Invite a friend to the community: search/suggest platform users, send/cancel invites, and the invitee's accept/decline inbox. Only one pending invite per (community, invitee) at a time." },
     { "name": "Group Chat",   "description": "Real-time messaging in a community's chat room ({roomId} = Community.chatRoomId). These are the shared platform chat endpoints (also used for appointment/direct chat) — full generic docs at the main /api-docs. Real-time delivery also available via socket.io events (join_room, send_message, typing_start, etc.) on the same connection." }
   ],
   "paths": {
@@ -726,29 +727,140 @@
         }
       }
     },
-    "/chat/rooms/{roomId}": {
+    "/community/communities/{id}/invites/search-users": {
       "get": {
-        "tags": ["Group Chat"],
-        "summary": "Get chat room details",
-        "description": "roomId = the community's chatRoomId. Returns the room plus its active participants.",
+        "tags": ["Invites"],
+        "summary": "Search platform users to invite",
+        "description": "Requires active membership (any role). Matches on name/email, excludes the caller and anyone already an active member of this community.",
         "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "$ref": "#/components/parameters/ChatRoomId" }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "query", "name": "q", "schema": { "type": "string" }, "description": "Search text (name or email)" },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
         "responses": {
-          "200": { "description": "Room details", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/ChatRoomDetails" } } } } } },
+          "200": { "description": "Matching users", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "users": { "type": "array", "items": { "$ref": "#/components/schemas/PublicUser" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/communities/{id}/invites/suggested-users": {
+      "get": {
+        "tags": ["Invites"],
+        "summary": "List suggested users to invite",
+        "description": "Requires active membership (any role). Suggests users who share at least one other active community with the caller and aren't already members of this one.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Suggested users", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "users": { "type": "array", "items": { "$ref": "#/components/schemas/PublicUser" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/communities/{id}/invites": {
+      "post": {
+        "tags": ["Invites"],
+        "summary": "Send an invite",
+        "description": "Requires active membership (any role). Fails with 400 if inviting yourself, the invitee is already an active member, or the invitee already has a pending invite to this community. Notifies the invitee.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityId" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SendInviteRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Invite sent", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "invite": { "$ref": "#/components/schemas/CommunityInvite" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "get": {
+        "tags": ["Invites"],
+        "summary": "List invites sent by this community",
+        "description": "Owner/admin only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["pending", "accepted", "declined", "cancelled"], "default": "pending" } }
+        ],
+        "responses": {
+          "200": { "description": "Sent invites", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "invites": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityInvite" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/communities/{id}/invites/{inviteId}": {
+      "delete": {
+        "tags": ["Invites"],
+        "summary": "Cancel a pending invite",
+        "description": "The original sender, or a community owner/admin, can cancel. Fails with 404 if the invite doesn't exist or is no longer pending.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "path", "name": "inviteId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Invite cancelled" },
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
     },
-    "/chat/rooms/{roomId}/participants": {
+    "/community/invites/mine": {
+      "get": {
+        "tags": ["Invites"],
+        "summary": "List invites addressed to me",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["pending", "accepted", "declined", "cancelled"], "default": "pending" } }
+        ],
+        "responses": {
+          "200": { "description": "My invites", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "invites": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityInvite" } } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/community/invites/{id}/accept": {
+      "post": {
+        "tags": ["Invites"],
+        "summary": "Accept an invite",
+        "description": "Only the invitee can accept. Creates (or reactivates) the invitee's community membership with invitedBy set, syncs their group-chat access, and notifies the original sender. Fails with 404 if the invite doesn't exist or is no longer pending.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/InviteId" }],
+        "responses": {
+          "200": { "description": "Invite accepted", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "invite": { "$ref": "#/components/schemas/CommunityInvite" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/invites/{id}/decline": {
+      "post": {
+        "tags": ["Invites"],
+        "summary": "Decline an invite",
+        "description": "Only the invitee can decline. Fails with 404 if the invite doesn't exist or is no longer pending.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/InviteId" }],
+        "responses": {
+          "200": { "description": "Invite declined", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "invite": { "$ref": "#/components/schemas/CommunityInvite" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/chat/rooms/{roomId}": {
       "get": {
         "tags": ["Group Chat"],
-        "summary": "List active chat participants",
-        "description": "roomId = the community's chatRoomId. Kept in sync automatically with community membership — you don't join/leave this room directly, it follows CommunityMember.",
+        "summary": "Get chat room details",
+        "description": "roomId = the community's chatRoomId. Returns the room plus its active participants (there is no separate participants-list endpoint — this is the only way to see who's in the room).",
         "security": [{ "bearerAuth": [] }],
         "parameters": [{ "$ref": "#/components/parameters/ChatRoomId" }],
         "responses": {
-          "200": { "description": "Participants", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/ChatParticipant" } } } } } } },
+          "200": { "description": "Room details", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/ChatRoomDetails" } } } } } },
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
@@ -874,6 +986,7 @@
       "PostId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
       "EventId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
       "VoiceSpaceId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "InviteId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
       "ChatRoomId": { "in": "path", "name": "roomId", "required": true, "schema": { "type": "string", "format": "uuid" }, "description": "A community's chatRoomId" },
       "ChatMessageId": { "in": "path", "name": "messageId", "required": true, "schema": { "type": "string", "format": "uuid" } }
     },
@@ -1122,6 +1235,27 @@
           "isActive":   { "type": "boolean" },
           "joinedAt":   { "type": "string", "format": "date-time", "nullable": true },
           "user":       { "$ref": "#/components/schemas/PublicUser" }
+        }
+      },
+      "SendInviteRequest": {
+        "type": "object",
+        "required": ["inviteeId"],
+        "properties": {
+          "inviteeId": { "type": "string", "format": "uuid" },
+          "message":   { "type": "string", "nullable": true, "example": "Thought you'd like this community!" }
+        }
+      },
+      "CommunityInvite": {
+        "type": "object",
+        "properties": {
+          "id":          { "type": "string", "format": "uuid" },
+          "status":      { "type": "string", "enum": ["pending", "accepted", "declined", "cancelled"] },
+          "message":     { "type": "string", "nullable": true },
+          "respondedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "community":   { "type": "object", "nullable": true, "properties": { "id": { "type": "string", "format": "uuid" }, "name": { "type": "string" } } },
+          "invitedBy":   { "$ref": "#/components/schemas/PublicUser" },
+          "invitee":     { "$ref": "#/components/schemas/PublicUser" },
+          "createdAt":   { "type": "string", "format": "date-time" }
         }
       },
       "ChatParticipant": {
