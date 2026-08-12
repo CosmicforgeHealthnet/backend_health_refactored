@@ -13,7 +13,7 @@ module.exports = new EntitySchema({
         privacyType:   { type: "enum", enum: ["public", "private"], default: "public" },
         bannerUrl:     { type: "varchar", nullable: true },
         avatarUrl:     { type: "varchar", nullable: true },
-        rules:         { type: "text", nullable: true },
+        rules:         { type: "jsonb", nullable: true },
         memberCount:   { type: "integer", default: 0 },
         postCount:     { type: "integer", default: 0 },
         isActive:      { type: "boolean", default: true },
