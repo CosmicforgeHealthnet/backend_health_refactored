@@ -393,6 +393,21 @@ class AppointmentService {
       throw new Error("Appointment not found");
     }
 
+    // Ownership/role check — only the patient, the doctor on the appointment,
+    // or an admin may view its details (prevents IDOR)
+    const requestingUserId = req?.user?.sub;
+    const requestingUserRole = req?.user?.role;
+    const isAdmin = [USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN].includes(requestingUserRole);
+    const isOwner =
+      requestingUserId === appointment.patientId ||
+      requestingUserId === appointment.doctorId;
+
+    if (!isAdmin && !isOwner) {
+      const error = new Error("Access denied. You do not have permission to view this appointment.");
+      error.status = 403;
+      throw error;
+    }
+
     // If appointment has UTC time, convert for display
     if (appointment.appointmentTimeUTC) {
       const userTimezone = TimezoneService.getUserTimezone(null, req);

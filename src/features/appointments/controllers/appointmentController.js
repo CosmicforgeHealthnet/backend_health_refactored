@@ -133,6 +133,12 @@ class AppointmentController {
         timezoneContext: req.userTimezoneData
       });
     } catch (error) {
+      if (error.status === 403) {
+        return res.status(403).json({
+          success: false,
+          error: error.message
+        });
+      }
       res.status(404).json({
         success: false,
         error: error.message

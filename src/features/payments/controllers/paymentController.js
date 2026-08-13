@@ -290,6 +290,74 @@ class PaymentController {
   /**
    * Initiate a payment transaction (supports all services)
    */
+  static async initiateLabPayment(req, res) {
+    try {
+      const bridgeSecret = req.headers['x-lab-payment-secret'];
+      if (!process.env.LAB_PAYMENT_BRIDGE_SECRET || bridgeSecret !== process.env.LAB_PAYMENT_BRIDGE_SECRET) {
+        return res.status(403).json({
+          success: false,
+          message: "Invalid lab payment bridge secret"
+        });
+      }
+
+      const {
+        orderId,
+        orderNumber,
+        patientId,
+        patientEmail,
+        patientName,
+        patientPhone,
+        amount,
+        currency,
+        provider = 'paystack',
+        description,
+        returnUrl,
+        labCallbackBaseUrl
+      } = req.body;
+
+      if (!orderId || !patientId || !amount || !currency) {
+        return res.status(400).json({
+          success: false,
+          message: "orderId, patientId, amount, and currency are required"
+        });
+      }
+
+      if (!['flutterwave', 'paystack'].includes(provider)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid payment provider"
+        });
+      }
+
+      const result = await paymentService.initiateLabPayment({
+        orderId,
+        orderNumber,
+        patientId,
+        patientEmail,
+        patientName,
+        patientPhone,
+        amount: Number(amount),
+        currency,
+        provider,
+        description,
+        returnUrl,
+        labCallbackBaseUrl
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Lab payment initialized successfully",
+        data: result
+      });
+    } catch (error) {
+      console.error("Error initiating lab payment:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to initiate lab payment"
+      });
+    }
+  }
+
   static async initiatePayment(req, res) {
     try {
       const paymentData = {

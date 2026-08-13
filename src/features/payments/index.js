@@ -11,5 +11,6 @@ module.exports = {
     router,
     webhookRouter: require("./routes/webhooks"),
     callbackRouter,
+    internalLabRouter: require("./routes/internalLabPayments"),
     entities
 };
