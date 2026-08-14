@@ -49,6 +49,11 @@ class CommunityPostService {
         return communityPostRepository.findByCommunity(communityId, { page, limit });
     }
 
+    async listMyFeed(userId, { page, limit } = {}) {
+        const communityIds = await communityMemberRepository.findActiveCommunityIdsByUser(userId);
+        return communityPostRepository.findByCommunities(communityIds, { page, limit });
+    }
+
     async deletePost(postId, actingUserId) {
         const post = await communityPostRepository.findById(postId);
         if (!post) throw new NotFoundError("Post not found");

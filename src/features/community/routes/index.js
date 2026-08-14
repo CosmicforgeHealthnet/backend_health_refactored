@@ -16,6 +16,8 @@ router.use(authenticateJWT);
 router.get("/communities/mine", communityController.getMyCommunities);
 router.get("/communities/discover", communityController.discover);
 router.get("/posts/saved", communityPostController.listMySavedPosts);
+router.get("/posts/feed", communityPostController.listMyFeed);
+router.get("/events/feed", communityEventController.listMyFeed);
 router.get("/invites/mine", communityInviteController.listMine);
 
 // ─── Communities ──────────────────────────────────────────────────────────────

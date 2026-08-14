@@ -28,8 +28,12 @@ function formatMember(member) {
 
 function formatPost(post) {
     if (!post) return undefined;
-    const { deletedBy, ...rest } = post;
-    return { ...rest, author: publicUser(post.author) };
+    const { deletedBy, community, ...rest } = post;
+    return {
+        ...rest,
+        author: publicUser(post.author),
+        community: community ? { id: community.id, name: community.name } : undefined,
+    };
 }
 
 function formatComment(comment) {
@@ -49,7 +53,12 @@ function formatSave(save) {
 
 function formatEvent(event) {
     if (!event) return undefined;
-    return { ...event, createdBy: publicUser(event.createdBy) };
+    const { community, ...rest } = event;
+    return {
+        ...rest,
+        createdBy: publicUser(event.createdBy),
+        community: community ? { id: community.id, name: community.name } : undefined,
+    };
 }
 
 function formatRsvp(rsvp) {

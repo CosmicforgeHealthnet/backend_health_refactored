@@ -57,6 +57,14 @@ const communityMemberRepository = {
     countActiveByCommunity(communityId) {
         return memberRepo().count({ where: { community: { id: communityId }, isActive: true } });
     },
+
+    async findActiveCommunityIdsByUser(userId) {
+        const rows = await memberRepo().find({
+            where: { user: { id: userId }, isActive: true },
+            relations: ["community"],
+        });
+        return rows.filter((r) => r.community && r.community.isActive).map((r) => r.community.id);
+    },
 };
 
 module.exports = communityMemberRepository;

@@ -44,11 +44,13 @@ beforeEach(() => {
   communityEventRepository.create = jest.fn().mockImplementation((data) => Promise.resolve(makeEvent(data)));
   communityEventRepository.findById = jest.fn().mockResolvedValue(makeEvent());
   communityEventRepository.findByCommunity = jest.fn().mockResolvedValue({ events: [], total: 0, page: 1, limit: 20 });
+  communityEventRepository.findByCommunities = jest.fn().mockResolvedValue({ events: [], total: 0, page: 1, limit: 20 });
   communityEventRepository.update = jest.fn().mockResolvedValue(undefined);
   communityEventRepository.softDelete = jest.fn().mockResolvedValue(undefined);
 
   communityMemberRepository.findActiveByUserAndCommunity = jest.fn().mockResolvedValue(null);
   communityMemberRepository.findByCommunity = jest.fn().mockResolvedValue([]);
+  communityMemberRepository.findActiveCommunityIdsByUser = jest.fn().mockResolvedValue([]);
 
   communityEventRSVPRepository.findByEventAndUser = jest.fn().mockResolvedValue(null);
 
@@ -161,6 +163,28 @@ describe('listCommunityEvents', () => {
     expect(communityEventRepository.findByCommunity).toHaveBeenCalledWith(
       COMMUNITY_ID, expect.objectContaining({ includeDrafts: false })
     );
+  });
+});
+
+// ============================================================================
+// listMyFeed
+// ============================================================================
+
+describe('listMyFeed', () => {
+  test('resolves the caller\'s joined community ids and fetches upcoming events across them', async () => {
+    communityMemberRepository.findActiveCommunityIdsByUser = jest.fn().mockResolvedValue(['c1', 'c2']);
+    communityEventRepository.findByCommunities = jest.fn().mockResolvedValue({ events: [makeEvent()], total: 1, page: 1, limit: 20 });
+
+    const result = await communityEventService.listMyFeed(MEMBER_ID, { page: 1, limit: 20 });
+
+    expect(communityMemberRepository.findActiveCommunityIdsByUser).toHaveBeenCalledWith(MEMBER_ID);
+    expect(communityEventRepository.findByCommunities).toHaveBeenCalledWith(['c1', 'c2'], { page: 1, limit: 20 });
+    expect(result.events).toHaveLength(1);
+  });
+
+  test('passes an empty array through when the caller has no joined communities', async () => {
+    await communityEventService.listMyFeed(MEMBER_ID, {});
+    expect(communityEventRepository.findByCommunities).toHaveBeenCalledWith([], {});
   });
 });
 

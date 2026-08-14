@@ -56,6 +56,11 @@ class CommunityEventService {
         return communityEventRepository.findByCommunity(communityId, { includeDrafts, page, limit });
     }
 
+    async listMyFeed(userId, { page, limit } = {}) {
+        const communityIds = await communityMemberRepository.findActiveCommunityIdsByUser(userId);
+        return communityEventRepository.findByCommunities(communityIds, { page, limit });
+    }
+
     async updateEvent(eventId, actingUserId, data) {
         const event = await this._requireManagerAccess(eventId, actingUserId);
 

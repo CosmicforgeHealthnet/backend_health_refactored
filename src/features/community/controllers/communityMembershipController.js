@@ -50,8 +50,13 @@ class CommunityMembershipController {
 
     async leave(req, res, next) {
         try {
-            await communityMembershipService.leaveCommunity(req.params.id, req.user.id);
-            return res.status(200).json({ success: true, message: "Left community" });
+            const result = await communityMembershipService.leaveCommunity(req.params.id, req.user.id);
+            const message = result.communityDeleted
+                ? "Left community — you were the last member, so the community was closed"
+                : result.newOwner
+                    ? "Left community — ownership was transferred to another member"
+                    : "Left community";
+            return res.status(200).json({ success: true, message, ...result });
         } catch (error) {
             next(error);
         }

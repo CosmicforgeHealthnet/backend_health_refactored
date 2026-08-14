@@ -25,6 +25,24 @@ const communityPostRepository = {
         return { posts, total, page, limit };
     },
 
+    async findByCommunities(communityIds, { page = 1, limit = 20 } = {}) {
+        if (!communityIds.length) return { posts: [], total: 0, page, limit };
+
+        const qb = postRepo()
+            .createQueryBuilder("p")
+            .leftJoinAndSelect("p.author", "author")
+            .leftJoinAndSelect("p.media", "media")
+            .leftJoinAndSelect("p.community", "community")
+            .where("p.communityId IN (:...communityIds)", { communityIds })
+            .andWhere("p.isDeleted = false")
+            .orderBy("p.createdAt", "DESC")
+            .skip((page - 1) * limit)
+            .take(limit);
+
+        const [posts, total] = await qb.getManyAndCount();
+        return { posts, total, page, limit };
+    },
+
     create(data) {
         return postRepo().save(data);
     },

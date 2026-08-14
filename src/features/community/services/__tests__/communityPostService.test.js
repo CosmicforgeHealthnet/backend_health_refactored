@@ -53,8 +53,11 @@ beforeEach(() => {
 
   communityMemberRepository.findActiveByUserAndCommunity = jest.fn().mockResolvedValue(null);
 
+  communityMemberRepository.findActiveCommunityIdsByUser = jest.fn().mockResolvedValue([]);
+
   communityPostRepository.create = jest.fn().mockResolvedValue(makePost());
   communityPostRepository.findById = jest.fn().mockResolvedValue(makePost());
+  communityPostRepository.findByCommunities = jest.fn().mockResolvedValue({ posts: [], total: 0, page: 1, limit: 20 });
   communityPostRepository.softDelete = jest.fn().mockResolvedValue(undefined);
   communityPostRepository.incrementViewCount = jest.fn().mockResolvedValue(undefined);
   communityPostRepository.incrementLikeCount = jest.fn().mockResolvedValue(undefined);
@@ -133,6 +136,31 @@ describe('getPost', () => {
     const result = await communityPostService.getPost(POST_ID, undefined);
     expect(result).toMatchObject({ isLiked: false, isSaved: false });
     expect(communityPostLikeRepository.findByPostAndUser).not.toHaveBeenCalled();
+  });
+});
+
+// ============================================================================
+// listMyFeed
+// ============================================================================
+
+describe('listMyFeed', () => {
+  test('resolves the caller\'s joined community ids and fetches posts across them', async () => {
+    communityMemberRepository.findActiveCommunityIdsByUser = jest.fn().mockResolvedValue(['c1', 'c2']);
+    communityPostRepository.findByCommunities = jest.fn().mockResolvedValue({ posts: [makePost()], total: 1, page: 1, limit: 20 });
+
+    const result = await communityPostService.listMyFeed(AUTHOR_ID, { page: 1, limit: 20 });
+
+    expect(communityMemberRepository.findActiveCommunityIdsByUser).toHaveBeenCalledWith(AUTHOR_ID);
+    expect(communityPostRepository.findByCommunities).toHaveBeenCalledWith(['c1', 'c2'], { page: 1, limit: 20 });
+    expect(result.posts).toHaveLength(1);
+  });
+
+  test('passes an empty array through when the caller has no joined communities', async () => {
+    communityMemberRepository.findActiveCommunityIdsByUser = jest.fn().mockResolvedValue([]);
+
+    await communityPostService.listMyFeed(AUTHOR_ID, {});
+
+    expect(communityPostRepository.findByCommunities).toHaveBeenCalledWith([], {});
   });
 });
 

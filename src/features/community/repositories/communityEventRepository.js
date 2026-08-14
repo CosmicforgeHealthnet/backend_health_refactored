@@ -26,6 +26,25 @@ const communityEventRepository = {
         return { events, total, page, limit };
     },
 
+    async findByCommunities(communityIds, { page = 1, limit = 20 } = {}) {
+        if (!communityIds.length) return { events: [], total: 0, page, limit };
+
+        const qb = eventRepo()
+            .createQueryBuilder("e")
+            .leftJoinAndSelect("e.createdBy", "createdBy")
+            .leftJoinAndSelect("e.community", "community")
+            .where("e.communityId IN (:...communityIds)", { communityIds })
+            .andWhere("e.isDeleted = false")
+            .andWhere("e.status = 'published'")
+            .andWhere("e.startAt >= :now", { now: new Date() })
+            .orderBy("e.startAt", "ASC")
+            .skip((page - 1) * limit)
+            .take(limit);
+
+        const [events, total] = await qb.getManyAndCount();
+        return { events, total, page, limit };
+    },
+
     create(data) {
         return eventRepo().save(data);
     },

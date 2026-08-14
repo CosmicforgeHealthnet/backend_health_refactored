@@ -71,6 +71,8 @@ beforeEach(() => {
   communityMemberRepository.updateRole = jest.fn().mockResolvedValue(undefined);
   communityMemberRepository.findByCommunity = jest.fn().mockResolvedValue([]);
 
+  communityRepository.softDelete = jest.fn().mockResolvedValue(undefined);
+
   communityJoinRequestRepository.findPendingByUserAndCommunity = jest.fn().mockResolvedValue(null);
   communityJoinRequestRepository.create = jest.fn().mockResolvedValue(makeJoinRequest());
   communityJoinRequestRepository.findById = jest.fn().mockResolvedValue(makeJoinRequest());
@@ -298,21 +300,62 @@ describe('leaveCommunity', () => {
     );
   });
 
-  test('throws ValidationError when the owner tries to leave', async () => {
-    communityMemberRepository.findActiveByUserAndCommunity = jest.fn().mockResolvedValue(makeMembership({ role: 'owner' }));
-    await expect(communityMembershipService.leaveCommunity(COMMUNITY_ID, USER_ID)).rejects.toThrow(
-      'Promote another member to owner'
-    );
-  });
-
   test('deactivates the membership, decrements the member count, and revokes chat access', async () => {
     communityMemberRepository.findActiveByUserAndCommunity = jest.fn().mockResolvedValue(makeMembership({ id: 'm1', role: 'member' }));
 
-    await communityMembershipService.leaveCommunity(COMMUNITY_ID, USER_ID);
+    const result = await communityMembershipService.leaveCommunity(COMMUNITY_ID, USER_ID);
 
     expect(communityMemberRepository.deactivate).toHaveBeenCalledWith('m1');
     expect(communityRepository.decrementMemberCount).toHaveBeenCalledWith(COMMUNITY_ID);
     expect(mockChatService.removeParticipant).toHaveBeenCalledWith(CHAT_ROOM_ID, USER_ID);
+    expect(result).toEqual({ newOwner: null, communityDeleted: false });
+  });
+
+  test('an owner leaving promotes the longest-standing admin to owner over moderators/members', async () => {
+    communityMemberRepository.findActiveByUserAndCommunity = jest.fn().mockResolvedValue(makeMembership({ id: 'owner-m', role: 'owner' }));
+    communityMemberRepository.findByCommunity = jest.fn().mockResolvedValue([
+      { id: 'mod-m', role: 'moderator', user: { id: 'mod-user' }, joinedAt: '2026-01-01T00:00:00Z' },
+      { id: 'admin-m', role: 'admin', user: { id: 'admin-user' }, joinedAt: '2026-02-01T00:00:00Z' },
+      { id: 'member-m', role: 'member', user: { id: 'member-user' }, joinedAt: '2026-01-01T00:00:00Z' },
+    ]);
+
+    const result = await communityMembershipService.leaveCommunity(COMMUNITY_ID, OWNER_ID);
+
+    expect(communityMemberRepository.updateRole).toHaveBeenCalledWith('admin-m', 'owner');
+    expect(mockChatService.updateParticipantRole).toHaveBeenCalledWith(CHAT_ROOM_ID, 'admin-user', 'admin', OWNER_ID);
+    expect(mockNotify).toHaveBeenCalledWith(
+      'admin-user',
+      'notification',
+      expect.stringContaining('now the owner'),
+      expect.any(Object),
+      'community'
+    );
+    expect(communityMemberRepository.deactivate).toHaveBeenCalledWith('owner-m');
+    expect(result).toEqual({ newOwner: { id: 'admin-user', role: 'owner' }, communityDeleted: false });
+  });
+
+  test('an owner leaving with no admins promotes the earliest-joined moderator over members', async () => {
+    communityMemberRepository.findActiveByUserAndCommunity = jest.fn().mockResolvedValue(makeMembership({ id: 'owner-m', role: 'owner' }));
+    communityMemberRepository.findByCommunity = jest.fn().mockResolvedValue([
+      { id: 'member-m', role: 'member', user: { id: 'member-user' }, joinedAt: '2026-01-01T00:00:00Z' },
+      { id: 'mod-m', role: 'moderator', user: { id: 'mod-user' }, joinedAt: '2026-03-01T00:00:00Z' },
+    ]);
+
+    const result = await communityMembershipService.leaveCommunity(COMMUNITY_ID, OWNER_ID);
+
+    expect(communityMemberRepository.updateRole).toHaveBeenCalledWith('mod-m', 'owner');
+    expect(result.newOwner).toEqual({ id: 'mod-user', role: 'owner' });
+  });
+
+  test('an owner leaving as the last active member closes the community instead of promoting anyone', async () => {
+    communityMemberRepository.findActiveByUserAndCommunity = jest.fn().mockResolvedValue(makeMembership({ id: 'owner-m', role: 'owner' }));
+    communityMemberRepository.findByCommunity = jest.fn().mockResolvedValue([]);
+
+    const result = await communityMembershipService.leaveCommunity(COMMUNITY_ID, OWNER_ID);
+
+    expect(communityRepository.softDelete).toHaveBeenCalledWith(COMMUNITY_ID);
+    expect(communityMemberRepository.updateRole).not.toHaveBeenCalled();
+    expect(result).toEqual({ newOwner: null, communityDeleted: true });
   });
 });
 

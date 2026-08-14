@@ -8,6 +8,10 @@ const { NotFoundError, ForbiddenError, ValidationError } = require("../../../sha
 const notificationService = new NotificationService();
 const chatService = new ChatService();
 
+// Who inherits ownership when the owner leaves — prefer an existing admin, then a
+// moderator, then whoever's been a plain member the longest (lower rank wins).
+const SUCCESSOR_ROLE_RANK = { admin: 0, moderator: 1, member: 2 };
+
 // Community chat access is a derived, secondary system — a hiccup syncing it must
 // never fail the underlying community membership action (join/leave/approve/etc).
 async function addChatParticipant(chatRoomId, userId, chatRole) {
@@ -191,14 +195,49 @@ class CommunityMembershipService {
         const membership = await communityMemberRepository.findActiveByUserAndCommunity(userId, communityId);
         if (!membership) throw new NotFoundError("You are not a member of this community");
 
+        const community = await communityRepository.findById(communityId);
+
+        let newOwner = null;
+        let communityDeleted = false;
+
         if (membership.role === "owner") {
-            throw new ValidationError("Promote another member to owner before leaving the community");
+            const others = await communityMemberRepository.findByCommunity(communityId, {
+                role: ["admin", "moderator", "member"],
+            });
+
+            if (others.length) {
+                others.sort((a, b) => {
+                    const rankDiff = SUCCESSOR_ROLE_RANK[a.role] - SUCCESSOR_ROLE_RANK[b.role];
+                    if (rankDiff !== 0) return rankDiff;
+                    return new Date(a.joinedAt) - new Date(b.joinedAt);
+                });
+                newOwner = others[0];
+
+                await communityMemberRepository.updateRole(newOwner.id, "owner");
+                await updateChatParticipantRole(community?.chatRoom?.id, newOwner.user.id, "admin", userId);
+                await notificationService
+                    .createNotification(
+                        newOwner.user.id,
+                        "notification",
+                        `You are now the owner of ${community.name}`,
+                        { communityId },
+                        "community"
+                    )
+                    .catch(() => {});
+            } else {
+                await communityRepository.softDelete(communityId);
+                communityDeleted = true;
+            }
         }
 
-        const community = await communityRepository.findById(communityId);
         await communityMemberRepository.deactivate(membership.id);
         await communityRepository.decrementMemberCount(communityId);
         await removeChatParticipant(community?.chatRoom?.id, userId);
+
+        return {
+            newOwner: newOwner ? { id: newOwner.user.id, role: "owner" } : null,
+            communityDeleted,
+        };
     }
 
     async removeMember(communityId, targetUserId, actingUserId) {

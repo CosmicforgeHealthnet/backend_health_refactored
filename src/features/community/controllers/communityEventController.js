@@ -14,6 +14,16 @@ class CommunityEventController {
         }
     }
 
+    async listMyFeed(req, res, next) {
+        try {
+            const { page = 1, limit = 20 } = req.query;
+            const result = await communityEventService.listMyFeed(req.user.id, { page: Number(page), limit: Number(limit) });
+            return res.status(200).json({ success: true, ...result, events: result.events.map(formatEvent) });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async listByCommunity(req, res, next) {
         try {
             const { page = 1, limit = 20 } = req.query;
