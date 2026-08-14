@@ -81,7 +81,7 @@ function formatPublicProduct(p) {
         category:             p.category,
         subcategory:          p.subcategory,
         prescriptionRequired: p.prescriptionRequired ?? false,
-        media:                p.media || [],
+        media:                (p.media || []).map(m => ({ ...m, url: m.mediaUrl })),
         vendor: p.vendor
             ? {
                 id:           p.vendor.id,

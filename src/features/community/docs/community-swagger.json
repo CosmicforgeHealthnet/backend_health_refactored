@@ -1,0 +1,1342 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CosmicForge Community Health System API",
+    "description": "Phase 1: Communities, Membership & Roles, and Posts. Phase 2: Events. Phase 3: Group Chat — every community automatically gets a group chat room (Community.chatRoomId), kept in sync with membership, usable via the endpoints under the Group Chat tag below (these are the same underlying /api/chat/* endpoints the rest of the platform uses for appointment/direct chat too — {roomId} in every path is the community's chatRoomId). Phase 4: Voice Spaces — audio-only, Twitter/X-Spaces-style rooms backed by real Zoom meetings (any active member can start one; one live space per community at a time). Host controls (mute/remove) happen in Zoom's own in-meeting UI via the host's start link, not via this API — the account backing this integration is on a plan without per-participant REST moderation. Invite Members — any active member can search the platform's users and invite them directly (no join request needed); the invitee accepts/declines from their own inbox. Cross-community feeds — GET /posts/feed and GET /events/feed aggregate posts/upcoming events across every community the caller belongs to. Leaving — any member, including the owner, can leave a community; if the owner leaves, ownership auto-transfers to another active member (or the community closes if they were the last one). A social/networking layer shared across doctors, patients, pharmacies, and labs — same architecture for every role, only role/permissions differ. Community roles (owner/admin/moderator/member/pending_member) are per-community and separate from the platform-wide user role.",
+    "version": "1.6.0"
+  },
+  "servers": [
+    { "url": "http://localhost:3000/api", "description": "Development server" }
+  ],
+  "tags": [
+    { "name": "Communities",  "description": "Create, discover, update, and delete communities" },
+    { "name": "Membership",   "description": "Join/leave, join-requests, member list, remove/promote members. Also keeps each member's group-chat access in sync (see Community.chatRoomId)." },
+    { "name": "Posts",        "description": "Community posts, likes, comments, saves" },
+    { "name": "Events",       "description": "Community events: create/publish/update/delete, RSVP, reminders, attendee list" },
+    { "name": "Voice Spaces", "description": "Audio-only live rooms: start/end, join/leave, request-to-speak, promote/demote, attendee list" },
+    { "name": "Invites",      "description": "Invite a friend to the community: search/suggest platform users, send/cancel invites, and the invitee's accept/decline inbox. Only one pending invite per (community, invitee) at a time." },
+    { "name": "Group Chat",   "description": "Real-time messaging in a community's chat room ({roomId} = Community.chatRoomId). These are the shared platform chat endpoints (also used for appointment/direct chat) — full generic docs at the main /api-docs. Real-time delivery also available via socket.io events (join_room, send_message, typing_start, etc.) on the same connection." }
+  ],
+  "paths": {
+    "/community/communities": {
+      "post": {
+        "tags": ["Communities"],
+        "summary": "Create a community",
+        "description": "Creates the community and makes the caller its owner.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateCommunityRequest" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Community created",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "community": { "$ref": "#/components/schemas/Community" } } } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/community/communities/mine": {
+      "get": {
+        "tags": ["Communities"],
+        "summary": "List my communities",
+        "description": "Communities the caller is an active member of, each annotated with the caller's role (myRole).",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "My communities",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "communities": { "type": "array", "items": { "$ref": "#/components/schemas/Community" } } } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/community/communities/discover": {
+      "get": {
+        "tags": ["Communities"],
+        "summary": "Discover communities",
+        "description": "Public discovery feed. Excludes communities the caller already belongs to.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "search", "schema": { "type": "string" }, "description": "Matches name or description" },
+          { "in": "query", "name": "category", "schema": { "type": "string" } },
+          { "in": "query", "name": "privacyType", "schema": { "type": "string", "enum": ["public", "private"] } },
+          { "in": "query", "name": "page", "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated discoverable communities",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaginatedCommunities" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/community/communities/{id}": {
+      "get": {
+        "tags": ["Communities"],
+        "summary": "Get a community by ID",
+        "description": "Response includes isMember, myRole, and hasPendingRequest flags for the caller.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityId" }],
+        "responses": {
+          "200": { "description": "Community detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "community": { "$ref": "#/components/schemas/Community" } } } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Communities"],
+        "summary": "Update a community",
+        "description": "Owner only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityId" }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateCommunityRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Community updated", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "community": { "$ref": "#/components/schemas/Community" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Communities"],
+        "summary": "Delete a community",
+        "description": "Owner only. Soft delete — the community is hidden from discovery/joins but its data is preserved.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityId" }],
+        "responses": {
+          "200": { "description": "Community deleted" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/communities/{id}/join": {
+      "post": {
+        "tags": ["Membership"],
+        "summary": "Join a public community",
+        "description": "Instant join. Returns 400 if the community is private — use the join-requests endpoint instead.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityId" }],
+        "responses": {
+          "200": { "description": "Joined", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "membership": { "$ref": "#/components/schemas/CommunityMember" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/communities/{id}/join-requests": {
+      "post": {
+        "tags": ["Membership"],
+        "summary": "Request to join a private community",
+        "description": "Notifies the community's owners/admins. Returns 400 if the community is public, already a member, or a pending request already exists.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityId" }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "message": { "type": "string", "example": "I'd love to join this community" } } } } }
+        },
+        "responses": {
+          "201": { "description": "Join request submitted", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "joinRequest": { "$ref": "#/components/schemas/CommunityJoinRequest" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "get": {
+        "tags": ["Membership"],
+        "summary": "List join requests",
+        "description": "Owner/admin only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["pending", "approved", "rejected"], "default": "pending" } }
+        ],
+        "responses": {
+          "200": { "description": "Join requests", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "joinRequests": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityJoinRequest" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/communities/{id}/join-requests/{requestId}/approve": {
+      "post": {
+        "tags": ["Membership"],
+        "summary": "Approve a join request",
+        "description": "Owner/admin only. Activates the requester's membership and notifies them.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "$ref": "#/components/parameters/JoinRequestId" }
+        ],
+        "responses": {
+          "200": { "description": "Join request approved", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "joinRequest": { "$ref": "#/components/schemas/CommunityJoinRequest" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/communities/{id}/join-requests/{requestId}/reject": {
+      "post": {
+        "tags": ["Membership"],
+        "summary": "Reject a join request",
+        "description": "Owner/admin only. Notifies the requester.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "$ref": "#/components/parameters/JoinRequestId" }
+        ],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "reason": { "type": "string", "example": "Not currently accepting new members" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Join request rejected", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "joinRequest": { "$ref": "#/components/schemas/CommunityJoinRequest" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/communities/{id}/leave": {
+      "post": {
+        "tags": ["Membership"],
+        "summary": "Leave a community",
+        "description": "Any member can leave, including the owner. If the owner leaves, ownership is automatically transferred to another active member (preferring an existing admin, then moderator, then the longest-standing plain member) and that member is notified. If the owner is the community's last active member, the community is closed (soft-deleted) instead.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityId" }],
+        "responses": {
+          "200": {
+            "description": "Left community",
+            "content": { "application/json": { "schema": { "type": "object", "properties": {
+              "success": { "type": "boolean" },
+              "message": { "type": "string" },
+              "newOwner": { "type": "object", "nullable": true, "description": "Set when ownership was transferred", "properties": { "id": { "type": "string", "format": "uuid" }, "role": { "type": "string", "example": "owner" } } },
+              "communityDeleted": { "type": "boolean", "description": "True if the community was closed because the owner was its last active member" }
+            } } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/communities/{id}/members": {
+      "get": {
+        "tags": ["Membership"],
+        "summary": "List members",
+        "description": "Any active member can view.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "query", "name": "role", "schema": { "type": "string", "enum": ["owner", "admin", "moderator", "member", "pending_member"] } }
+        ],
+        "responses": {
+          "200": { "description": "Members", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "members": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityMember" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/communities/{id}/members/{userId}": {
+      "delete": {
+        "tags": ["Membership"],
+        "summary": "Remove a member",
+        "description": "Owner/admin only. The owner cannot be removed this way, and you cannot remove yourself (use leave instead).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "path", "name": "userId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Member removed" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/communities/{id}/members/{userId}/role": {
+      "put": {
+        "tags": ["Membership"],
+        "summary": "Change a member's role",
+        "description": "Owner only. newRole must be one of admin/moderator/member — ownership itself is not transferable through this endpoint.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "path", "name": "userId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["role"], "properties": { "role": { "type": "string", "enum": ["admin", "moderator", "member"] } } } } }
+        },
+        "responses": {
+          "200": { "description": "Role updated", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "membership": { "$ref": "#/components/schemas/CommunityMember" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/communities/{communityId}/posts": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Create a post",
+        "description": "Requires active membership (any role). A post needs content and/or at least one media URL.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityIdForPosts" }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePostRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Post created", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "post": { "$ref": "#/components/schemas/CommunityPost" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "get": {
+        "tags": ["Posts"],
+        "summary": "List a community's posts",
+        "description": "Requires active membership (any role).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityIdForPosts" },
+          { "in": "query", "name": "page", "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Posts", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaginatedPosts" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/posts/feed": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "List posts from all communities I've joined",
+        "description": "A combined, reverse-chronological feed of posts across every community the caller is an active member of. Each post includes a community reference so the client can tell them apart.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "page", "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "My feed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaginatedPosts" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/community/posts/saved": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "List my saved posts",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "page", "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Saved posts", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "saves": { "type": "array", "items": { "type": "object", "properties": { "post": { "$ref": "#/components/schemas/CommunityPost" } } } }, "total": { "type": "integer" }, "page": { "type": "integer" }, "limit": { "type": "integer" } } } } } }
+        }
+      }
+    },
+    "/community/posts/{id}": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get a post by ID",
+        "description": "Increments the view count and returns isLiked/isSaved flags for the caller.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/PostId" }],
+        "responses": {
+          "200": { "description": "Post detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "post": { "$ref": "#/components/schemas/CommunityPost" } } } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Delete a post",
+        "description": "The author, or a moderator/admin/owner of the post's community, can delete it.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/PostId" }],
+        "responses": {
+          "200": { "description": "Post deleted" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/posts/{id}/like": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Like a post",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/PostId" }],
+        "responses": {
+          "200": { "description": "Post liked" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Unlike a post",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/PostId" }],
+        "responses": {
+          "200": { "description": "Post unliked" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/posts/{id}/comments": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Add a comment",
+        "description": "Set parentCommentId to reply to another comment (one level of threading).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/PostId" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AddCommentRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Comment added", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "comment": { "$ref": "#/components/schemas/CommunityPostComment" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "get": {
+        "tags": ["Posts"],
+        "summary": "List a post's comments",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/PostId" },
+          { "in": "query", "name": "page", "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Comments", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "comments": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityPostComment" } }, "total": { "type": "integer" }, "page": { "type": "integer" }, "limit": { "type": "integer" } } } } } }
+        }
+      }
+    },
+    "/community/posts/{id}/comments/{commentId}": {
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Delete a comment",
+        "description": "The author, or a moderator/admin/owner of the post's community, can delete it.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/PostId" },
+          { "in": "path", "name": "commentId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Comment deleted" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/posts/{id}/save": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Save (bookmark) a post",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/PostId" }],
+        "responses": {
+          "200": { "description": "Post saved" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Unsave a post",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/PostId" }],
+        "responses": {
+          "200": { "description": "Post unsaved" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/events/feed": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "List upcoming events from all communities I've joined",
+        "description": "Published, upcoming (startAt in the future) events across every community the caller is an active member of, soonest first. Each event includes a community reference so the client can tell them apart.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "page", "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "My upcoming events", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "events": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityEvent" } }, "total": { "type": "integer" }, "page": { "type": "integer" }, "limit": { "type": "integer" } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/community/communities/{communityId}/events": {
+      "post": {
+        "tags": ["Events"],
+        "summary": "Create an event",
+        "description": "Owner/admin only. Set status to \"published\" to publish immediately (notifies all other active members) or omit/\"draft\" to save as a draft first.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityIdForPosts" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateEventRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Event created", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "event": { "$ref": "#/components/schemas/CommunityEvent" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "get": {
+        "tags": ["Events"],
+        "summary": "List a community's events",
+        "description": "Draft events are only included for owners/admins; everyone else sees published events only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityIdForPosts" },
+          { "in": "query", "name": "page", "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Events", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "events": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityEvent" } }, "total": { "type": "integer" }, "page": { "type": "integer" }, "limit": { "type": "integer" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/events/{id}": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "Get an event by ID",
+        "description": "Draft events are only visible to the community's owner/admin. Response includes isGoing/remindMe flags for the caller.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "description": "Event detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "event": { "$ref": "#/components/schemas/CommunityEvent" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Events"],
+        "summary": "Update an event",
+        "description": "Owner/admin only. Setting status from draft to published notifies all other active community members.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateEventRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Event updated", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "event": { "$ref": "#/components/schemas/CommunityEvent" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Events"],
+        "summary": "Delete an event",
+        "description": "Owner/admin only. Soft delete.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "description": "Event deleted" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/events/{id}/rsvp": {
+      "post": {
+        "tags": ["Events"],
+        "summary": "RSVP to an event",
+        "description": "Confirms attendance (\"going\"). The event must be published. Reminder defaults to on.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "description": "RSVP confirmed" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Events"],
+        "summary": "Cancel an RSVP",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "description": "RSVP cancelled" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/events/{id}/reminder": {
+      "put": {
+        "tags": ["Events"],
+        "summary": "Set/unset the reminder for an event",
+        "description": "Requires an existing RSVP — RSVP first, then toggle the reminder. A background job notifies remindMe=true attendees roughly 1 hour before the event starts.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["remindMe"], "properties": { "remindMe": { "type": "boolean" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Reminder preference updated" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/community/events/{id}/attendees": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "List attendees",
+        "description": "Owner/admin only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "description": "Attendees", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "attendees": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityEventRSVP" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/communities/{communityId}/voice-spaces": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Start a voice space",
+        "description": "Any active member can start one. Creates a real, instant Zoom meeting. Fails with 400 if the community already has a live space (only one at a time). The response includes joinUrl (share with anyone) and hostStartUrl (host only — never shown to other viewers).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityIdForPosts" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["title"], "properties": { "title": { "type": "string", "example": "Community AMA" } } } } }
+        },
+        "responses": {
+          "201": { "description": "Voice space started", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "space": { "$ref": "#/components/schemas/CommunityVoiceSpace" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "get": {
+        "tags": ["Voice Spaces"],
+        "summary": "List past (ended) voice spaces",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityIdForPosts" },
+          { "in": "query", "name": "page", "schema": { "type": "integer", "default": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Past voice spaces", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "spaces": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityVoiceSpace" } }, "total": { "type": "integer" }, "page": { "type": "integer" }, "limit": { "type": "integer" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/communities/{communityId}/voice-spaces/active": {
+      "get": {
+        "tags": ["Voice Spaces"],
+        "summary": "Get the community's current live voice space, if any",
+        "description": "Returns 404 if no space is currently live.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityIdForPosts" }],
+        "responses": {
+          "200": { "description": "The live space", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "space": { "$ref": "#/components/schemas/CommunityVoiceSpace" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "description": "No live voice space in this community" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}": {
+      "get": {
+        "tags": ["Voice Spaces"],
+        "summary": "Get a voice space by ID",
+        "description": "Response includes myRole and handRaised for the caller (null/false if not an active participant).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Voice space detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "space": { "$ref": "#/components/schemas/CommunityVoiceSpace" } } } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/end": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "End a voice space",
+        "description": "Host only. Really ends the underlying Zoom meeting, marks the space ended, and disconnects all participants.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Voice space ended" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/join": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Join a voice space",
+        "description": "Joins as a listener. Requires active community membership and a live space.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Joined", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "space": { "$ref": "#/components/schemas/CommunityVoiceSpace" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/leave": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Leave a voice space",
+        "description": "If the host leaves, the space automatically ends for everyone.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Left the voice space" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/request-to-speak": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Raise your hand to request to speak",
+        "description": "Listeners only. Notifies the host.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Request sent" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/participants": {
+      "get": {
+        "tags": ["Voice Spaces"],
+        "summary": "List host, speakers, and listeners",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/VoiceSpaceId" }],
+        "responses": {
+          "200": { "description": "Participants", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "participants": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityVoiceSpaceParticipant" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/participants/{userId}/promote": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Promote a listener to speaker",
+        "description": "Host only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/VoiceSpaceId" },
+          { "in": "path", "name": "userId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Promoted to speaker" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/voice-spaces/{id}/participants/{userId}/demote": {
+      "post": {
+        "tags": ["Voice Spaces"],
+        "summary": "Move a speaker back to listener (\"Remove speakers\")",
+        "description": "Host only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/VoiceSpaceId" },
+          { "in": "path", "name": "userId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Moved back to listener" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/communities/{id}/invites/search-users": {
+      "get": {
+        "tags": ["Invites"],
+        "summary": "Search platform users to invite",
+        "description": "Requires active membership (any role). Matches on name/email, excludes the caller and anyone already an active member of this community.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "query", "name": "q", "schema": { "type": "string" }, "description": "Search text (name or email)" },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Matching users", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "users": { "type": "array", "items": { "$ref": "#/components/schemas/PublicUser" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/communities/{id}/invites/suggested-users": {
+      "get": {
+        "tags": ["Invites"],
+        "summary": "List suggested users to invite",
+        "description": "Requires active membership (any role). Suggests users who share at least one other active community with the caller and aren't already members of this one.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Suggested users", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "users": { "type": "array", "items": { "$ref": "#/components/schemas/PublicUser" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/communities/{id}/invites": {
+      "post": {
+        "tags": ["Invites"],
+        "summary": "Send an invite",
+        "description": "Requires active membership (any role). Fails with 400 if inviting yourself, the invitee is already an active member, or the invitee already has a pending invite to this community. Notifies the invitee.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/CommunityId" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SendInviteRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Invite sent", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "invite": { "$ref": "#/components/schemas/CommunityInvite" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "get": {
+        "tags": ["Invites"],
+        "summary": "List invites sent by this community",
+        "description": "Owner/admin only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["pending", "accepted", "declined", "cancelled"], "default": "pending" } }
+        ],
+        "responses": {
+          "200": { "description": "Sent invites", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "invites": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityInvite" } } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/community/communities/{id}/invites/{inviteId}": {
+      "delete": {
+        "tags": ["Invites"],
+        "summary": "Cancel a pending invite",
+        "description": "The original sender, or a community owner/admin, can cancel. Fails with 404 if the invite doesn't exist or is no longer pending.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/CommunityId" },
+          { "in": "path", "name": "inviteId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Invite cancelled" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/invites/mine": {
+      "get": {
+        "tags": ["Invites"],
+        "summary": "List invites addressed to me",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "in": "query", "name": "status", "schema": { "type": "string", "enum": ["pending", "accepted", "declined", "cancelled"], "default": "pending" } }
+        ],
+        "responses": {
+          "200": { "description": "My invites", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "invites": { "type": "array", "items": { "$ref": "#/components/schemas/CommunityInvite" } } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/community/invites/{id}/accept": {
+      "post": {
+        "tags": ["Invites"],
+        "summary": "Accept an invite",
+        "description": "Only the invitee can accept. Creates (or reactivates) the invitee's community membership with invitedBy set, syncs their group-chat access, and notifies the original sender. Fails with 404 if the invite doesn't exist or is no longer pending.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/InviteId" }],
+        "responses": {
+          "200": { "description": "Invite accepted", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "invite": { "$ref": "#/components/schemas/CommunityInvite" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/community/invites/{id}/decline": {
+      "post": {
+        "tags": ["Invites"],
+        "summary": "Decline an invite",
+        "description": "Only the invitee can decline. Fails with 404 if the invite doesn't exist or is no longer pending.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/InviteId" }],
+        "responses": {
+          "200": { "description": "Invite declined", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "invite": { "$ref": "#/components/schemas/CommunityInvite" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/chat/rooms/{roomId}": {
+      "get": {
+        "tags": ["Group Chat"],
+        "summary": "Get chat room details",
+        "description": "roomId = the community's chatRoomId. Returns the room plus its active participants (there is no separate participants-list endpoint — this is the only way to see who's in the room).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ChatRoomId" }],
+        "responses": {
+          "200": { "description": "Room details", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/ChatRoomDetails" } } } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/chat/rooms/{roomId}/messages": {
+      "get": {
+        "tags": ["Group Chat"],
+        "summary": "Get message history",
+        "description": "roomId = the community's chatRoomId.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/ChatRoomId" },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } },
+          { "in": "query", "name": "offset", "schema": { "type": "integer", "minimum": 0, "default": 0 } },
+          { "in": "query", "name": "since", "schema": { "type": "string", "format": "date-time" } },
+          { "in": "query", "name": "until", "schema": { "type": "string", "format": "date-time" } },
+          { "in": "query", "name": "type", "schema": { "type": "string", "enum": ["text", "image", "file", "system"] } }
+        ],
+        "responses": {
+          "200": { "description": "Messages", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/ChatMessage" } } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Group Chat"],
+        "summary": "Send a message",
+        "description": "roomId = the community's chatRoomId. Same-shape real-time equivalent: socket.io event `send_message` with `{ roomId, content, type, replyToId }`.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ChatRoomId" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["content"], "properties": { "content": { "type": "string", "maxLength": 4000 }, "type": { "type": "string", "enum": ["text", "image", "file"], "default": "text" }, "replyToId": { "type": "string", "format": "uuid", "nullable": true }, "metadata": { "type": "object" } } } } }
+        },
+        "responses": {
+          "201": { "description": "Message sent", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/ChatMessage" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/chat/rooms/{roomId}/read": {
+      "post": {
+        "tags": ["Group Chat"],
+        "summary": "Mark messages as read",
+        "description": "roomId = the community's chatRoomId. Omit messageId to mark the whole room read.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ChatRoomId" }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "messageId": { "type": "string", "format": "uuid" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Marked as read" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/chat/rooms/{roomId}/search": {
+      "get": {
+        "tags": ["Group Chat"],
+        "summary": "Search messages in the room",
+        "description": "roomId = the community's chatRoomId.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/ChatRoomId" },
+          { "in": "query", "name": "q", "required": true, "schema": { "type": "string", "minLength": 1 } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } },
+          { "in": "query", "name": "offset", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": { "description": "Matching messages", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/ChatMessage" } } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/chat/messages/{messageId}": {
+      "put": {
+        "tags": ["Group Chat"],
+        "summary": "Edit a message",
+        "description": "Author only.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ChatMessageId" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["content"], "properties": { "content": { "type": "string", "maxLength": 4000 } } } } }
+        },
+        "responses": {
+          "200": { "description": "Message edited", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/ChatMessage" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Group Chat"],
+        "summary": "Delete a message",
+        "description": "Author, or a community moderator/admin/owner.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/ChatMessageId" },
+          { "in": "query", "name": "soft", "schema": { "type": "boolean", "default": true }, "description": "Soft-delete (default) keeps the row marked deleted; false hard-deletes it." }
+        ],
+        "responses": {
+          "200": { "description": "Message deleted" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "parameters": {
+      "CommunityId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "CommunityIdForPosts": { "in": "path", "name": "communityId", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "JoinRequestId": { "in": "path", "name": "requestId", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "PostId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "EventId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "VoiceSpaceId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "InviteId": { "in": "path", "name": "id", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "ChatRoomId": { "in": "path", "name": "roomId", "required": true, "schema": { "type": "string", "format": "uuid" }, "description": "A community's chatRoomId" },
+      "ChatMessageId": { "in": "path", "name": "messageId", "required": true, "schema": { "type": "string", "format": "uuid" } }
+    },
+    "responses": {
+      "BadRequest":   { "description": "Bad request",              "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "Unauthorized": { "description": "Not authenticated",         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "Forbidden":    { "description": "Insufficient community role", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "NotFound":     { "description": "Not found",                 "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string" }
+        }
+      },
+      "PublicUser": {
+        "type": "object",
+        "description": "A stripped-down user reference — never includes credentials or contact fields.",
+        "properties": {
+          "id":              { "type": "string", "format": "uuid" },
+          "fullName":        { "type": "string" },
+          "profileImageUrl": { "type": "string", "nullable": true },
+          "role":            { "type": "string", "example": "doctor" }
+        }
+      },
+      "CreateCommunityRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name":        { "type": "string", "example": "Diabetes Support Circle" },
+          "description": { "type": "string" },
+          "category":    { "type": "string", "example": "Chronic Illness" },
+          "tags":        { "type": "array", "items": { "type": "string" } },
+          "privacyType": { "type": "string", "enum": ["public", "private"], "default": "public" },
+          "bannerUrl":   { "type": "string" },
+          "avatarUrl":   { "type": "string" },
+          "rules":       { "type": "array", "items": { "type": "string" }, "example": ["Be respectful", "No spam", "Keep discussions on-topic"] }
+        }
+      },
+      "UpdateCommunityRequest": {
+        "type": "object",
+        "properties": {
+          "name":        { "type": "string" },
+          "description": { "type": "string" },
+          "category":    { "type": "string" },
+          "tags":        { "type": "array", "items": { "type": "string" } },
+          "privacyType": { "type": "string", "enum": ["public", "private"] },
+          "bannerUrl":   { "type": "string" },
+          "avatarUrl":   { "type": "string" },
+          "rules":       { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Community": {
+        "type": "object",
+        "properties": {
+          "id":           { "type": "string", "format": "uuid" },
+          "name":         { "type": "string" },
+          "slug":         { "type": "string" },
+          "description":  { "type": "string", "nullable": true },
+          "category":     { "type": "string", "nullable": true },
+          "tags":         { "type": "array", "items": { "type": "string" }, "nullable": true },
+          "privacyType":  { "type": "string", "enum": ["public", "private"] },
+          "bannerUrl":    { "type": "string", "nullable": true },
+          "avatarUrl":    { "type": "string", "nullable": true },
+          "rules":        { "type": "array", "items": { "type": "string" }, "nullable": true },
+          "memberCount":  { "type": "integer" },
+          "postCount":    { "type": "integer" },
+          "isActive":     { "type": "boolean" },
+          "chatRoomId":   { "type": "string", "format": "uuid", "nullable": true, "description": "The community's group chat room. Every active member is automatically kept in sync as a participant of this room (owner/admin → chat role 'admin', moderator → 'moderator', member → 'member'). Use the existing generic chat API (documented at /api-docs) to send/read messages: POST/GET /api/chat/rooms/{chatRoomId}/messages, GET /api/chat/rooms/{chatRoomId}, plus the socket.io events (join_room, send_message, typing_start, etc.). There are no community-specific chat endpoints — community membership alone grants access." },
+          "createdBy":    { "$ref": "#/components/schemas/PublicUser" },
+          "createdAt":    { "type": "string", "format": "date-time" },
+          "updatedAt":    { "type": "string", "format": "date-time" },
+          "isMember":         { "type": "boolean", "description": "Present on GET /communities/{id} — whether the caller is an active member" },
+          "myRole":           { "type": "string", "nullable": true, "enum": ["owner", "admin", "moderator", "member", null], "description": "Present on GET /communities/{id}" },
+          "hasPendingRequest": { "type": "boolean", "description": "Present on GET /communities/{id} — caller has a pending join request" }
+        }
+      },
+      "PaginatedCommunities": {
+        "type": "object",
+        "properties": {
+          "success":     { "type": "boolean" },
+          "communities": { "type": "array", "items": { "$ref": "#/components/schemas/Community" } },
+          "total":       { "type": "integer" },
+          "page":        { "type": "integer" },
+          "limit":       { "type": "integer" }
+        }
+      },
+      "CommunityMember": {
+        "type": "object",
+        "properties": {
+          "id":        { "type": "string", "format": "uuid" },
+          "role":      { "type": "string", "enum": ["owner", "admin", "moderator", "member", "pending_member"] },
+          "isActive":  { "type": "boolean" },
+          "joinedAt":  { "type": "string", "format": "date-time", "nullable": true },
+          "leftAt":    { "type": "string", "format": "date-time", "nullable": true },
+          "user":      { "$ref": "#/components/schemas/PublicUser" }
+        }
+      },
+      "CommunityJoinRequest": {
+        "type": "object",
+        "properties": {
+          "id":               { "type": "string", "format": "uuid" },
+          "status":           { "type": "string", "enum": ["pending", "approved", "rejected"] },
+          "message":          { "type": "string", "nullable": true },
+          "rejectionReason":  { "type": "string", "nullable": true },
+          "reviewedAt":       { "type": "string", "format": "date-time", "nullable": true },
+          "user":             { "$ref": "#/components/schemas/PublicUser" },
+          "reviewedBy":       { "$ref": "#/components/schemas/PublicUser" },
+          "createdAt":        { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreatePostRequest": {
+        "type": "object",
+        "properties": {
+          "content":   { "type": "string", "example": "Hello everyone, glad to be here!" },
+          "mediaUrls": { "type": "array", "items": { "type": "string" }, "description": "Already-uploaded media URLs" }
+        }
+      },
+      "CommunityPostMedia": {
+        "type": "object",
+        "properties": {
+          "id":        { "type": "string", "format": "uuid" },
+          "mediaUrl":  { "type": "string" },
+          "mediaType": { "type": "string", "enum": ["image", "video"] },
+          "order":     { "type": "integer" }
+        }
+      },
+      "CommunityPost": {
+        "type": "object",
+        "properties": {
+          "id":            { "type": "string", "format": "uuid" },
+          "content":       { "type": "string", "nullable": true },
+          "likeCount":     { "type": "integer" },
+          "commentCount":  { "type": "integer" },
+          "viewCount":     { "type": "integer" },
+          "isDeleted":     { "type": "boolean" },
+          "author":        { "$ref": "#/components/schemas/PublicUser" },
+          "media":         { "type": "array", "items": { "$ref": "#/components/schemas/CommunityPostMedia" } },
+          "isLiked":       { "type": "boolean", "description": "Present on GET /posts/{id} — whether the caller liked this post" },
+          "isSaved":       { "type": "boolean", "description": "Present on GET /posts/{id} — whether the caller saved this post" },
+          "community":     { "type": "object", "nullable": true, "description": "Present on GET /posts/feed", "properties": { "id": { "type": "string", "format": "uuid" }, "name": { "type": "string" } } },
+          "createdAt":     { "type": "string", "format": "date-time" },
+          "updatedAt":     { "type": "string", "format": "date-time" }
+        }
+      },
+      "PaginatedPosts": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "posts":   { "type": "array", "items": { "$ref": "#/components/schemas/CommunityPost" } },
+          "total":   { "type": "integer" },
+          "page":    { "type": "integer" },
+          "limit":   { "type": "integer" }
+        }
+      },
+      "AddCommentRequest": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content":         { "type": "string", "example": "Welcome!" },
+          "parentCommentId": { "type": "string", "format": "uuid", "nullable": true, "description": "Set to reply to another comment" }
+        }
+      },
+      "CommunityPostComment": {
+        "type": "object",
+        "properties": {
+          "id":        { "type": "string", "format": "uuid" },
+          "content":   { "type": "string" },
+          "isDeleted": { "type": "boolean" },
+          "author":    { "$ref": "#/components/schemas/PublicUser" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateEventRequest": {
+        "type": "object",
+        "required": ["title", "startAt"],
+        "properties": {
+          "title":         { "type": "string", "example": "Monthly Diabetes Support Meetup" },
+          "description":   { "type": "string" },
+          "startAt":       { "type": "string", "format": "date-time", "example": "2026-09-15T18:00:00Z" },
+          "coverImageUrl": { "type": "string" },
+          "status":        { "type": "string", "enum": ["draft", "published"], "default": "draft", "description": "Omit or \"draft\" to save as a draft; \"published\" to publish immediately." }
+        }
+      },
+      "UpdateEventRequest": {
+        "type": "object",
+        "properties": {
+          "title":         { "type": "string" },
+          "description":   { "type": "string" },
+          "startAt":       { "type": "string", "format": "date-time" },
+          "coverImageUrl": { "type": "string" },
+          "status":        { "type": "string", "enum": ["draft", "published"], "description": "Set to \"published\" to publish a draft event." }
+        }
+      },
+      "CommunityEvent": {
+        "type": "object",
+        "properties": {
+          "id":            { "type": "string", "format": "uuid" },
+          "title":         { "type": "string" },
+          "description":   { "type": "string", "nullable": true },
+          "startAt":       { "type": "string", "format": "date-time" },
+          "coverImageUrl": { "type": "string", "nullable": true },
+          "status":        { "type": "string", "enum": ["draft", "published"] },
+          "guestCount":    { "type": "integer" },
+          "createdBy":     { "$ref": "#/components/schemas/PublicUser" },
+          "isGoing":       { "type": "boolean", "description": "Present on GET /events/{id} — whether the caller has RSVP'd" },
+          "remindMe":      { "type": "boolean", "description": "Present on GET /events/{id} — the caller's reminder preference (false if not RSVP'd)" },
+          "community":     { "type": "object", "nullable": true, "description": "Present on GET /events/feed", "properties": { "id": { "type": "string", "format": "uuid" }, "name": { "type": "string" } } },
+          "createdAt":     { "type": "string", "format": "date-time" },
+          "updatedAt":     { "type": "string", "format": "date-time" }
+        }
+      },
+      "CommunityEventRSVP": {
+        "type": "object",
+        "properties": {
+          "id":        { "type": "string", "format": "uuid" },
+          "remindMe":  { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "user":      { "$ref": "#/components/schemas/PublicUser" }
+        }
+      },
+      "CommunityVoiceSpace": {
+        "type": "object",
+        "properties": {
+          "id":            { "type": "string", "format": "uuid" },
+          "title":         { "type": "string" },
+          "status":        { "type": "string", "enum": ["live", "ended"] },
+          "provider":      { "type": "string", "example": "zoom" },
+          "joinUrl":       { "type": "string", "nullable": true, "description": "Share with anyone who wants to join the audio room" },
+          "hostStartUrl":  { "type": "string", "nullable": true, "description": "HOST ONLY — launches the Zoom meeting with full moderator control (mute/remove). Omitted entirely for every other viewer." },
+          "host":          { "$ref": "#/components/schemas/PublicUser" },
+          "endedAt":       { "type": "string", "format": "date-time", "nullable": true },
+          "myRole":        { "type": "string", "nullable": true, "enum": ["host", "speaker", "listener", null], "description": "Present on GET /voice-spaces/{id} and /active" },
+          "handRaised":    { "type": "boolean", "description": "Present on GET /voice-spaces/{id} and /active" },
+          "createdAt":     { "type": "string", "format": "date-time" },
+          "updatedAt":     { "type": "string", "format": "date-time" }
+        }
+      },
+      "CommunityVoiceSpaceParticipant": {
+        "type": "object",
+        "properties": {
+          "id":         { "type": "string", "format": "uuid" },
+          "role":       { "type": "string", "enum": ["host", "speaker", "listener"] },
+          "handRaised": { "type": "boolean" },
+          "isActive":   { "type": "boolean" },
+          "joinedAt":   { "type": "string", "format": "date-time", "nullable": true },
+          "user":       { "$ref": "#/components/schemas/PublicUser" }
+        }
+      },
+      "SendInviteRequest": {
+        "type": "object",
+        "required": ["inviteeId"],
+        "properties": {
+          "inviteeId": { "type": "string", "format": "uuid" },
+          "message":   { "type": "string", "nullable": true, "example": "Thought you'd like this community!" }
+        }
+      },
+      "CommunityInvite": {
+        "type": "object",
+        "properties": {
+          "id":          { "type": "string", "format": "uuid" },
+          "status":      { "type": "string", "enum": ["pending", "accepted", "declined", "cancelled"] },
+          "message":     { "type": "string", "nullable": true },
+          "respondedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "community":   { "type": "object", "nullable": true, "properties": { "id": { "type": "string", "format": "uuid" }, "name": { "type": "string" } } },
+          "invitedBy":   { "$ref": "#/components/schemas/PublicUser" },
+          "invitee":     { "$ref": "#/components/schemas/PublicUser" },
+          "createdAt":   { "type": "string", "format": "date-time" }
+        }
+      },
+      "ChatParticipant": {
+        "type": "object",
+        "properties": {
+          "id":       { "type": "string", "format": "uuid" },
+          "role":     { "type": "string", "enum": ["admin", "moderator", "member"], "description": "Chat-level role, synced from the community role (owner→admin, moderator→moderator, member→member)" },
+          "isActive": { "type": "boolean" },
+          "joinedAt": { "type": "string", "format": "date-time" },
+          "user":     { "$ref": "#/components/schemas/PublicUser" }
+        }
+      },
+      "ChatRoomDetails": {
+        "type": "object",
+        "properties": {
+          "id":              { "type": "string", "format": "uuid" },
+          "name":            { "type": "string" },
+          "description":     { "type": "string", "nullable": true },
+          "type":            { "type": "string", "example": "group" },
+          "isPrivate":       { "type": "boolean" },
+          "maxParticipants": { "type": "integer" },
+          "participants":    { "type": "array", "items": { "$ref": "#/components/schemas/ChatParticipant" } },
+          "createdAt":       { "type": "string", "format": "date-time" }
+        }
+      },
+      "ChatMessage": {
+        "type": "object",
+        "properties": {
+          "id":        { "type": "string", "format": "uuid" },
+          "content":   { "type": "string" },
+          "type":      { "type": "string", "enum": ["text", "image", "file", "system"] },
+          "sender":    { "$ref": "#/components/schemas/PublicUser" },
+          "replyTo":   { "type": "object", "nullable": true, "description": "The message this one replies to, if any" },
+          "edited":    { "type": "boolean" },
+          "deleted":   { "type": "boolean" },
+          "readBy":    { "type": "array", "items": { "type": "string", "format": "uuid" } },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

@@ -35,12 +35,10 @@ class CartService {
             cart = await cartRepository.saveCart({ patientId, vendorId, status: "draft" });
         }
 
-        // If product already in cart — increase quantity
+        // If product already in cart — set the quantity to whatever was passed
         const existingItem = await cartRepository.findItemByCartAndProduct(cart.id, productId);
         if (existingItem) {
-            await cartRepository.updateItem(existingItem.id, {
-                quantity: existingItem.quantity + quantity,
-            });
+            await cartRepository.updateItem(existingItem.id, { quantity });
         } else {
             await cartRepository.saveItem({
                 cartId:        cart.id,
@@ -52,20 +50,6 @@ class CartService {
         }
 
         return cartRepository.findByIdAndPatient(cart.id, patientId);
-    }
-
-    async updateItemQuantity(patientId, cartId, itemId, quantity) {
-        if (quantity < 1) throw new Error("Quantity must be at least 1");
-
-        const cart = await cartRepository.findByIdAndPatient(cartId, patientId);
-        if (!cart) throw new Error("Cart not found");
-        if (cart.status !== "draft") throw new Error("Cannot modify a submitted cart");
-
-        const item = await cartRepository.findItemById(itemId);
-        if (!item || item.cart.id !== cartId) throw new Error("Cart item not found");
-
-        await cartRepository.updateItem(itemId, { quantity });
-        return cartRepository.findByIdAndPatient(cartId, patientId);
     }
 
     async removeItem(patientId, cartId, itemId) {
@@ -95,10 +79,31 @@ class CartService {
         });
     }
 
-    async submitCart(patientId, cartId, patientNote, prescriptionId) {
-        const cart = await cartRepository.findByIdAndPatient(cartId, patientId);
+    async submitCart(patientId, cartId, patientNote, prescriptionId, items) {
+        let cart = await cartRepository.findByIdAndPatient(cartId, patientId);
         if (!cart) throw new Error("Cart not found");
         if (cart.status !== "draft") throw new Error("Cart has already been submitted");
+
+        // Final quantities are managed client-side while shopping and only sent
+        // here, at checkout — this avoids a round trip per quantity change.
+        // items: [{ productId, quantity }] — quantity <= 0 removes the item.
+        if (Array.isArray(items) && items.length > 0) {
+            for (const { productId, quantity } of items) {
+                if (!productId || !Number.isInteger(quantity)) {
+                    throw new Error("Each item must have a valid productId and an integer quantity");
+                }
+                const existingItem = await cartRepository.findItemByCartAndProduct(cartId, productId);
+                if (!existingItem) throw new Error(`Product ${productId} is not in this cart`);
+
+                if (quantity <= 0) {
+                    await cartRepository.deleteItem(existingItem.id);
+                } else {
+                    await cartRepository.updateItem(existingItem.id, { quantity });
+                }
+            }
+            cart = await cartRepository.findByIdAndPatient(cartId, patientId);
+        }
+
         if (!cart.items || cart.items.length === 0) throw new Error("Cannot submit an empty cart");
 
         // Auto-confirm at listed product prices — no vendor confirmation step needed

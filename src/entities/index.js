@@ -38,6 +38,7 @@ const cart     = require('../features/cart/entities');
 const serviceManagement = require('../features/service-management/entities');
 const adminOps = require('../features/admin-ops/entities');
 const analytics = require('../features/analytics/entities');
+const community = require('../features/community/entities');
 // Add gamification, marketing, search if they have entities?
 // const gamification = require('../features/gamification/entities'); // Check existence first?
 // const marketing = require('../features/marketing/entities'); // Check existence first?
@@ -66,6 +67,7 @@ module.exports = [
     ...Object.values(serviceManagement),
     ...Object.values(adminOps),
     ...Object.values(analytics),
+    ...Object.values(community),
 
     // Check other features if they exist and export entities
     // ...safeImport('../features/gamification/entities'), // Merged to marketing

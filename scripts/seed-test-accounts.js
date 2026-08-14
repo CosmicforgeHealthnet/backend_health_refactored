@@ -1,7 +1,7 @@
 /**
  * Seed script: creates 4 fully-verified test accounts
  *   - cf.patient@cosmicforge.dev    / TestPatient@123   (gold_elite)
- *   - cf.doctor@cosmicforge.dev     / TestDoctor@123    (professional, verified)
+ *   - cf.doctor@cosmicforge.dev     / TestDoctor@123    (gold_elite, verified)
  *   - cf.pharmacy@cosmicforge.dev   / TestPharmacy@123  (gold_elite, verified)
  *   - cf.vendor@cosmicforge.dev     / TestVendor@123    (free, approved)
  *
@@ -37,16 +37,28 @@ async function run() {
   try {
     await client.query('BEGIN');
 
-    // ── Remove any existing test accounts (CASCADE cleans related rows) ──
-    await client.query(`
-      DELETE FROM users
-      WHERE email IN (
-        'cf.patient@cosmicforge.dev',
-        'cf.doctor@cosmicforge.dev',
-        'cf.pharmacy@cosmicforge.dev',
-        'cf.vendor@cosmicforge.dev'
-      )
-    `);
+    // ── Remove any existing test accounts (delete FK dependents first) ──
+    const testEmails = [
+      'cf.patient@cosmicforge.dev',
+      'cf.doctor@cosmicforge.dev',
+      'cf.pharmacy@cosmicforge.dev',
+      'cf.vendor@cosmicforge.dev',
+    ];
+
+    // Fetch IDs first so we can target child rows
+    const { rows: existingUsers } = await client.query(
+      `SELECT id FROM users WHERE email = ANY($1)`,
+      [testEmails]
+    );
+    const existingIds = existingUsers.map(r => r.id);
+
+    if (existingIds.length > 0) {
+      // Delete rows in tables that reference users but lack CASCADE
+      await client.query(`DELETE FROM vendor_orders WHERE "patientId" = ANY($1)`, [existingIds]);
+      await client.query(`DELETE FROM carts         WHERE "patientId" = ANY($1)`, [existingIds]);
+      // Now safe to delete users (remaining FKs have CASCADE)
+      await client.query(`DELETE FROM users WHERE id = ANY($1)`, [existingIds]);
+    }
     console.log('🗑️  Cleared existing test accounts');
 
     // ════════════════════════════════════════════
@@ -84,7 +96,11 @@ async function run() {
     console.log(`👤 Patient created: ${patientUser.id}`);
 
     // ════════════════════════════════════════════
-    //  DOCTOR — professional tier, fully verified
+    //  DOCTOR — gold_elite tier, fully verified
+    //  (users.tier is a display/badge tier — kept in line with patient/pharmacy.
+    //   The doctor's actual commission-rate plan lives in subscriptions.tier
+    //   below and stays 'professional', since 'gold_elite' isn't a valid
+    //   doctor subscription plan — that vocabulary is patient-plan only.)
     // ════════════════════════════════════════════
     const { rows: [doctorUser] } = await client.query(`
       INSERT INTO users (
@@ -95,7 +111,7 @@ async function run() {
         'Dr. Test Doctor',
         'cf.doctor@cosmicforge.dev',
         $1,
-        'doctor', 'doctor_active', 'professional', 'local',
+        'doctor', 'doctor_active', 'gold_elite', 'local',
         '+2348000000002', 'General Practice', false, false, 0, 0, 0
       ) RETURNING id
     `, [HASHES.doctor]);
@@ -296,7 +312,7 @@ async function run() {
     console.log('DOCTOR');
     console.log('  email   : cf.doctor@cosmicforge.dev');
     console.log('  password: TestDoctor@123');
-    console.log('  tier    : professional (fully verified)');
+    console.log('  tier    : gold_elite (fully verified)');
     console.log('');
     console.log('PHARMACY');
     console.log('  email   : cf.pharmacy@cosmicforge.dev');

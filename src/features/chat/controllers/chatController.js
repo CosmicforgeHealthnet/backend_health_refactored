@@ -262,7 +262,7 @@ class ChatController {
       const { soft = true } = req.query;
 
       // Get message details before deletion for WebSocket notification
-      const { ChatMessageRepository } = require('../../LAB/websocket/chat');
+      const ChatMessageRepository = require('../repositories/chatMessageRepository');
       const messageRepo = new ChatMessageRepository();
       const messageBeforeDelete = await messageRepo.findByIdWithDetails(messageId);
 

@@ -1,4 +1,5 @@
 // src/services/doctorVerificationService.js
+const AppDataSource = require("../../../config/database");
 const verificationRequestRepo = require("../repositories/verificationRequestRepository");
 const verificationDocumentRepo = require("../repositories/verificationDocumentRepository");
 const verificationStatusHistoryRepo = require("../repositories/verificationStatusHistoryRepository");
@@ -22,8 +23,11 @@ const { sendVerificationStatusEmail,
 const VerificationHelpers = require("../utils/verificationHelpers");
 const apiConnectorService = require("./apiConnectorService");
 const documentProcessingService = require("./documentProcessingService");
+const ninVerificationService = require("./ninVerificationService");
+const DocumentUploadMiddleware = require("../../documents/middlewares/documentUploadMiddleware");
+const crypto = require("crypto");
 
-const { VerificationStatus } = require("../entities/VerificationRequest");
+const { VerificationStatus, NinVerificationStatus } = require("../entities/VerificationRequest");
 const { getNotificationSocket } = require("../../../shared/utils/notificationUtils");
 
 class DoctorVerificationService {
@@ -352,6 +356,95 @@ class DoctorVerificationService {
   }
 
   /**
+   * Submit and verify a doctor's NIN (National Identification Number).
+   * Nigeria-specific identity check — confirms the government-registered name for
+   * this NIN matches the doctor's name on the platform. A mismatch does NOT
+   * auto-reject the verification request: it's surfaced to admins for manual
+   * review, since legitimate mismatches happen (married names, spelling variants).
+   * This does not currently block approval on its own — see NIN_VERIFICATION_REQUIREMENTS.md
+   * for the pending grace-period/enforcement decision for doctors already on the platform.
+   */
+  async submitNinVerification(verificationRequestId, doctorId, nin) {
+    try {
+      const verificationRequest = await verificationRequestRepo.findById(verificationRequestId);
+      if (!verificationRequest || verificationRequest.doctorId !== doctorId) {
+        throw new Error("Verification request not found");
+      }
+
+      if (verificationRequest.countryCode !== 'NG') {
+        throw new Error("NIN verification only applies to Nigeria");
+      }
+
+      const doctor = await userRepository.findById(doctorId);
+      if (!doctor) {
+        throw new Error("Doctor not found");
+      }
+
+      const result = await ninVerificationService.verifyNin(nin, doctor.fullName);
+
+      const encryptionKey = crypto.randomBytes(32).toString('hex');
+      const encryptedBuffer = DocumentUploadMiddleware.encryptBuffer(Buffer.from(nin, 'utf8'), encryptionKey);
+
+      const updateData = {
+        ninEncrypted: encryptedBuffer.toString('hex'),
+        ninEncryptionKey: encryptionKey,
+        ninLast4: nin.slice(-4),
+        ninVerificationStatus: result.status,
+        ninVerifiedData: result.providerData,
+        ninNameMatchScore: result.nameMatchScore,
+        ninSubmittedAt: new Date()
+      };
+
+      if (result.providerData) {
+        updateData.ninVerifiedAt = new Date();
+      }
+
+      await verificationRequestRepo.update(verificationRequestId, updateData);
+
+      // Info-only audit entry — doesn't change the verification request's own status
+      await verificationStatusHistoryRepo.logStatusChange(
+        verificationRequestId,
+        verificationRequest.status,
+        verificationRequest.status,
+        doctorId,
+        `NIN submitted — result: ${result.status}${result.nameMatchScore != null ? ` (name match ${result.nameMatchScore}%)` : ''}`,
+        { ninVerificationStatus: result.status, nameMatchScore: result.nameMatchScore },
+        false
+      );
+
+      try {
+        const messages = {
+          [NinVerificationStatus.VERIFIED]: "Your NIN has been verified and matches your registered name.",
+          [NinVerificationStatus.MISMATCH]: "Your NIN was found, but the registered name didn't match — this will be reviewed by our team.",
+          [NinVerificationStatus.FAILED]: "We couldn't verify your NIN. Please check the number and try again."
+        };
+        await getNotificationSocket().sendNotificationToUser(doctorId, {
+          type: "info",
+          message: messages[result.status] || "Your NIN verification has been processed.",
+          metadata: {
+            action: "nin_verification_result",
+            verificationRequestId,
+            status: result.status,
+            link: "/doctor/verification"
+          }
+        });
+      } catch (notifyError) {
+        console.error("Error sending NIN verification notification:", notifyError);
+      }
+
+      return {
+        status: result.status,
+        nameMatchScore: result.nameMatchScore,
+        error: result.error
+      };
+
+    } catch (error) {
+      console.error("Error submitting NIN verification:", error);
+      throw error;
+    }
+  }
+
+  /**
    * ENHANCED: Approve verification with automatic wallet and subscription setup
    * WITH DEBUGGING
    */
@@ -416,26 +509,46 @@ class DoctorVerificationService {
 
       console.log(`🔄 Starting enhanced approval for doctor ${verificationRequest.doctorId}`);
 
-      // Continue with existing approval logic...
-      await verificationRequestRepo.updateStatus(
-        verificationRequestId,
-        VerificationStatus.APPROVED,
-        approvedBy,
-        approvalNotes
-      );
+      // Mark the request approved, log the change, and activate the doctor's
+      // account together, in one DB transaction. These three used to run as
+      // separate non-transactional writes — if anything failed partway through,
+      // the request could end up "approved" while the account stayed pending
+      // forever (confirmed happening to a real doctor). Wrapping them together
+      // means they either all land or none do.
+      await AppDataSource.transaction(async (manager) => {
+        const approvedAt = new Date();
 
-      // Log status change
-      await verificationStatusHistoryRepo.logStatusChange(
-        verificationRequestId,
-        verificationRequest.status,
-        VerificationStatus.APPROVED,
-        approvedBy,
-        approvalNotes || "Verification approved",
-        null,
-        approvedBy === 'system'
-      );
+        const vrUpdate = {
+          status: VerificationStatus.APPROVED,
+          updatedBy: approvedBy,
+          updatedAt: approvedAt,
+          approvedAt,
+        };
+        if (approvalNotes) vrUpdate.reviewNotes = approvalNotes;
 
-      // Update doctor profile and user status
+        await manager.getRepository("VerificationRequest").update(verificationRequestId, vrUpdate);
+
+        await manager.getRepository("VerificationStatusHistory").insert({
+          verificationRequestId,
+          fromStatus: verificationRequest.status,
+          toStatus: VerificationStatus.APPROVED,
+          changedBy: approvedBy,
+          changeReason: approvalNotes || "Verification approved",
+          automatedChange: approvedBy === 'system',
+        });
+
+        await manager.getRepository("User").update(verificationRequest.doctorId, {
+          status: 'doctor_active',
+        });
+      });
+
+      // Everything below is best-effort enhancement, not core approval state —
+      // a doctor is fully "approved and active" as of the transaction above
+      // regardless of what happens next. Failures here are non-fatal and
+      // self-healing: the weekly doctor-setup-check job and the admin
+      // fix-setup tools already cover gaps in wallet/subscription/profile sync.
+
+      // Update doctor profile verification metadata
       await this.updateDoctorProfileVerificationStatus(
         verificationRequest.doctorId,
         "verified",
@@ -443,13 +556,6 @@ class DoctorVerificationService {
         verificationRequest.tier,
         verificationRequest.confidenceScore
       );
-
-      // Update user status to doctor_active
-      const user = await userRepository.findById(verificationRequest.doctorId);
-      if (user) {
-        user.status = 'doctor_active';
-        await userRepository.save(user);
-      }
 
       // NEW: Sync verified license data and calculate years of experience
       await this.syncVerifiedDataToProfile(verificationRequest);

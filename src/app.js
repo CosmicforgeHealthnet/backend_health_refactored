@@ -78,6 +78,7 @@ const analyticsFeature = require("./features/analytics");
 const vendorFeature = require("./features/vendor");
 const shopFeature   = require("./features/shop");
 const cartFeature   = require("./features/cart");
+const communityFeature = require("./features/community");
 
 // Legacy Compatibility Routes
 
@@ -200,6 +201,7 @@ const shopSwaggerDoc          = loadSwaggerDoc("./features/shop/docs/shop-swagge
 const cartSwaggerDoc          = loadSwaggerDoc("./features/cart/docs/cart-swagger.json", "Cart");
 const hybridPharmacySwaggerDoc  = loadSwaggerDoc("./features/pharmacy/docs/hybrid-pharmacy-swagger.json", "Hybrid Pharmacy");
 const pharmacySessionSwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/pharmacy-session-swagger.json", "Pharmacy Session");
+const communitySwaggerDoc       = loadSwaggerDoc("./features/community/docs/community-swagger.json", "Community");
 
 const patientSwaggerDoc = loadSwaggerDoc("./features/pharmacy/docs/patient-swagger.bundle.json", "Patient");
 patientSwaggerDoc.servers = [
@@ -371,6 +373,20 @@ app.use('/shop-docs', swaggerUi.serveFiles(shopSwaggerDoc, {}), swaggerUi.setup(
     swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
 }));
 
+communitySwaggerDoc.servers = [
+    {
+        url: process.env.NODE_ENV === "production"
+            ? `${process.env.PROD_BACKEND_URL || config.backendUrl}/api`
+            : `http://localhost:${process.env.PORT || "3000"}/api`,
+        description: process.env.NODE_ENV === "production" ? "Production server" : "Development server",
+    },
+];
+app.use('/community-docs', swaggerUi.serveFiles(communitySwaggerDoc, {}), swaggerUi.setup(communitySwaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "CosmicForge Community API",
+    swaggerOptions: { docExpansion: 'none', persistAuthorization: true },
+}));
+
 vendorAnalyticsDoc.servers = [
     {
         url: process.env.NODE_ENV === "production"
@@ -488,6 +504,7 @@ app.get("/", (req, res) => {
             vendor: "/vendor-docs",
             shop: "/shop-docs",
             cart: "/cart-docs",
+            community: "/community-docs",
             promotions: "/promotions-docs",
             vendorAnalytics: "/vendor-analytics-docs",
             hybridPharmacy: "/hybrid-pharmacy-docs",
@@ -564,6 +581,7 @@ app.use("/api/analytics", analyticsFeature.router);
 app.use("/api/vendor",   vendorFeature.router);
 app.use("/api/shop",     shopFeature.router);
 app.use("/api/cart",     cartFeature.router);
+app.use("/api/community", communityFeature.router);
 
 
 // ============================================

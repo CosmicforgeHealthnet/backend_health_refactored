@@ -398,6 +398,25 @@ async function sendProfileCompletionReminderEmail(user) {
     );
 }
 
+/**
+ * Send a reminder to doctors who registered but never called
+ * POST /api/doctor/verification/submit — they have zero verification_requests
+ * rows and are invisible to the admin verification queue as a result.
+ */
+async function sendVerificationNotSubmittedReminderEmail(user) {
+    await emailService.send(
+        "verification_not_submitted_reminder",
+        user.email,
+        "Action Needed: Submit Your Verification - CosmicForge Health",
+        {
+            fullName: user.fullName,
+            verificationSubmitLink: `${process.env.APP_BASE_URL}/doctor/verification`,
+            supportLink: `${process.env.APP_BASE_URL}/doctors/dashboard/support`,
+            currentYear: new Date().getFullYear()
+        }
+    );
+}
+
 
 /**
  * Send appointment reminder email to doctor (1 hour before)
@@ -1057,6 +1076,7 @@ module.exports = {
 
     //reminder for profile completion
     sendProfileCompletionReminderEmail,
+    sendVerificationNotSubmittedReminderEmail,
 
     // Reminder emails
     sendDoctorAppointmentReminder,

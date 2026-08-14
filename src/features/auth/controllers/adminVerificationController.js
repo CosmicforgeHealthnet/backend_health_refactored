@@ -338,6 +338,14 @@ class AdminVerificationController {
           confidenceScore: verificationRequest.confidenceScore,
           apiVerificationData: verificationRequest.apiVerificationData,
           apiErrors: verificationRequest.apiErrors,
+          ninVerification: {
+            status: verificationRequest.ninVerificationStatus,
+            last4: verificationRequest.ninLast4,
+            nameMatchScore: verificationRequest.ninNameMatchScore,
+            verifiedData: verificationRequest.ninVerifiedData,
+            submittedAt: verificationRequest.ninSubmittedAt,
+            verifiedAt: verificationRequest.ninVerifiedAt
+          },
           submittedAt: verificationRequest.submittedAt,
           approvedAt: verificationRequest.approvedAt,
           rejectedAt: verificationRequest.rejectedAt,
@@ -701,6 +709,36 @@ class AdminVerificationController {
     } catch (error) {
       console.error('Failed to log admin document access:', error);
       // Don't throw error, just log it
+    }
+  }
+
+  /**
+   * List doctors who registered but never called /verification/submit.
+   * These have zero verification_requests rows, so they never show up in
+   * getVerificationQueue (which only ever lists existing requests) — this is
+   * the only way to find them short of querying the database directly.
+   * GET /api/admin/verification/stuck-doctors
+   */
+  async getStuckDoctors(req, res, next) {
+    try {
+      const doctors = await userRepository.findDoctorsWithNoVerificationRequest();
+
+      res.json({
+        success: true,
+        count: doctors.length,
+        doctors: doctors.map(d => ({
+          id: d.id,
+          fullName: d.fullName,
+          email: d.email,
+          phoneNumber: d.phoneNumber,
+          status: d.status,
+          profileStatus: d.hasProfile ? "complete" : "incomplete",
+          createdAt: d.createdAt,
+          daysSinceSignup: Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+        })),
+      });
+    } catch (error) {
+      next(error);
     }
   }
 

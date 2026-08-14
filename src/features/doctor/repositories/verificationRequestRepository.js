@@ -22,6 +22,14 @@ class VerificationRequestRepository {
         });
     }
 
+    // Has this doctor ever submitted a verification request (any status)?
+    // Used to flag accounts that registered but never hit /verification/submit —
+    // those are invisible to the admin queue, which only lists existing rows.
+    async existsForDoctor(doctorId) {
+        const count = await this.repository.count({ where: { doctorId } });
+        return count > 0;
+    }
+
     // Find by doctor ID
     async findByDoctorId(doctorId, relations = []) {
         return await this.repository.find({

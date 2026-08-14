@@ -15,6 +15,7 @@ const magicLinkService = require("../services/magicLinkService");
 const googleAuthService = require("../services/googleAuthService");
 const refreshTokenService = require("../services/refreshTokenService");
 const mfaService = require('../services/mfa/mfaService');
+const verificationRequestRepo = require("../../doctor/repositories/verificationRequestRepository");
 
 // ADD THIS: Country restriction for patients only
 const ALLOWED_PATIENT_COUNTRIES = ['Nigeria', 'Ghana', 'Kenya', 'South Africa'];
@@ -241,10 +242,12 @@ exports.login = async (req, res, next) => {
             });
         }
 
-        // 2) Lookup user
-        const user = role
-            ? await userRepo.findByEmailAndRole(email, role)
-            : await userRepo.findByEmail(email);
+        // 2) Lookup user — try role-specific first; if nothing found (e.g. patient
+        //    app sends role:'patient' but this account is role:'doctor'), fall back
+        //    to email-only so doctors aren't blocked by the frontend's default role.
+        //    Same-email multi-role users are safe: the role-specific hit wins first.
+        let user = role ? await userRepo.findByEmailAndRole(email, role) : null;
+        if (!user) user = await userRepo.findByEmail(email);
         if (!user) {
             return res
                 .status(401)
@@ -282,9 +285,10 @@ exports.login = async (req, res, next) => {
             }
         }
 
-        // 6) Issue tokens (original logic)
+        // 6) Issue tokens — pass the actual role from DB so authService
+        //    lookup uses the correct role, not whatever the frontend sent.
         const tokens = await authService.login(
-            { email, password, role },
+            { email, password, role: user.role },
             deviceFingerprint,
             userAgent
         );
@@ -497,12 +501,13 @@ exports.resendVerification = async (req, res, next) => {
         const { email } = req.body;
         if (!email) return res.status(400).json({ error: "Email is required" });
 
-        // Note: verificationService is now local
         await verificationService.resendVerificationEmail(email);
 
-        // Always 200 to avoid leaking which emails exist
         res.json({ message: "If unverified, a new link has been emailed." });
     } catch (err) {
+        if (err.code === 'ALREADY_VERIFIED') {
+            return res.status(200).json({ message: "Email is already verified. You can log in." });
+        }
         next(err);
     }
 };
@@ -771,6 +776,14 @@ exports.getCurrentUser = async (req, res, next) => {
 
         console.log("✅ [DEBUG] User found. departmentSpecialty in DB:", user.departmentSpecialty);
 
+        // Doctors who registered but never called /verification/submit have zero
+        // verification_requests rows — invisible to the admin queue. Flag it so
+        // the frontend can route them back to the submit step every session.
+        let verificationRequired = false;
+        if (user.role === "doctor") {
+            verificationRequired = !(await verificationRequestRepo.existsForDoctor(user.id));
+        }
+
         // Sanitize response (remove sensitive fields)
         const sanitizedUser = {
             id: user.id,
@@ -786,6 +799,7 @@ exports.getCurrentUser = async (req, res, next) => {
             mfaEnabled: user.mfaEnabled,
             country: user.country,
             isOnline: user.isOnline,
+            verificationRequired,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
         };

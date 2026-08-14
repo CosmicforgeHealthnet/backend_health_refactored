@@ -24,6 +24,14 @@ const VerificationTier = {
   TIER_3: "tier_3"  // Lower confidence (Manual only)
 };
 
+const NinVerificationStatus = {
+  NOT_SUBMITTED: "not_submitted",
+  PENDING: "pending",
+  VERIFIED: "verified",   // NIN valid and name matched the platform name
+  MISMATCH: "mismatch",   // NIN valid but the registered name didn't match — needs admin review
+  FAILED: "failed"        // NIN invalid or provider lookup failed
+};
+
 module.exports = new EntitySchema({
   name: "VerificationRequest",
   tableName: "verification_requests",
@@ -61,6 +69,21 @@ module.exports = new EntitySchema({
     apiVerificationData: { type: "jsonb", nullable: true },
     apiVerifiedAt: { type: "timestamp", nullable: true },
     apiErrors: { type: "text", nullable: true },
+
+    // NIN (National Identification Number) verification — Nigeria-specific identity check.
+    // Confirms the doctor's registered name matches the government record for the NIN they submit.
+    ninEncrypted: { type: "text", nullable: true }, // AES-256-GCM encrypted NIN, hex-encoded
+    ninEncryptionKey: { type: "varchar", nullable: true }, // hex key used to encrypt/decrypt ninEncrypted
+    ninLast4: { type: "varchar", length: 4, nullable: true }, // last 4 digits, for display without decrypting
+    ninVerificationStatus: {
+      type: "enum",
+      enum: Object.values(NinVerificationStatus),
+      default: NinVerificationStatus.NOT_SUBMITTED
+    },
+    ninVerifiedData: { type: "jsonb", nullable: true }, // raw provider response: name, dob, gender, etc.
+    ninNameMatchScore: { type: "integer", nullable: true }, // 0-100 similarity vs. platform name
+    ninSubmittedAt: { type: "timestamp", nullable: true },
+    ninVerifiedAt: { type: "timestamp", nullable: true },
     
     // Manual review data
     assignedReviewerId: { type: "uuid", nullable: true },
@@ -124,3 +147,4 @@ module.exports = new EntitySchema({
 module.exports.VerificationStatus = VerificationStatus;
 module.exports.VerificationMethod = VerificationMethod;
 module.exports.VerificationTier = VerificationTier;
+module.exports.NinVerificationStatus = NinVerificationStatus;

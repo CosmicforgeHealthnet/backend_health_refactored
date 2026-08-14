@@ -22,24 +22,6 @@ class CartController {
         }
     }
 
-    async updateItemQuantity(req, res, next) {
-        try {
-            const { quantity } = req.body;
-            if (!quantity) return res.status(400).json({ success: false, error: "quantity is required" });
-
-            const cart = await cartService.updateItemQuantity(
-                req.user.id,
-                req.params.cartId,
-                req.params.itemId,
-                Number(quantity)
-            );
-            return res.status(200).json({ success: true, message: "Item updated", cart: formatCart(cart) });
-        } catch (error) {
-            if (isClientError(error)) return res.status(400).json({ success: false, error: error.message });
-            next(error);
-        }
-    }
-
     async removeItem(req, res, next) {
         try {
             const cart = await cartService.removeItem(req.user.id, req.params.cartId, req.params.itemId);
@@ -99,8 +81,8 @@ class CartController {
 
     async submitCart(req, res, next) {
         try {
-            const { patientNote, prescriptionId } = req.body;
-            const cart = await cartService.submitCart(req.user.id, req.params.cartId, patientNote, prescriptionId);
+            const { patientNote, prescriptionId, items } = req.body;
+            const cart = await cartService.submitCart(req.user.id, req.params.cartId, patientNote, prescriptionId, items);
             return res.status(200).json({
                 success: true,
                 message: "Cart submitted to vendor. They will review and confirm pricing.",
@@ -169,7 +151,9 @@ function isClientError(error) {
         error.message.includes("must be") ||
         error.message.includes("empty") ||
         error.message.includes("does not belong") ||
-        error.message.includes("positive")
+        error.message.includes("positive") ||
+        error.message.includes("must have a valid") ||
+        error.message.includes("is not in this cart")
     );
 }
 

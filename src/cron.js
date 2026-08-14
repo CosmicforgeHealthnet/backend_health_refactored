@@ -2,6 +2,8 @@ const cron = require('node-cron');
 const runSubscriptionExpiryJob = require("./features/subscriptions/jobs/subscription-expiryJob");
 const doctorVerificationService = require('./features/doctor/services/doctorVerificationService');
 const verificationRequestRepo = require('./features/doctor/repositories/verificationRequestRepository');
+const userRepository = require('./features/auth/repositories/userRepository');
+const { sendVerificationNotSubmittedReminderEmail } = require('./shared/services/email/emailHelpers');
 const PaymentJobScheduler = require('./features/payments/jobs/paymentJobScheduler');
 const { trackJob } = require('./features/admin-ops/services/jobTracker');
 const { recordHealthCheck } = require('./features/admin-ops/services/adminOpsService');
@@ -9,6 +11,7 @@ const AppDataSource = require('./config/database');
 const { getSetting } = require('./shared/services/adminSettingsService');
 const { runConsultationMaintenance } = require('./features/appointments/jobs/consultationMaintenanceJob');
 const { runPrescriptionMaintenance } = require('./features/pharmacy/jobs/prescriptionMaintenanceJob');
+const { runEventReminderJob } = require('./features/community/jobs/eventReminderJob');
 
 class VerificationReminderJob {
 
@@ -90,6 +93,14 @@ class VerificationReminderJob {
       console.log(`✅ Sent ${expiringTokens.length} payment method expiry notifications`);
     }));
 
+    // Remind doctors who registered but never submitted verification details —
+    // weekly on Mondays at 9 AM. These have zero verification_requests rows and
+    // are invisible to the admin queue, so nothing else nudges them.
+    cron.schedule('0 9 * * 1', trackJob('verification-never-submitted-reminders', 'cron', async () => {
+      console.log('📧 Running never-submitted verification reminder job...');
+      await VerificationReminderJob.sendNeverSubmittedReminders();
+    }));
+
     // Fix incomplete doctor setups weekly on Sundays at 2 AM
     cron.schedule('0 2 * * 0', trackJob('doctor-setup-check', 'cron', async () => {
       console.log('🔧 Running weekly doctor setup check...');
@@ -149,6 +160,11 @@ class VerificationReminderJob {
       }
     }));
 
+    // Community event reminders — every 5 minutes, notifies RSVPs whose event starts within the hour
+    cron.schedule("*/5 * * * *", trackJob('community-event-reminders', 'cron', async () => {
+      await runEventReminderJob();
+    }));
+
     // Health check snapshot every 15 minutes
     cron.schedule("*/15 * * * *", async () => {
       try {
@@ -183,6 +199,20 @@ class VerificationReminderJob {
       await doctorVerificationService.sendVerificationExpiryWarning(request.id, 7);
     }
     console.log(`⚠️ Sent ${expiringRequests.length} expiry warnings`);
+  }
+
+  static async sendNeverSubmittedReminders() {
+    const stuckDoctors = await userRepository.findDoctorsWithNoVerificationRequest();
+    let sent = 0;
+    for (const doctor of stuckDoctors) {
+      try {
+        await sendVerificationNotSubmittedReminderEmail(doctor);
+        sent++;
+      } catch (error) {
+        console.error(`Failed to send never-submitted reminder to ${doctor.email}:`, error.message);
+      }
+    }
+    console.log(`📤 Sent ${sent}/${stuckDoctors.length} "verification not submitted" reminders`);
   }
 }
 

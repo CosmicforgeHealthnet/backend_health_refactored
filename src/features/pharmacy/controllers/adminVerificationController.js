@@ -102,7 +102,7 @@ class AdminVerificationController {
 
       return res.json(result);
     } catch (error) {
-      if (error.message.includes("not found") || error.message.includes("must be verified")) {
+      if (error.message.includes("not found") || error.message.includes("must be verified") || error.message.includes("no documents")) {
         return res.status(400).json({ error: error.message });
       }
       next(error);

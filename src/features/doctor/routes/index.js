@@ -228,6 +228,38 @@ router.post("/verification/:id/documents", authenticateJWT, DocumentUploadMiddle
 
 /**
  * @swagger
+ * /api/doctor/verification/{id}/nin:
+ *   post:
+ *     summary: Submit NIN for identity verification
+ *     tags: [Doctor]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Verification request ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [nin]
+ *             properties:
+ *               nin:
+ *                 type: string
+ *                 example: "12345678901"
+ *     description: |
+ *       Nigeria-specific identity check. Confirms the doctor's registered name
+ *       matches the government record for the NIN they submit.
+ */
+router.post("/verification/:id/nin", authenticateJWT, doctorVerificationController.submitNin.bind(doctorVerificationController));
+
+/**
+ * @swagger
  * /api/doctor/verification/status:
  *   get:
  *     summary: Get verification status

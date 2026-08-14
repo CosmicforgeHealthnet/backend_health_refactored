@@ -1270,10 +1270,26 @@ All require Auth (vendor only).
 |---|---|---|
 | GET | `/api/cart` | List all my carts — query: `status`, `page`, `limit` |
 | GET | `/api/cart/:cartId` | Single cart detail |
-| PUT | `/api/cart/:cartId/items/:itemId` | Update quantity — body: `{ "quantity": 3 }` |
-| DELETE | `/api/cart/:cartId/items/:itemId` | Remove item |
-| POST | `/api/cart/:cartId/submit` | Submit to vendor — body: `{ "patientNote": "..." }` (optional) |
+| DELETE | `/api/cart/:cartId/items/:itemId` | Remove item now, while still shopping |
+| POST | `/api/cart/:cartId/submit` | Submit to vendor — see below |
 | POST | `/api/cart/:cartId/cancel` | Cancel cart |
+
+**There is no live "update quantity" endpoint, by design.** Quantity (the +/- stepper on a cart line item) should be managed entirely client-side — don't call the API on every click. Keep the running quantity in local/component state, and send the final values in one shot when the patient checks out.
+
+### `POST /api/cart/:cartId/submit` — Submit to vendor
+
+**Request Body:**
+```json
+{
+  "patientNote": "Please pack carefully",
+  "items": [
+    { "productId": "uuid", "quantity": 3 },
+    { "productId": "uuid", "quantity": 0 }
+  ]
+}
+```
+- `patientNote` — optional.
+- `items` — optional. Only send it if the patient changed any quantities since adding items to the cart. Each entry must reference a `productId` already in this cart (from a prior `POST /api/cart/vendor/:vendorId/items` call) — `quantity: 0` (or negative) removes that item entirely. Omit `items` altogether if nothing changed and the cart should submit as-is.
 
 ---
 

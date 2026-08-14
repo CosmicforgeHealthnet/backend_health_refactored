@@ -192,7 +192,7 @@ function formatProduct(p) {
         status:               p.status,
         rejectionReason:      p.rejectionReason,
         isActive:             p.isActive,
-        media:                p.media || [],
+        media:                (p.media || []).map(m => ({ ...m, url: m.mediaUrl })),
         vendor:               p.vendor ? { id: p.vendor.id, businessName: p.vendor.businessName, logoUrl: p.vendor.logoUrl } : undefined,
         createdAt:            p.createdAt,
         updatedAt:            p.updatedAt,

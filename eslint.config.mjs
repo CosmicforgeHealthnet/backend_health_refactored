@@ -1,5 +1,6 @@
 // eslint.config.mjs
 import js from '@eslint/js';
+import globals from 'globals';
 import unicorn from 'eslint-plugin-unicorn';
 
 const jestGlobals = {
@@ -25,18 +26,7 @@ export default [
       ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
-        __dirname: true,
-        require: true,
-        module: true,
-        process: true,
-        exports: true,
-        Buffer: true,
-        setImmediate: true,
-        clearImmediate: true,
-        console:true,
-        setTimeout:true,
-        setInterval:true,
-        clearInterval:true
+        ...globals.node,
       },
     },
     rules: {
