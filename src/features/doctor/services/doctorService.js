@@ -2,6 +2,13 @@ const userRepository = require("../../auth/repositories/userRepository");
 const doctorProfileRepository = require("../repositories/doctorProfileRepository");
 const { USER_ROLES } = require("../../../shared/utils/constants");
 const cache = require("../../../shared/utils/cache");
+const AppDataSource = require("../../../config/database");
+const DoctorProfile = require("../entities/DoctorProfile");
+const ProfessionalLicense = require("../entities/ProfessionalLicense");
+const ProfessionalCertificate = require("../entities/ProfessionalCertificate");
+const ClinicalPractice = require("../entities/ClinicalPractice");
+const DigitalHealthTools = require("../entities/DigitalHealthTools");
+const DoctorWallet = require("../entities/DoctorWallet");
 
 class DoctorService {
     async createDoctorProfile(data) {
@@ -32,48 +39,55 @@ class DoctorService {
             user,
         };
 
-        const doctorProfile = await doctorProfileRepository.create(doctorProfileData);
-        const savedProfile = await doctorProfileRepository.save(doctorProfile);
+        // The profile and its sub-records (license, certificates, clinical
+        // practice, tools, wallet) are all part of the same submission, so they
+        // must land together. Previously they were saved one at a time with no
+        // transaction — if a sub-record save failed (e.g. a bad license field),
+        // the profile itself stayed committed, and the client's retry was
+        // blocked by the "Doctor profile already exists for this user" check
+        // above even though the submission never fully succeeded.
+        return await AppDataSource.transaction(async (manager) => {
+            const savedProfile = await manager.getRepository(DoctorProfile).save(doctorProfileData);
 
-        // Save related entities
-        if (data.professionalLicense) {
-            await doctorProfileRepository.professionalLicenseRepo.save({
-                ...data.professionalLicense,
-                doctorProfile: savedProfile,
-            });
-        }
-
-        if (data.professionalCertificate && Array.isArray(data.professionalCertificate)) {
-            for (const certificate of data.professionalCertificate) {
-                await doctorProfileRepository.professionalCertificateRepo.save({
-                    ...certificate,
+            if (data.professionalLicense) {
+                await manager.getRepository(ProfessionalLicense).save({
+                    ...data.professionalLicense,
                     doctorProfile: savedProfile,
                 });
             }
-        }
 
-        if (data.clinicalPractice) {
-            await doctorProfileRepository.clinicalPracticeRepo.save({
-                ...data.clinicalPractice,
-                doctorProfile: savedProfile,
-            });
-        }
+            if (data.professionalCertificate && Array.isArray(data.professionalCertificate)) {
+                for (const certificate of data.professionalCertificate) {
+                    await manager.getRepository(ProfessionalCertificate).save({
+                        ...certificate,
+                        doctorProfile: savedProfile,
+                    });
+                }
+            }
 
-        if (data.digitalHealthTools) {
-            await doctorProfileRepository.digitalHealthToolsRepo.save({
-                ...data.digitalHealthTools,
-                doctorProfile: savedProfile,
-            });
-        }
+            if (data.clinicalPractice) {
+                await manager.getRepository(ClinicalPractice).save({
+                    ...data.clinicalPractice,
+                    doctorProfile: savedProfile,
+                });
+            }
 
-        if (data.wallet) {
-            await doctorProfileRepository.walletRepo.save({
-                ...data.wallet,
-                doctorProfile: savedProfile,
-            });
-        }
+            if (data.digitalHealthTools) {
+                await manager.getRepository(DigitalHealthTools).save({
+                    ...data.digitalHealthTools,
+                    doctorProfile: savedProfile,
+                });
+            }
 
-        return savedProfile;
+            if (data.wallet) {
+                await manager.getRepository(DoctorWallet).save({
+                    ...data.wallet,
+                    doctorProfile: savedProfile,
+                });
+            }
+
+            return savedProfile;
+        });
     }
 
     async getDoctorProfileById(id) {
