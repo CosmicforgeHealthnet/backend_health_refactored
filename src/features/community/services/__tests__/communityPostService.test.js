@@ -58,6 +58,7 @@ beforeEach(() => {
   communityPostRepository.create = jest.fn().mockResolvedValue(makePost());
   communityPostRepository.findById = jest.fn().mockResolvedValue(makePost());
   communityPostRepository.findByCommunities = jest.fn().mockResolvedValue({ posts: [], total: 0, page: 1, limit: 20 });
+  communityPostRepository.findByCommunity = jest.fn().mockResolvedValue({ posts: [], total: 0, page: 1, limit: 20 });
   communityPostRepository.softDelete = jest.fn().mockResolvedValue(undefined);
   communityPostRepository.incrementViewCount = jest.fn().mockResolvedValue(undefined);
   communityPostRepository.incrementLikeCount = jest.fn().mockResolvedValue(undefined);
@@ -70,6 +71,7 @@ beforeEach(() => {
   communityPostLikeRepository.findByPostAndUser = jest.fn().mockResolvedValue(null);
   communityPostLikeRepository.create = jest.fn().mockResolvedValue(undefined);
   communityPostLikeRepository.delete = jest.fn().mockResolvedValue(undefined);
+  communityPostLikeRepository.findLikedPostIdsByUser = jest.fn().mockResolvedValue([]);
 
   communityPostCommentRepository.create = jest.fn().mockResolvedValue(makeComment());
   communityPostCommentRepository.findById = jest.fn().mockResolvedValue(makeComment());
@@ -79,6 +81,7 @@ beforeEach(() => {
   communityPostSaveRepository.create = jest.fn().mockResolvedValue(undefined);
   communityPostSaveRepository.delete = jest.fn().mockResolvedValue(undefined);
   communityPostSaveRepository.findByUser = jest.fn().mockResolvedValue({ saves: [], total: 0, page: 1, limit: 20 });
+  communityPostSaveRepository.findSavedPostIdsByUser = jest.fn().mockResolvedValue([]);
 });
 
 // ============================================================================
@@ -161,6 +164,72 @@ describe('listMyFeed', () => {
     await communityPostService.listMyFeed(AUTHOR_ID, {});
 
     expect(communityPostRepository.findByCommunities).toHaveBeenCalledWith([], {});
+  });
+
+  test('tags each feed post with isLiked/isSaved for the caller', async () => {
+    const post1 = makePost({ id: 'post-1' });
+    const post2 = makePost({ id: 'post-2' });
+    communityPostRepository.findByCommunities = jest.fn().mockResolvedValue({ posts: [post1, post2], total: 2, page: 1, limit: 20 });
+    communityPostLikeRepository.findLikedPostIdsByUser = jest.fn().mockResolvedValue(['post-1']);
+    communityPostSaveRepository.findSavedPostIdsByUser = jest.fn().mockResolvedValue(['post-2']);
+
+    const result = await communityPostService.listMyFeed(AUTHOR_ID, { page: 1, limit: 20 });
+
+    expect(communityPostLikeRepository.findLikedPostIdsByUser).toHaveBeenCalledWith(AUTHOR_ID, ['post-1', 'post-2']);
+    expect(communityPostSaveRepository.findSavedPostIdsByUser).toHaveBeenCalledWith(AUTHOR_ID, ['post-1', 'post-2']);
+    expect(result.posts).toEqual([
+      expect.objectContaining({ id: 'post-1', isLiked: true, isSaved: false }),
+      expect.objectContaining({ id: 'post-2', isLiked: false, isSaved: true }),
+    ]);
+  });
+});
+
+// ============================================================================
+// listCommunityPosts
+// ============================================================================
+
+describe('listCommunityPosts', () => {
+  test('tags each post with isLiked/isSaved for the viewer', async () => {
+    const post1 = makePost({ id: 'post-1' });
+    communityPostRepository.findByCommunity = jest.fn().mockResolvedValue({ posts: [post1], total: 1, page: 1, limit: 20 });
+    communityPostLikeRepository.findLikedPostIdsByUser = jest.fn().mockResolvedValue(['post-1']);
+    communityPostSaveRepository.findSavedPostIdsByUser = jest.fn().mockResolvedValue([]);
+
+    const result = await communityPostService.listCommunityPosts(COMMUNITY_ID, OTHER_USER_ID, { page: 1, limit: 20 });
+
+    expect(communityPostRepository.findByCommunity).toHaveBeenCalledWith(COMMUNITY_ID, { page: 1, limit: 20 });
+    expect(communityPostLikeRepository.findLikedPostIdsByUser).toHaveBeenCalledWith(OTHER_USER_ID, ['post-1']);
+    expect(result.posts).toEqual([expect.objectContaining({ id: 'post-1', isLiked: true, isSaved: false })]);
+  });
+
+  test('returns isLiked=false/isSaved=false for every post when there is no viewer', async () => {
+    communityPostRepository.findByCommunity = jest.fn().mockResolvedValue({ posts: [makePost()], total: 1, page: 1, limit: 20 });
+
+    const result = await communityPostService.listCommunityPosts(COMMUNITY_ID, undefined, {});
+
+    expect(communityPostLikeRepository.findLikedPostIdsByUser).not.toHaveBeenCalled();
+    expect(result.posts).toEqual([expect.objectContaining({ isLiked: false, isSaved: false })]);
+  });
+});
+
+// ============================================================================
+// recordView
+// ============================================================================
+
+describe('recordView', () => {
+  test('throws NotFoundError when the post does not exist', async () => {
+    communityPostRepository.findById = jest.fn().mockResolvedValue(null);
+    await expect(communityPostService.recordView(POST_ID)).rejects.toThrow('Post not found');
+    expect(communityPostRepository.incrementViewCount).not.toHaveBeenCalled();
+  });
+
+  test('increments the view count and returns the new total', async () => {
+    communityPostRepository.findById = jest.fn().mockResolvedValue(makePost({ viewCount: 4 }));
+
+    const result = await communityPostService.recordView(POST_ID);
+
+    expect(communityPostRepository.incrementViewCount).toHaveBeenCalledWith(POST_ID);
+    expect(result).toEqual({ viewCount: 5 });
   });
 });
 

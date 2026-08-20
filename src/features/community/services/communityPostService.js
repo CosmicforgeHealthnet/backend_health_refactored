@@ -9,6 +9,23 @@ const { NotFoundError, ForbiddenError, ValidationError } = require("../../../sha
 
 const MODERATOR_ROLES = ["owner", "admin", "moderator"];
 
+// Batch-attaches isLiked/isSaved for a viewer across a page of posts (two queries
+// total, not one per post) — the same flags getPost returns for a single post.
+async function attachViewerFlags(posts, viewerId) {
+    if (!posts.length) return posts;
+    if (!viewerId) return posts.map((p) => ({ ...p, isLiked: false, isSaved: false }));
+
+    const postIds = posts.map((p) => p.id);
+    const [likedIds, savedIds] = await Promise.all([
+        communityPostLikeRepository.findLikedPostIdsByUser(viewerId, postIds),
+        communityPostSaveRepository.findSavedPostIdsByUser(viewerId, postIds),
+    ]);
+    const likedSet = new Set(likedIds);
+    const savedSet = new Set(savedIds);
+
+    return posts.map((p) => ({ ...p, isLiked: likedSet.has(p.id), isSaved: savedSet.has(p.id) }));
+}
+
 class CommunityPostService {
     async createPost(communityId, userId, { content, mediaUrls }) {
         if (!content && !(mediaUrls && mediaUrls.length)) {
@@ -45,13 +62,23 @@ class CommunityPostService {
         return { ...post, viewCount: post.viewCount + 1, isLiked, isSaved };
     }
 
-    async listCommunityPosts(communityId, { page, limit } = {}) {
-        return communityPostRepository.findByCommunity(communityId, { page, limit });
+    async listCommunityPosts(communityId, viewerId, { page, limit } = {}) {
+        const result = await communityPostRepository.findByCommunity(communityId, { page, limit });
+        return { ...result, posts: await attachViewerFlags(result.posts, viewerId) };
     }
 
     async listMyFeed(userId, { page, limit } = {}) {
         const communityIds = await communityMemberRepository.findActiveCommunityIdsByUser(userId);
-        return communityPostRepository.findByCommunities(communityIds, { page, limit });
+        const result = await communityPostRepository.findByCommunities(communityIds, { page, limit });
+        return { ...result, posts: await attachViewerFlags(result.posts, userId) };
+    }
+
+    async recordView(postId) {
+        const post = await communityPostRepository.findById(postId);
+        if (!post) throw new NotFoundError("Post not found");
+
+        await communityPostRepository.incrementViewCount(postId);
+        return { viewCount: post.viewCount + 1 };
     }
 
     async deletePost(postId, actingUserId) {
