@@ -6,6 +6,7 @@ const CommunityPostMedia            = require("./CommunityPostMedia");
 const CommunityPostLike             = require("./CommunityPostLike");
 const CommunityPostComment          = require("./CommunityPostComment");
 const CommunityPostSave             = require("./CommunityPostSave");
+const CommunityPostView             = require("./CommunityPostView");
 const CommunityEvent                = require("./CommunityEvent");
 const CommunityEventRSVP            = require("./CommunityEventRSVP");
 const CommunityVoiceSpace           = require("./CommunityVoiceSpace");
@@ -21,6 +22,7 @@ module.exports = {
     CommunityPostLike,
     CommunityPostComment,
     CommunityPostSave,
+    CommunityPostView,
     CommunityEvent,
     CommunityEventRSVP,
     CommunityVoiceSpace,

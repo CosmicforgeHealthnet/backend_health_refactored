@@ -8,6 +8,7 @@ jest.mock('../../repositories/communityPostMediaRepository');
 jest.mock('../../repositories/communityPostLikeRepository');
 jest.mock('../../repositories/communityPostCommentRepository');
 jest.mock('../../repositories/communityPostSaveRepository');
+jest.mock('../../repositories/communityPostViewRepository');
 
 const communityRepository = require('../../repositories/communityRepository');
 const communityMemberRepository = require('../../repositories/communityMemberRepository');
@@ -16,6 +17,7 @@ const communityPostMediaRepository = require('../../repositories/communityPostMe
 const communityPostLikeRepository = require('../../repositories/communityPostLikeRepository');
 const communityPostCommentRepository = require('../../repositories/communityPostCommentRepository');
 const communityPostSaveRepository = require('../../repositories/communityPostSaveRepository');
+const communityPostViewRepository = require('../../repositories/communityPostViewRepository');
 
 // communityPostService exports a singleton instance
 const communityPostService = require('../communityPostService');
@@ -82,6 +84,9 @@ beforeEach(() => {
   communityPostSaveRepository.delete = jest.fn().mockResolvedValue(undefined);
   communityPostSaveRepository.findByUser = jest.fn().mockResolvedValue({ saves: [], total: 0, page: 1, limit: 20 });
   communityPostSaveRepository.findSavedPostIdsByUser = jest.fn().mockResolvedValue([]);
+
+  communityPostViewRepository.findByPostAndUser = jest.fn().mockResolvedValue(null);
+  communityPostViewRepository.create = jest.fn().mockResolvedValue(undefined);
 });
 
 // ============================================================================
@@ -125,20 +130,32 @@ describe('getPost', () => {
     await expect(communityPostService.getPost(POST_ID, AUTHOR_ID)).rejects.toThrow('Post not found');
   });
 
-  test('increments the view count and returns isLiked/isSaved flags for the viewer', async () => {
+  test('records a view and increments the count the first time this viewer opens the post', async () => {
     communityPostLikeRepository.findByPostAndUser = jest.fn().mockResolvedValue({ id: 'like-1' });
     communityPostSaveRepository.findByPostAndUser = jest.fn().mockResolvedValue(null);
 
     const result = await communityPostService.getPost(POST_ID, OTHER_USER_ID);
 
+    expect(communityPostViewRepository.create).toHaveBeenCalledWith(POST_ID, OTHER_USER_ID);
     expect(communityPostRepository.incrementViewCount).toHaveBeenCalledWith(POST_ID);
     expect(result).toMatchObject({ isLiked: true, isSaved: false, viewCount: 1 });
   });
 
-  test('returns isLiked=false/isSaved=false for an anonymous viewer', async () => {
+  test('does not increment the view count again for a viewer who has already viewed this post', async () => {
+    communityPostViewRepository.findByPostAndUser = jest.fn().mockResolvedValue({ id: 'view-1' });
+
+    const result = await communityPostService.getPost(POST_ID, OTHER_USER_ID);
+
+    expect(communityPostViewRepository.create).not.toHaveBeenCalled();
+    expect(communityPostRepository.incrementViewCount).not.toHaveBeenCalled();
+    expect(result.viewCount).toBe(0);
+  });
+
+  test('returns isLiked=false/isSaved=false for an anonymous viewer and does not record a view', async () => {
     const result = await communityPostService.getPost(POST_ID, undefined);
     expect(result).toMatchObject({ isLiked: false, isSaved: false });
     expect(communityPostLikeRepository.findByPostAndUser).not.toHaveBeenCalled();
+    expect(communityPostViewRepository.create).not.toHaveBeenCalled();
   });
 });
 
@@ -219,17 +236,39 @@ describe('listCommunityPosts', () => {
 describe('recordView', () => {
   test('throws NotFoundError when the post does not exist', async () => {
     communityPostRepository.findById = jest.fn().mockResolvedValue(null);
-    await expect(communityPostService.recordView(POST_ID)).rejects.toThrow('Post not found');
+    await expect(communityPostService.recordView(POST_ID, OTHER_USER_ID)).rejects.toThrow('Post not found');
     expect(communityPostRepository.incrementViewCount).not.toHaveBeenCalled();
   });
 
-  test('increments the view count and returns the new total', async () => {
+  test('increments the view count and returns the new total on a viewer\'s first view', async () => {
     communityPostRepository.findById = jest.fn().mockResolvedValue(makePost({ viewCount: 4 }));
 
-    const result = await communityPostService.recordView(POST_ID);
+    const result = await communityPostService.recordView(POST_ID, OTHER_USER_ID);
 
+    expect(communityPostViewRepository.create).toHaveBeenCalledWith(POST_ID, OTHER_USER_ID);
     expect(communityPostRepository.incrementViewCount).toHaveBeenCalledWith(POST_ID);
     expect(result).toEqual({ viewCount: 5 });
+  });
+
+  test('does not increment again on a repeat call from the same viewer', async () => {
+    communityPostRepository.findById = jest.fn().mockResolvedValue(makePost({ viewCount: 4 }));
+    communityPostViewRepository.findByPostAndUser = jest.fn().mockResolvedValue({ id: 'view-1' });
+
+    const result = await communityPostService.recordView(POST_ID, OTHER_USER_ID);
+
+    expect(communityPostViewRepository.create).not.toHaveBeenCalled();
+    expect(communityPostRepository.incrementViewCount).not.toHaveBeenCalled();
+    expect(result).toEqual({ viewCount: 4 });
+  });
+
+  test('a concurrent duplicate insert (unique-constraint race) is swallowed without incrementing twice', async () => {
+    communityPostRepository.findById = jest.fn().mockResolvedValue(makePost({ viewCount: 4 }));
+    communityPostViewRepository.create = jest.fn().mockRejectedValue(new Error('duplicate key value violates unique constraint'));
+
+    const result = await communityPostService.recordView(POST_ID, OTHER_USER_ID);
+
+    expect(communityPostRepository.incrementViewCount).not.toHaveBeenCalled();
+    expect(result).toEqual({ viewCount: 4 });
   });
 });
 

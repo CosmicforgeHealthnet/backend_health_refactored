@@ -47,7 +47,7 @@ class CommunityPostController {
 
     async view(req, res, next) {
         try {
-            const result = await communityPostService.recordView(req.params.id);
+            const result = await communityPostService.recordView(req.params.id, req.user.id);
             return res.status(200).json({ success: true, message: "View recorded", viewCount: result.viewCount });
         } catch (error) {
             next(error);

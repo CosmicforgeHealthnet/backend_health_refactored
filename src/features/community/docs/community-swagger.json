@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "CosmicForge Community Health System API",
-    "description": "Phase 1: Communities, Membership & Roles, and Posts. Phase 2: Events. Phase 3: Group Chat — every community automatically gets a group chat room (Community.chatRoomId), kept in sync with membership, usable via the endpoints under the Group Chat tag below (these are the same underlying /api/chat/* endpoints the rest of the platform uses for appointment/direct chat too — {roomId} in every path is the community's chatRoomId). Phase 4: Voice Spaces — audio-only, Twitter/X-Spaces-style rooms backed by real Zoom meetings (any active member can start one; one live space per community at a time). Host controls (mute/remove) happen in Zoom's own in-meeting UI via the host's start link, not via this API — the account backing this integration is on a plan without per-participant REST moderation. Invite Members — any active member can search the platform's users and invite them directly (no join request needed); the invitee accepts/declines from their own inbox. Cross-community feeds — GET /posts/feed and GET /events/feed aggregate posts/upcoming events across every community the caller belongs to. Leaving — any member, including the owner, can leave a community; if the owner leaves, ownership auto-transfers to another active member (or the community closes if they were the last one). Post views — POST /posts/{id}/view is a lightweight view-count ping for list/feed cards, separate from GET /posts/{id} which also increments the count when opening the full post. Every post-list endpoint (community posts, /posts/feed) now returns isLiked/isSaved per post for the caller, matching GET /posts/{id}. A social/networking layer shared across doctors, patients, pharmacies, and labs — same architecture for every role, only role/permissions differ. Community roles (owner/admin/moderator/member/pending_member) are per-community and separate from the platform-wide user role.",
-    "version": "1.7.0"
+    "description": "Phase 1: Communities, Membership & Roles, and Posts. Phase 2: Events. Phase 3: Group Chat — every community automatically gets a group chat room (Community.chatRoomId), kept in sync with membership, usable via the endpoints under the Group Chat tag below (these are the same underlying /api/chat/* endpoints the rest of the platform uses for appointment/direct chat too — {roomId} in every path is the community's chatRoomId). Phase 4: Voice Spaces — audio-only, Twitter/X-Spaces-style rooms backed by real Zoom meetings (any active member can start one; one live space per community at a time). Host controls (mute/remove) happen in Zoom's own in-meeting UI via the host's start link, not via this API — the account backing this integration is on a plan without per-participant REST moderation. Invite Members — any active member can search the platform's users and invite them directly (no join request needed); the invitee accepts/declines from their own inbox. Cross-community feeds — GET /posts/feed and GET /events/feed aggregate posts/upcoming events across every community the caller belongs to. Leaving — any member, including the owner, can leave a community; if the owner leaves, ownership auto-transfers to another active member (or the community closes if they were the last one). Post views — POST /posts/{id}/view is a lightweight view-count ping for list/feed cards, separate from GET /posts/{id} which also increments the count when opening the full post; either way, a post's view count only increases once per (post, viewer) pair, no matter how many times either endpoint is called. Every post-list endpoint (community posts, /posts/feed) now returns isLiked/isSaved per post for the caller, matching GET /posts/{id}. A social/networking layer shared across doctors, patients, pharmacies, and labs — same architecture for every role, only role/permissions differ. Community roles (owner/admin/moderator/member/pending_member) are per-community and separate from the platform-wide user role.",
+    "version": "1.7.1"
   },
   "servers": [
     { "url": "http://localhost:3000/api", "description": "Development server" }
@@ -340,7 +340,7 @@
       "get": {
         "tags": ["Posts"],
         "summary": "Get a post by ID",
-        "description": "Increments the view count and returns isLiked/isSaved flags for the caller.",
+        "description": "Returns isLiked/isSaved flags for the caller. Increments the view count only the first time this caller views this post — repeat opens (or a prior call to POST /posts/{id}/view for the same post) do not increment it again.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [{ "$ref": "#/components/parameters/PostId" }],
         "responses": {
@@ -365,7 +365,7 @@
       "post": {
         "tags": ["Posts"],
         "summary": "Record a view of a post",
-        "description": "Lightweight view-count ping for post cards in a list/feed, where the client already has the post data and doesn't want to fetch the full detail via GET /posts/{id} (which also increments the view count on its own). Don't call both endpoints for the same view.",
+        "description": "Lightweight view-count ping for post cards in a list/feed, where the client already has the post data and doesn't want to fetch the full detail via GET /posts/{id}. The view count only increments once per (post, caller) pair, ever — calling this repeatedly, or calling this and then GET /posts/{id} (or vice versa), only counts as one view. Safe to call every time a post card is displayed.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [{ "$ref": "#/components/parameters/PostId" }],
         "responses": {
