@@ -131,7 +131,14 @@ const pharmacyWebhookController = {
         const reference = data?.reference;
         if (!reference) return;
         // Flutterwave uses reference not transfer_code — find payout by reference
-        const { AppDataSource } = require("../../../config/database");
+        // BUG FIX: config/database.js does `module.exports = AppDataSource`
+        // (a plain TypeORM DataSource instance, not `{ AppDataSource }`).
+        // Destructuring here made the local `AppDataSource` undefined, so
+        // every Flutterwave transfer.completed event threw
+        // "Cannot read properties of undefined (reading 'getRepository')"
+        // inside handleWebhook's try/catch — silently swallowed, meaning
+        // Flutterwave payout completions were never reconciled.
+        const AppDataSource = require("../../../config/database");
         const payout = await AppDataSource.getRepository("PharmacyPayoutRequest").findOne({
           where: { reference },
         });

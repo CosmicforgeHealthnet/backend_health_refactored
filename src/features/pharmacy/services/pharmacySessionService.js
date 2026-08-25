@@ -188,9 +188,13 @@ class PharmacySessionService {
         const session = await sessionRepository.findByIdAndPatient(sessionId, patientId);
         if (!session) throw new Error("Session not found");
         await expireIfNeeded(session);
-        if (session.status === "expired") throw new Error("Session has expired. Please start a new session.");
-        if (session.status !== "cart_ready") throw new Error("Cart is not ready for payment yet. Wait for the pharmacy to finalise.");
+        if (session.status === "expired")   throw new Error("Session has expired. Please start a new session.");
         if (session.status === "approved")  throw new Error("Session is already approved and paid.");
+        // NOTE: this must run after the "approved" check above — "approved" is
+        // also != "cart_ready", so checking status !== "cart_ready" first would
+        // make the "already approved and paid" branch below unreachable and
+        // report the less accurate "not ready yet" message instead.
+        if (session.status !== "cart_ready") throw new Error("Cart is not ready for payment yet. Wait for the pharmacy to finalise.");
 
         const cart = session.cart;
         if (!cart || !cart.totalAmountNgn) throw new Error("Cart has no items or total");
@@ -512,20 +516,26 @@ class PharmacySessionService {
             if (pharmacyAmountUsd > 0) {
                 const wallet = await trx.findOne("PharmacyWallet", { where: { pharmacyId: cart.pharmacyId } });
                 if (wallet) {
+                    // Use an atomic SQL-expression update (not a JS-computed literal
+                    // from the `wallet` read above) — two carts for the same pharmacy
+                    // settling concurrently must not lose one credit to a stale read.
                     await trx.update("PharmacyWallet", { id: wallet.id }, {
-                        pendingClearanceUsd: parseFloat(wallet.pendingClearanceUsd || 0) + pharmacyAmountUsd,
-                        totalEarningsUsd:    parseFloat(wallet.totalEarningsUsd    || 0) + pharmacyAmountUsd,
+                        pendingClearanceUsd: () => `"pendingClearanceUsd" + ${pharmacyAmountUsd}`,
+                        totalEarningsUsd:    () => `"totalEarningsUsd" + ${pharmacyAmountUsd}`,
                     });
 
+                    const updatedWallet = await trx.findOne("PharmacyWallet", { where: { id: wallet.id } });
+
                     await trx.save("PharmacyWalletTransaction", {
-                        walletId:    wallet.id,
-                        pharmacyId:  cart.pharmacyId,
-                        type:        "credit",
-                        category:    "invoice_payment",
-                        status:      "pending",
-                        amountUsd:   pharmacyAmountUsd,
-                        description: `Prescription cart payment — session ${cart.sessionId} (7% platform fee deducted)`,
-                        reference:   cart.paymentReference,
+                        walletId:        wallet.id,
+                        pharmacyId:      cart.pharmacyId,
+                        type:            "credit",
+                        category:        "invoice_payment",
+                        status:          "pending",
+                        amountUsd:       pharmacyAmountUsd,
+                        balanceAfterUsd: parseFloat(updatedWallet.pendingClearanceUsd),
+                        description:     `Prescription cart payment — session ${cart.sessionId} (pharmacy receives 100%, platform fee charged separately to patient)`,
+                        reference:       cart.paymentReference,
                     });
                 }
             }

@@ -3,6 +3,7 @@ const shipmentService = require("../services/shipmentService");
 function isClientError(msg) {
     return (
         msg.includes("not found") ||
+        msg.includes("No shipment found") ||
         msg.includes("required") ||
         msg.includes("must be") ||
         msg.includes("already") ||

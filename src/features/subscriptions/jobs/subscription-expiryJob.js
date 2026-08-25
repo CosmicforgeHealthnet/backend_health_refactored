@@ -13,7 +13,10 @@
  *   cron.schedule('0 0 * * *', runSubscriptionExpiryJob);
  */
 
-const { AppDataSource } = require("../../../config/database");
+// config/database.js does `module.exports = AppDataSource` (a plain TypeORM
+// DataSource instance, not `{ AppDataSource }`) — destructuring made this
+// undefined, so AppDataSource.getRepository(...) below threw on every run.
+const AppDataSource = require("../../../config/database");
 const Subscription = require("../entities/Subscription");
 const SubscriptionService = require("../services/subscriptionService");
 
