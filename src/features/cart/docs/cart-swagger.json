@@ -73,33 +73,6 @@
       }
     },
     "/cart/{cartId}/items/{itemId}": {
-      "put": {
-        "tags": ["Patient Cart"],
-        "summary": "Update item quantity",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "in": "path", "name": "cartId", "required": true, "schema": { "type": "string", "format": "uuid" } },
-          { "in": "path", "name": "itemId", "required": true, "schema": { "type": "string", "format": "uuid" } }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["quantity"],
-                "properties": {
-                  "quantity": { "type": "integer", "minimum": 1 }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Item updated" },
-          "400": { "$ref": "#/components/responses/BadRequest" }
-        }
-      },
       "delete": {
         "tags": ["Patient Cart"],
         "summary": "Remove item from cart",
@@ -117,7 +90,7 @@
       "post": {
         "tags": ["Patient Cart"],
         "summary": "Submit cart to vendor",
-        "description": "Locks the cart for editing and sends it to the vendor for pricing review. By submitting, the patient agrees to share their name and phone number with the vendor.",
+        "description": "Locks the cart for editing and sends it to the vendor for pricing review. By submitting, the patient agrees to share their name and phone number with the vendor.\n\nQuantities are managed client-side while shopping (there is no per-change update endpoint) — pass the final quantities here via `items`. Any item omitted from `items` keeps its last-known quantity; setting an item's `quantity` to 0 or less removes it from the cart at submission time.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           { "in": "path", "name": "cartId", "required": true, "schema": { "type": "string", "format": "uuid" } }
@@ -128,7 +101,20 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "patientNote": { "type": "string", "example": "Please include delivery to Ikeja, Lagos." }
+                  "patientNote":    { "type": "string", "example": "Please include delivery to Ikeja, Lagos." },
+                  "prescriptionId": { "type": "string", "format": "uuid", "description": "Link this cart to a prescription, if applicable." },
+                  "items": {
+                    "type": "array",
+                    "description": "Final quantities for items already in the cart, set client-side. Omitted items keep their current quantity.",
+                    "items": {
+                      "type": "object",
+                      "required": ["productId", "quantity"],
+                      "properties": {
+                        "productId": { "type": "string", "format": "uuid" },
+                        "quantity":  { "type": "integer", "description": "0 or less removes the item from the cart." }
+                      }
+                    }
+                  }
                 }
               }
             }
