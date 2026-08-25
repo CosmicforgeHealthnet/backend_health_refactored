@@ -591,8 +591,14 @@ class DoctorVerificationService {
       const setupResult = await this.setupDoctorFinancialProfile(verificationRequest.doctorId);
       console.log(`✅ Financial profile setup: ${JSON.stringify(setupResult)}`);
 
-      // Remove from review queue
-      await queueRepo.markCompleted(verificationRequestId);
+      // Remove from review queue — best-effort like the steps above; the
+      // doctor is already approved and active from the transaction, so a
+      // failure here must not surface as a failed approval.
+      try {
+        await queueRepo.markCompleted(verificationRequestId);
+      } catch (queueError) {
+        console.error("Error removing verification from review queue:", queueError);
+      }
 
       // Enhanced approval notification with wallet/subscription info
       await this.sendEnhancedApprovalNotification(
