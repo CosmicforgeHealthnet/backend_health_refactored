@@ -295,7 +295,7 @@ class DoctorService {
                 const result = await userRepository.findAllCompleteProfileDoctors({ skip, take });
 
                 return {
-                    data: result.doctors,
+                    data: result.doctors.map(withBookableFlag),
                     meta: {
                         total: result.total,
                         page: parseInt(page),
@@ -317,7 +317,7 @@ class DoctorService {
                 const result = await userRepository.findVerifiedDoctors({ skip, take });
 
                 return {
-                    data: result.doctors,
+                    data: result.doctors.map(withBookableFlag),
                     meta: {
                         total: result.total,
                         page: parseInt(page),
@@ -413,6 +413,15 @@ class DoctorService {
     async getUserRatings(userId) {
         return await userRepository.getUserRatings(userId);
     }
+}
+
+// Verified doctors are now listed even before they've set pricing/availability
+// (see userRepository.findVerifiedDoctors) — this flag lets the frontend tell
+// patients "booking not yet available" instead of showing a broken/empty
+// price and schedule for a doctor who technically can't be booked yet.
+function withBookableFlag(doctor) {
+    doctor.isBookable = (doctor.doctorPricing?.length > 0) && (doctor.doctorAvailability?.length > 0);
+    return doctor;
 }
 
 module.exports = new DoctorService();

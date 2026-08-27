@@ -73,6 +73,36 @@ class UserRepository {
     }));
   }
 
+  // Verified doctors who are invisible-to-bookers in practice: they pass
+  // verification but never set consultation pricing and/or a weekly
+  // schedule, so a patient can find them but can't actually book them.
+  // Lets admins/support proactively nudge doctors stuck at this step instead
+  // of it only surfacing as a silent "why can't patients see me" report.
+  async findVerifiedDoctorsMissingBookingSetup() {
+    const rows = await this.repo
+      .createQueryBuilder("user")
+      .leftJoin("doctor_pricing", "dp", 'dp."doctorId" = user.id')
+      .leftJoin("doctor_availability", "da", 'da."doctorId" = user.id')
+      .where("user.role = :role", { role: USER_ROLES.DOCTOR })
+      .andWhere("user.status = :status", { status: "doctor_active" })
+      .andWhere("(dp.id IS NULL OR da.id IS NULL)")
+      .groupBy("user.id")
+      .orderBy("user.createdAt", "ASC")
+      .select(["user.id", "user.fullName", "user.email", "user.createdAt"])
+      .addSelect("bool_or(dp.id IS NOT NULL)", "haspricing")
+      .addSelect("bool_or(da.id IS NOT NULL)", "hasavailability")
+      .getRawMany();
+
+    return rows.map(r => ({
+      id: r.user_id,
+      fullName: r.user_fullName,
+      email: r.user_email,
+      createdAt: r.user_createdAt,
+      hasPricing: r.haspricing,
+      hasAvailability: r.hasavailability,
+    }));
+  }
+
   // New method to fetch all doctors
   async findAllDoctors({ skip, take } = {}) {
     const [doctors, total] = await this.repo.findAndCount({
@@ -136,14 +166,14 @@ class UserRepository {
       .addSelect("doctorAvailability")
       .innerJoin("user.doctorProfile", "doctorProfile")
       .leftJoin("doctorProfile.professionalLicense", "professionalLicense")
-      .innerJoin(
+      .leftJoin(
         "doctorProfile.professionalCertificate",
         "professionalCertificate"
       )
-      .innerJoin("doctorProfile.clinicalPractice", "clinicalPractice")
-      .innerJoin("doctorProfile.digitalHealthTools", "digitalHealthTools")
-      .innerJoin("user.doctorPricing", "doctorPricing")
-      .innerJoin("user.doctorAvailability", "doctorAvailability")
+      .leftJoin("doctorProfile.clinicalPractice", "clinicalPractice")
+      .leftJoin("doctorProfile.digitalHealthTools", "digitalHealthTools")
+      .leftJoin("user.doctorPricing", "doctorPricing")
+      .leftJoin("user.doctorAvailability", "doctorAvailability")
       .where("user.role = :role", { role: USER_ROLES.DOCTOR });
 
     if (typeof skip === 'number') query.skip(skip);
@@ -333,8 +363,14 @@ class UserRepository {
       )
       .leftJoin("doctorProfile.clinicalPractice", "clinicalPractice")
       .leftJoin("doctorProfile.digitalHealthTools", "digitalHealthTools")
-      .innerJoin("user.doctorPricing", "doctorPricing")
-      .innerJoin("user.doctorAvailability", "doctorAvailability")
+      // Pricing/availability are surfaced but not required to appear here —
+      // requiring them (via innerJoin) silently hid every verified doctor who
+      // hadn't yet set them up (roughly half of all verified doctors on
+      // staging when this was found). A verified doctor should be
+      // discoverable immediately; the frontend can show "booking not yet
+      // available" for one with no pricing/availability set.
+      .leftJoin("user.doctorPricing", "doctorPricing")
+      .leftJoin("user.doctorAvailability", "doctorAvailability")
       .leftJoin("user.doctorUnavailability", "doctorUnavailability") // Optional
       .leftJoin("user.ratings", "ratings") // Optional
       .where("user.role = :role", { role: USER_ROLES.DOCTOR })
