@@ -71,8 +71,8 @@ class AuthService {
 
         // 1) Lookup user
         const user = role
-            ? await userRepository.findByEmailAndRole(email, role)
-            : await userRepository.findByEmail(email);
+            ? await userRepository.findByEmailAndRoleWithAuthSecrets(email, role)
+            : await userRepository.findByEmailWithAuthSecrets(email);
         if (!user || !user.passwordHash) {
             throw new Error('Invalid credentials');
         }

@@ -257,8 +257,8 @@ exports.login = async (req, res, next) => {
         //    app sends role:'patient' but this account is role:'doctor'), fall back
         //    to email-only so doctors aren't blocked by the frontend's default role.
         //    Same-email multi-role users are safe: the role-specific hit wins first.
-        let user = role ? await userRepo.findByEmailAndRole(email, role) : null;
-        if (!user) user = await userRepo.findByEmail(email);
+        let user = role ? await userRepo.findByEmailAndRoleWithAuthSecrets(email, role) : null;
+        if (!user) user = await userRepo.findByEmailWithAuthSecrets(email);
         if (!user) {
             return res
                 .status(401)

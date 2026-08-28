@@ -89,6 +89,8 @@ beforeEach(() => {
   userRepo.findByEmailAndRole = jest.fn().mockResolvedValue(makeUser());
   userRepo.findById            = jest.fn().mockResolvedValue(makeUser());
   userRepo.update               = jest.fn().mockResolvedValue(undefined);
+  userRepo.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(makeUser());
+  userRepo.findByIdWithAuthSecrets           = jest.fn().mockResolvedValue(makeUser());
 
   mfaService.verifyToken = jest.fn().mockReturnValue(true);
 
@@ -178,11 +180,11 @@ describe('loginPharmacy', () => {
     const res = makeRes();
     await pharmacyAuthController.loginPharmacy(req, res, makeNext());
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(userRepo.findByEmailAndRole).not.toHaveBeenCalled();
+    expect(userRepo.findByEmailAndRoleWithAuthSecrets).not.toHaveBeenCalled();
   });
 
   test('401s when no pharmacy user matches the email', async () => {
-    userRepo.findByEmailAndRole = jest.fn().mockResolvedValue(null);
+    userRepo.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(null);
     const req = { body: { email: 'x@x.com', password: 'pw', deviceFingerprint: 'fp' }, headers: {} };
     const res = makeRes();
     await pharmacyAuthController.loginPharmacy(req, res, makeNext());
@@ -191,7 +193,7 @@ describe('loginPharmacy', () => {
   });
 
   test('401s when the account has no local password (SSO-only)', async () => {
-    userRepo.findByEmailAndRole = jest.fn().mockResolvedValue(makeUser({ passwordHash: null }));
+    userRepo.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(makeUser({ passwordHash: null }));
     const req = { body: { email: 'x@x.com', password: 'pw', deviceFingerprint: 'fp' }, headers: {} };
     const res = makeRes();
     await pharmacyAuthController.loginPharmacy(req, res, makeNext());
@@ -210,7 +212,7 @@ describe('loginPharmacy', () => {
   });
 
   test('short-circuits with 206 + tempUserId when MFA is enabled and no mfaToken was sent', async () => {
-    userRepo.findByEmailAndRole = jest.fn().mockResolvedValue(makeUser({ mfaEnabled: true }));
+    userRepo.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(makeUser({ mfaEnabled: true }));
     const req = { body: { email: 'x@x.com', password: 'pw', deviceFingerprint: 'fp' }, headers: {} };
     const res = makeRes();
     await pharmacyAuthController.loginPharmacy(req, res, makeNext());
@@ -220,7 +222,7 @@ describe('loginPharmacy', () => {
   });
 
   test('401s when mfaToken is provided but invalid', async () => {
-    userRepo.findByEmailAndRole = jest.fn().mockResolvedValue(makeUser({ mfaEnabled: true, mfaSecret: 'secret' }));
+    userRepo.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(makeUser({ mfaEnabled: true, mfaSecret: 'secret' }));
     mfaService.verifyToken = jest.fn().mockReturnValue(false);
     const req = { body: { email: 'x@x.com', password: 'pw', deviceFingerprint: 'fp', mfaToken: '000000' }, headers: {} };
     const res = makeRes();
@@ -231,7 +233,7 @@ describe('loginPharmacy', () => {
   });
 
   test('logs in successfully with a valid mfaToken', async () => {
-    userRepo.findByEmailAndRole = jest.fn().mockResolvedValue(makeUser({ mfaEnabled: true, mfaSecret: 'secret' }));
+    userRepo.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(makeUser({ mfaEnabled: true, mfaSecret: 'secret' }));
     mfaService.verifyToken = jest.fn().mockReturnValue(true);
     const req = { body: { email: 'x@x.com', password: 'pw', deviceFingerprint: 'fp', mfaToken: '123456' }, headers: {} };
     const res = makeRes();
@@ -463,7 +465,7 @@ describe('changePassword', () => {
   });
 
   test('404s when the user cannot be found', async () => {
-    userRepo.findById = jest.fn().mockResolvedValue(null);
+    userRepo.findByIdWithAuthSecrets = jest.fn().mockResolvedValue(null);
     const req = { user: { sub: USER_ID }, body: { currentPassword: 'old', newPassword: 'newpassword' } };
     const res = makeRes();
     await pharmacyAuthController.changePassword(req, res, makeNext());

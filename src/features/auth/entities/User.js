@@ -36,7 +36,14 @@ module.exports = new EntitySchema({
     id: { primary: true, type: "uuid", generated: "uuid" },
     fullName: { type: "varchar", nullable: false },
     email: { type: "varchar" },
-    passwordHash: { type: "varchar", nullable: true },
+    // select: false — these must never come back on a plain find()/findOne(),
+    // including via relations from OTHER entities (ratings, chat, disputes,
+    // notifications, etc. all relate to User). A doctor's full user row,
+    // passwordHash included, was found leaking through exactly that kind of
+    // relation load. Code that genuinely needs one of these (login, password
+    // change, MFA enable/disable) must explicitly re-select it — see
+    // userRepository's *WithAuthSecrets methods.
+    passwordHash: { type: "varchar", nullable: true, select: false },
 
     // PHARMACY FIELDS
     username: {
@@ -94,9 +101,9 @@ module.exports = new EntitySchema({
     providerId: { type: "varchar", nullable: true },
     profileImageUrl: { type: "varchar", nullable: true },
     mfaEnabled: { type: "boolean", default: false },
-    mfaSecret: { type: "varchar", nullable: true },
-    refreshTokenHash: { type: "varchar", nullable: true },
-    resetPasswordOTP: { type: "varchar", nullable: true },
+    mfaSecret: { type: "varchar", nullable: true, select: false },
+    refreshTokenHash: { type: "varchar", nullable: true, select: false },
+    resetPasswordOTP: { type: "varchar", nullable: true, select: false },
     resetPasswordOTPExpires: { type: "timestamp", nullable: true },
     mustChangePassword: { type: "boolean", default: false },
     passwordChangedAt: { type: "timestamp", nullable: true },

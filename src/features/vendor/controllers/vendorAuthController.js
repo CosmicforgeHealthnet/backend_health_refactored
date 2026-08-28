@@ -166,7 +166,7 @@ class VendorAuthController {
                 return res.status(400).json({ success: false, error: "Email and password are required" });
             }
 
-            const user = await userRepository.findByEmailAndRole(email.toLowerCase().trim(), 'vendor');
+            const user = await userRepository.findByEmailAndRoleWithAuthSecrets(email.toLowerCase().trim(), 'vendor');
             if (!user) {
                 return res.status(401).json({ success: false, error: "Invalid credentials" });
             }
@@ -389,7 +389,7 @@ class VendorAuthController {
                 return res.status(400).json({ success: false, error: "New password must be at least 8 characters" });
             }
 
-            const user = await userRepository.findById(req.user.id);
+            const user = await userRepository.findByIdWithAuthSecrets(req.user.id);
             const match = await bcrypt.compare(currentPassword, user.passwordHash);
             if (!match) {
                 return res.status(401).json({ success: false, error: "Current password is incorrect" });

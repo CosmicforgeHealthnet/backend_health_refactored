@@ -75,6 +75,8 @@ beforeEach(() => {
 
   userRepository.findByEmailAndRole = jest.fn().mockResolvedValue(makeUser());
   userRepository.findById = jest.fn().mockResolvedValue(makeUser());
+  userRepository.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(makeUser());
+  userRepository.findByIdWithAuthSecrets = jest.fn().mockResolvedValue(makeUser());
 
   passwordResetService.requestReset = jest.fn().mockResolvedValue(undefined);
   passwordResetService.resetPassword = jest.fn().mockResolvedValue(undefined);
@@ -176,7 +178,7 @@ describe('loginVendor', () => {
   });
 
   test('401s when no vendor user matches the email', async () => {
-    userRepository.findByEmailAndRole = jest.fn().mockResolvedValue(null);
+    userRepository.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(null);
     const req = { body: { email: 'x@x.com', password: 'pw' }, headers: {} };
     const res = makeRes();
     await vendorAuthController.loginVendor(req, res, makeNext());
@@ -193,7 +195,7 @@ describe('loginVendor', () => {
   });
 
   test('short-circuits with 206 + tempToken when MFA is enabled, without calling authService.login', async () => {
-    userRepository.findByEmailAndRole = jest.fn().mockResolvedValue(makeUser({ mfaEnabled: true }));
+    userRepository.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(makeUser({ mfaEnabled: true }));
     const req = { body: { email: 'x@x.com', password: 'pw' }, headers: {} };
     const res = makeRes();
     await vendorAuthController.loginVendor(req, res, makeNext());
@@ -216,7 +218,7 @@ describe('loginVendor', () => {
   });
 
   test('accountState reflects "documents_required" for a pending vendor with a verified email', async () => {
-    userRepository.findByEmailAndRole = jest.fn().mockResolvedValue(makeUser({ status: 'vendor_active' }));
+    userRepository.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(makeUser({ status: 'vendor_active' }));
     vendorAuthService.getVendorProfile = jest.fn().mockResolvedValue({
       vendor: makeVendor({ verificationStatus: 'pending' }), user: makeUser({ status: 'vendor_active' }),
     });
@@ -231,7 +233,7 @@ describe('loginVendor', () => {
   });
 
   test('accountState reflects "email_unverified" before anything else, even if somehow already approved', async () => {
-    userRepository.findByEmailAndRole = jest.fn().mockResolvedValue(makeUser({ status: 'pending_email_verification' }));
+    userRepository.findByEmailAndRoleWithAuthSecrets = jest.fn().mockResolvedValue(makeUser({ status: 'pending_email_verification' }));
     vendorAuthService.getVendorProfile = jest.fn().mockResolvedValue({
       vendor: makeVendor({ verificationStatus: 'approved' }), user: makeUser({ status: 'pending_email_verification' }),
     });

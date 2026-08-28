@@ -28,6 +28,36 @@ class UserRepository {
     return this.repo.findOne({ where: { email, role } });
   }
 
+  // passwordHash/mfaSecret are select:false on the entity (see User.js) so
+  // they never come back by accident. Login and password-change flows are
+  // the only legitimate consumers — they must go through these explicitly,
+  // via addSelect, which adds the field on top of the normal default
+  // selection rather than restricting to just these columns.
+  async findByEmailWithAuthSecrets(email) {
+    return this.repo
+      .createQueryBuilder("user")
+      .addSelect(["user.passwordHash", "user.mfaSecret"])
+      .where("user.email = :email", { email })
+      .getOne();
+  }
+
+  async findByEmailAndRoleWithAuthSecrets(email, role) {
+    return this.repo
+      .createQueryBuilder("user")
+      .addSelect(["user.passwordHash", "user.mfaSecret"])
+      .where("user.email = :email", { email })
+      .andWhere("user.role = :role", { role })
+      .getOne();
+  }
+
+  async findByIdWithAuthSecrets(id) {
+    return this.repo
+      .createQueryBuilder("user")
+      .addSelect(["user.passwordHash", "user.mfaSecret"])
+      .where("user.id = :id", { id })
+      .getOne();
+  }
+
   create(data) {
     return this.repo.create(data);
   }
