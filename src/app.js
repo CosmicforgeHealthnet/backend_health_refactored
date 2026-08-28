@@ -582,6 +582,7 @@ app.use("/api/vendor",   vendorFeature.router);
 app.use("/api/shop",     shopFeature.router);
 app.use("/api/cart",     cartFeature.router);
 app.use("/api/community", communityFeature.router);
+app.use("/api/health", require("./features/health").router); // Public health content (news, etc.) for the patient dashboard
 
 
 // ============================================

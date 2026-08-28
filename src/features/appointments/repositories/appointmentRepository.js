@@ -261,6 +261,22 @@ class AppointmentRepository {
 
     }
 
+    // Lean lookup for calendar/dashboard views — avoids the heavy medical
+    // profile / verification-document joins that findAll()/findUpcoming...()
+    // pull in, since those aren't needed to render a calendar cell.
+    async findByPatientAndDateRange(patientId, startDate, endDate) {
+        const appointments = await this.repository.find({
+            where: {
+                patientId,
+                appointmentDate: Between(startDate, endDate),
+            },
+            order: { appointmentDate: "ASC", appointmentTime: "ASC" },
+            relations: ["doctor"],
+        });
+
+        return sanitizeAppointments(appointments);
+    }
+
     async findUpcomingAppointmentsForDoctor(doctorId) {
         const today = new Date();
         const appointments = await this.repository.find({

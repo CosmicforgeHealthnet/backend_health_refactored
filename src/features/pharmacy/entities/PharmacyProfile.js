@@ -27,6 +27,12 @@ module.exports = new EntitySchema({
     description: { type: "text", nullable: true },
     website: { type: "varchar", nullable: true },
 
+    // Geolocation — used by /api/patient/nearby-vendors/
+    latitude: { type: "decimal", precision: 10, scale: 7, nullable: true },
+    longitude: { type: "decimal", precision: 10, scale: 7, nullable: true },
+    deliveryAvailable: { type: "boolean", default: true },
+    pickupAvailable: { type: "boolean", default: true },
+
     // Settings & Operational Details
     defaultCurrency: { type: "varchar", length: 3, default: "NGN", nullable: false },
     serviceRadius: { type: "decimal", precision: 10, scale: 2, default: 0, nullable: false, comment: "Delivery radius in miles/km" },
