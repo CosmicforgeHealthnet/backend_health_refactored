@@ -14,6 +14,11 @@ function stripHtml(text) {
   return (text || "").replace(/<[^>]*>/g, "").trim();
 }
 
+function extractFirstImage(html) {
+  const match = (html || "").match(/<img[^>]*\ssrc="([^"]+)"/i);
+  return match ? match[1] : null;
+}
+
 function extractText(field) {
   // xml2js can hand back either a plain string or { _: "text" } depending
   // on whether the element had attributes (e.g. WHO's guid isPermaLink).
@@ -43,12 +48,16 @@ class HealthNewsService {
 
       return list.map((item) => {
         const guid = extractText(item.guid);
+        // The lead image, when an article has one, is embedded as an <img>
+        // inside the escaped HTML of a10:content — not a dedicated
+        // media/enclosure tag, which this feed doesn't have.
+        const content = extractText(item["a10:content"]);
         return {
           id: guid ? guid.replace(/^urn:uuid:/, "") : item.link,
           title: stripHtml(extractText(item.title)),
           summary: stripHtml(extractText(item.description)),
           category: null, // WHO's general news feed doesn't carry a topic taxonomy
-          image: null, // not present in this feed
+          image: extractFirstImage(content),
           source: "World Health Organization (WHO)",
           source_url: item.link,
           published_at: item.pubDate ? new Date(item.pubDate).toISOString() : null,
