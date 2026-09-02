@@ -10,12 +10,26 @@ const DocumentFileService = require("../../documents/services/documentFileServic
 
 const appointmentRepository = new AppointmentRepository();
 
+// The LAB feature is a flag-gated "legacy" module (ENABLE_LEGACY_LAB_ROUTES)
+// whose entities aren't registered in every environment's TypeORM
+// DataSource — calling it can throw EntityMetadataNotFoundError there.
+// Lab activity is one optional slice of the timeline, so a lookup failure
+// should degrade to "no lab events" rather than take the whole feed down.
+async function getPatientLabOrdersSafe(patientId, limit, offset) {
+  try {
+    return await labOrderService.getPatientOrders(patientId, limit, offset);
+  } catch (error) {
+    console.error("lab order lookup failed, treating as no results:", error.message);
+    return [];
+  }
+}
+
 class PatientActivityService {
   async getRecentActivity(patientId, limit = 5) {
     const [appointments, prescriptions, labOrders, documents] = await Promise.all([
       appointmentRepository.findByPatientId(patientId),
       prescriptionService.getPatientPrescriptions(patientId, { limit: 20 }),
-      labOrderService.getPatientOrders(patientId, 20, 0),
+      getPatientLabOrdersSafe(patientId, 20, 0),
       DocumentFileService.getRecentFiles(patientId, 20).catch(() => ({ files: [] })),
     ]);
 

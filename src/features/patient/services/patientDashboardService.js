@@ -16,6 +16,21 @@ const NON_ACTIVE_PRESCRIPTION_STATUSES = [PrescriptionStatus.COMPLETED, Prescrip
 const RESULT_AVAILABLE_STATUSES = [ORDER_STATUS.RESULTS_APPROVED, ORDER_STATUS.COMPLETED];
 const NEW_RESULT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days — no read/unread tracking exists on lab orders
 
+// The LAB feature is a flag-gated "legacy" module (ENABLE_LEGACY_LAB_ROUTES)
+// whose entities aren't registered in every environment's TypeORM
+// DataSource — calling it can throw EntityMetadataNotFoundError there.
+// Lab results are one optional section of the dashboard, so a lab lookup
+// failure should degrade to "no results" rather than take the whole
+// endpoint down.
+async function getPatientLabOrdersSafe(patientId, limit, offset) {
+  try {
+    return await labOrderService.getPatientOrders(patientId, limit, offset);
+  } catch (error) {
+    console.error("lab order lookup failed, treating as no results:", error.message);
+    return [];
+  }
+}
+
 function toDateOnly(value) {
   if (!value) return null;
   if (value instanceof Date) return value.toISOString().slice(0, 10);
@@ -77,7 +92,7 @@ class PatientDashboardService {
     const [upcoming, prescriptions, labOrders, fileStats, wallet] = await Promise.all([
       appointmentRepository.findUpcomingAppointmentsForPatient(patientId),
       prescriptionService.getPatientPrescriptions(patientId, { limit: 100 }),
-      labOrderService.getPatientOrders(patientId, 100, 0),
+      getPatientLabOrdersSafe(patientId, 100, 0),
       DocumentFileService.getUserFileStats(patientId).catch(() => ({ stats: { total_files: 0 } })),
       patientWalletService.getSummary(patientId, countryCode).catch(() => ({ balance: 0, currency: "USD" })),
     ]);
@@ -104,7 +119,7 @@ class PatientDashboardService {
 
   // GET /api/patient/lab-results/summary/
   async getLabResultsSummary(patientId) {
-    const orders = await labOrderService.getPatientOrders(patientId, 100, 0);
+    const orders = await getPatientLabOrdersSafe(patientId, 100, 0);
     const available = orders.filter((o) => RESULT_AVAILABLE_STATUSES.includes(o.status));
     const newResults = available.filter((o) => {
       const deliveredAt = o.resultsDeliveredAt || o.updatedAt;
