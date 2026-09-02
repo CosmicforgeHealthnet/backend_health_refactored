@@ -35,7 +35,14 @@ class HealthNewsService {
       CACHE_TTL_SECONDS
     );
 
-    return { articles: (articles || []).slice(0, limit) };
+    // WHO's feed only embeds an image on some items. Prefer the ones that
+    // have one (each group stays in its original recency order) so the
+    // dashboard shows real photos where possible, then backfill with the
+    // most recent image-less articles rather than under-filling the quota.
+    const withImage = (articles || []).filter((a) => a.image);
+    const withoutImage = (articles || []).filter((a) => !a.image);
+
+    return { articles: [...withImage, ...withoutImage].slice(0, limit) };
   }
 
   async _fetchAndNormalize() {

@@ -145,7 +145,7 @@ class ContentService {
   async updateCondition(id, updateData) {
     const condition = await conditionRepo.findById(id);
     if (!condition) {
-      throw new Error("Condition not found");
+      throw new NotFoundError(`Condition with ID ${id} not found`);
     }
 
     await conditionRepo.update(id, updateData);
@@ -159,7 +159,7 @@ class ContentService {
     try {
       const condition = await conditionRepo.findById(id);
       if (!condition) {
-        throw new NotFoundError(`Conly.ondition with ID ${id} not found`);
+        throw new NotFoundError(`Condition with ID ${id} not found`);
       }
 
       await queryRunner.startTransaction();
@@ -193,7 +193,7 @@ class ContentService {
   async toggleConditionStatus(id) {
     const condition = await conditionRepo.findById(id);
     if (!condition) {
-      throw new Error("Condition not found");
+      throw new NotFoundError(`Condition with ID ${id} not found`);
     }
 
     const newStatus = !condition.isActive;
@@ -280,7 +280,7 @@ class ContentService {
 
     const condition = await conditionRepo.findById(conditionId);
     if (!condition) {
-      throw new Error("Condition not found");
+      throw new NotFoundError(`Condition with ID ${conditionId} not found`);
     }
 
     return await emergencyStepRepo.findByConditionId(conditionId);
@@ -289,7 +289,7 @@ class ContentService {
   async getEmergencyStepById(id) {
     const step = await emergencyStepRepo.findById(id);
     if (!step) {
-      throw new Error("Emergency step not found");
+      throw new NotFoundError(`Emergency step with ID ${id} not found`);
     }
     return step;
   }
@@ -300,7 +300,7 @@ class ContentService {
       categoryType
     );
     if (!step) {
-      throw new Error(
+      throw new NotFoundError(
         "Emergency step not found for this condition and category"
       );
     }
@@ -310,7 +310,7 @@ class ContentService {
   async updateEmergencyStep(id, updateData) {
     const step = await emergencyStepRepo.findById(id);
     if (!step) {
-      throw new Error("Emergency step not found");
+      throw new NotFoundError(`Emergency step with ID ${id} not found`);
     }
 
     await emergencyStepRepo.update(id, updateData);
@@ -320,7 +320,7 @@ class ContentService {
   async deleteEmergencyStep(id) {
     const step = await emergencyStepRepo.findById(id);
     if (!step) {
-      throw new Error("Emergency step not found");
+      throw new NotFoundError(`Emergency step with ID ${id} not found`);
     }
 
     await emergencyStepRepo.delete(id);
@@ -331,7 +331,7 @@ class ContentService {
   async uploadConditionImage(conditionId, documentsData) {
     const condition = await conditionRepo.findById(conditionId);
     if (!condition) {
-      throw new Error("Condition not found");
+      throw new NotFoundError(`Condition with ID ${conditionId} not found`);
     }
 
     // Assuming single image upload for condition
@@ -348,7 +348,7 @@ class ContentService {
   async uploadCategoryImage(stepId, documentsData) {
     const step = await emergencyStepRepo.findById(stepId);
     if (!step) {
-      throw new Error("Emergency step not found");
+      throw new NotFoundError(`Emergency step with ID ${stepId} not found`);
     }
 
     // Assuming single image upload for category
