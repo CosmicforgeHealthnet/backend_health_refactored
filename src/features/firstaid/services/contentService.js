@@ -294,11 +294,20 @@ class ContentService {
     return step;
   }
 
-  async getEmergencyStepByConditionAndCategory(conditionId, categoryType) {
-    const step = await emergencyStepRepo.findByConditionAndCategory(
+  async getEmergencyStepByConditionAndCategory(conditionId, categoryType = "general") {
+    let step = await emergencyStepRepo.findByConditionAndCategory(
       conditionId,
       categoryType
     );
+
+    // Fall back to "general" when the specific age group hasn't been filled in yet
+    if (!step && categoryType !== "general") {
+      step = await emergencyStepRepo.findByConditionAndCategory(
+        conditionId,
+        "general"
+      );
+    }
+
     if (!step) {
       throw new NotFoundError(
         "Emergency step not found for this condition and category"

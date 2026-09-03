@@ -7,25 +7,16 @@ class EmergencyStepController {
       const { conditionId } = req.params;
       const { categoryType } = req.query;
 
-      if (categoryType) {
-        const steps =
-          await contentService.getEmergencyStepByConditionAndCategory(
-            conditionId,
-            categoryType
-          );
-        res.json({
-          success: true,
-          data: steps,
-          count: steps.length,
-        });
-      } else {
-        const steps = await contentService.getEmergencySteps(conditionId);
-        res.json({
-          success: true,
-          data: steps,
-          count: steps.length,
-        });
-      }
+      // Falls back to "general" when categoryType is omitted, or when the
+      // requested age group hasn't been filled in yet for this condition
+      const step = await contentService.getEmergencyStepByConditionAndCategory(
+        conditionId,
+        categoryType || "general"
+      );
+      res.json({
+        success: true,
+        data: step,
+      });
     } catch (error) {
       next(error);
     }

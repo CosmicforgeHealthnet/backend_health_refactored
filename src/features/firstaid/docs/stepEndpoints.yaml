@@ -2,7 +2,10 @@ paths:
   /api/firstaid/content/steps/condition/{conditionId}:
     get:
       summary: Get steps by condition ID
-      description: Retrieve all steps for a specific condition, with optional category filter (public endpoint)
+      description: >-
+        Retrieve the emergency step for a specific condition and age group (public endpoint).
+        If categoryType is omitted, or if no step has been created yet for the requested
+        age group, this falls back to the "general" category step for the condition.
       tags: [First Aid - Emergency Steps]
       parameters:
         - name: conditionId
@@ -14,7 +17,9 @@ paths:
             format: uuid
         - name: categoryType
           in: query
-          description: Optional category filter
+          description: >-
+            Optional age group filter. Defaults to "general" when omitted, and falls back to
+            "general" if no step exists yet for the requested age group.
           schema:
             type: string
             enum:
@@ -24,7 +29,7 @@ paths:
               - infants
       responses:
         '200':
-          description: Successfully retrieved steps
+          description: Successfully retrieved the emergency step (may be a fallback to "general")
           content:
             application/json:
               schema:
@@ -34,19 +39,11 @@ paths:
                     type: boolean
                     example: true
                   data:
-                    oneOf:
-                      - $ref: './stepComponents.yaml#/components/schemas/EmergencyStep'
-                      - type: array
-                        items:
-                          $ref: './stepComponents.yaml#/components/schemas/EmergencyStep'
-                  count:
-                    type: integer
-                    description: Number of steps returned
-                    example: 3
+                    $ref: './stepComponents.yaml#/components/schemas/EmergencyStep'
         '400':
           description: Invalid condition ID or category
         '404':
-          description: Condition not found
+          description: Condition not found, or no step exists for this condition in any category
         '500':
           description: Internal server error
 
