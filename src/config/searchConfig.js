@@ -2,7 +2,11 @@
 
 const ENTITY_PERMISSIONS = {
   User: {
-    patient: ['fullName', 'specialty', 'isAvailable', 'profilePicture'],
+    // Real column names on the User entity (auth/entities/User.js) - the doctor
+    // fields used to be listed as "specialty"/"isAvailable"/"profilePicture",
+    // none of which exist on this entity, so they silently matched nothing.
+    public: ['fullName', 'departmentSpecialty', 'isOnline', 'profileImageUrl', 'averageRating', 'totalRatings', 'tier'],
+    patient: ['fullName', 'departmentSpecialty', 'isOnline', 'profileImageUrl', 'averageRating', 'totalRatings', 'tier'],
     doctor: ['fullName', 'email', 'phone', 'lastVisit'],
     admin: ['*']
   },
@@ -19,6 +23,20 @@ const ENTITY_PERMISSIONS = {
   Subscription: {
     patient: [],
     doctor: ['tier', 'status', 'price', 'endDate', 'commissionRate'],
+    admin: ['*']
+  },
+  // Publicly browsable: patients (and anonymous visitors) can search live products,
+  // but never rejection reasons or other vendor-internal fields.
+  Product: {
+    public: ['title', 'description', 'price', 'category', 'subcategory'],
+    patient: ['title', 'description', 'price', 'category', 'subcategory'],
+    admin: ['*']
+  },
+  // Publicly browsable: facility contact fields are limited to business phone,
+  // not the admin's personal email, which stays admin-only.
+  LabFacility: {
+    public: ['facilityName', 'city', 'state', 'facilityType'],
+    patient: ['facilityName', 'city', 'state', 'facilityType', 'phone'],
     admin: ['*']
   }
 };
@@ -108,22 +126,36 @@ const isDynamicallySearchable = (columnName) => {
          name.length > 3; // Most meaningful searchable fields have names longer than 3 chars
 };
 
+// Keys must be lowercase - getColumnWeight() lowercases the column name before
+// lookup, so a mixed-case key here (e.g. "fullName") never matches anything
+// and silently falls back to the default weight of 1.
 const COLUMN_WEIGHTS = {
   name: 10,
   title: 9,
-  fullName: 10,
+  fullname: 10,
+  facilityname: 9,
   email: 8,
   description: 5,
-  specialty: 7,
+  departmentspecialty: 7,
   address: 3,
+  city: 4,
+  state: 2,
   phone: 6
 };
 
 const USER_FILTERS = {
+  // Anonymous/unauthenticated search - scoped to what's safe to expose with no login
+  public: {
+    User: { role: 'doctor', status: 'doctor_active' },
+    Product: { isActive: true, status: 'approved' },
+    LabFacility: { status: 'active' }
+  },
   patient: {
-    User: { role: 'doctor', status: 'active' },
+    User: { role: 'doctor', status: 'doctor_active' },
     Appointment: { patientId: 'USER_ID' },
     Transaction: { patientId: 'USER_ID' },
+    Product: { isActive: true, status: 'approved' },
+    LabFacility: { status: 'active' }
     // Subscription: { userId: 'USER_ID' }
   },
   doctor: {

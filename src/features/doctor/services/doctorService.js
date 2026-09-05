@@ -342,11 +342,18 @@ class DoctorService {
         return userRepository.findDoctorsByOnlineStatus(isOnline);
     }
 
-    async searchDoctors(query) {
+    async searchDoctors(query, userRole = 'public') {
         if (!query || query.length < 3) {
             throw new Error("Search query must be at least 3 characters long");
         }
-        return userRepository.searchDoctors(query);
+        // Delegates to the centralized search service (src/features/search) instead
+        // of a bespoke query, scoped to just the User entity so this doesn't also
+        // search products/appointments/etc. Only active, verified doctors are
+        // visible to public/patient callers - see ENTITY_PERMISSIONS/USER_FILTERS
+        // in config/searchConfig.js for exactly which fields and rows are exposed.
+        const searchService = require('../../search/services/searchService');
+        const result = await searchService.search(query, null, userRole, { category: 'User' });
+        return result.results.user || [];
     }
 
     async updateAuthInfo(userId, { fullName, profileImageUrl, bannerUrl, departmentSpecialty }) {

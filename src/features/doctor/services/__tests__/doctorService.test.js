@@ -13,11 +13,13 @@ jest.mock('../../../../config/database');
 jest.mock('../../../auth/repositories/userRepository');
 jest.mock('../../repositories/doctorProfileRepository');
 jest.mock('../../../../shared/utils/cache');
+jest.mock('../../../search/services/searchService');
 
 const AppDataSource = require('../../../../config/database');
 const userRepository = require('../../../auth/repositories/userRepository');
 const doctorProfileRepository = require('../../repositories/doctorProfileRepository');
 const cache = require('../../../../shared/utils/cache');
+const searchService = require('../../../search/services/searchService');
 
 const DoctorProfile = require('../../entities/DoctorProfile');
 const ProfessionalLicense = require('../../entities/ProfessionalLicense');
@@ -454,13 +456,18 @@ describe('getDoctorsByOnlineStatus / searchDoctors', () => {
         await expect(doctorService.searchDoctors('')).rejects.toThrow(
             'Search query must be at least 3 characters long'
         );
-        expect(userRepository.searchDoctors).not.toHaveBeenCalled();
+        expect(searchService.search).not.toHaveBeenCalled();
     });
 
-    test('searchDoctors delegates once the query is long enough', async () => {
-        userRepository.searchDoctors = jest.fn().mockResolvedValue([{ id: 'd1' }]);
+    test('searchDoctors delegates to the centralized search service, scoped to the User entity', async () => {
+        searchService.search = jest.fn().mockResolvedValue({ results: { user: [{ id: 'd1' }] } });
         await expect(doctorService.searchDoctors('cardio')).resolves.toEqual([{ id: 'd1' }]);
-        expect(userRepository.searchDoctors).toHaveBeenCalledWith('cardio');
+        expect(searchService.search).toHaveBeenCalledWith('cardio', null, 'public', { category: 'User' });
+    });
+
+    test('searchDoctors returns an empty array when the search service finds no doctors', async () => {
+        searchService.search = jest.fn().mockResolvedValue({ results: {} });
+        await expect(doctorService.searchDoctors('cardio')).resolves.toEqual([]);
     });
 });
 

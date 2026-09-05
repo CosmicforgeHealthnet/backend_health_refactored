@@ -1248,6 +1248,16 @@ class PaymentService {
           // Only verify funds processing for COMPLETED transactions
           if (transaction.doctorId && transaction.serviceType === 'appointment') {
             await this.processFundsForAppointmentPayment(transaction);
+          } else if (transaction.serviceType === 'pharmacy') {
+            // Cart orders can complete through this path too (e.g. stored-method
+            // auto-billing), not just the payment-provider webhook - without this,
+            // a cart paid here never gets marked 'paid' and the vendor never gets
+            // credited, even though the transaction itself shows 'completed'.
+            try {
+              await this._handleCartOrderPayment(transaction);
+            } catch (cartErr) {
+              console.error('❌ Cart order post-payment handling failed:', cartErr.message);
+            }
           } else if (transaction.doctorId) {
             await this.processFundsImmediate(transaction);
           }
@@ -2044,6 +2054,15 @@ class PaymentService {
     });
     if (!cart) {
       console.error(`[CartPayment] Cart ${transaction.serviceId} not found for transaction ${transaction.id}`);
+      return;
+    }
+
+    // Idempotency guard: this can be invoked more than once for the same cart
+    // (payment-provider webhooks retry, and a completed transaction can also be
+    // reached via processPayment). Without this, a retry would credit the
+    // vendor's wallet again for an order already paid out.
+    if (cart.status === 'paid') {
+      console.log(`[CartPayment] Cart ${cart.id} already marked paid - skipping duplicate reconciliation`);
       return;
     }
 

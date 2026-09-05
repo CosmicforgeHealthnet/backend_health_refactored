@@ -204,7 +204,8 @@ class UserRepository {
       .leftJoin("doctorProfile.digitalHealthTools", "digitalHealthTools")
       .leftJoin("user.doctorPricing", "doctorPricing")
       .leftJoin("user.doctorAvailability", "doctorAvailability")
-      .where("user.role = :role", { role: USER_ROLES.DOCTOR });
+      .where("user.role = :role", { role: USER_ROLES.DOCTOR })
+      .orderBy("user.createdAt", "DESC");
 
     if (typeof skip === 'number') query.skip(skip);
     if (typeof take === 'number') query.take(take);
@@ -404,7 +405,8 @@ class UserRepository {
       .leftJoin("user.doctorUnavailability", "doctorUnavailability") // Optional
       .leftJoin("user.ratings", "ratings") // Optional
       .where("user.role = :role", { role: USER_ROLES.DOCTOR })
-      .andWhere("user.status = :status", { status: "doctor_active" });
+      .andWhere("user.status = :status", { status: "doctor_active" })
+      .orderBy("user.createdAt", "DESC");
 
     if (typeof skip === 'number') query.skip(skip);
     if (typeof take === 'number') query.take(take);
