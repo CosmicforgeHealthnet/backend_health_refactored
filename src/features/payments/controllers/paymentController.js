@@ -1585,6 +1585,12 @@ class PaymentController {
             } catch (syncError) {
               console.error(`❌ Failed to automatically sync appointment status:`, syncError);
             }
+          } else if (transaction.serviceType === 'pharmacy') {
+            try {
+              await paymentService._handleCartOrderPayment(transaction);
+            } catch (cartErr) {
+              console.error('❌ Cart order post-payment handling failed on callback:', cartErr.message);
+            }
           } else if (transaction.doctorId) {
             await paymentService.processFundsImmediate(transaction);
           }
