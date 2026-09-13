@@ -27,7 +27,7 @@ class CommunityPostController {
     async listByCommunity(req, res, next) {
         try {
             const { page = 1, limit = 20 } = req.query;
-            const result = await communityPostService.listCommunityPosts(req.params.communityId, {
+            const result = await communityPostService.listCommunityPosts(req.params.communityId, req.user.id, {
                 page: Number(page), limit: Number(limit),
             });
             return res.status(200).json({ success: true, ...result, posts: result.posts.map(formatPost) });
@@ -40,6 +40,15 @@ class CommunityPostController {
         try {
             const post = await communityPostService.getPost(req.params.id, req.user.id);
             return res.status(200).json({ success: true, post: formatPost(post) });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async view(req, res, next) {
+        try {
+            const result = await communityPostService.recordView(req.params.id, req.user.id);
+            return res.status(200).json({ success: true, message: "View recorded", viewCount: result.viewCount });
         } catch (error) {
             next(error);
         }

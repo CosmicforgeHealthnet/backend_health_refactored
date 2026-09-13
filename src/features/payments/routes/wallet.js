@@ -40,6 +40,7 @@ router.get('/password/reset/verify/:token',
 
 // Apply common middlewares
 router.use(authenticateJWT);
+router.use(PaymentAuthMiddleware.verifyPaymentAuth); // fresh DB read -> req.fullUser, so requireVerifiedDoctor sees live status, not a stale JWT claim
 router.use(SanitizerMiddleware.sanitizeInput);
 
 /**

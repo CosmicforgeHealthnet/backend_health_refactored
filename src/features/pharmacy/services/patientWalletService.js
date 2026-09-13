@@ -147,13 +147,16 @@ const patientWalletService = {
     const txn = await patientWalletTxnRepo.findByReference(reference);
     if (!txn || txn.status !== PatientTxnStatus.PENDING) return;
 
+    // Atomically claim the PENDING transaction before crediting. Payment
+    // gateways routinely redeliver webhooks for the same reference — without
+    // this guard, two deliveries that both pass the findByReference check
+    // above would each credit the wallet, double-crediting the patient.
+    // Only the delivery whose UPDATE actually affects a row proceeds.
+    const result = await patientWalletTxnRepo.markCompletedIfPending(txn.id);
+    if (!result.affected) return;
+
     // Credit wallet
     await patientWalletRepo.creditBalance(txn.patientId, parseFloat(txn.amountUsd));
-
-    // Mark transaction as completed
-    await patientWalletTxnRepo.update(txn.id, {
-      status: PatientTxnStatus.COMPLETED,
-    });
 
     console.log(`[PatientWallet] Top-up confirmed for patient ${txn.patientId} — ${txn.amountUsd} USD`);
   },
@@ -164,7 +167,7 @@ const patientWalletService = {
   async handleTopUpFailed(reference) {
     const txn = await patientWalletTxnRepo.findByReference(reference);
     if (!txn || txn.status !== PatientTxnStatus.PENDING) return;
-    await patientWalletTxnRepo.update(txn.id, { status: PatientTxnStatus.FAILED });
+    await patientWalletTxnRepo.markFailedIfPending(txn.id);
   },
 };
 

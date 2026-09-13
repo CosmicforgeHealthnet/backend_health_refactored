@@ -68,7 +68,7 @@ class MFAService {
    * Disable MFA for user
    */
   async disableMFA(userId, token) {
-    const user = await userRepository.findById(userId);
+    const user = await userRepository.findByIdWithAuthSecrets(userId);
     if (!user || !user.mfaEnabled) {
       throw new Error('MFA not enabled for this user');
     }

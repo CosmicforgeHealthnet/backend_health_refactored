@@ -35,6 +35,12 @@ module.exports = new EntitySchema({
 
         logoUrl: { type: "varchar", nullable: true },
 
+        // Geolocation — used by /api/patient/nearby-vendors/
+        latitude: { type: "decimal", precision: 10, scale: 7, nullable: true },
+        longitude: { type: "decimal", precision: 10, scale: 7, nullable: true },
+        deliveryAvailable: { type: "boolean", default: true },
+        pickupAvailable: { type: "boolean", default: true },
+
         verificationStatus: {
             type: "enum",
             enum: ["pending", "documents_required", "under_review", "approved", "rejected", "suspended"],

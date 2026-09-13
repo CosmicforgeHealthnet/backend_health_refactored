@@ -743,6 +743,33 @@ class AdminVerificationController {
   }
 
   /**
+   * Get verified doctors who haven't set up pricing and/or availability yet
+   * — verified, but not actually bookable by patients.
+   * GET /api/admin/verification/pending-booking-setup
+   */
+  async getDoctorsPendingBookingSetup(req, res, next) {
+    try {
+      const doctors = await userRepository.findVerifiedDoctorsMissingBookingSetup();
+
+      res.json({
+        success: true,
+        count: doctors.length,
+        doctors: doctors.map(d => ({
+          id: d.id,
+          fullName: d.fullName,
+          email: d.email,
+          hasPricing: d.hasPricing,
+          hasAvailability: d.hasAvailability,
+          createdAt: d.createdAt,
+          daysSinceVerified: Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+        })),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Get verification statistics
    * GET /api/admin/verification/statistics
    */

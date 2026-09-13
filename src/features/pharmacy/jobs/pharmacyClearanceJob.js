@@ -15,7 +15,11 @@
 const walletTxnRepo   = require("../repositories/pharmacyWalletTransactionRepository");
 const pharmacyWalletRepo = require("../repositories/pharmacyWalletRepository");
 const pharmacyDisputeRepo = require("../repositories/pharmacyDisputeRepository");
-const { AppDataSource } = require("../../../config/database");
+// BUG FIX: config/database.js does `module.exports = AppDataSource` (a plain
+// TypeORM DataSource instance, not `{ AppDataSource }`). Destructuring made
+// this AppDataSource undefined, so `AppDataSource.transaction(...)` below
+// threw on every run — the daily escrow clearance job was completely broken.
+const AppDataSource = require("../../../config/database");
 
 /**
  * Calculate the date N business days ago (skips Saturday & Sunday).

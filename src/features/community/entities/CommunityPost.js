@@ -57,6 +57,11 @@ module.exports = new EntitySchema({
             target: "CommunityPostSave",
             inverseSide: "post",
         },
+        views: {
+            type: "one-to-many",
+            target: "CommunityPostView",
+            inverseSide: "post",
+        },
     },
     indices: [
         { name: "IDX_COMMUNITY_POST_COMMUNITY", columns: ["community"] },

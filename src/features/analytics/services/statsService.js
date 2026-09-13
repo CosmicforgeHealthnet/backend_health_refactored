@@ -1,4 +1,7 @@
-const { AppDataSource } = require('../../../config/database');
+// config/database.js does `module.exports = AppDataSource` (a plain TypeORM
+// DataSource instance, not `{ AppDataSource }`) — destructuring made this
+// undefined, so every AppDataSource.getRepository(...) call here threw.
+const AppDataSource = require('../../../config/database');
 
 const VALID_USER_TYPES = ['patient', 'doctor', 'pharmacy', 'lab', 'unknown'];
 const VALID_ROLES = ['lab'];

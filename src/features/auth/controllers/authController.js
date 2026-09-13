@@ -95,15 +95,20 @@ exports.signup = async (req, res, next) => {
             emailSent = false;
         }
 
-        //create referral
-        await referralService.createUserReferralCode(user.id);
-        const { ref } = req.query;
-        console.log(req.query);
-        if (ref) {
-            const referral = await referralService.processReferral(user.id, ref);
-            console.log(referral);
-            if (referral)
-                await referralService.verifyReferral(referral.referredUserId);
+        // Referral bookkeeping is best-effort — the account is already created,
+        // so a referral failure here must not turn a successful signup into an
+        // error response (that left orphaned User rows blocking retry with
+        // "Email already in use").
+        try {
+            await referralService.createUserReferralCode(user.id);
+            const { ref } = req.query;
+            if (ref) {
+                const referral = await referralService.processReferral(user.id, ref);
+                if (referral)
+                    await referralService.verifyReferral(referral.referredUserId);
+            }
+        } catch (referralErr) {
+            console.error("💥 Referral processing failed:", referralErr);
         }
 
         return res.status(201).json({
@@ -180,12 +185,18 @@ exports.signupOtp = async (req, res, next) => {
             emailSent = false;
         }
 
-        await referralService.createUserReferralCode(user.id);
-        const { ref } = req.query;
-        if (ref) {
-            const referral = await referralService.processReferral(user.id, ref);
-            if (referral)
-                await referralService.verifyReferral(referral.referredUserId);
+        // Referral bookkeeping is best-effort — see the equivalent guard in
+        // exports.signup for why this must not throw past this point.
+        try {
+            await referralService.createUserReferralCode(user.id);
+            const { ref } = req.query;
+            if (ref) {
+                const referral = await referralService.processReferral(user.id, ref);
+                if (referral)
+                    await referralService.verifyReferral(referral.referredUserId);
+            }
+        } catch (referralErr) {
+            console.error("💥 Referral processing failed:", referralErr);
         }
 
         // 🌟 Create wallet for new doctors
@@ -246,8 +257,8 @@ exports.login = async (req, res, next) => {
         //    app sends role:'patient' but this account is role:'doctor'), fall back
         //    to email-only so doctors aren't blocked by the frontend's default role.
         //    Same-email multi-role users are safe: the role-specific hit wins first.
-        let user = role ? await userRepo.findByEmailAndRole(email, role) : null;
-        if (!user) user = await userRepo.findByEmail(email);
+        let user = role ? await userRepo.findByEmailAndRoleWithAuthSecrets(email, role) : null;
+        if (!user) user = await userRepo.findByEmailWithAuthSecrets(email);
         if (!user) {
             return res
                 .status(401)

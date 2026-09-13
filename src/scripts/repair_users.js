@@ -83,20 +83,28 @@ async function repair() {
         console.log("✅ Schema patched.");
 
         // PART 2: Data Restoration
-        console.log("🩺 Restoring Doctor roles and statuses...");
-        // First count how many need restoration
+        console.log("🩺 Restoring Doctor roles...");
+        // NOTE: this used to also force-set status = 'doctor_active' for every user
+        // with a doctor_profiles row, regardless of their actual verification outcome
+        // (verification_requests.status). That desynced users.status from the real
+        // verification decision for doctors who were never approved (or were rejected),
+        // which is exactly the "verification status inconsistent" bug fixed on
+        // 2026-08-25 via src/scripts/reconcile_doctor_verification_status.js.
+        // Status is intentionally left untouched here — only doctorVerificationService's
+        // approve/reject flow (and the reconciliation script) should ever set it.
         const doctorsToRestore = await queryRunner.query(`
-            SELECT COUNT(*) FROM "users" 
+            SELECT COUNT(*) FROM "users"
             WHERE "id" IN (SELECT "userId" FROM "doctor_profiles")
-            AND ("role" != 'doctor' OR "status" != 'doctor_active');
+            AND "role" != 'doctor';
         `);
-        
+
         const doctorUpdate = await queryRunner.query(`
-            UPDATE "users" 
-            SET "role" = 'doctor', "status" = 'doctor_active' 
-            WHERE "id" IN (SELECT "userId" FROM "doctor_profiles");
+            UPDATE "users"
+            SET "role" = 'doctor'
+            WHERE "id" IN (SELECT "userId" FROM "doctor_profiles")
+            AND "role" != 'doctor';
         `);
-        console.log(`✅ Restored doctors (affected rows: ${doctorUpdate[1] || 'check database'})`);
+        console.log(`✅ Restored doctor roles (affected rows: ${doctorUpdate[1] || 'check database'})`);
 
         console.log("💊 Checking for misplaced Pharmacy staff...");
         const pharmacyUpdate = await queryRunner.query(`

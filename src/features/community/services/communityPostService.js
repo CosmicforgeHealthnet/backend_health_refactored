@@ -5,9 +5,49 @@ const communityPostMediaRepository = require("../repositories/communityPostMedia
 const communityPostLikeRepository = require("../repositories/communityPostLikeRepository");
 const communityPostCommentRepository = require("../repositories/communityPostCommentRepository");
 const communityPostSaveRepository = require("../repositories/communityPostSaveRepository");
+const communityPostViewRepository = require("../repositories/communityPostViewRepository");
 const { NotFoundError, ForbiddenError, ValidationError } = require("../../../shared/utils/errors");
 
 const MODERATOR_ROLES = ["owner", "admin", "moderator"];
+
+// Batch-attaches isLiked/isSaved for a viewer across a page of posts (two queries
+// total, not one per post) — the same flags getPost returns for a single post.
+async function attachViewerFlags(posts, viewerId) {
+    if (!posts.length) return posts;
+    if (!viewerId) return posts.map((p) => ({ ...p, isLiked: false, isSaved: false }));
+
+    const postIds = posts.map((p) => p.id);
+    const [likedIds, savedIds] = await Promise.all([
+        communityPostLikeRepository.findLikedPostIdsByUser(viewerId, postIds),
+        communityPostSaveRepository.findSavedPostIdsByUser(viewerId, postIds),
+    ]);
+    const likedSet = new Set(likedIds);
+    const savedSet = new Set(savedIds);
+
+    return posts.map((p) => ({ ...p, isLiked: likedSet.has(p.id), isSaved: savedSet.has(p.id) }));
+}
+
+// Caps a post's viewCount to at most one increment per viewer, no matter how many
+// times they open the post or ping the view endpoint. Returns whether this call
+// was the one that actually counted (so callers can reflect it in their response
+// without a second read of the row).
+async function recordViewOnce(postId, viewerId) {
+    if (!viewerId) return false;
+
+    const existing = await communityPostViewRepository.findByPostAndUser(postId, viewerId);
+    if (existing) return false;
+
+    try {
+        await communityPostViewRepository.create(postId, viewerId);
+    } catch (error) {
+        // Unique constraint race — a concurrent request from the same viewer won it first.
+        if (!/duplicate key|unique constraint/i.test(error.message)) throw error;
+        return false;
+    }
+
+    await communityPostRepository.incrementViewCount(postId);
+    return true;
+}
 
 class CommunityPostService {
     async createPost(communityId, userId, { content, mediaUrls }) {
@@ -33,7 +73,7 @@ class CommunityPostService {
         const post = await communityPostRepository.findById(postId);
         if (!post) throw new NotFoundError("Post not found");
 
-        await communityPostRepository.incrementViewCount(postId);
+        const wasNewView = await recordViewOnce(postId, viewerId);
 
         let isLiked = false;
         let isSaved = false;
@@ -42,16 +82,26 @@ class CommunityPostService {
             isSaved = !!(await communityPostSaveRepository.findByPostAndUser(postId, viewerId));
         }
 
-        return { ...post, viewCount: post.viewCount + 1, isLiked, isSaved };
+        return { ...post, viewCount: post.viewCount + (wasNewView ? 1 : 0), isLiked, isSaved };
     }
 
-    async listCommunityPosts(communityId, { page, limit } = {}) {
-        return communityPostRepository.findByCommunity(communityId, { page, limit });
+    async listCommunityPosts(communityId, viewerId, { page, limit } = {}) {
+        const result = await communityPostRepository.findByCommunity(communityId, { page, limit });
+        return { ...result, posts: await attachViewerFlags(result.posts, viewerId) };
     }
 
     async listMyFeed(userId, { page, limit } = {}) {
         const communityIds = await communityMemberRepository.findActiveCommunityIdsByUser(userId);
-        return communityPostRepository.findByCommunities(communityIds, { page, limit });
+        const result = await communityPostRepository.findByCommunities(communityIds, { page, limit });
+        return { ...result, posts: await attachViewerFlags(result.posts, userId) };
+    }
+
+    async recordView(postId, viewerId) {
+        const post = await communityPostRepository.findById(postId);
+        if (!post) throw new NotFoundError("Post not found");
+
+        const wasNewView = await recordViewOnce(postId, viewerId);
+        return { viewCount: post.viewCount + (wasNewView ? 1 : 0) };
     }
 
     async deletePost(postId, actingUserId) {

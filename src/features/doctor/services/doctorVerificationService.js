@@ -102,68 +102,95 @@ class DoctorVerificationService {
         new Date()
       );
 
-      // 5. Create verification request
-      const verificationRequest = await verificationRequestRepo.create({
-        doctorId,
-        licenseNumber: verificationData.licenseNumber,
-        countryCode: verificationData.countryCode.toUpperCase(),
-        issuingAuthority: verificationData.issuingAuthority || countryConfig.regulatoryBody,
-        licenseType: verificationData.licenseType,
-        issueDate: verificationData.issueDate,
-        expiryDate: verificationData.expiryDate,
-        status: VerificationStatus.PENDING,
-        method: verificationMethod.method,
-        tier: verificationMethod.tier,
-        confidenceScore: 0,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        createdBy: submittedBy || doctorId
+      // 5-6. Create the verification request and its initial status-history entry
+      // together, in one transaction. These two used to be separate unguarded
+      // writes — if the history log (or anything after it) threw, the request
+      // row stayed committed in PENDING status, and the doctor's next attempt
+      // was blocked by the "already has an active verification request" check
+      // above, even though nothing was ever fully submitted. Wrapping them
+      // together means they either both land or neither does.
+      const verificationRequest = await AppDataSource.transaction(async (manager) => {
+        const created = await manager.getRepository("VerificationRequest").save({
+          doctorId,
+          licenseNumber: verificationData.licenseNumber,
+          countryCode: verificationData.countryCode.toUpperCase(),
+          issuingAuthority: verificationData.issuingAuthority || countryConfig.regulatoryBody,
+          licenseType: verificationData.licenseType,
+          issueDate: verificationData.issueDate,
+          expiryDate: verificationData.expiryDate,
+          status: VerificationStatus.PENDING,
+          method: verificationMethod.method,
+          tier: verificationMethod.tier,
+          confidenceScore: 0,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          createdBy: submittedBy || doctorId
+        });
+
+        await manager.getRepository("VerificationStatusHistory").save({
+          verificationRequestId: created.id,
+          fromStatus: null,
+          toStatus: VerificationStatus.PENDING,
+          changedBy: submittedBy || doctorId,
+          changeReason: "Initial verification request submitted",
+          metadata: { countryConfig: countryConfig.countryCode, method: verificationMethod.method },
+          automatedChange: true
+        });
+
+        return created;
       });
 
-      // 6. Log status change
-      await verificationStatusHistoryRepo.logStatusChange(
-        verificationRequest.id,
-        null,
-        VerificationStatus.PENDING,
-        submittedBy || doctorId,
-        "Initial verification request submitted",
-        { countryConfig: countryConfig.countryCode, method: verificationMethod.method },
-        true
-      );
+      // 7-10. Everything below is best-effort follow-up, not core submission
+      // state — the request is fully and safely persisted as of the
+      // transaction above. A failure in any of these must not be reported to
+      // the doctor as a submission failure (that would falsely suggest
+      // nothing was saved, while also leaving them blocked on retry).
 
       // 7. Update doctor profile
-      await this.updateDoctorProfileVerificationStatus(
-        doctorId,
-        "pending",
-        verificationRequest.id,
-        verificationMethod.tier
-      );
+      try {
+        await this.updateDoctorProfileVerificationStatus(
+          doctorId,
+          "pending",
+          verificationRequest.id,
+          verificationMethod.tier
+        );
+      } catch (profileErr) {
+        console.error("Error updating doctor profile after verification submission:", profileErr);
+      }
 
       // 8. Add to review queue if manual review required
-      if (verificationMethod.requiresManualReview || verificationMethod.method === 'manual') {
-        const user = await userRepository.findById(doctorId);
-        const priority = VerificationHelpers.determineQueuePriority(
-          verificationRequest,
-          user?.tier || 'free'
-        );
+      try {
+        if (verificationMethod.requiresManualReview || verificationMethod.method === 'manual') {
+          const user = await userRepository.findById(doctorId);
+          const priority = VerificationHelpers.determineQueuePriority(
+            verificationRequest,
+            user?.tier || 'free'
+          );
 
-        await queueRepo.addToQueue({
-          verificationRequestId: verificationRequest.id,
-          priority,
-          slaTarget,
-          complexity: this.determineComplexity(verificationMethod.tier)
-        });
+          await queueRepo.addToQueue({
+            verificationRequestId: verificationRequest.id,
+            priority,
+            slaTarget,
+            complexity: this.determineComplexity(verificationMethod.tier)
+          });
+        }
+      } catch (queueErr) {
+        console.error("Error adding verification request to review queue:", queueErr);
       }
 
       // 9. Send email notification
-      await this.sendVerificationStatusNotification(
-        doctorId,
-        VerificationStatus.PENDING,
-        verificationRequest,
-        {
-          estimatedProcessingTime: verificationMethod.avgProcessingTime,
-          nextSteps: this.getNextStepsMessage(verificationMethod.method)
-        }
-      );
+      try {
+        await this.sendVerificationStatusNotification(
+          doctorId,
+          VerificationStatus.PENDING,
+          verificationRequest,
+          {
+            estimatedProcessingTime: verificationMethod.avgProcessingTime,
+            nextSteps: this.getNextStepsMessage(verificationMethod.method)
+          }
+        );
+      } catch (notifyErr) {
+        console.error("Error sending verification submission notification:", notifyErr);
+      }
 
       // 10. Start automated verification only if the country has an active API endpoint
       // For 'hybrid' countries without an API (e.g. Nigeria tier_2, hasApi: false),
@@ -564,8 +591,14 @@ class DoctorVerificationService {
       const setupResult = await this.setupDoctorFinancialProfile(verificationRequest.doctorId);
       console.log(`✅ Financial profile setup: ${JSON.stringify(setupResult)}`);
 
-      // Remove from review queue
-      await queueRepo.markCompleted(verificationRequestId);
+      // Remove from review queue — best-effort like the steps above; the
+      // doctor is already approved and active from the transaction, so a
+      // failure here must not surface as a failed approval.
+      try {
+        await queueRepo.markCompleted(verificationRequestId);
+      } catch (queueError) {
+        console.error("Error removing verification from review queue:", queueError);
+      }
 
       // Enhanced approval notification with wallet/subscription info
       await this.sendEnhancedApprovalNotification(

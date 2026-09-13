@@ -9,8 +9,8 @@ class SearchController {
   static async search(req, res, next) {
     try {
       const { q: query, category, limit = 10, ...filters } = req.query;
-      const userId = req.user.sub;
-      const userRole = req.user.role;
+      const userId = req.user?.sub || null;
+      const userRole = req.user?.role || 'public';
 
       // Validate query
       if (!query || query.trim().length < 2) {
@@ -47,7 +47,7 @@ class SearchController {
   static async getSuggestions(req, res, next) {
     try {
       const { q: query } = req.query;
-      const userRole = req.user.role;
+      const userRole = req.user?.role || 'public';
 
       if (!query || query.trim().length < 1) {
         return res.json({
@@ -103,8 +103,8 @@ class SearchController {
    */
   static async getSearchableEntities(req, res, next) {
     try {
-      const userId = req.user.sub;
-      const userRole = req.user.role;
+      const userId = req.user?.sub || null;
+      const userRole = req.user?.role || 'public';
 
       const entities = await searchService.getSearchableEntities(userId, userRole);
 

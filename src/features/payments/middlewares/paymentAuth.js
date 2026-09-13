@@ -3,34 +3,37 @@
 // ================================
 
 // src/middlewares/paymentAuth.js
-const { authenticateJWT, authorizeRoles } = require('../../auth/middlewares/authMiddleware');
 const userRepository = require('../../auth/repositories/userRepository');
 
 class PaymentAuthMiddleware {
   /**
-   * Enhanced JWT verification for payment operations
+   * Fresh DB read of the requesting user, attached as req.fullUser.
+   *
+   * Must run after authenticateJWT (relies on req.user.sub). Exists because
+   * req.user.status is a snapshot baked into the JWT at login/refresh time —
+   * up to ACCESS_EXPIRES old — so a doctor whose verification status just
+   * changed (e.g. admin approval, or a status-consistency fix) would
+   * otherwise be denied/allowed wallet access based on stale data until
+   * their token happened to refresh. requireVerifiedDoctor/requireActivePatient
+   * already prefer req.fullUser over req.user when it's present.
    */
   static async verifyPaymentAuth(req, res, next) {
-    authenticateJWT(req, res, async (error) => {
-      if (error) return;
+    try {
+      const user = await userRepository.findById(req.user.sub);
 
-      try {
-        const user = await userRepository.findById(req.user.sub);
-
-        if (!user) {
-          return res.status(401).json({ error: 'User not found' });
-        }
-
-        if (user.status === 'locked') {
-          return res.status(403).json({ error: 'Account is locked. Contact support.' });
-        }
-
-        req.fullUser = user;
-        next();
-      } catch (error) {
-        return res.status(500).json({ error: 'Authentication error' });
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' });
       }
-    });
+
+      if (user.status === 'locked') {
+        return res.status(403).json({ error: 'Account is locked. Contact support.' });
+      }
+
+      req.fullUser = user;
+      next();
+    } catch (error) {
+      return res.status(500).json({ error: 'Authentication error' });
+    }
   }
 
   /**

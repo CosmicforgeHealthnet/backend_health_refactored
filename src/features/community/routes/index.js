@@ -49,6 +49,7 @@ router.get(
     communityPostController.listByCommunity
 );
 router.get("/posts/:id", communityPostController.getById);
+router.post("/posts/:id/view", communityPostController.view);
 router.delete("/posts/:id", communityPostController.delete);
 router.post("/posts/:id/like", communityPostController.like);
 router.delete("/posts/:id/like", communityPostController.unlike);

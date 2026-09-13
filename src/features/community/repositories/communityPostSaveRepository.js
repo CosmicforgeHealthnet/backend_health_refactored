@@ -1,10 +1,20 @@
 const AppDataSource = require("../../../config/database");
+const { In } = require("typeorm");
 
 const saveRepo = () => AppDataSource.getRepository("CommunityPostSave");
 
 const communityPostSaveRepository = {
     findByPostAndUser(postId, userId) {
         return saveRepo().findOne({ where: { post: { id: postId }, user: { id: userId } } });
+    },
+
+    async findSavedPostIdsByUser(userId, postIds) {
+        if (!postIds.length) return [];
+        const rows = await saveRepo().find({
+            where: { user: { id: userId }, post: { id: In(postIds) } },
+            relations: ["post"],
+        });
+        return rows.map((r) => r.post.id);
     },
 
     async findByUser(userId, { page = 1, limit = 20 } = {}) {

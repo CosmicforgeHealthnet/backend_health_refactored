@@ -1215,7 +1215,13 @@ class PrescriptionService {
    * @param {string} driverId  UUID of the user acting as driver
    */
   async assignDriver(prescriptionId, driverId) {
-    const prescription = await prescriptionRepo.findOne({ where: { id: prescriptionId } });
+    // NOTE: prescriptionRepo (this module's PrescriptionRepository wrapper)
+    // does not itself expose findOne/update — those only exist on the raw
+    // TypeORM repo behind its `.repo` getter. Use the wrapper's own
+    // findById/updateFields (used by every other method in this file)
+    // instead of calling the non-existent prescriptionRepo.findOne/update,
+    // which previously threw a TypeError on every call.
+    const prescription = await prescriptionRepo.findById(prescriptionId);
     if (!prescription) {
       throw Object.assign(new Error("Prescription not found"), { status: 404 });
     }
@@ -1246,11 +1252,10 @@ class PrescriptionService {
       }
     }
 
-    await prescriptionRepo.update(prescriptionId, {
+    await prescriptionRepo.updateFields(prescriptionId, {
       driverId,
       status:      PrescriptionStatus.OUT_FOR_DELIVERY,
       dispatchedAt: prescription.dispatchedAt ?? new Date(),
-      updatedAt:   new Date(),
     });
 
     emitStatusChange({ ...prescription, patientId: prescription.patientId, pharmacyId: prescription.pharmacyId }, PrescriptionStatus.OUT_FOR_DELIVERY);

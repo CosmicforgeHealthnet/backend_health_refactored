@@ -6,20 +6,30 @@ paths:
         - Search
       summary: Universal search across accessible entities
       description: |
-        Perform a universal search across all entities the user has access to.
-        Results are filtered based on user role and permissions.
-        
+        Perform a universal search across all entities the caller has access to.
+        Authentication is optional - an unauthenticated request is treated as the
+        `public` role and can still search publicly-browsable entities (doctors,
+        products). Results and visible fields are scoped per role/entity via
+        `ENTITY_PERMISSIONS` in `config/searchConfig.js`; a role only ever sees the
+        exact fields it's been granted, never a raw database row.
+
+        Multi-word queries are tokenized: every word must match at least one
+        searchable column (AND across words, OR across columns), so "john
+        cardiologist" can match a name and a specialty in separate columns.
+
         **Searchable entities vary by role:**
-        - **Patient**: Can search doctors, their own appointments, transactions, and subscriptions
-        - **Doctor**: Can search their patients, appointments, and transactions
-        - **Admin**: Can search across all entities with appropriate permissions
+        - **Public (unauthenticated)**: Active doctors (name, specialty, rating, online status), approved/active products
+        - **Patient**: Same as public, plus their own appointments, transactions, and subscriptions
+        - **Doctor**: Their patients, appointments, and transactions
+        - **Admin**: All entities, unrestricted fields
       security:
         - bearerAuth: []
+        - {}
       parameters:
         - name: q
           in: query
           required: true
-          description: Search query string (minimum 2 characters)
+          description: Search query string (minimum 2 characters). Split on whitespace and tokenized - see description.
           schema:
             type: string
             minLength: 2
@@ -28,11 +38,11 @@ paths:
         - name: category
           in: query
           required: false
-          description: Optional category filter to limit search scope
+          description: Entity name to scope the search to a single entity type instead of every entity the caller can access (case-insensitive, e.g. "User", "Product").
           schema:
             type: string
-            enum: [user, appointment, transaction, subscription]
-          example: "user"
+            enum: [User, Product, Appointment, Transaction, Subscription]
+          example: "User"
         - name: limit
           in: query
           required: false
@@ -52,34 +62,27 @@ paths:
                 $ref: '#/components/schemas/SearchResponse'
               examples:
                 doctorSearch:
-                  summary: Search for doctors
+                  summary: Search for doctors (public/unauthenticated caller, category=User)
                   value:
                     success: true
                     message: "Search completed successfully"
                     data:
-                      query: "doctor cardiology"
+                      query: "cardio"
                       results:
                         user:
                           - id: "123e4567-e89b-12d3-a456-426614174000"
-                            entityType: "User"
-                            title: "Dr. John Smith"
-                            description: "Cardiology specialist"
-                            relevanceScore: 95.0
+                            fullName: "Ajani Olalekan peter"
+                            departmentSpecialty: "Cardiology"
+                            profileImageUrl: null
+                            tier: "free"
+                            isOnline: false
+                            averageRating: "4.5"
+                            totalRatings: 12
                             _meta:
                               entityType: "User"
                               searchable: true
-                              updatedAt: "2023-12-01T10:00:00Z"
-                        appointment:
-                          - id: "123e4567-e89b-12d3-a456-426614174001"
-                            entityType: "Appointment"
-                            title: "Cardiology Consultation"
-                            description: "Scheduled for tomorrow"
-                            relevanceScore: 78.5
-                            _meta:
-                              entityType: "Appointment"
-                              searchable: true
-                              updatedAt: "2023-12-01T09:30:00Z"
-                      total: 15
+                              updatedAt: "2025-09-11T09:25:22.283Z"
+                      total: 1
                       suggestions: ["doctor appointment", "cardiology consultation"]
                       searchTime: 1640995200000
                 emptyResults:
@@ -109,9 +112,11 @@ paths:
       summary: Get search suggestions
       description: |
         Get search suggestions based on a partial query.
-        Suggestions are tailored to the user's role and common search patterns.
+        Suggestions are tailored to the caller's role and common search patterns.
+        Authentication is optional - an unauthenticated caller is treated as the `public` role.
       security:
         - bearerAuth: []
+        - {}
       parameters:
         - name: q
           in: query
@@ -155,10 +160,12 @@ paths:
         - Search
       summary: Get searchable entities for current user
       description: |
-        Retrieve the list of entity types that the current user can search.
+        Retrieve the list of entity types that the current caller can search.
         This is useful for building search interfaces and understanding search scope.
+        Authentication is optional - an unauthenticated caller is treated as the `public` role.
       security:
         - bearerAuth: []
+        - {}
       responses:
         '200':
           description: Searchable entities retrieved successfully
@@ -167,13 +174,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/SearchEntitiesResponse'
               examples:
+                publicEntities:
+                  summary: Entities available to an unauthenticated caller
+                  value:
+                    success: true
+                    message: "Searchable entities retrieved successfully"
+                    data:
+                      entities: ["User", "Product"]
                 patientEntities:
                   summary: Entities available to patient
                   value:
                     success: true
                     message: "Searchable entities retrieved successfully"
                     data:
-                      entities: ["User", "Appointment", "Transaction", "Subscription"]
+                      entities: ["User", "Appointment", "Transaction", "Product"]
                 doctorEntities:
                   summary: Entities available to doctor
                   value:

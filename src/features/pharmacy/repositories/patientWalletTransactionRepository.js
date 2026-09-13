@@ -1,5 +1,6 @@
 const AppDataSource = require("../../../config/database");
 const PatientWalletTransactionSchema = require("../entities/PatientWalletTransaction");
+const { PatientTxnStatus } = PatientWalletTransactionSchema;
 
 const repo = () => AppDataSource.getRepository(PatientWalletTransactionSchema);
 
@@ -29,6 +30,29 @@ const patientWalletTransactionRepository = {
   },
 
   update: (id, data) => repo().update(id, data),
+
+  /**
+   * Atomically transitions a PENDING transaction to COMPLETED/FAILED.
+   * The WHERE clause includes status = 'pending' so that two concurrent
+   * calls for the same reference (e.g. a duplicate webhook delivery) can
+   * never both succeed — only the first affects a row. Callers must check
+   * `result.affected` before crediting/debiting the wallet.
+   */
+  markCompletedIfPending: (id) =>
+    repo()
+      .createQueryBuilder()
+      .update()
+      .set({ status: PatientTxnStatus.COMPLETED })
+      .where("id = :id AND status = :pending", { id, pending: PatientTxnStatus.PENDING })
+      .execute(),
+
+  markFailedIfPending: (id) =>
+    repo()
+      .createQueryBuilder()
+      .update()
+      .set({ status: PatientTxnStatus.FAILED })
+      .where("id = :id AND status = :pending", { id, pending: PatientTxnStatus.PENDING })
+      .execute(),
 };
 
 module.exports = patientWalletTransactionRepository;

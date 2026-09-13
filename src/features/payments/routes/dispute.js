@@ -15,6 +15,7 @@ const SanitizerMiddleware = require('../../../shared/middlewares/sanitizer');
 
 // Apply common middlewares
 router.use(authenticateJWT);
+router.use(PaymentAuthMiddleware.verifyPaymentAuth); // fresh DB read -> req.fullUser, so requireVerifiedDoctor/requireActivePatient see live status, not a stale JWT claim
 router.use(SanitizerMiddleware.sanitizeInput);
 
 /**

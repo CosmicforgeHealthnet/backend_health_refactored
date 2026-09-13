@@ -2,19 +2,21 @@
 const express = require('express');
 const router = express.Router();
 const SearchController = require('../controllers/searchController');
-const { authenticateJWT, authorizeRoles } = require("../../auth/middlewares/authMiddleware");
+const { authenticateJWT, authorizeRoles, optionalAuth } = require("../../auth/middlewares/authMiddleware");
 const ValidationMiddleware = require('../../../shared/middlewares/validation');
 const RateLimiterMiddleware = require('../../../shared/middlewares/rateLimiter');
 const SanitizerMiddleware = require('../../../shared/middlewares/sanitizer');
 
-// Apply common middlewares
-router.use(authenticateJWT);
+// Auth is optional here (not mandatory) - anonymous visitors can still search
+// public entities like doctors, products, and lab facilities. Logged-in users
+// get the extra entities/fields their role is permissioned for.
+router.use(optionalAuth);
 router.use(SanitizerMiddleware.sanitizeInput);
 
 /**
  * @route   GET /api/search
  * @desc    Universal search across all accessible entities
- * @access  Private (All authenticated users)
+ * @access  Public (more entities/fields unlocked when authenticated)
  */
 router.get('/',
   RateLimiterMiddleware.general(),
@@ -25,7 +27,7 @@ router.get('/',
 /**
  * @route   GET /api/search/suggestions
  * @desc    Get search suggestions based on partial query
- * @access  Private (All authenticated users)
+ * @access  Public (more entities/fields unlocked when authenticated)
  */
 router.get('/suggestions',
   RateLimiterMiddleware.general(),
@@ -36,7 +38,7 @@ router.get('/suggestions',
 /**
  * @route   GET /api/search/entities
  * @desc    Get list of entities user can search
- * @access  Private (All authenticated users)
+ * @access  Public (more entities/fields unlocked when authenticated)
  */
 router.get('/entities',
   SearchController.getSearchableEntities
@@ -48,6 +50,7 @@ router.get('/entities',
  * @access  Private (Admin only)
  */
 router.get('/analytics',
+  authenticateJWT,
   authorizeRoles('admin', 'super_admin'),
   SearchController.getSearchAnalytics
 );

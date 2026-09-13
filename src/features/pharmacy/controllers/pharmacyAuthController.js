@@ -126,7 +126,7 @@ class PharmacyAuthController {
       }
 
       // 1) Lookup user
-      const user = await userRepo.findByEmailAndRole(email, 'pharmacy');
+      const user = await userRepo.findByEmailAndRoleWithAuthSecrets(email, 'pharmacy');
       if (!user) {
         return res.status(401).json({
           error: "The email address you entered is not registered."
@@ -511,7 +511,7 @@ class PharmacyAuthController {
         return res.status(400).json({ success: false, message: "New password must be at least 8 characters" });
       }
 
-      const user = await userRepo.findById(userId);
+      const user = await userRepo.findByIdWithAuthSecrets(userId);
       if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
       const valid = await bcrypt.compare(currentPassword, user.passwordHash);

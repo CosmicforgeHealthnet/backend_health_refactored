@@ -13,12 +13,24 @@ function isClientError(msg) {
         msg.includes("required") ||
         msg.includes("already") ||
         msg.includes("Cannot") ||
+        // BUG FIX: pharmacySessionService throws "Can only add items to an
+        // active session" and "Can only modify items in an active session"
+        // (addCartItem/removeCartItem) — neither matched any pattern here
+        // (note the capital-C "Cannot" above is a different string), so both
+        // fell through to next(error) and surfaced as a 500 instead of the
+        // intended 400. Same class of bug as the promotionWebhookController
+        // isClientError mismatch found in the vendor feature.
+        msg.includes("Can only") ||
         msg.includes("must be") ||
         msg.includes("expired") ||
         msg.includes("cannot be cancelled") ||
         msg.includes("at least") ||
         msg.includes("greater than") ||
         msg.includes("no longer") ||
+        // BUG FIX: approveAndPay's "Cart has no items or total" also matched
+        // nothing above, so a cart missing its total fell through to a 500
+        // instead of 400.
+        msg.includes("no items") ||
         msg.includes("ready") ||
         msg.includes("approved") ||
         msg.includes("dispute")

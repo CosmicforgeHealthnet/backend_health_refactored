@@ -6,13 +6,11 @@ const {
   SENSITIVE_FIELDS,
   SENSITIVE_ENTITIES,
   SEARCHABLE_COLUMN_TYPES,
-  SEARCHABLE_COLUMN_NAMES,
   COLUMN_WEIGHTS,
   USER_FILTERS,
   COMMON_SEARCH_TERMS,
   SEARCH_SETTINGS,
-  SENSITIVE_PATTERNS,
-  isDynamicallySearchable
+  SENSITIVE_PATTERNS
 } = require("../../../config/searchConfig");
 
 class SearchService {
@@ -139,14 +137,24 @@ class SearchService {
    * Check if column is searchable
    */
   isSearchableColumn(column) {
-    // Exclude sensitive fields
-    if (this.sensitiveFields.includes(column.propertyName.toLowerCase())) {
+    const name = column.propertyName.toLowerCase();
+
+    // Exclude sensitive fields (exact match)
+    if (this.sensitiveFields.includes(name)) {
       return false;
     }
 
-    // Dynamic inclusion based on type or name patterns
-    return SEARCHABLE_COLUMN_TYPES.includes(column.type) ||
-      isDynamicallySearchable(column.propertyName);
+    // Exclude sensitive-looking fields by substring too (e.g. "resetPasswordToken"),
+    // not just fields that exactly match SENSITIVE_FIELDS
+    const sensitivePatterns = ['password', 'hash', 'token', 'key', 'secret', 'private'];
+    if (sensitivePatterns.some(pattern => name.includes(pattern))) {
+      return false;
+    }
+
+    // Only genuinely text-typed columns are searchable with LOWER()/LIKE. A
+    // column's name alone is never sufficient - non-text types (uuid, timestamp,
+    // date, integer, boolean, enum) fail at query time despite "looking" textual.
+    return SEARCHABLE_COLUMN_TYPES.includes(column.type);
   }
 
   /**
@@ -185,13 +193,23 @@ class SearchService {
   }
 
   /**
-   * Perform contextual search across entities
+   * Perform contextual search across entities.
+   *
+   * `filters.category` (an entity name, case-insensitive) scopes the search to a
+   * single entity instead of every entity the role can access - used by callers
+   * like doctor search or product search that only ever want one entity type.
    */
   async performContextualSearch(query, entities, userId, userRole, filters) {
     const results = {};
     const searchPromises = [];
 
-    for (const [entityName, entityData] of Object.entries(entities)) {
+    const entriesToSearch = filters.category
+      ? Object.entries(entities).filter(
+          ([entityName]) => entityName.toLowerCase() === String(filters.category).toLowerCase()
+        )
+      : Object.entries(entities);
+
+    for (const [entityName, entityData] of entriesToSearch) {
       const promise = this.searchEntity(
         entityName,
         entityData,
@@ -283,29 +301,38 @@ class SearchService {
   }
 
   /**
-   * Apply search conditions to query
+   * Apply search conditions to query.
+   *
+   * Tokenizes the query into individual words and requires every word to match
+   * at least one searchable column (AND across words, OR across columns), so a
+   * query like "john cardiologist" can match name and specialty in separate
+   * columns instead of only matching if the whole phrase appears in one column.
    */
   applySearchConditions(queryBuilder, columns, query) {
-    const searchConditions = [];
+    if (!columns || columns.length === 0) return;
+
+    const terms = query.split(/\s+/).filter(Boolean).slice(0, 10);
+    if (terms.length === 0) return;
+
     const parameters = {};
+    const termGroups = terms.map((term, termIndex) => {
+      const columnConditions = columns.map((column, colIndex) => {
+        const paramName = `search_${termIndex}_${colIndex}`;
 
-    columns.forEach((column, index) => {
-      const paramName = `search${index}`;
+        if (column.type && column.type.includes('array')) {
+          // Parameterized ANY() match - avoids injecting the term directly into SQL
+          parameters[paramName] = term;
+          return `:${paramName} = ANY(entity.${column.name})`;
+        }
 
-      // 🔧 FIX: Handle array columns differently
-      if (column.type && column.type.includes('array')) {
-        // For array columns, use ANY() function
-        searchConditions.push(`'${query}' = ANY(entity.${column.name})`);
-      } else {
-        // For regular columns, use LIKE
-        searchConditions.push(`LOWER(entity.${column.name}) LIKE LOWER(:${paramName})`);
-        parameters[paramName] = `%${query}%`;
-      }
+        parameters[paramName] = `%${term}%`;
+        return `LOWER(entity.${column.name}) LIKE LOWER(:${paramName})`;
+      });
+
+      return `(${columnConditions.join(' OR ')})`;
     });
 
-    if (searchConditions.length > 0) {
-      queryBuilder.andWhere(`(${searchConditions.join(' OR ')})`, parameters);
-    }
+    queryBuilder.andWhere(termGroups.join(' AND '), parameters);
   }
 
   /**
@@ -336,13 +363,21 @@ class SearchService {
       return;
     }
 
+    // Bind the query as parameters rather than interpolating it into the SQL text.
+    // TypeORM tracks parameters on the query builder globally, so a param set here
+    // is available to the raw SQL fragment passed to addSelect below.
+    const lowerQuery = query.toLowerCase();
+    queryBuilder.setParameter('relevanceExact', lowerQuery);
+    queryBuilder.setParameter('relevancePrefix', `${lowerQuery}%`);
+    queryBuilder.setParameter('relevanceContains', `%${lowerQuery}%`);
+
     const orderCases = columns.map(column => {
       const weight = column.weight;
-      return `CASE 
-        WHEN LOWER(entity.${column.name}) = LOWER('${query}') THEN ${weight * 3}
-        WHEN LOWER(entity.${column.name}) LIKE LOWER('${query}%') THEN ${weight * 2}
-        WHEN LOWER(entity.${column.name}) LIKE LOWER('%${query}%') THEN ${weight}
-        ELSE 0 
+      return `CASE
+        WHEN LOWER(entity.${column.name}) = :relevanceExact THEN ${weight * 3}
+        WHEN LOWER(entity.${column.name}) LIKE :relevancePrefix THEN ${weight * 2}
+        WHEN LOWER(entity.${column.name}) LIKE :relevanceContains THEN ${weight}
+        ELSE 0
       END`;
     }).join(' + ');
 
@@ -379,6 +414,22 @@ class SearchService {
     this.sensitiveFields.forEach(field => {
       delete cleaned[field];
     });
+
+    // Enforce field-level visibility. entityData.columns (used earlier for search
+    // matching) is a narrower, text-only list - it does NOT limit what a raw
+    // TypeORM getMany() row contains, which is every column on the entity. This is
+    // the actual visibility control: project down to exactly what ENTITY_PERMISSIONS
+    // grants this role for this entity, so a restricted role (e.g. "public") never
+    // gets internal/non-permitted fields just because they weren't part of the
+    // search-matching column set.
+    const allowedFields = this.entityPermissions[entityName]?.[userRole];
+    if (allowedFields && !allowedFields.includes('*')) {
+      Object.keys(cleaned).forEach(key => {
+        if (key !== 'id' && !allowedFields.includes(key)) {
+          delete cleaned[key];
+        }
+      });
+    }
 
     // Add metadata
     cleaned._meta = {
@@ -500,24 +551,37 @@ class SearchService {
   }
 
   /**
-   * Apply additional filters from request
+   * Apply additional filters from request.
+   *
+   * `key` comes straight from request query params, so it must be checked against
+   * the entity's real column names before being used as a raw SQL identifier -
+   * otherwise a crafted param name lets an attacker inject arbitrary SQL here.
    */
   applyAdditionalFilters(queryBuilder, filters) {
-    // 🔧 FIX: Exclude search-specific parameters that are not database columns
     const excludedParams = ['q', 'query', 'category', 'limit', 'offset', 'page'];
 
-    Object.entries(filters).forEach(([key, value]) => {
-      // Skip if key is in excluded params or if value is empty
-      if (excludedParams.includes(key) || !value) {
+    let validColumns;
+    try {
+      validColumns = queryBuilder.expressionMap.mainAlias.metadata.columns.map(
+        col => col.propertyName
+      );
+    } catch (error) {
+      console.warn('Could not resolve entity metadata for additional filters:', error.message);
+      return;
+    }
+
+    Object.entries(filters).forEach(([key, value], index) => {
+      if (excludedParams.includes(key) || value === undefined || value === null || value === '') {
         return;
       }
 
-      // Only add filters for actual database columns
-      try {
-        queryBuilder.andWhere(`entity.${key} = :${key}`, { [key]: value });
-      } catch (error) {
+      if (!validColumns.includes(key)) {
         console.warn(`Skipping filter for non-existent column: ${key}`);
+        return;
       }
+
+      const paramName = `filter_${index}`;
+      queryBuilder.andWhere(`entity.${key} = :${paramName}`, { [paramName]: value });
     });
   }
 }

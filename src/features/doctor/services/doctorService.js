@@ -2,6 +2,13 @@ const userRepository = require("../../auth/repositories/userRepository");
 const doctorProfileRepository = require("../repositories/doctorProfileRepository");
 const { USER_ROLES } = require("../../../shared/utils/constants");
 const cache = require("../../../shared/utils/cache");
+const AppDataSource = require("../../../config/database");
+const DoctorProfile = require("../entities/DoctorProfile");
+const ProfessionalLicense = require("../entities/ProfessionalLicense");
+const ProfessionalCertificate = require("../entities/ProfessionalCertificate");
+const ClinicalPractice = require("../entities/ClinicalPractice");
+const DigitalHealthTools = require("../entities/DigitalHealthTools");
+const DoctorWallet = require("../entities/DoctorWallet");
 
 class DoctorService {
     async createDoctorProfile(data) {
@@ -32,48 +39,55 @@ class DoctorService {
             user,
         };
 
-        const doctorProfile = await doctorProfileRepository.create(doctorProfileData);
-        const savedProfile = await doctorProfileRepository.save(doctorProfile);
+        // The profile and its sub-records (license, certificates, clinical
+        // practice, tools, wallet) are all part of the same submission, so they
+        // must land together. Previously they were saved one at a time with no
+        // transaction — if a sub-record save failed (e.g. a bad license field),
+        // the profile itself stayed committed, and the client's retry was
+        // blocked by the "Doctor profile already exists for this user" check
+        // above even though the submission never fully succeeded.
+        return await AppDataSource.transaction(async (manager) => {
+            const savedProfile = await manager.getRepository(DoctorProfile).save(doctorProfileData);
 
-        // Save related entities
-        if (data.professionalLicense) {
-            await doctorProfileRepository.professionalLicenseRepo.save({
-                ...data.professionalLicense,
-                doctorProfile: savedProfile,
-            });
-        }
-
-        if (data.professionalCertificate && Array.isArray(data.professionalCertificate)) {
-            for (const certificate of data.professionalCertificate) {
-                await doctorProfileRepository.professionalCertificateRepo.save({
-                    ...certificate,
+            if (data.professionalLicense) {
+                await manager.getRepository(ProfessionalLicense).save({
+                    ...data.professionalLicense,
                     doctorProfile: savedProfile,
                 });
             }
-        }
 
-        if (data.clinicalPractice) {
-            await doctorProfileRepository.clinicalPracticeRepo.save({
-                ...data.clinicalPractice,
-                doctorProfile: savedProfile,
-            });
-        }
+            if (data.professionalCertificate && Array.isArray(data.professionalCertificate)) {
+                for (const certificate of data.professionalCertificate) {
+                    await manager.getRepository(ProfessionalCertificate).save({
+                        ...certificate,
+                        doctorProfile: savedProfile,
+                    });
+                }
+            }
 
-        if (data.digitalHealthTools) {
-            await doctorProfileRepository.digitalHealthToolsRepo.save({
-                ...data.digitalHealthTools,
-                doctorProfile: savedProfile,
-            });
-        }
+            if (data.clinicalPractice) {
+                await manager.getRepository(ClinicalPractice).save({
+                    ...data.clinicalPractice,
+                    doctorProfile: savedProfile,
+                });
+            }
 
-        if (data.wallet) {
-            await doctorProfileRepository.walletRepo.save({
-                ...data.wallet,
-                doctorProfile: savedProfile,
-            });
-        }
+            if (data.digitalHealthTools) {
+                await manager.getRepository(DigitalHealthTools).save({
+                    ...data.digitalHealthTools,
+                    doctorProfile: savedProfile,
+                });
+            }
 
-        return savedProfile;
+            if (data.wallet) {
+                await manager.getRepository(DoctorWallet).save({
+                    ...data.wallet,
+                    doctorProfile: savedProfile,
+                });
+            }
+
+            return savedProfile;
+        });
     }
 
     async getDoctorProfileById(id) {
@@ -281,7 +295,7 @@ class DoctorService {
                 const result = await userRepository.findAllCompleteProfileDoctors({ skip, take });
 
                 return {
-                    data: result.doctors,
+                    data: result.doctors.map(withBookableFlag),
                     meta: {
                         total: result.total,
                         page: parseInt(page),
@@ -303,7 +317,7 @@ class DoctorService {
                 const result = await userRepository.findVerifiedDoctors({ skip, take });
 
                 return {
-                    data: result.doctors,
+                    data: result.doctors.map(withBookableFlag),
                     meta: {
                         total: result.total,
                         page: parseInt(page),
@@ -328,11 +342,18 @@ class DoctorService {
         return userRepository.findDoctorsByOnlineStatus(isOnline);
     }
 
-    async searchDoctors(query) {
+    async searchDoctors(query, userRole = 'public') {
         if (!query || query.length < 3) {
             throw new Error("Search query must be at least 3 characters long");
         }
-        return userRepository.searchDoctors(query);
+        // Delegates to the centralized search service (src/features/search) instead
+        // of a bespoke query, scoped to just the User entity so this doesn't also
+        // search products/appointments/etc. Only active, verified doctors are
+        // visible to public/patient callers - see ENTITY_PERMISSIONS/USER_FILTERS
+        // in config/searchConfig.js for exactly which fields and rows are exposed.
+        const searchService = require('../../search/services/searchService');
+        const result = await searchService.search(query, null, userRole, { category: 'User' });
+        return result.results.user || [];
     }
 
     async updateAuthInfo(userId, { fullName, profileImageUrl, bannerUrl, departmentSpecialty }) {
@@ -399,6 +420,15 @@ class DoctorService {
     async getUserRatings(userId) {
         return await userRepository.getUserRatings(userId);
     }
+}
+
+// Verified doctors are now listed even before they've set pricing/availability
+// (see userRepository.findVerifiedDoctors) — this flag lets the frontend tell
+// patients "booking not yet available" instead of showing a broken/empty
+// price and schedule for a doctor who technically can't be booked yet.
+function withBookableFlag(doctor) {
+    doctor.isBookable = (doctor.doctorPricing?.length > 0) && (doctor.doctorAvailability?.length > 0);
+    return doctor;
 }
 
 module.exports = new DoctorService();
