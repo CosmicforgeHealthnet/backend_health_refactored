@@ -4,8 +4,8 @@ info:
   version: 1.0.0
   description: API for doctor verification and health management system
 servers:
-  - url: http://localhost:3000
-    description: Development server
+  - url: https://api.cosmicforge.com
+    description: Production server
 paths:
   /lab/admin/facilities/pending:
     get:
