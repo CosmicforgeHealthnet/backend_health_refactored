@@ -78,6 +78,7 @@ const analyticsFeature = require("./features/analytics");
 const vendorFeature = require("./features/vendor");
 const shopFeature   = require("./features/shop");
 const cartFeature   = require("./features/cart");
+const reviewsFeature = require("./features/reviews");
 const communityFeature = require("./features/community");
 
 // Legacy Compatibility Routes
@@ -581,6 +582,7 @@ app.use("/api/analytics", analyticsFeature.router);
 app.use("/api/vendor",   vendorFeature.router);
 app.use("/api/shop",     shopFeature.router);
 app.use("/api/cart",     cartFeature.router);
+app.use("/api/reviews",  reviewsFeature.router);
 app.use("/api/community", communityFeature.router);
 app.use("/api/health", require("./features/health").router); // Public health content (news, etc.) for the patient dashboard
 
