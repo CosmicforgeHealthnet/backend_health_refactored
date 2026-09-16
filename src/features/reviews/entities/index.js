@@ -1,3 +1,5 @@
 const Review = require("./Review");
 
-module.exports = { Review };
+const AppFeedback = require("./AppFeedback");
+
+module.exports = { Review, AppFeedback };

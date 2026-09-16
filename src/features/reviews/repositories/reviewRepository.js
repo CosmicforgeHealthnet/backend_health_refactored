@@ -4,6 +4,17 @@ const reviewRepo      = () => AppDataSource.getRepository("Review");
 const appointmentRepo = () => AppDataSource.getRepository("Appointment");
 
 const reviewRepository = {
+    createFeedback(data) {
+        return AppDataSource.getRepository("AppFeedback").save(data);
+    },
+
+    findFeedbackByAuthor(authorId) {
+        return AppDataSource.getRepository("AppFeedback").find({
+            where: { authorId },
+            order: { createdAt: "DESC" },
+        });
+    },
+
     findAppointmentById(id) {
         return appointmentRepo().findOne({ where: { id } });
     },
