@@ -57,6 +57,11 @@ module.exports = new EntitySchema({
       default: 0,
       comment: "Break time between appointments in minutes",
     },
+    minimumNoticeMinutes: {
+      type: "int",
+      default: 30,
+      comment: "Minimum lead time (minutes) a patient must book ahead of now; 0 = bookable up to the last minute",
+    },
     timezone: {
       type: "varchar",
       length: 100,

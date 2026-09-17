@@ -73,6 +73,7 @@ class DoctorAvailabilityService {
                     doctorId,
                     ...dayAvailability,
                     timezone: doctorTimezone,
+                    minimumNoticeMinutes: this.clampMinimumNotice(dayAvailability.minimumNoticeMinutes),
                     startTimeUTC: startTimeUTC.toISOString().split('T')[1].substring(0, 8), // Extract HH:MM:SS
                     endTimeUTC: endTimeUTC.toISOString().split('T')[1].substring(0, 8)
                 });
@@ -200,9 +201,10 @@ class DoctorAvailabilityService {
 
             const isToday = this.isToday(date, targetTimezone);
             const currentTime = isToday ? this.getCurrentTime(targetTimezone) : null;
-            const BOOKING_BUFFER_MINUTES = 60; // Appointments must be booked 1 hour in advance
+            // Doctor-configurable lead time (defaults to 0 — bookable up to the last minute)
+            const BOOKING_BUFFER_MINUTES = dayAvailability[0]?.minimumNoticeMinutes ?? 0;
 
-            // Filter out unavailable/booked slots and past time slots (with 1-hour buffer for today)
+            // Filter out unavailable/booked and already-past/too-soon slots for today
             const availableSlots = Array.from(allSlots)
                 .filter((slot) => {
                     const isNotBooked = !bookedSlots.includes(slot);
@@ -421,6 +423,7 @@ class DoctorAvailabilityService {
                     doctorId,
                     ...dayAvailability,
                     timezone: doctorTimezone,
+                    minimumNoticeMinutes: this.clampMinimumNotice(dayAvailability.minimumNoticeMinutes),
                     startTimeUTC: startTimeUTC.toISOString().split('T')[1].substring(0, 8),
                     endTimeUTC: endTimeUTC.toISOString().split('T')[1].substring(0, 8)
                 });
@@ -434,6 +437,13 @@ class DoctorAvailabilityService {
         } catch (error) {
             throw new Error(`Failed to replace availability: ${error.message}`);
         }
+    }
+
+    // Doctor can set any lead time, but never more than 1 hour
+    clampMinimumNotice(value) {
+        const n = Number(value);
+        if (!Number.isFinite(n) || n < 0) return 0;
+        return Math.min(60, Math.floor(n));
     }
 
     // Keep existing utility methods
