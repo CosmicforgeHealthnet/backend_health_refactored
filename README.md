@@ -1,4 +1,4 @@
-# cosmicForge\_health\_backend
+# cosmicForge\_health\_backend.
 
 A simple, robust backend for the CosmicForge Health application built with Node.js, Express, PostgreSQL, and an ORM (TypeORM).
 
